@@ -4,3 +4,6 @@
     <NuxtLink to="/dashboard" class="btn mt-4">Go to Dashboard</NuxtLink>
   </div>
 </template>
+<script setup>
+navigateTo('/dashboard')
+</script>
