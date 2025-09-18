@@ -1,4 +1,6 @@
 <template>
+</div>
+<div class="overflow-x-auto">
 <table class="w-full text-sm">
 <thead>
 <tr class="text-left text-header">
