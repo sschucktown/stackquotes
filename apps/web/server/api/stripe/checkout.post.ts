@@ -1,10 +1,10 @@
+// apps/web/server/api/stripe/checkout.post.ts
 /// <reference types="nitropack" />
 
 import Stripe from 'stripe'
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
-
   const body = await readBody<{ amount: number }>(event)
 
   if (!body?.amount) {
@@ -14,10 +14,8 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // Stripe initialized with your secret key from runtime config
   const stripe = new Stripe(config.stripeSecretKey as string, {
-    apiVersion: '2024-06-20',
- // use latest supported API version
+    apiVersion: '2024-06-20', // ✅ stable API version
   })
 
   const session = await stripe.checkout.sessions.create({
@@ -27,7 +25,7 @@ export default defineEventHandler(async (event) => {
         price_data: {
           currency: 'usd',
           product_data: { name: 'Deposit Payment' },
-          unit_amount: Math.round(body.amount * 100), // amount in cents
+          unit_amount: Math.round(body.amount * 100), // cents
         },
         quantity: 1,
       },
