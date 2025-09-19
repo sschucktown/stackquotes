@@ -1,17 +1,14 @@
 // apps/web/middleware/auth.global.ts
-export default defineNuxtRouteMiddleware(async (to) => {
+import { useAuthStore } from '~/stores/auth'
+
+export default defineNuxtRouteMiddleware((to) => {
   if (process.server) return
 
   const auth = useAuthStore()
-  await auth.init()
-
-  // ⏳ Wait for auth loading
-  if (auth.loading) {
-    console.log('⏳ Auth still loading...')
-    return
-  }
-
   const publicRoutes = ['/login']
+
+  // ⏳ If not initialized yet, let page render (no redirect flash)
+  if (!auth.initialized) return
 
   if (!auth.user && !publicRoutes.includes(to.path)) {
     return navigateTo('/login')
