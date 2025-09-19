@@ -1,10 +1,12 @@
 import { defineStore } from 'pinia'
 import { z } from 'zod'
+import { useAuthStore } from '~/stores/auth'
 
 export type LineItem = { id?: string; description: string; qty: number; unitPrice: number }
 export type Quote = {
   id: string
   client_id: string
+  contractor_id: string
   status: 'draft' | 'sent' | 'accepted' | 'declined'
   subtotal: number
   deposit_amount: number | null
@@ -26,23 +28,41 @@ export const useQuoteStore = defineStore('quotes', {
   actions: {
     async load() {
       const sb = useSb()
+      const auth = useAuthStore()
       const { data, error } = await sb
         .from('quotes')
         .select('*')
+        .eq('contractor_id', auth.user?.id) // ✅ only load this contractor’s quotes
         .order('created_at', { ascending: false })
       if (error) throw error
       this.list = (data ?? []) as Quote[]
     },
+
     async create(payload: Partial<Quote>) {
       const sb = useSb()
-      const { data, error } = await sb.from('quotes').insert(payload).select('*').single()
+      const auth = useAuthStore()
+      const { data, error } = await sb
+        .from('quotes')
+        .insert({
+          ...payload,
+          contractor_id: auth.user?.id, // ✅ required for RLS
+        })
+        .select('*')
+        .single()
       if (error) throw error
       this.list.unshift(data as Quote)
       return data as Quote
     },
+
     async byId(id: string) {
       const sb = useSb()
-      const { data, error } = await sb.from('quotes').select('*').eq('id', id).single()
+      const auth = useAuthStore()
+      const { data, error } = await sb
+        .from('quotes')
+        .select('*')
+        .eq('id', id)
+        .eq('contractor_id', auth.user?.id) // ✅ enforce ownership
+        .single()
       if (error) throw error
       this.current = data as Quote
       return this.current
