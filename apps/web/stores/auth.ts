@@ -1,11 +1,7 @@
 // apps/web/stores/auth.ts
 import { defineStore } from 'pinia'
 
-type Profile = {
-  id: string
-  company_name: string | null
-  logo_url: string | null
-}
+type Profile = { id: string; company_name: string | null; logo_url: string | null }
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
@@ -13,21 +9,23 @@ export const useAuthStore = defineStore('auth', {
     profile: null as Profile | null,
   }),
   actions: {
-    async init() {
-      if (process.server) return // never run Supabase auth server-side
+    async safeInit() {
+      if (process.server) return
 
       const sb = useSb()
       if (!sb?.auth) {
-        console.warn('Supabase client not ready in auth.init()')
+        console.warn('Supabase client not ready in safeInit()')
         return
       }
 
-      const { data: { user } } = await sb.auth.getUser()
-      this.user = user
-
-      if (user) {
-        await this.fetchProfile()
+      const { data: { user }, error } = await sb.auth.getUser()
+      if (error) {
+        console.error('safeInit error:', error)
+        return
       }
+
+      this.user = user
+      if (user) await this.fetchProfile()
     },
 
     async signIn(email: string) {
@@ -54,8 +52,18 @@ export const useAuthStore = defineStore('auth', {
       const sb = useSb()
       if (!sb) throw new Error('Supabase client not ready')
 
-      const { data, error } = await sb.from('contractors').select('*').single()
-      if (error) throw error
+      const { data, error } = await sb.from('contractors').select('*').maybeSingle()
+
+      if (error) {
+        console.error('fetchProfile error:', error)
+        return
+      }
+
+      if (!data && this.user) {
+        // No contractor record yet → initialize a placeholder profile
+        this.profile = { id: this.user.id, company_name: null, logo_url: null }
+        return
+      }
 
       this.profile = data as Profile
     },
@@ -64,13 +72,22 @@ export const useAuthStore = defineStore('auth', {
       const sb = useSb()
       if (!sb) throw new Error('Supabase client not ready')
 
-      const { data, error } = await sb.from('contractors')
-        .upsert(payload)
+      // Ensure contractor row exists for the logged-in user
+      const { data, error } = await sb
+        .from('contractors')
+        .upsert(
+          { id: this.user.id, ...payload }, // merge user.id in case row doesn’t exist
+          { onConflict: 'id' }
+        )
         .select('*')
         .single()
 
-      if (error) throw error
-      this.profile = data
+      if (error) {
+        console.error('updateBrand error:', error)
+        throw error
+      }
+
+      this.profile = data as Profile
     },
   },
 })
