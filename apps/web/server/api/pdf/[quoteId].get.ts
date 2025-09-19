@@ -11,30 +11,23 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    // ✅ Ensure chromium is in headless mode (vercel requires this)
     const browser = await puppeteer.launch({
       args: chromium.args,
       defaultViewport: chromium.defaultViewport,
-      executablePath: await chromium.executablePath(
-        // this ensures Vercel uses its packaged binary
-        '/usr/bin/chromium-browser'
-      ),
-      headless: true, // force headless
+      executablePath: await chromium.executablePath(), // ✅ let Sparticuz choose
+      headless: chromium.headless, // ✅ works locally + Vercel
       ignoreHTTPSErrors: true,
     })
 
     const page = await browser.newPage()
 
-    // Load your quote page
     const config = useRuntimeConfig()
     const quoteUrl = `${config.public.baseUrl}/quotes/${quoteId}`
     await page.goto(quoteUrl, { waitUntil: 'networkidle0' })
 
-    // Generate PDF
     const pdf = await page.pdf({ format: 'A4', printBackground: true })
     await browser.close()
 
-    // Return PDF
     event.node.res.setHeader('Content-Type', 'application/pdf')
     event.node.res.setHeader(
       'Content-Disposition',
