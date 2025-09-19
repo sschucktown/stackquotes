@@ -11,12 +11,20 @@ export const useAuthStore = defineStore('auth', {
   actions: {
     async init() {
       const sb = useSb()
+
+      if (!sb || !sb.auth) {
+        console.warn('Supabase client not ready in init()')
+        return
+      }
+
       const { data: { user } } = await sb.auth.getUser()
       this.user = user
       if (user) await this.fetchProfile()
     },
     async signIn(email: string) {
       const sb = useSb()
+      if (!sb?.auth) throw new Error('Supabase client not ready')
+
       const { error } = await sb.auth.signInWithOtp({
         email,
         options: { emailRedirectTo: window.location.origin },
@@ -25,18 +33,24 @@ export const useAuthStore = defineStore('auth', {
     },
     async signOut() {
       const sb = useSb()
+      if (!sb?.auth) throw new Error('Supabase client not ready')
+
       await sb.auth.signOut()
       this.user = null
       this.profile = null
     },
     async fetchProfile() {
       const sb = useSb()
+      if (!sb) throw new Error('Supabase client not ready')
+
       const { data, error } = await sb.from('contractors').select('*').single()
       if (error) throw error
       this.profile = data as Profile
     },
     async updateBrand(payload: { company_name?: string; logo_url?: string | null }) {
       const sb = useSb()
+      if (!sb) throw new Error('Supabase client not ready')
+
       const { data, error } = await sb.from('contractors').upsert(payload).select('*').single()
       if (error) throw error
       this.profile = data
