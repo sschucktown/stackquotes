@@ -11,13 +11,17 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    const executablePath = await chromium.executablePath() // ✅ guaranteed safe on Vercel
+    // ✅ executablePath is a string, not a function
+    const executablePath =
+      process.env.NODE_ENV === 'production'
+        ? chromium.executablePath
+        : undefined // let Puppeteer find Chrome locally
 
     const browser = await puppeteer.launch({
       args: chromium.args,
       defaultViewport: chromium.defaultViewport,
       executablePath,
-      headless: chromium.headless, // ✅ works locally + Vercel
+      headless: true,
       ignoreHTTPSErrors: true,
     })
 
