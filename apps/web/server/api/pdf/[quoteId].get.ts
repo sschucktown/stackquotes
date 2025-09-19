@@ -1,112 +1,55 @@
-import chromium from "@sparticuz/chromium";
-import puppeteer from "puppeteer-core";
+// apps/web/server/api/pdf/[quoteId].get.ts
+import { defineEventHandler, getRouterParam, createError } from 'h3'
+import chromium from '@sparticuz/chromium'
+import puppeteer from 'puppeteer-core'
+import { useRuntimeConfig } from '#imports'
 
 export default defineEventHandler(async (event) => {
-  const quoteId = getRouterParam(event, "quoteId");
-  const sb = await useServerSupabase();
-
-  const { data: quote } = await sb
-    .from("quotes")
-    .select("*, clients(*), contractors(*)")
-    .eq("id", quoteId)
-    .single();
-
-  if (!quote) {
-    throw createError({ statusCode: 404, statusMessage: "Quote not found" });
+  const quoteId = getRouterParam(event, 'quoteId')
+  if (!quoteId) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'Missing quoteId',
+    })
   }
 
-  const html = renderQuoteHtml(quote);
+  try {
+    // Launch Puppeteer with Sparticuz Chromium (works on Vercel)
+    const browser = await puppeteer.launch({
+      args: chromium.args,
+      defaultViewport: chromium.defaultViewport,
+      executablePath: await chromium.executablePath(),
+      headless: chromium.headless,
+    })
 
-  // Launch Puppeteer with serverless-friendly Chromium
-  const browser = await puppeteer.launch({
-    args: chromium.args,
-    defaultViewport: chromium.defaultViewport,
-    executablePath: await chromium.executablePath(),
-    headless: chromium.headless,
-  });
+    const page = await browser.newPage()
 
-  const page = await browser.newPage();
-  await page.setContent(html, { waitUntil: "networkidle0" });
-  const pdf = await page.pdf({ format: "A4", printBackground: true });
-  await browser.close();
+    // Load your hosted page for the quote (adjust path if needed)
+    const config = useRuntimeConfig()
+    const quoteUrl = `${config.public.baseUrl}/quotes/${quoteId}`
 
-  setHeader(event, "Content-Type", "application/pdf");
-  setHeader(
-    event,
-    "Content-Disposition",
-    `inline; filename=quote-${quoteId}.pdf`
-  );
+    await page.goto(quoteUrl, { waitUntil: 'networkidle0' })
 
-  return pdf;
-});
+    // Generate PDF
+    const pdf = await page.pdf({
+      format: 'A4',
+      printBackground: true,
+    })
 
-function renderQuoteHtml(q: any) {
-  const css = `
-  body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Ubuntu,Arial,sans-serif;color:#0f172a}
-  .hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}
-  .logo{height:48px}
-  .tier{border:1px solid #e2e8f0;border-radius:12px;padding:12px;margin-bottom:12px}
-  h1{color:#1E293B}
-  .pill{background:#F8FAFC;padding:4px 8px;border-radius:999px;border:1px solid #e2e8f0}
-  table{width:100%;border-collapse:collapse}
-  td,th{padding:8px;border-top:1px solid #e2e8f0;text-align:left}
-  `;
+    await browser.close()
 
-  const tiers = ["good", "better", "best"];
-  const tierHtml = tiers
-    .map(
-      (t) => `
-    <div class="tier">
-      <h3>${t.toUpperCase()}</h3>
-      <table>
-        <thead><tr><th>Description</th><th>Qty</th><th>Unit</th><th>Total</th></tr></thead>
-        <tbody>
-          ${(q.options?.[t] || [])
-            .map(
-              (i: any) =>
-                `<tr><td>${i.description}</td><td>${i.qty}</td><td>$${i.unitPrice.toFixed(
-                  2
-                )}</td><td>$${(i.qty * i.unitPrice).toFixed(2)}</td></tr>`
-            )
-            .join("")}
-        </tbody>
-      </table>
-    </div>`
+    // Return PDF to client
+    event.node.res.setHeader('Content-Type', 'application/pdf')
+    event.node.res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="quote-${quoteId}.pdf"`
     )
-    .join("");
-
-  return `<!doctype html>
-  <html>
-    <head><meta charset="utf-8"/><style>${css}</style></head>
-    <body>
-      <div class="hdr">
-        <div>
-          <h1>Quote #${q.id}</h1>
-          <div class="pill">${q.contractors?.company_name ?? ""}</div>
-        </div>
-        ${
-          q.contractors?.logo_url
-            ? `<img class="logo" src="${q.contractors.logo_url}"/>`
-            : ""
-        }
-      </div>
-      <div>
-        <strong>Client:</strong> ${q.clients?.name ?? ""} — ${
-    q.clients?.email ?? ""
+    return pdf
+  } catch (err: any) {
+    console.error('❌ PDF generation failed:', err)
+    throw createError({
+      statusCode: 500,
+      statusMessage: 'Failed to generate PDF',
+    })
   }
-      </div>
-      <hr/>
-      ${tierHtml}
-      <h3>Deposit: $${(q.deposit_amount ?? 0).toFixed(2)}</h3>
-    </body>
-  </html>`;
-}
-
-async function useServerSupabase() {
-  const config = useRuntimeConfig();
-  const { createClient } = await import("@supabase/supabase-js");
-  return createClient(
-    process.env.NUXT_PUBLIC_SUPABASE_URL!,
-    config.supabaseServiceRole!
-  );
-}
+})
