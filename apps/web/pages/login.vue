@@ -1,59 +1,31 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useAuthStore } from '~/stores/auth'
-import { navigateTo } from '#app'
-
-const email = ref('')
-const loading = ref(false)
-const message = ref<string | null>(null)
-const error = ref<string | null>(null)
-
-const auth = useAuthStore()
-
-// Check if already logged in → redirect to dashboard
-onMounted(async () => {
-  await auth.init()
-  if (auth.user) {
-    navigateTo('/dashboard')
-  }
+definePageMeta({
+  layout: 'auth'
 })
-
-const signIn = async () => {
-  loading.value = true
-  message.value = null
-  error.value = null
-  try {
-    await auth.signIn(email.value)
-    message.value = '✅ Check your email for a login link.'
-  } catch (err: any) {
-    console.error('Login error:', err)
-    error.value = err.message || '❌ Failed to send login link'
-  } finally {
-    loading.value = false
-  }
-}
 </script>
 
 <template>
-  <div class="max-w-md mx-auto mt-12 p-6 border rounded shadow">
-    <h1 class="text-xl font-bold mb-4">Login</h1>
-
+  <div class="w-full max-w-sm bg-white p-6 rounded shadow">
+    <h2 class="font-bold text-xl mb-4">Login</h2>
     <input
       v-model="email"
       type="email"
       placeholder="Enter your email"
-      class="w-full border px-3 py-2 mb-4 rounded"
+      class="w-full border p-2 mb-4 rounded"
     />
-
-    <button
-      @click="signIn"
-      :disabled="loading"
-      class="w-full bg-blue-600 text-white py-2 rounded disabled:opacity-50"
-    >
-      {{ loading ? 'Sending...' : 'Send Login Link' }}
-    </button>
-
-    <p v-if="message" class="text-green-600 mt-4">{{ message }}</p>
-    <p v-if="error" class="text-red-600 mt-4">{{ error }}</p>
+    <button @click="sendLink" class="btn w-full">Send Login Link</button>
   </div>
 </template>
+
+<script setup lang="ts">
+import { ref } from 'vue'
+import { useAuthStore } from '~/stores/auth'
+
+const email = ref('')
+const auth = useAuthStore()
+
+const sendLink = async () => {
+  await auth.signIn(email.value)
+  alert('Magic link sent!')
+}
+</script>
