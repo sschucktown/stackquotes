@@ -16,7 +16,8 @@ export default defineEventHandler(async (event) => {
 
   // Stripe initialized with your secret key from runtime config
   const stripe = new Stripe(config.stripeSecretKey as string, {
-    apiVersion: '2025-04-30.acacia', // use latest supported API version
+    apiVersion: '2024-06-20',
+ // use latest supported API version
   })
 
   const session = await stripe.checkout.sessions.create({
