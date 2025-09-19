@@ -1,7 +1,11 @@
 // apps/web/stores/auth.ts
 import { defineStore } from 'pinia'
 
-type Profile = { id: string; company_name: string | null; logo_url: string | null }
+type Profile = {
+  id: string
+  company_name: string | null
+  logo_url: string | null
+}
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
@@ -9,47 +13,62 @@ export const useAuthStore = defineStore('auth', {
     profile: null as Profile | null,
   }),
   actions: {
-    async safeInit() {
-      // only run in client
-      if (process.server) return
+    async init() {
+      if (process.server) return // never run Supabase auth server-side
 
       const sb = useSb()
       if (!sb?.auth) {
-        console.warn('Supabase client not ready in safeInit()')
+        console.warn('Supabase client not ready in auth.init()')
         return
       }
 
       const { data: { user } } = await sb.auth.getUser()
       this.user = user
-      if (user) await this.fetchProfile()
+
+      if (user) {
+        await this.fetchProfile()
+      }
     },
+
     async signIn(email: string) {
       const sb = useSb()
       if (!sb?.auth) throw new Error('Supabase client not ready')
+
       const { error } = await sb.auth.signInWithOtp({
         email,
         options: { emailRedirectTo: window.location.origin },
       })
       if (error) throw error
     },
+
     async signOut() {
       const sb = useSb()
       if (!sb?.auth) throw new Error('Supabase client not ready')
+
       await sb.auth.signOut()
       this.user = null
       this.profile = null
     },
+
     async fetchProfile() {
       const sb = useSb()
       if (!sb) throw new Error('Supabase client not ready')
+
       const { data, error } = await sb.from('contractors').select('*').single()
       if (error) throw error
+
       this.profile = data as Profile
     },
+
     async updateBrand(payload: { company_name?: string; logo_url?: string | null }) {
       const sb = useSb()
       if (!sb) throw new Error('Supabase client not ready')
-      const { data, error } = await sb.from('contractors').upsert(payload).select('*').single()
+
+      const { data, error } = await sb.from('contractors')
+        .upsert(payload)
+        .select('*')
+        .single()
+
       if (error) throw error
       this.profile = data
     },
