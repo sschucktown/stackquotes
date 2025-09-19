@@ -12,7 +12,7 @@ const auth = useAuthStore()
 
 // Check if already logged in → redirect to dashboard
 onMounted(async () => {
-  await auth.safeInit()
+  await auth.init()
   if (auth.user) {
     navigateTo('/dashboard')
   }
