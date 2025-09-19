@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useAuthStore } from '~/stores/auth'
+import { navigateTo } from '#app'
 
 const email = ref('')
 const loading = ref(false)
@@ -9,16 +10,24 @@ const error = ref<string | null>(null)
 
 const auth = useAuthStore()
 
+// Check if already logged in → redirect to dashboard
+onMounted(async () => {
+  await auth.safeInit()
+  if (auth.user) {
+    navigateTo('/dashboard')
+  }
+})
+
 const signIn = async () => {
   loading.value = true
   message.value = null
   error.value = null
   try {
     await auth.signIn(email.value)
-    message.value = 'Check your email for a login link.'
+    message.value = '✅ Check your email for a login link.'
   } catch (err: any) {
     console.error('Login error:', err)
-    error.value = err.message || 'Failed to send login link'
+    error.value = err.message || '❌ Failed to send login link'
   } finally {
     loading.value = false
   }
