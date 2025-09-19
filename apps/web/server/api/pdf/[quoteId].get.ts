@@ -11,10 +11,12 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
+    const executablePath = await chromium.executablePath() // ✅ guaranteed safe on Vercel
+
     const browser = await puppeteer.launch({
       args: chromium.args,
       defaultViewport: chromium.defaultViewport,
-      executablePath: await chromium.executablePath(), // ✅ let Sparticuz choose
+      executablePath,
       headless: chromium.headless, // ✅ works locally + Vercel
       ignoreHTTPSErrors: true,
     })
