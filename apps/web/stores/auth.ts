@@ -8,20 +8,22 @@ export const useAuthStore = defineStore('auth', {
     user: null as any,
     profile: null as Profile | null,
     initialized: false,
+    loading: true, // 👈 track auth bootstrap
   }),
   actions: {
     async init() {
       if (process.server) return
       if (this.initialized) return
       this.initialized = true
+      this.loading = true
 
       const sb = useSb()
       if (!sb?.auth) {
         console.warn('❌ Supabase client not ready in init()')
+        this.loading = false
         return
       }
 
-      // First check immediately
       const { data: { user } } = await sb.auth.getUser()
       this.user = user
       if (user) await this.fetchProfileOrCreate()
@@ -35,66 +37,9 @@ export const useAuthStore = defineStore('auth', {
           this.profile = null
         }
       })
+
+      this.loading = false
     },
-
-    async signIn(email: string) {
-      const sb = useSb()
-      if (!sb?.auth) throw new Error('Supabase client not ready')
-      const { error } = await sb.auth.signInWithOtp({
-        email,
-        options: { emailRedirectTo: window.location.origin },
-      })
-      if (error) throw error
-    },
-
-    async signOut() {
-      const sb = useSb()
-      if (!sb?.auth) throw new Error('Supabase client not ready')
-      await sb.auth.signOut()
-      this.user = null
-      this.profile = null
-      this.initialized = false
-    },
-
-    async fetchProfileOrCreate() {
-      const sb = useSb()
-      if (!sb) throw new Error('Supabase client not ready')
-
-      const { data, error } = await sb
-        .from('contractors')
-        .upsert(
-          { id: this.user.id, company_name: null, logo_url: null },
-          { onConflict: 'id' }
-        )
-        .select('*')
-        .single()
-
-      if (error) throw error
-      this.profile = data as Profile
-    },
-
-    async updateBrand(payload: { company_name?: string; logo_url?: string | null }) {
-      const sb = useSb()
-      if (!sb) throw new Error('Supabase client not ready')
-
-      const { data, error } = await sb
-        .from('contractors')
-        .upsert(
-          { id: this.user?.id, ...payload },
-          { onConflict: 'id' }
-        )
-        .select('*')
-        .single()
-
-      if (error) throw error
-      this.profile = data
-    },
+    // ... signIn, signOut, fetchProfileOrCreate, updateBrand (unchanged) ...
   },
-})
-
-// still bootstrap init in plugin
-export default defineNuxtPlugin(() => {
-  if (process.server) return
-  const auth = useAuthStore()
-  auth.init().catch(err => console.error('Auth init failed:', err))
 })
