@@ -7,7 +7,7 @@ export const useAuthStore = defineStore('auth', {
   state: () => ({
     user: null as any,
     profile: null as Profile | null,
-    initialized: false, // ✅ prevents duplicate init calls
+    initialized: false,
   }),
   actions: {
     async init() {
@@ -21,20 +21,20 @@ export const useAuthStore = defineStore('auth', {
         return
       }
 
-      console.log('🔑 Calling supabase.auth.getUser()...')
-      const { data: { user }, error } = await sb.auth.getUser()
-      if (error) {
-        console.error('❌ Error in getUser:', error)
-        return
-      }
-
-      console.log('👤 User result:', user)
+      // First check immediately
+      const { data: { user } } = await sb.auth.getUser()
       this.user = user
+      if (user) await this.fetchProfileOrCreate()
 
-      if (user) {
-        console.log('➡️ Ensuring profile...')
-        await this.fetchProfileOrCreate()
-      }
+      // 🔑 Keep session synced
+      sb.auth.onAuthStateChange(async (_event, session) => {
+        this.user = session?.user ?? null
+        if (this.user) {
+          await this.fetchProfileOrCreate()
+        } else {
+          this.profile = null
+        }
+      })
     },
 
     async signIn(email: string) {
@@ -60,7 +60,6 @@ export const useAuthStore = defineStore('auth', {
       const sb = useSb()
       if (!sb) throw new Error('Supabase client not ready')
 
-      // ✅ Use upsert to avoid duplicates
       const { data, error } = await sb
         .from('contractors')
         .upsert(
@@ -70,12 +69,7 @@ export const useAuthStore = defineStore('auth', {
         .select('*')
         .single()
 
-      if (error) {
-        console.error('❌ Error in fetchProfileOrCreate:', error)
-        throw error
-      }
-
-      console.log('✅ Profile ready:', data)
+      if (error) throw error
       this.profile = data as Profile
     },
 
@@ -96,4 +90,11 @@ export const useAuthStore = defineStore('auth', {
       this.profile = data
     },
   },
+})
+
+// still bootstrap init in plugin
+export default defineNuxtPlugin(() => {
+  if (process.server) return
+  const auth = useAuthStore()
+  auth.init().catch(err => console.error('Auth init failed:', err))
 })
