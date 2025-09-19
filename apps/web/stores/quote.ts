@@ -39,20 +39,28 @@ export const useQuoteStore = defineStore('quotes', {
     },
 
     async create(payload: Partial<Quote>) {
-      const sb = useSb()
-      const auth = useAuthStore()
-      const { data, error } = await sb
-        .from('quotes')
-        .insert({
-          ...payload,
-          contractor_id: auth.user?.id, // ✅ required for RLS
-        })
-        .select('*')
-        .single()
-      if (error) throw error
-      this.list.unshift(data as Quote)
-      return data as Quote
-    },
+  const sb = useSb()
+  const auth = useAuthStore()
+
+  if (!auth.user?.id) {
+    throw new Error("No contractor (auth user) found")
+  }
+
+  const fullPayload = {
+    contractor_id: auth.user.id,
+    ...payload,
+  }
+
+  const { data, error } = await sb
+    .from('quotes')
+    .insert(fullPayload)
+    .select('*')
+    .single()
+
+  if (error) throw error
+  this.list.unshift(data as Quote)
+  return data as Quote
+},
 
     async byId(id: string) {
       const sb = useSb()
