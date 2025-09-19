@@ -11,7 +11,7 @@ export default defineNuxtConfig({
   runtimeConfig: {
     // Server-only variables (never exposed to client)
     stripeSecretKey: process.env.STRIPE_SECRET_KEY,
-    supabaseServiceRole: process.env.SUPABASE_SERVICE_ROLE,
+    supabaseServiceRole: process.env.SUPABASE_SERVICE_ROLE_KEY,
 
     // Public variables (available client-side)
     public: {
