@@ -1,3 +1,4 @@
+// apps/web/stores/auth.ts
 import { defineStore } from 'pinia'
 
 type Profile = { id: string; company_name: string | null; logo_url: string | null }
@@ -6,10 +7,13 @@ export const useAuthStore = defineStore('auth', {
   state: () => ({
     user: null as any,
     profile: null as Profile | null,
+    initialized: false, // ✅ prevents duplicate init calls
   }),
   actions: {
     async init() {
       if (process.server) return
+      if (this.initialized) return
+      this.initialized = true
 
       const sb = useSb()
       if (!sb?.auth) {
@@ -21,12 +25,14 @@ export const useAuthStore = defineStore('auth', {
       const { data: { user }, error } = await sb.auth.getUser()
       if (error) {
         console.error('❌ Error in getUser:', error)
+        return
       }
-      console.log('👤 User result:', user)
 
+      console.log('👤 User result:', user)
       this.user = user
+
       if (user) {
-        console.log('➡️ Fetching profile...')
+        console.log('➡️ Ensuring profile...')
         await this.fetchProfileOrCreate()
       }
     },
@@ -47,46 +53,47 @@ export const useAuthStore = defineStore('auth', {
       await sb.auth.signOut()
       this.user = null
       this.profile = null
+      this.initialized = false
     },
 
     async fetchProfileOrCreate() {
       const sb = useSb()
       if (!sb) throw new Error('Supabase client not ready')
 
-      // Try to fetch
-      const { data, error } = await sb.from('contractors').select('*').eq('id', this.user.id).single()
-      if (error && error.code !== 'PGRST116') {
-        // 116 = no rows
+      // ✅ Use upsert to avoid duplicates
+      const { data, error } = await sb
+        .from('contractors')
+        .upsert(
+          { id: this.user.id, company_name: null, logo_url: null },
+          { onConflict: 'id' }
+        )
+        .select('*')
+        .single()
+
+      if (error) {
+        console.error('❌ Error in fetchProfileOrCreate:', error)
         throw error
       }
 
-      if (data) {
-        console.log('✅ Profile loaded:', data)
-        this.profile = data as Profile
-        return
-      }
-
-      // If not found, insert
-      console.log('ℹ️ No profile found, creating default...')
-      const { data: created, error: insertErr } = await sb.from('contractors')
-        .insert({ id: this.user.id, company_name: null, logo_url: null })
-        .select('*')
-        .single()
-      if (insertErr) throw insertErr
-
-      console.log('✅ Profile created:', created)
-      this.profile = created as Profile
+      console.log('✅ Profile ready:', data)
+      this.profile = data as Profile
     },
 
     async updateBrand(payload: { company_name?: string; logo_url?: string | null }) {
       const sb = useSb()
       if (!sb) throw new Error('Supabase client not ready')
-      const { data, error } = await sb.from('contractors').upsert({
-        id: this.user?.id,
-        ...payload,
-      }).select('*').single()
+
+      const { data, error } = await sb
+        .from('contractors')
+        .upsert(
+          { id: this.user?.id, ...payload },
+          { onConflict: 'id' }
+        )
+        .select('*')
+        .single()
+
       if (error) throw error
-      this.profile = data as Profile
+      this.profile = data
     },
   },
 })
