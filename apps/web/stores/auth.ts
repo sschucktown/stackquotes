@@ -10,7 +10,6 @@ export const useAuthStore = defineStore('auth', {
   }),
   actions: {
     async init() {
-      // run only in browser
       if (process.server) return
 
       const sb = useSb()
@@ -19,7 +18,12 @@ export const useAuthStore = defineStore('auth', {
         return
       }
 
-      const { data: { user } } = await sb.auth.getUser()
+      const { data: { user }, error } = await sb.auth.getUser()
+      if (error) {
+        console.error('Error getting user:', error)
+        return
+      }
+
       this.user = user
       if (user) await this.fetchProfile()
     },
@@ -45,17 +49,39 @@ export const useAuthStore = defineStore('auth', {
     async fetchProfile() {
       const sb = useSb()
       if (!sb) throw new Error('Supabase client not ready')
-      const { data, error } = await sb.from('contractors').select('*').single()
-      if (error) throw error
-      this.profile = data as Profile
+      if (!this.user?.id) return
+
+      const { data, error } = await sb
+        .from('contractors')
+        .select('*')
+        .eq('id', this.user.id)
+        .maybeSingle()
+
+      if (error) {
+        console.error('fetchProfile error:', error)
+        return
+      }
+
+      this.profile = data as Profile | null
     },
 
     async updateBrand(payload: { company_name?: string; logo_url?: string | null }) {
       const sb = useSb()
       if (!sb) throw new Error('Supabase client not ready')
-      const { data, error } = await sb.from('contractors').upsert(payload).select('*').single()
-      if (error) throw error
-      this.profile = data
+      if (!this.user?.id) throw new Error('No user logged in')
+
+      const { data, error } = await sb
+        .from('contractors')
+        .upsert({ id: this.user.id, ...payload })
+        .select('*')
+        .maybeSingle()
+
+      if (error) {
+        console.error('updateBrand error:', error)
+        return
+      }
+
+      this.profile = data as Profile
     },
   },
 })
