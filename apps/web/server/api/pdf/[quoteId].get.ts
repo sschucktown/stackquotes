@@ -7,38 +7,34 @@ import { useRuntimeConfig } from '#imports'
 export default defineEventHandler(async (event) => {
   const quoteId = getRouterParam(event, 'quoteId')
   if (!quoteId) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: 'Missing quoteId',
-    })
+    throw createError({ statusCode: 400, statusMessage: 'Missing quoteId' })
   }
 
   try {
-    // Launch Puppeteer with Sparticuz Chromium (works on Vercel)
+    // ✅ Ensure chromium is in headless mode (vercel requires this)
     const browser = await puppeteer.launch({
       args: chromium.args,
       defaultViewport: chromium.defaultViewport,
-      executablePath: await chromium.executablePath(),
-      headless: chromium.headless,
+      executablePath: await chromium.executablePath(
+        // this ensures Vercel uses its packaged binary
+        '/usr/bin/chromium-browser'
+      ),
+      headless: true, // force headless
+      ignoreHTTPSErrors: true,
     })
 
     const page = await browser.newPage()
 
-    // Load your hosted page for the quote (adjust path if needed)
+    // Load your quote page
     const config = useRuntimeConfig()
     const quoteUrl = `${config.public.baseUrl}/quotes/${quoteId}`
-
     await page.goto(quoteUrl, { waitUntil: 'networkidle0' })
 
     // Generate PDF
-    const pdf = await page.pdf({
-      format: 'A4',
-      printBackground: true,
-    })
-
+    const pdf = await page.pdf({ format: 'A4', printBackground: true })
     await browser.close()
 
-    // Return PDF to client
+    // Return PDF
     event.node.res.setHeader('Content-Type', 'application/pdf')
     event.node.res.setHeader(
       'Content-Disposition',
