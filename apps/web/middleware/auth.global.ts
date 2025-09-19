@@ -3,10 +3,9 @@ export default defineNuxtRouteMiddleware(async (to) => {
   if (process.server) return
 
   const auth = useAuthStore()
-  await auth.init()   // single source of truth
+  await auth.init() // ✅ ensures Supabase session is restored
 
   const publicRoutes = ['/login']
-
   if (!auth.user && !publicRoutes.includes(to.path)) {
     return navigateTo('/login')
   }
