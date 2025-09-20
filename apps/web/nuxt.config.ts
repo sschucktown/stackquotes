@@ -1,6 +1,9 @@
 // apps/web/nuxt.config.ts
 export default defineNuxtConfig({
-  ssr: true,   // ✅ ensure SSR + API routes
+  ssr: true,              // 👈 force server rendering & API routes
+  nitro: {
+    preset: 'vercel'      // 👈 target Vercel serverless runtime
+  },
 
   modules: ['@pinia/nuxt'],
 
