@@ -1,5 +1,7 @@
 // apps/web/nuxt.config.ts
 export default defineNuxtConfig({
+  ssr: true,   // ✅ ensure SSR + API routes
+
   modules: ['@pinia/nuxt'],
 
   css: ['@/assets/css/tailwind.css'],
