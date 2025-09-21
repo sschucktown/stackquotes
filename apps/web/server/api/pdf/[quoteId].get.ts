@@ -11,11 +11,11 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    // ✅ Always use chrome-aws-lambda’s executable
-    const executablePath = await chromium.executablePath
+    // 👇 Try chrome-aws-lambda, fallback to a known path
+    let executablePath = await chromium.executablePath
 
     if (!executablePath) {
-      throw new Error('No executablePath found for chrome-aws-lambda')
+      executablePath = '/usr/bin/chromium-browser' // common on Vercel runtimes
     }
 
     const browser = await puppeteer.launch({
