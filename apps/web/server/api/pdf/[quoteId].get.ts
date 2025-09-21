@@ -11,16 +11,18 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    // 👇 Handle both Vercel (AWS-like) + local dev
-    const executablePath =
-      (await chromium.executablePath) ||
-      puppeteer.executablePath() // fallback for local
+    // ✅ Always use chrome-aws-lambda’s executable
+    const executablePath = await chromium.executablePath
+
+    if (!executablePath) {
+      throw new Error('No executablePath found for chrome-aws-lambda')
+    }
 
     const browser = await puppeteer.launch({
       args: chromium.args,
       defaultViewport: chromium.defaultViewport,
       executablePath,
-      headless: true,
+      headless: chromium.headless,
     })
 
     const page = await browser.newPage()
