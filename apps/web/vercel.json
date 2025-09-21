@@ -1,7 +1,7 @@
 {
   "version": 2,
   "functions": {
-    "apps/web/server/api/pdf/[quoteId].get.ts": {
+    "api/**/*": {
       "memory": 1024,
       "maxDuration": 60
     }
