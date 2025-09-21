@@ -147,3 +147,5 @@ export const useQuoteStore = defineStore('quotes', {
       this.list = this.list.filter(q => q.id !== id)
       if (this.current?.id === id) this.current = null
     },
+  },
+})
