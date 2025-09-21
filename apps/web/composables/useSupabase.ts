@@ -25,3 +25,10 @@ export const signupWithEmail = async (email: string, password: string) => {
   const supabase = useSb()
   return await supabase.auth.signUp({ email, password })
 }
+
+//Delete Quotes
+export const deleteQuote = async (id: string) => {
+  const supabase = useSb()
+  const { error } = await supabase.from('quotes').delete().eq('id', id)
+  if (error) throw error
+}
