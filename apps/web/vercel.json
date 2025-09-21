@@ -1,8 +1,0 @@
-{
-  "version": 3,
-  "buildCommand": "npx nuxi build",
-  "installCommand": "npm install",
-  "outputDirectory": ".output/public",
-  "framework": "nuxt",
-  "rootDirectory": "apps/web"
-}
