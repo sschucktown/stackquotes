@@ -28,6 +28,7 @@ watch(logoUrl, (url) => auth.updateBrand({ logo_url: url ?? null }))
 const saveBrand = () => auth.updateBrand({ company_name: company.value })
 
 const clientName = (id: string) => clients.list.find(c => c.id === id)?.name ?? 'Unknown'
+
 const newQuote = async () => {
   const q = await quotes.create({
     client_id: clients.list[0]?.id,
@@ -37,6 +38,15 @@ const newQuote = async () => {
     options: { good: [], better: [], best: [] },
   } as any)
   navigateTo(`/quotes/${q.id}`)
+}
+
+const deleteQuote = async (id: string) => {
+  if (!confirm('Are you sure you want to delete this quote?')) return
+  try {
+    await quotes.remove(id) // 👈 assumes you add `remove` in quote store
+  } catch (err) {
+    console.error('❌ Delete failed:', err)
+  }
 }
 </script>
 
@@ -85,6 +95,7 @@ const newQuote = async () => {
             <td class="p-2 flex gap-2">
               <NuxtLink class="btn" :to="`/quotes/${q.id}`">Open</NuxtLink>
               <a class="btn" :href="`/api/pdf/${q.id}`" target="_blank">PDF</a>
+              <button class="btn text-red-600" @click="deleteQuote(q.id)">Delete</button>
             </td>
           </tr>
         </tbody>
