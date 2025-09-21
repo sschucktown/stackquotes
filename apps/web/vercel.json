@@ -1,7 +1,7 @@
 {
   "version": 2,
-  "functions": {
-    "api/**/*": {
+  "overrides": {
+    "functions/__fallback.func": {
       "memory": 1024,
       "maxDuration": 60
     }
