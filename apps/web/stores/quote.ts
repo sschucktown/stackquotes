@@ -100,5 +100,50 @@ export const useQuoteStore = defineStore('quotes', {
       this.current = data as Quote
       return this.current
     },
-  },
-})
+
+    async update(id: string, changes: Partial<Quote>) {
+      const sb = useSb()
+      const auth = useAuthStore()
+
+      if (!auth.user?.id) {
+        throw new Error('❌ No contractor (auth user) found')
+      }
+
+      const { data, error } = await sb
+        .from('quotes')
+        .update(changes)
+        .eq('id', id)
+        .eq('contractor_id', auth.user.id)
+        .select('*')
+        .single()
+
+      if (error) throw error
+
+      // Update list + current
+      const idx = this.list.findIndex(q => q.id === id)
+      if (idx !== -1) this.list[idx] = data as Quote
+      if (this.current?.id === id) this.current = data as Quote
+
+      return data as Quote
+    },
+
+    async remove(id: string) {
+      const sb = useSb()
+      const auth = useAuthStore()
+
+      if (!auth.user?.id) {
+        throw new Error('❌ No contractor (auth user) found')
+      }
+
+      const { error } = await sb
+        .from('quotes')
+        .delete()
+        .eq('id', id)
+        .eq('contractor_id', auth.user.id)
+
+      if (error) throw error
+
+      // Update store state
+      this.list = this.list.filter(q => q.id !== id)
+      if (this.current?.id === id) this.current = null
+    },
