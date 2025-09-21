@@ -11,7 +11,10 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    const executablePath = await chromium.executablePath
+    // 👇 Handle both Vercel (AWS-like) + local dev
+    const executablePath =
+      (await chromium.executablePath) ||
+      puppeteer.executablePath() // fallback for local
 
     const browser = await puppeteer.launch({
       args: chromium.args,
