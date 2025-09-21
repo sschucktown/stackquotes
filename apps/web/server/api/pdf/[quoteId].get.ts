@@ -1,6 +1,6 @@
 // apps/web/server/api/pdf/[quoteId].get.ts
 import { defineEventHandler, getRouterParam, createError } from 'h3'
-import chromium from 'chrome-aws-lambda'
+import chromium from '@sparticuz/chromium'
 import puppeteer from 'puppeteer-core'
 import { useRuntimeConfig } from '#imports'
 
@@ -11,12 +11,8 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    // 👇 Try chrome-aws-lambda, fallback to a known path
-    let executablePath = await chromium.executablePath
-
-    if (!executablePath) {
-      executablePath = '/usr/bin/chromium-browser' // common on Vercel runtimes
-    }
+    // ✅ Correct way with @sparticuz/chromium
+    const executablePath = await chromium.executablePath()
 
     const browser = await puppeteer.launch({
       args: chromium.args,
