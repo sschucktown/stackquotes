@@ -10,32 +10,25 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    // Get executable path safely (supports both string and async getter)
-    let executablePath: string | undefined
-    if (process.env.NODE_ENV === 'production') {
-      executablePath =
-        typeof chromium.executablePath === 'function'
-          ? await chromium.executablePath()
-          : chromium.executablePath
-    } else {
-      executablePath = undefined // let Puppeteer find Chrome locally
-    }
-
-    console.log('Chromium path in production:', executablePath)
+    const executablePath =
+      process.env.NODE_ENV === 'production'
+        ? await chromium.executablePath()   // 👈 fixed
+        : undefined
 
     const browser = await puppeteer.launch({
       args: chromium.args,
       defaultViewport: chromium.defaultViewport,
       executablePath,
-      headless: chromium.headless, // let @sparticuz/chromium decide
+      headless: chromium.headless,
       ignoreHTTPSErrors: true,
     })
 
     const page = await browser.newPage()
+
     const config = useRuntimeConfig()
     const quoteUrl = `${config.public.baseUrl}/quotes/${quoteId}`
-    console.log('Navigating to quote URL:', quoteUrl)
 
+    console.log('🌐 Navigating to', quoteUrl) // 👈 debug log
     await page.goto(quoteUrl, { waitUntil: 'networkidle0' })
 
     const pdf = await page.pdf({ format: 'A4', printBackground: true })
