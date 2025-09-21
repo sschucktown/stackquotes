@@ -1,7 +1,9 @@
 // apps/web/server/api/pdf/[quoteId].get.ts
 import { defineEventHandler, getRouterParam, createError } from 'h3'
 import { useRuntimeConfig } from '#imports'
-import { chromium } from 'playwright-aws-lambda'
+import pkg from 'playwright-aws-lambda'
+const { chromium } = pkg
+
 
 export default defineEventHandler(async (event) => {
   const quoteId = getRouterParam(event, 'quoteId')
