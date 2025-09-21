@@ -1,8 +1,8 @@
 // apps/web/server/api/pdf/[quoteId].get.ts
 import { defineEventHandler, getRouterParam, createError } from 'h3'
-import { useRuntimeConfig } from '#imports'
 import chromium from 'chrome-aws-lambda'
 import puppeteer from 'puppeteer-core'
+import { useRuntimeConfig } from '#imports'
 
 export default defineEventHandler(async (event) => {
   const quoteId = getRouterParam(event, 'quoteId')
@@ -11,7 +11,6 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    console.log('🚀 Launching Chromium (chrome-aws-lambda)...')
     const executablePath = await chromium.executablePath
 
     const browser = await puppeteer.launch({
@@ -19,25 +18,16 @@ export default defineEventHandler(async (event) => {
       defaultViewport: chromium.defaultViewport,
       executablePath,
       headless: true,
-      ignoreHTTPSErrors: true
     })
 
     const page = await browser.newPage()
 
     const config = useRuntimeConfig()
     const quoteUrl = `${config.public.baseUrl}/quotes/${quoteId}`
-    console.log('🌐 Navigating to:', quoteUrl)
-
     await page.goto(quoteUrl, { waitUntil: 'networkidle0' })
 
-    console.log('📄 Generating PDF...')
-    const pdf = await page.pdf({
-      format: 'A4',
-      printBackground: true
-    })
-
+    const pdf = await page.pdf({ format: 'A4', printBackground: true })
     await browser.close()
-    console.log('✅ PDF generated successfully')
 
     event.node.res.setHeader('Content-Type', 'application/pdf')
     event.node.res.setHeader(
@@ -49,7 +39,7 @@ export default defineEventHandler(async (event) => {
     console.error('❌ PDF generation failed:', err)
     throw createError({
       statusCode: 500,
-      statusMessage: 'Failed to generate PDF'
+      statusMessage: 'Failed to generate PDF',
     })
   }
 })
