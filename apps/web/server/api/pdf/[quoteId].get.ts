@@ -1,7 +1,7 @@
 // apps/web/server/api/pdf/[quoteId].get.ts
 import { defineEventHandler, getRouterParam, createError } from 'h3'
 import { useRuntimeConfig } from '#imports'
-import playwright from 'playwright-aws-lambda'
+import { chromium } from 'playwright-aws-lambda'
 
 export default defineEventHandler(async (event) => {
   const quoteId = getRouterParam(event, 'quoteId')
@@ -10,21 +10,19 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    console.log('🚀 Launching Playwright Chromium...')
-    const browser = await playwright.launchChromium({
-      headless: true
+    console.log('🚀 Launching Playwright AWS Lambda Chromium...')
+    const browser = await chromium.launch({
+      headless: true,
+      args: chromium.args,
+      executablePath: await chromium.executablePath()
     })
-
-    if (!browser) {
-      throw new Error('Could not launch Chromium from playwright-aws-lambda')
-    }
 
     const page = await browser.newPage()
 
     const config = useRuntimeConfig()
     const quoteUrl = `${config.public.baseUrl}/quotes/${quoteId}`
-
     console.log('🌐 Navigating to:', quoteUrl)
+
     await page.goto(quoteUrl, { waitUntil: 'networkidle' })
 
     console.log('📄 Generating PDF...')
