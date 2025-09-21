@@ -27,9 +27,15 @@ onMounted(async () => {
 watch(logoUrl, (url) => auth.updateBrand({ logo_url: url ?? null }))
 const saveBrand = () => auth.updateBrand({ company_name: company.value })
 
-const clientName = (id: string) => clients.list.find(c => c.id === id)?.name ?? 'Unknown'
+const clientName = (id: string) =>
+  clients.list.find(c => c.id === id)?.name ?? 'Unknown'
 
 const newQuote = async () => {
+  if (clients.list.length === 0) {
+    alert('⚠️ You need to create a client before making a quote.')
+    return
+  }
+
   const q = await quotes.create({
     client_id: clients.list[0]?.id,
     status: 'draft',
@@ -37,13 +43,14 @@ const newQuote = async () => {
     deposit_amount: 0,
     options: { good: [], better: [], best: [] },
   } as any)
+
   navigateTo(`/quotes/${q.id}`)
 }
 
 const deleteQuote = async (id: string) => {
   if (!confirm('Are you sure you want to delete this quote?')) return
   try {
-    await quotes.remove(id) // 👈 assumes you add `remove` in quote store
+    await quotes.remove(id)
   } catch (err) {
     console.error('❌ Delete failed:', err)
   }
@@ -65,7 +72,12 @@ const deleteQuote = async (id: string) => {
     <div v-else>
       🏢 Company: {{ auth.profile.company_name || 'N/A' }}
       <br />
-      <img v-if="auth.profile.logo_url" :src="auth.profile.logo_url" alt="Logo" class="h-12" />
+      <img
+        v-if="auth.profile.logo_url"
+        :src="auth.profile.logo_url"
+        alt="Logo"
+        class="h-12"
+      />
     </div>
 
     <!-- Branding form -->
@@ -93,9 +105,14 @@ const deleteQuote = async (id: string) => {
             <td class="p-2">{{ q.status }}</td>
             <td class="p-2">${{ q.subtotal.toFixed(2) }}</td>
             <td class="p-2 flex gap-2">
+              <!-- ✅ Open editor -->
               <NuxtLink class="btn" :to="`/quotes/${q.id}`">Open</NuxtLink>
+              <!-- ✅ Open PDF API -->
               <a class="btn" :href="`/api/pdf/${q.id}`" target="_blank">PDF</a>
-              <button class="btn text-red-600" @click="deleteQuote(q.id)">Delete</button>
+              <!-- ✅ Delete -->
+              <button class="btn text-red-600" @click="deleteQuote(q.id)">
+                Delete
+              </button>
             </td>
           </tr>
         </tbody>
