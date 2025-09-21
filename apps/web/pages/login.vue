@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { supabase, loginWithGoogle } from '~/composables/useSupabase'
+import { loginWithEmail, signupWithEmail, loginWithGoogle } from '~/composables/useSupabase'
 
 const isLogin = ref(true)
 const email = ref('')
@@ -13,16 +13,10 @@ const handleEmailAuth = async () => {
   errorMessage.value = null
   try {
     if (isLogin.value) {
-      const { error } = await supabase.auth.signInWithPassword({
-        email: email.value,
-        password: password.value,
-      })
+      const { error } = await loginWithEmail(email.value, password.value)
       if (error) throw error
     } else {
-      const { error } = await supabase.auth.signUp({
-        email: email.value,
-        password: password.value,
-      })
+      const { error } = await signupWithEmail(email.value, password.value)
       if (error) throw error
     }
   } catch (err: any) {
