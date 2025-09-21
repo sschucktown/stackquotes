@@ -1,7 +1,7 @@
 import { defineEventHandler, getRouterParam, createError } from 'h3'
 import { useRuntimeConfig } from '#imports'
 import pkg from 'playwright-aws-lambda'
-const { chromium } = pkg
+const { launchChromium, executablePath, args } = pkg
 
 export default defineEventHandler(async (event) => {
   const quoteId = getRouterParam(event, 'quoteId')
@@ -11,11 +11,7 @@ export default defineEventHandler(async (event) => {
 
   try {
     console.log('🚀 Launching Playwright AWS Lambda Chromium...')
-    const browser = await chromium.launch({
-      headless: true,
-      args: chromium.args,
-      executablePath: await chromium.executablePath()
-    })
+    const browser = await launchChromium({ headless: true }) // ✅ use launchChromium()
 
     const page = await browser.newPage()
 
@@ -26,10 +22,7 @@ export default defineEventHandler(async (event) => {
     await page.goto(quoteUrl, { waitUntil: 'networkidle' })
 
     console.log('📄 Generating PDF...')
-    const pdf = await page.pdf({
-      format: 'A4',
-      printBackground: true
-    })
+    const pdf = await page.pdf({ format: 'A4', printBackground: true })
 
     await browser.close()
     console.log('✅ PDF generated successfully')
