@@ -1,4 +1,3 @@
-// apps/web/plugins/supabase-init.client.ts
 import { useAuthStore } from '~/stores/auth'
 
 export default defineNuxtPlugin((nuxtApp) => {
@@ -11,9 +10,8 @@ export default defineNuxtPlugin((nuxtApp) => {
     let sb: ReturnType<typeof useSupabaseClient> | null = null
     try {
       sb = useSupabaseClient()
-      console.log("✅ Supabase client is now available in app:mounted:", sb)
     } catch (err) {
-      console.error("❌ useSupabaseClient() still failed:", err)
+      console.error('❌ useSupabaseClient() failed:', err)
     }
 
     if (!sb) {
@@ -22,7 +20,6 @@ export default defineNuxtPlugin((nuxtApp) => {
     }
 
     console.log('✅ Supabase client available, initializing auth...')
-    const auth = useAuthStore()
-    auth.init()
+    useAuthStore().init()
   })
 })
