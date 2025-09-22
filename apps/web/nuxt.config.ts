@@ -1,18 +1,14 @@
 // apps/web/nuxt.config.ts
+import { defineNuxtConfig } from 'nuxt/config'
+
+console.log('🟢 SUPABASE URL exists:', !!process.env.NUXT_PUBLIC_SUPABASE_URL)
+console.log('🟢 SUPABASE ANON KEY exists:', !!process.env.NUXT_PUBLIC_SUPABASE_ANON_KEY)
+
 export default defineNuxtConfig({
-  ssr: true,              // 👈 force server rendering & API routes
-  nitro: {
-    preset: 'vercel'      // 👈 target Vercel serverless runtime
-  },
-
   modules: [
+    '@nuxtjs/supabase',
     '@pinia/nuxt',
-    '@nuxtjs/supabase'
-  ],
-
-  css: ['@/assets/css/tailwind.css'],
-
-  plugins: [
+    '@nuxtjs/tailwindcss',
   ],
 
   runtimeConfig: {
@@ -32,19 +28,11 @@ export default defineNuxtConfig({
       supabaseAnonKey:
         process.env.NUXT_PUBLIC_SUPABASE_ANON_KEY ||
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-
     },
   },
 
-  typescript: {
-    strict: true,
-    shim: false,
-  },
-
-  postcss: {
-    plugins: {
-      tailwindcss: {},
-      autoprefixer: {},
-    },
+  css: ['~/assets/css/main.css'],
+  build: {
+    transpile: ['@headlessui/vue'],
   },
 })
