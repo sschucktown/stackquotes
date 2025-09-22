@@ -20,16 +20,29 @@ export const useAuthStore = defineStore('auth', {
       if (this.initialized) return
       this.initialized = true
 
-      const sb = useSb()
+      const sb = useSupabaseClient()
       if (!sb?.auth) {
         console.warn('❌ Supabase client not ready in init()')
         return
       }
 
-      console.log('🔑 Restoring session with supabase.auth.getUser()...')
-      const { data: { user }, error } = await sb.auth.getUser()
-      if (error) {
-        console.error('❌ Error in getUser:', error)
+      console.log('🔑 Restoring session with supabase.auth.getSession()...')
+      const { data: { session }, error: sessionError } = await sb.auth.getSession()
+
+      if (sessionError) {
+        console.error('❌ Error in getSession:', sessionError)
+        return
+      }
+
+      if (!session) {
+        console.log('⚠️ No active session found, user not logged in')
+        this.user = null
+        return
+      }
+
+      const { data: { user }, error: userError } = await sb.auth.getUser()
+      if (userError) {
+        console.error('❌ Error in getUser:', userError)
         return
       }
 
@@ -42,7 +55,7 @@ export const useAuthStore = defineStore('auth', {
     },
 
     async signIn(email: string) {
-      const sb = useSb()
+      const sb = useSupabaseClient()
       if (!sb?.auth) throw new Error('Supabase client not ready')
 
       const { error } = await sb.auth.signInWithOtp({
@@ -55,7 +68,7 @@ export const useAuthStore = defineStore('auth', {
     },
 
     async signOut() {
-      const sb = useSb()
+      const sb = useSupabaseClient()
       if (!sb?.auth) throw new Error('Supabase client not ready')
 
       await sb.auth.signOut()
@@ -65,7 +78,7 @@ export const useAuthStore = defineStore('auth', {
     },
 
     async fetchProfileOrCreate() {
-      const sb = useSb()
+      const sb = useSupabaseClient()
       if (!sb) throw new Error('Supabase client not ready')
       if (!this.user?.id) throw new Error('No user ID available')
 
@@ -89,7 +102,7 @@ export const useAuthStore = defineStore('auth', {
     },
 
     async updateBrand(payload: { company_name?: string; logo_url?: string | null }) {
-      const sb = useSb()
+      const sb = useSupabaseClient()
       if (!sb) throw new Error('Supabase client not ready')
       if (!this.user?.id) throw new Error('No user ID available')
 
