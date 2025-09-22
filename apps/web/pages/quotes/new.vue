@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useSupabaseClient } from '#imports'
-import { createQuote } from '~/services/quote' // your existing service
+import { useQuoteStore } from '~/stores/quote'
 
 const supabase = useSupabaseClient()
+const quoteStore = useQuoteStore()
 
 // state
 const clients = ref<any[]>([])
@@ -19,6 +20,7 @@ async function loadClients() {
     .from('clients')
     .select('*')
     .order('created_at', { ascending: false })
+
   if (error) {
     errorMsg.value = error.message
     return
@@ -41,25 +43,28 @@ async function addClient() {
     .insert([newClient.value])
     .select()
     .single()
+
   if (error) {
     errorMsg.value = error.message
     return
   }
+
   clients.value.unshift(data)
   clientId.value = data.id
   showNewClientForm.value = false
   newClient.value = { name: '', email: '', phone: '' }
 }
 
-// create quote
+// create new quote
 async function startQuote() {
   if (!clientId.value) {
     errorMsg.value = '⚠️ Please select or create a client first'
     return
   }
+
   loading.value = true
   try {
-    const quote = await createQuote(clientId.value)
+    const quote = await quoteStore.create({ client_id: clientId.value })
     navigateTo(`/quotes/${quote.id}`)
   } catch (e: any) {
     errorMsg.value = e.message
