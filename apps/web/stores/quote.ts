@@ -1,3 +1,4 @@
+// apps/web/stores/quote.ts
 import { defineStore } from 'pinia'
 import { z } from 'zod'
 import { useAuthStore } from '~/stores/auth'
@@ -48,7 +49,7 @@ export const useQuoteStore = defineStore('quotes', {
       const { data, error } = await sb
         .from('quotes')
         .select('*')
-        .eq('contractor_id', auth.user.id) // ✅ scoped to contractor
+        .eq('contractor_id', auth.user.id)
         .order('created_at', { ascending: false })
 
       if (error) throw error
@@ -63,7 +64,6 @@ export const useQuoteStore = defineStore('quotes', {
         throw new Error('❌ No contractor (auth user) found')
       }
 
-      // ✅ force contractor_id
       const fullPayload = {
         contractor_id: auth.user.id,
         ...payload,
@@ -93,7 +93,7 @@ export const useQuoteStore = defineStore('quotes', {
         .from('quotes')
         .select('*')
         .eq('id', id)
-        .eq('contractor_id', auth.user.id) // ✅ enforce ownership
+        .eq('contractor_id', auth.user.id)
         .single()
 
       if (error) throw error
@@ -119,7 +119,6 @@ export const useQuoteStore = defineStore('quotes', {
 
       if (error) throw error
 
-      // Update list + current
       const idx = this.list.findIndex(q => q.id === id)
       if (idx !== -1) this.list[idx] = data as Quote
       if (this.current?.id === id) this.current = data as Quote
@@ -143,7 +142,6 @@ export const useQuoteStore = defineStore('quotes', {
 
       if (error) throw error
 
-      // Update store state
       this.list = this.list.filter(q => q.id !== id)
       if (this.current?.id === id) this.current = null
     },
