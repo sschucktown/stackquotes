@@ -1,0 +1,18 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "apps/web/nuxt.config.ts",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    { "src": "/(.*)", "dest": "apps/web/.output/server/index.mjs" }
+  ],
+  "env": {
+    "NUXT_PUBLIC_SUPABASE_URL": "@nuxt_public_supabase_url",
+    "NUXT_PUBLIC_SUPABASE_ANON_KEY": "@nuxt_public_supabase_anon_key",
+    "STRIPE_SECRET_KEY": "@stripe_secret_key",
+    "SUPABASE_SERVICE_ROLE_KEY": "@supabase_service_role_key"
+  }
+}
