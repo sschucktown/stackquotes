@@ -12,11 +12,8 @@ export default defineNuxtConfig({
   ],
 
   runtimeConfig: {
-    // server-only
     stripeSecretKey: process.env.STRIPE_SECRET_KEY,
     supabaseServiceRole: process.env.SUPABASE_SERVICE_ROLE_KEY,
-
-    // public (client-side)
     public: {
       baseUrl:
         process.env.NUXT_PUBLIC_BASE_URL ||
@@ -31,7 +28,8 @@ export default defineNuxtConfig({
     },
   },
 
-  css: ['~/assets/css/main.css'],
+  css: ['~/assets/css/tailwind.css'],
+
   build: {
     transpile: ['@headlessui/vue'],
   },
