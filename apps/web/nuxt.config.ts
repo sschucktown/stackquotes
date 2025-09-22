@@ -7,7 +7,6 @@ export default defineNuxtConfig({
 
   modules: [
     '@pinia/nuxt',
-    '@nuxtjs/supabase',   // 👈 add Supabase Nuxt module
   ],
 
   css: ['@/assets/css/tailwind.css'],
