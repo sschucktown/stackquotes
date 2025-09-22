@@ -32,6 +32,9 @@ export default defineNuxtConfig({
       supabaseAnonKey:
         process.env.NUXT_PUBLIC_SUPABASE_ANON_KEY ||
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      console.log('🟢 SUPABASE URL exists:', !!process.env.NUXT_PUBLIC_SUPABASE_URL)
+console.log('🟢 SUPABASE KEY exists:', !!process.env.NUXT_PUBLIC_SUPABASE_ANON_KEY)
+
     },
   },
 
