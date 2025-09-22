@@ -11,8 +11,9 @@ export default defineNuxtPlugin(() => {
     let sb: ReturnType<typeof useSupabaseClient> | null = null
     try {
       sb = useSupabaseClient()
+      console.log("✅ Supabase client available at plugin init:", sb)
     } catch (err) {
-      console.error('❌ useSupabaseClient() threw an error:', err)
+      console.error("❌ useSupabaseClient() threw an error:", err)
     }
 
     if (!sb) {
@@ -21,7 +22,6 @@ export default defineNuxtPlugin(() => {
     }
 
     console.log('✅ Supabase client available, initializing auth...')
-
     const auth = useAuthStore()
     auth.init()
   })
