@@ -11,13 +11,19 @@ export const useAuthStore = defineStore('auth', {
   state: () => ({
     user: null as any,
     profile: null as Profile | null,
-    initialized: false, // prevents duplicate init calls
+    initialized: false,
   }),
 
   actions: {
     async init() {
-      if (process.server) return
-      if (this.initialized) return
+      if (process.server) {
+        console.log('⚡ auth.init() skipped (server-side)')
+        return
+      }
+      if (this.initialized) {
+        console.log('⚡ auth.init() skipped (already initialized)')
+        return
+      }
       this.initialized = true
 
       const sb = useSupabaseClient()
@@ -40,7 +46,9 @@ export const useAuthStore = defineStore('auth', {
         return
       }
 
+      console.log('✅ Session found:', session)
       const { data: { user }, error: userError } = await sb.auth.getUser()
+
       if (userError) {
         console.error('❌ Error in getUser:', userError)
         return
@@ -58,12 +66,17 @@ export const useAuthStore = defineStore('auth', {
       const sb = useSupabaseClient()
       if (!sb?.auth) throw new Error('Supabase client not ready')
 
+      console.log('📧 Sending magic link to:', email)
       const { error } = await sb.auth.signInWithOtp({
         email,
         options: { emailRedirectTo: window.location.origin },
       })
 
-      if (error) throw error
+      if (error) {
+        console.error('❌ Sign-in error:', error)
+        throw error
+      }
+
       alert('✅ Magic link sent! Check your email.')
     },
 
@@ -71,10 +84,12 @@ export const useAuthStore = defineStore('auth', {
       const sb = useSupabaseClient()
       if (!sb?.auth) throw new Error('Supabase client not ready')
 
+      console.log('🚪 Signing out...')
       await sb.auth.signOut()
       this.user = null
       this.profile = null
       this.initialized = false
+      console.log('✅ Signed out')
     },
 
     async fetchProfileOrCreate() {
@@ -82,7 +97,8 @@ export const useAuthStore = defineStore('auth', {
       if (!sb) throw new Error('Supabase client not ready')
       if (!this.user?.id) throw new Error('No user ID available')
 
-      // ✅ Upsert avoids duplicates when multiple init calls fire
+      console.log('📄 Fetching or creating profile for user:', this.user.id)
+
       const { data, error } = await sb
         .from('contractors')
         .upsert(
@@ -106,6 +122,8 @@ export const useAuthStore = defineStore('auth', {
       if (!sb) throw new Error('Supabase client not ready')
       if (!this.user?.id) throw new Error('No user ID available')
 
+      console.log('🎨 Updating brand for user:', this.user.id, 'with:', payload)
+
       const { data, error } = await sb
         .from('contractors')
         .upsert(
@@ -115,7 +133,12 @@ export const useAuthStore = defineStore('auth', {
         .select('*')
         .single()
 
-      if (error) throw error
+      if (error) {
+        console.error('❌ Error in updateBrand:', error)
+        throw error
+      }
+
+      console.log('✅ Brand updated:', data)
       this.profile = data as Profile
     },
   },
