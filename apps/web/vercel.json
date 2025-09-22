@@ -1,8 +1,21 @@
 {
   "version": 2,
+  "builds": [
+    {
+      "src": "apps/web/package.json",
+      "use": "@vercel/nuxt"
+    }
+  ],
   "routes": [
-    { "src": "/_nuxt/(.*)", "dest": "/_nuxt/$1" },
-    { "src": "/favicon.ico", "dest": "/favicon.ico" },
-    { "src": "/(.*)", "dest": "/" }
-  ]
+    {
+      "src": "/(.*)",
+      "dest": "apps/web/.output/server/index.mjs"
+    }
+  ],
+  "env": {
+    "NUXT_PUBLIC_SUPABASE_URL": "@nuxt_public_supabase_url",
+    "NUXT_PUBLIC_SUPABASE_ANON_KEY": "@nuxt_public_supabase_anon_key",
+    "STRIPE_SECRET_KEY": "@stripe_secret_key",
+    "SUPABASE_SERVICE_ROLE_KEY": "@supabase_service_role_key"
+  }
 }
