@@ -37,7 +37,7 @@ export const useQuoteStore = defineStore('quotes', {
 
   actions: {
     async load() {
-      const sb = useSb()
+      const sb = useSupabaseClient()
       const auth = useAuthStore()
 
       if (!auth.user?.id) {
@@ -56,7 +56,7 @@ export const useQuoteStore = defineStore('quotes', {
     },
 
     async create(payload: Partial<Quote>) {
-      const sb = useSb()
+      const sb = useSupabaseClient()
       const auth = useAuthStore()
 
       if (!auth.user?.id) {
@@ -82,7 +82,7 @@ export const useQuoteStore = defineStore('quotes', {
     },
 
     async byId(id: string) {
-      const sb = useSb()
+      const sb = useSupabaseClient()
       const auth = useAuthStore()
 
       if (!auth.user?.id) {
@@ -102,7 +102,7 @@ export const useQuoteStore = defineStore('quotes', {
     },
 
     async update(id: string, changes: Partial<Quote>) {
-      const sb = useSb()
+      const sb = useSupabaseClient()
       const auth = useAuthStore()
 
       if (!auth.user?.id) {
@@ -128,7 +128,7 @@ export const useQuoteStore = defineStore('quotes', {
     },
 
     async remove(id: string) {
-      const sb = useSb()
+      const sb = useSupabaseClient()
       const auth = useAuthStore()
 
       if (!auth.user?.id) {
