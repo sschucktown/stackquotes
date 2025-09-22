@@ -1,11 +1,7 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "apps/web/nuxt.config.ts",
-      "use": "@vercel/node"
-    }
-  ],
+  "buildCommand": "npm run build --workspace=apps/web",
+  "outputDirectory": "apps/web/.output/public",
   "routes": [
     {
       "src": "/(.*)",
