@@ -11,15 +11,21 @@ export default defineNuxtConfig({
     stripeSecretKey: process.env.STRIPE_SECRET_KEY,
     supabaseServiceRole: process.env.SUPABASE_SERVICE_ROLE_KEY,
     public: {
-      // ✅ Match what @nuxtjs/supabase expects
-      supabaseUrl: process.env.SUPABASE_URL,
-      supabaseAnonKey: process.env.SUPABASE_ANON_KEY,
-      baseUrl:
-        process.env.NUXT_PUBLIC_BASE_URL ||
-        process.env.NEXT_PUBLIC_BASE_URL ||
-        'http://localhost:3000',
+      baseUrl: process.env.NUXT_PUBLIC_BASE_URL
+        || process.env.NEXT_PUBLIC_BASE_URL
+        || 'http://localhost:3000',
+      supabaseUrl: process.env.NUXT_PUBLIC_SUPABASE_URL
+        || process.env.NEXT_PUBLIC_SUPABASE_URL,
+      supabaseAnonKey: process.env.NUXT_PUBLIC_SUPABASE_ANON_KEY
+        || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     },
   },
 
-  css: ['~/assets/css/tailwind.css'],
+  // 👇 Required so @nuxtjs/supabase initializes correctly
+  supabase: {
+    url: process.env.NUXT_PUBLIC_SUPABASE_URL
+      || process.env.NEXT_PUBLIC_SUPABASE_URL,
+    key: process.env.NUXT_PUBLIC_SUPABASE_ANON_KEY
+      || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+  },
 })
