@@ -20,7 +20,13 @@ export const useAuthStore = defineStore('auth', {
       if (this.initialized) return
       this.initialized = true
 
-      const sb = useSupabaseClient()
+      let sb: ReturnType<typeof useSupabaseClient> | null = null
+      try {
+        sb = useSupabaseClient()
+      } catch (err) {
+        console.error('❌ Failed to get Supabase client via useSupabaseClient()', err)
+      }
+
       if (!sb?.auth) {
         console.warn('❌ Supabase client not ready in init()')
         return
@@ -57,7 +63,12 @@ export const useAuthStore = defineStore('auth', {
     },
 
     async signIn(email: string) {
-      const sb = useSupabaseClient()
+      let sb: ReturnType<typeof useSupabaseClient> | null = null
+      try {
+        sb = useSupabaseClient()
+      } catch (err) {
+        console.error('❌ Failed to get Supabase client', err)
+      }
       if (!sb?.auth) throw new Error('Supabase client not ready')
 
       const { error } = await sb.auth.signInWithOtp({
@@ -70,17 +81,28 @@ export const useAuthStore = defineStore('auth', {
     },
 
     async signOut() {
-      const sb = useSupabaseClient()
+      let sb: ReturnType<typeof useSupabaseClient> | null = null
+      try {
+        sb = useSupabaseClient()
+      } catch (err) {
+        console.error('❌ Failed to get Supabase client', err)
+      }
       if (!sb?.auth) throw new Error('Supabase client not ready')
 
       await sb.auth.signOut()
       this.user = null
       this.profile = null
       this.initialized = false
+      console.log('✅ Signed out')
     },
 
     async fetchProfileOrCreate() {
-      const sb = useSupabaseClient()
+      let sb: ReturnType<typeof useSupabaseClient> | null = null
+      try {
+        sb = useSupabaseClient()
+      } catch (err) {
+        console.error('❌ Failed to get Supabase client', err)
+      }
       if (!sb) throw new Error('Supabase client not ready')
       if (!this.user?.id) throw new Error('No user ID available')
 
@@ -95,10 +117,16 @@ export const useAuthStore = defineStore('auth', {
 
       if (error) throw error
       this.profile = data as Profile
+      console.log('✅ Profile loaded or created:', data)
     },
 
     async updateBrand(payload: { company_name?: string; logo_url?: string | null }) {
-      const sb = useSupabaseClient()
+      let sb: ReturnType<typeof useSupabaseClient> | null = null
+      try {
+        sb = useSupabaseClient()
+      } catch (err) {
+        console.error('❌ Failed to get Supabase client', err)
+      }
       if (!sb) throw new Error('Supabase client not ready')
       if (!this.user?.id) throw new Error('No user ID available')
 
@@ -113,6 +141,7 @@ export const useAuthStore = defineStore('auth', {
 
       if (error) throw error
       this.profile = data as Profile
+      console.log('✅ Brand updated:', data)
     },
   },
 })
