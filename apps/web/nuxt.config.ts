@@ -13,17 +13,17 @@ export default defineNuxtConfig({
     supabaseServiceRole: process.env.SUPABASE_SERVICE_ROLE_KEY,
     public: {
       baseUrl:
-        process.env.NUXT_PUBLIC_BASE_URL ||
         process.env.NEXT_PUBLIC_BASE_URL ||
+        process.env.NUXT_PUBLIC_BASE_URL ||
         'http://localhost:3000',
       supabaseUrl:
-        process.env.NUXT_PUBLIC_SUPABASE_URL ||
-        process.env.NEXT_PUBLIC_SUPABASE_URL,
+        process.env.NEXT_PUBLIC_SUPABASE_URL ||
+        process.env.NUXT_PUBLIC_SUPABASE_URL,
       supabaseAnonKey:
-        process.env.NUXT_PUBLIC_SUPABASE_ANON_KEY ||
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+        process.env.NUXT_PUBLIC_SUPABASE_ANON_KEY,
     },
   },
 
-  css: ['~/assets/css/tailwind.css'],
+  css: ['~/assets/css/main.css'],
 })
