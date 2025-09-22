@@ -1,14 +1,11 @@
 // apps/web/nuxt.config.ts
 import { defineNuxtConfig } from 'nuxt/config'
 
-console.log('🟢 SUPABASE URL exists:', !!process.env.NUXT_PUBLIC_SUPABASE_URL)
-console.log('🟢 SUPABASE ANON KEY exists:', !!process.env.NUXT_PUBLIC_SUPABASE_ANON_KEY)
-
 export default defineNuxtConfig({
   modules: [
     '@nuxtjs/supabase',
     '@pinia/nuxt',
-    '@nuxtjs/tailwindcss',
+    '@nuxtjs/tailwindcss'
   ],
 
   runtimeConfig: {
@@ -29,8 +26,4 @@ export default defineNuxtConfig({
   },
 
   css: ['~/assets/css/tailwind.css'],
-
-  build: {
-    transpile: ['@headlessui/vue'],
-  },
 })
