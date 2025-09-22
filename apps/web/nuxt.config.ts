@@ -5,12 +5,15 @@ export default defineNuxtConfig({
     preset: 'vercel'      // 👈 target Vercel serverless runtime
   },
 
-  modules: ['@pinia/nuxt'],
+  modules: [
+    '@pinia/nuxt',
+    '@nuxtjs/supabase',   // 👈 add Supabase Nuxt module
+  ],
 
   css: ['@/assets/css/tailwind.css'],
 
   plugins: [
-    '~/plugins/supabase.client.ts', // load Supabase early
+    '~/plugins/supabase.client.ts', // load Supabase early if you need a custom client
   ],
 
   runtimeConfig: {
@@ -20,19 +23,22 @@ export default defineNuxtConfig({
 
     // public (client-side)
     public: {
-      baseUrl: process.env.NUXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000',
-      supabaseUrl: process.env.NUXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL,
-      supabaseAnonKey: process.env.NUXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      baseUrl:
+        process.env.NUXT_PUBLIC_BASE_URL ||
+        process.env.NEXT_PUBLIC_BASE_URL ||
+        'http://localhost:3000',
+      supabaseUrl:
+        process.env.NUXT_PUBLIC_SUPABASE_URL ||
+        process.env.NEXT_PUBLIC_SUPABASE_URL,
+      supabaseAnonKey:
+        process.env.NUXT_PUBLIC_SUPABASE_ANON_KEY ||
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     },
   },
 
   typescript: {
     strict: true,
     shim: false,
-  },
-
-  nitro: {
-    preset: 'vercel',
   },
 
   postcss: {
