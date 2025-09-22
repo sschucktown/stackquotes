@@ -13,7 +13,6 @@ export default defineNuxtConfig({
   css: ['@/assets/css/tailwind.css'],
 
   plugins: [
-    '~/plugins/supabase.client.ts', // load Supabase early if you need a custom client
   ],
 
   runtimeConfig: {
