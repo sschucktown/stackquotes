@@ -86,25 +86,42 @@ export default function NewQuotePage() {
     fetchQuote()
   }, [quoteId, supabase])
 
+  const calculateTierTotals = (tierIndex: number) => {
+    const newTiers = [...tiers]
+    const tier = newTiers[tierIndex]
+    tier.subtotal = tier.lineItems.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0)
+    tier.tax = tier.subtotal * (quoteInfo.taxRate / 100)
+    tier.total = tier.subtotal + tier.tax
+    setTiers(newTiers)
+  }
+
   const addLineItem = (tierIndex: number) => {
     const newTiers = [...tiers]
     newTiers[tierIndex].lineItems.push({ id: Date.now().toString(), description: "", quantity: 1, unitPrice: 0, total: 0 })
     setTiers(newTiers)
+    calculateTierTotals(tierIndex)
   }
 
   const updateLineItem = (tierIndex: number, itemId: string, field: keyof LineItem, value: string | number) => {
     const newTiers = [...tiers]
     const itemIndex = newTiers[tierIndex].lineItems.findIndex((i) => i.id === itemId)
     if (itemIndex === -1) return
-    const item = newTiers[tierIndex].lineItems[itemIndex]
-    newTiers[tierIndex].lineItems[itemIndex] = { ...item, [field]: value, total: item.quantity * item.unitPrice }
+    newTiers[tierIndex].lineItems[itemIndex] = {
+      ...newTiers[tierIndex].lineItems[itemIndex],
+      [field]: value,
+    }
+    newTiers[tierIndex].lineItems[itemIndex].total =
+      newTiers[tierIndex].lineItems[itemIndex].quantity *
+      newTiers[tierIndex].lineItems[itemIndex].unitPrice
     setTiers(newTiers)
+    calculateTierTotals(tierIndex)
   }
 
   const removeLineItem = (tierIndex: number, itemId: string) => {
     const newTiers = [...tiers]
     newTiers[tierIndex].lineItems = newTiers[tierIndex].lineItems.filter((i) => i.id !== itemId)
     setTiers(newTiers)
+    calculateTierTotals(tierIndex)
   }
 
   const saveQuote = async (status: "draft" | "sent") => {
@@ -112,41 +129,27 @@ export default function NewQuotePage() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
+    const payload = {
+      client_name: clientInfo.name,
+      client_email: clientInfo.email,
+      client_phone: clientInfo.phone,
+      project_title: quoteInfo.title,
+      project_description: clientInfo.projectDescription,
+      good_total: tiers[0].total,
+      better_total: tiers[1].total,
+      best_total: tiers[2].total,
+      good_items: tiers[0].lineItems,
+      better_items: tiers[1].lineItems,
+      best_items: tiers[2].lineItems,
+      deposit_percentage: quoteInfo.depositPercentage,
+      valid_until: quoteInfo.validUntil,
+      status,
+    }
+
     if (quoteId) {
-      await supabase.from("quotes").update({
-        client_name: clientInfo.name,
-        client_email: clientInfo.email,
-        client_phone: clientInfo.phone,
-        project_title: quoteInfo.title,
-        project_description: clientInfo.projectDescription,
-        good_total: tiers[0].subtotal,
-        better_total: tiers[1].subtotal,
-        best_total: tiers[2].subtotal,
-        good_items: tiers[0].lineItems,
-        better_items: tiers[1].lineItems,
-        best_items: tiers[2].lineItems,
-        deposit_percentage: quoteInfo.depositPercentage,
-        valid_until: quoteInfo.validUntil,
-        status,
-      }).eq("id", quoteId)
+      await supabase.from("quotes").update(payload).eq("id", quoteId)
     } else {
-      await supabase.from("quotes").insert([{
-        user_id: user.id,
-        client_name: clientInfo.name,
-        client_email: clientInfo.email,
-        client_phone: clientInfo.phone,
-        project_title: quoteInfo.title,
-        project_description: clientInfo.projectDescription,
-        good_total: tiers[0].subtotal,
-        better_total: tiers[1].subtotal,
-        best_total: tiers[2].subtotal,
-        good_items: tiers[0].lineItems,
-        better_items: tiers[1].lineItems,
-        best_items: tiers[2].lineItems,
-        deposit_percentage: quoteInfo.depositPercentage,
-        valid_until: quoteInfo.validUntil,
-        status,
-      }])
+      await supabase.from("quotes").insert([{ user_id: user.id, ...payload }])
     }
 
     setIsLoading(false)
@@ -204,6 +207,8 @@ export default function NewQuotePage() {
               ))}
               <Button variant="outline" size="sm" onClick={() => addLineItem(tierIndex)}><Plus className="h-4 w-4 mr-2" /> Add Item</Button>
               <div className="text-right font-semibold">Subtotal: ${tier.subtotal.toFixed(2)}</div>
+              <div className="text-right text-sm text-muted-foreground">Tax: ${tier.tax.toFixed(2)}</div>
+              <div className="text-right font-bold">Total: ${tier.total.toFixed(2)}</div>
             </CardContent>
           </Card>
         ))}
