@@ -34,6 +34,7 @@ import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 
 export default function DashboardPage() {
+  const supabase = createClient()
   const [quotes, setQuotes] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
@@ -41,8 +42,6 @@ export default function DashboardPage() {
   const [sortBy, setSortBy] = useState("newest")
 
   useEffect(() => {
-    const supabase = createClient()
-
     const fetchQuotes = async () => {
       const { data: { user }, error: userError } = await supabase.auth.getUser()
       if (userError || !user) {
@@ -64,7 +63,20 @@ export default function DashboardPage() {
     }
 
     fetchQuotes()
-  }, [])
+  }, [supabase])
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this quote?")) return
+
+    const { error } = await supabase.from("quotes").delete().eq("id", id)
+    if (error) {
+      console.error("Error deleting quote:", error)
+      alert("Failed to delete quote: " + error.message)
+      return
+    }
+
+    setQuotes((prev) => prev.filter((q) => q.id !== id)) // remove from UI
+  }
 
   const stats = {
     totalQuotes: quotes.length,
@@ -320,7 +332,10 @@ export default function DashboardPage() {
                             Duplicate
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem className="text-red-600">
+                          <DropdownMenuItem
+                            className="text-red-600"
+                            onClick={() => handleDelete(quote.id)}
+                          >
                             <Trash2 className="h-4 w-4 mr-2" />
                             Delete
                           </DropdownMenuItem>
