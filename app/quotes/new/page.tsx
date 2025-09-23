@@ -155,7 +155,7 @@ export default function NewQuotePage() {
       better_items: tiers[1].lineItems,
       best_items: tiers[2].lineItems,
       deposit_percentage: quoteInfo.depositPercentage,
-      valid_until: quoteInfo.validUntil,
+      valid_until: quoteInfo.validUntil || null, // ✅ this fixes the error
       status,
     }
 
