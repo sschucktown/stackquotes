@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -31,97 +31,64 @@ import {
   Calendar,
 } from "lucide-react"
 import Link from "next/link"
-
-// Mock data - in production this would come from your API
-const mockQuotes = [
-  {
-    id: "quote_001",
-    title: "Johnson Kitchen Remodel",
-    client: { name: "Sarah Johnson", email: "sarah@example.com" },
-    status: "accepted",
-    selectedTier: "Better",
-    amount: 23897,
-    depositPaid: 5974,
-    createdAt: "2024-01-15",
-    validUntil: "2024-02-15",
-  },
-  {
-    id: "quote_002",
-    title: "Smith Bathroom Renovation",
-    client: { name: "Mike Smith", email: "mike@example.com" },
-    status: "pending",
-    selectedTier: null,
-    amount: 15434,
-    depositPaid: 0,
-    createdAt: "2024-01-14",
-    validUntil: "2024-02-14",
-  },
-  {
-    id: "quote_003",
-    title: "Davis Deck Construction",
-    client: { name: "Lisa Davis", email: "lisa@example.com" },
-    status: "draft",
-    selectedTier: null,
-    amount: 37541,
-    depositPaid: 0,
-    createdAt: "2024-01-13",
-    validUntil: "2024-02-13",
-  },
-  {
-    id: "quote_004",
-    title: "Wilson Home Addition",
-    client: { name: "Tom Wilson", email: "tom@example.com" },
-    status: "declined",
-    selectedTier: null,
-    amount: 85000,
-    depositPaid: 0,
-    createdAt: "2024-01-12",
-    validUntil: "2024-02-12",
-  },
-  {
-    id: "quote_005",
-    title: "Brown Flooring Project",
-    client: { name: "Emma Brown", email: "emma@example.com" },
-    status: "accepted",
-    selectedTier: "Good",
-    amount: 12500,
-    depositPaid: 3125,
-    createdAt: "2024-01-11",
-    validUntil: "2024-02-11",
-  },
-]
-
-const stats = {
-  totalQuotes: mockQuotes.length,
-  acceptedQuotes: mockQuotes.filter((q) => q.status === "accepted").length,
-  pendingQuotes: mockQuotes.filter((q) => q.status === "pending").length,
-  totalRevenue: mockQuotes.filter((q) => q.status === "accepted").reduce((sum, q) => sum + q.amount, 0),
-  depositsCollected: mockQuotes.reduce((sum, q) => sum + q.depositPaid, 0),
-}
+import { createClient } from "@/lib/supabase/client"
 
 export default function DashboardPage() {
+  const [quotes, setQuotes] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [sortBy, setSortBy] = useState("newest")
 
-  const filteredQuotes = mockQuotes
+  useEffect(() => {
+    const supabase = createClient()
+
+    const fetchQuotes = async () => {
+      const { data, error } = await supabase
+        .from("quotes")
+        .select("*")
+        .order("created_at", { ascending: false })
+
+      if (error) console.error("Error fetching quotes:", error)
+      else setQuotes(data || [])
+
+      setLoading(false)
+    }
+
+    fetchQuotes()
+  }, [])
+
+  const stats = {
+    totalQuotes: quotes.length,
+    acceptedQuotes: quotes.filter((q) => q.status === "accepted").length,
+    pendingQuotes: quotes.filter((q) => q.status === "pending").length,
+    totalRevenue: quotes
+      .filter((q) => q.status === "accepted")
+      .reduce((sum, q) => sum + Number(q.best_total || 0), 0),
+    depositsCollected: quotes.reduce(
+      (sum, q) => sum + (q.deposit_percentage ? Number(q.best_total) * (q.deposit_percentage / 100) : 0),
+      0
+    ),
+  }
+
+  const filteredQuotes = quotes
     .filter((quote) => {
       const matchesSearch =
-        quote.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        quote.client.name.toLowerCase().includes(searchTerm.toLowerCase())
+        quote.project_title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        quote.client_name?.toLowerCase().includes(searchTerm.toLowerCase())
       const matchesStatus = statusFilter === "all" || quote.status === statusFilter
       return matchesSearch && matchesStatus
     })
     .sort((a, b) => {
       switch (sortBy) {
         case "newest":
-          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
         case "oldest":
-          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
         case "amount-high":
-          return b.amount - a.amount
+          return (Number(b.best_total) || 0) - (Number(a.best_total) || 0)
         case "amount-low":
-          return a.amount - b.amount
+          return (Number(a.best_total) || 0) - (Number(b.best_total) || 0)
         default:
           return 0
       }
@@ -167,7 +134,7 @@ export default function DashboardPage() {
       <div className="container mx-auto px-4 py-8">
         {/* Welcome Section */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Welcome back, John!</h1>
+          <h1 className="text-3xl font-bold mb-2">Welcome back!</h1>
           <p className="text-muted-foreground">Here's what's happening with your quotes today.</p>
         </div>
 
@@ -180,7 +147,6 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats.totalQuotes}</div>
-              <p className="text-xs text-muted-foreground">+3 from last month</p>
             </CardContent>
           </Card>
 
@@ -191,9 +157,6 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats.acceptedQuotes}</div>
-              <p className="text-xs text-muted-foreground">
-                {Math.round((stats.acceptedQuotes / stats.totalQuotes) * 100)}% acceptance rate
-              </p>
             </CardContent>
           </Card>
 
@@ -204,7 +167,6 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats.pendingQuotes}</div>
-              <p className="text-xs text-muted-foreground">Awaiting response</p>
             </CardContent>
           </Card>
 
@@ -215,7 +177,6 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">${stats.totalRevenue.toLocaleString()}</div>
-              <p className="text-xs text-muted-foreground">From accepted quotes</p>
             </CardContent>
           </Card>
 
@@ -226,7 +187,6 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">${stats.depositsCollected.toLocaleString()}</div>
-              <p className="text-xs text-muted-foreground">Collected this month</p>
             </CardContent>
           </Card>
         </div>
@@ -280,89 +240,90 @@ export default function DashboardPage() {
             </div>
 
             {/* Quotes List */}
-            <div className="space-y-4">
-              {filteredQuotes.map((quote) => (
-                <div
-                  key={quote.id}
-                  className="flex items-center justify-between p-4 border border-border/50 rounded-lg hover:bg-muted/30 transition-colors"
-                >
-                  <div className="flex items-center space-x-4">
-                    <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
-                      <FileText className="h-5 w-5 text-muted-foreground" />
-                    </div>
-                    <div>
-                      <p className="font-medium">{quote.title}</p>
-                      <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                        <span className="flex items-center">
-                          <Users className="h-3 w-3 mr-1" />
-                          {quote.client.name}
-                        </span>
-                        <span className="flex items-center">
-                          <Calendar className="h-3 w-3 mr-1" />
-                          {new Date(quote.createdAt).toLocaleDateString()}
-                        </span>
-                        {quote.selectedTier && (
-                          <Badge variant="outline" className="text-xs">
-                            {quote.selectedTier}
-                          </Badge>
-                        )}
+            {loading ? (
+              <p>Loading...</p>
+            ) : (
+              <div className="space-y-4">
+                {filteredQuotes.map((quote) => (
+                  <div
+                    key={quote.id}
+                    className="flex items-center justify-between p-4 border border-border/50 rounded-lg hover:bg-muted/30 transition-colors"
+                  >
+                    <div className="flex items-center space-x-4">
+                      <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
+                        <FileText className="h-5 w-5 text-muted-foreground" />
+                      </div>
+                      <div>
+                        <p className="font-medium">{quote.project_title}</p>
+                        <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                          <span className="flex items-center">
+                            <Users className="h-3 w-3 mr-1" />
+                            {quote.client_name}
+                          </span>
+                          <span className="flex items-center">
+                            <Calendar className="h-3 w-3 mr-1" />
+                            {new Date(quote.created_at).toLocaleDateString()}
+                          </span>
+                          {quote.selected_tier && (
+                            <Badge variant="outline" className="text-xs">
+                              {quote.selected_tier}
+                            </Badge>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <div className="flex items-center space-x-4">
-                    <div className="text-right">
-                      <p className="font-medium">${quote.amount.toLocaleString()}</p>
-                      {quote.depositPaid > 0 && (
-                        <p className="text-xs text-green-600">${quote.depositPaid.toLocaleString()} deposited</p>
-                      )}
+                    <div className="flex items-center space-x-4">
+                      <div className="text-right">
+                        <p className="font-medium">${Number(quote.best_total).toLocaleString()}</p>
+                      </div>
+                      <Badge className={`text-xs ${getStatusColor(quote.status)}`}>{quote.status}</Badge>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem>
+                            <Eye className="h-4 w-4 mr-2" />
+                            View Details
+                          </DropdownMenuItem>
+                          <DropdownMenuItem>
+                            <Edit className="h-4 w-4 mr-2" />
+                            Edit Quote
+                          </DropdownMenuItem>
+                          <DropdownMenuItem>
+                            <Copy className="h-4 w-4 mr-2" />
+                            Duplicate
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem className="text-red-600">
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
-                    <Badge className={`text-xs ${getStatusColor(quote.status)}`}>{quote.status}</Badge>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem>
-                          <Eye className="h-4 w-4 mr-2" />
-                          View Details
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <Edit className="h-4 w-4 mr-2" />
-                          Edit Quote
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <Copy className="h-4 w-4 mr-2" />
-                          Duplicate
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-red-600">
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
 
-            {filteredQuotes.length === 0 && (
-              <div className="text-center py-12">
-                <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-medium mb-2">No quotes found</h3>
-                <p className="text-muted-foreground mb-4">
-                  {searchTerm || statusFilter !== "all"
-                    ? "Try adjusting your search or filters"
-                    : "Create your first quote to get started"}
-                </p>
-                <Link href="/quotes/new">
-                  <Button>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Create Quote
-                  </Button>
-                </Link>
+                {filteredQuotes.length === 0 && (
+                  <div className="text-center py-12">
+                    <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-medium mb-2">No quotes found</h3>
+                    <p className="text-muted-foreground mb-4">
+                      {searchTerm || statusFilter !== "all"
+                        ? "Try adjusting your search or filters"
+                        : "Create your first quote to get started"}
+                    </p>
+                    <Link href="/quotes/new">
+                      <Button>
+                        <Plus className="h-4 w-4 mr-2" />
+                        Create Quote
+                      </Button>
+                    </Link>
+                  </div>
+                )}
               </div>
             )}
           </CardContent>
