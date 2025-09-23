@@ -1,16 +1,15 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { ArrowLeft, Plus, Trash2, Calculator, Send, Save } from "lucide-react"
+import { ArrowLeft, Save, Send, Plus, Trash2 } from "lucide-react"
 import Link from "next/link"
 
 interface LineItem {
@@ -33,6 +32,8 @@ interface QuoteTier {
 export default function NewQuotePage() {
   const supabase = createClient()
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const quoteId = searchParams.get("id")
 
   const [clientInfo, setClientInfo] = useState({
     name: "",
@@ -50,156 +51,162 @@ export default function NewQuotePage() {
   })
 
   const [tiers, setTiers] = useState<QuoteTier[]>([
-    {
-      name: "Good",
-      description: "Essential features and quality materials",
-      lineItems: [{ id: "1", description: "", quantity: 1, unitPrice: 0, total: 0 }],
-      subtotal: 0,
-      tax: 0,
-      total: 0,
-    },
-    {
-      name: "Better",
-      description: "Enhanced features with premium materials",
-      lineItems: [{ id: "1", description: "", quantity: 1, unitPrice: 0, total: 0 }],
-      subtotal: 0,
-      tax: 0,
-      total: 0,
-    },
-    {
-      name: "Best",
-      description: "Top-tier features with luxury materials",
-      lineItems: [{ id: "1", description: "", quantity: 1, unitPrice: 0, total: 0 }],
-      subtotal: 0,
-      tax: 0,
-      total: 0,
-    },
+    { name: "Good", description: "Essential", lineItems: [], subtotal: 0, tax: 0, total: 0 },
+    { name: "Better", description: "Enhanced", lineItems: [], subtotal: 0, tax: 0, total: 0 },
+    { name: "Best", description: "Premium", lineItems: [], subtotal: 0, tax: 0, total: 0 },
   ])
 
-  const [activeTier, setActiveTier] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
+
+  useEffect(() => {
+    const fetchQuote = async () => {
+      if (!quoteId) return
+      const { data } = await supabase.from("quotes").select("*").eq("id", quoteId).single()
+      if (!data) return
+
+      setClientInfo({
+        name: data.client_name,
+        email: data.client_email,
+        phone: data.client_phone,
+        address: "",
+        projectDescription: data.project_description,
+      })
+      setQuoteInfo({
+        title: data.project_title,
+        validUntil: data.valid_until,
+        depositPercentage: data.deposit_percentage,
+        taxRate: 8.5,
+      })
+      setTiers([
+        { name: "Good", description: "Essential", lineItems: data.good_items || [], subtotal: data.good_total, tax: 0, total: data.good_total },
+        { name: "Better", description: "Enhanced", lineItems: data.better_items || [], subtotal: data.better_total, tax: 0, total: data.better_total },
+        { name: "Best", description: "Premium", lineItems: data.best_items || [], subtotal: data.best_total, tax: 0, total: data.best_total },
+      ])
+    }
+    fetchQuote()
+  }, [quoteId, supabase])
 
   const addLineItem = (tierIndex: number) => {
     const newTiers = [...tiers]
-    const newId = Date.now().toString()
-    newTiers[tierIndex].lineItems.push({
-      id: newId,
-      description: "",
-      quantity: 1,
-      unitPrice: 0,
-      total: 0,
-    })
+    newTiers[tierIndex].lineItems.push({ id: Date.now().toString(), description: "", quantity: 1, unitPrice: 0, total: 0 })
+    setTiers(newTiers)
+  }
+
+  const updateLineItem = (tierIndex: number, itemId: string, field: keyof LineItem, value: string | number) => {
+    const newTiers = [...tiers]
+    const itemIndex = newTiers[tierIndex].lineItems.findIndex((i) => i.id === itemId)
+    if (itemIndex === -1) return
+    const item = newTiers[tierIndex].lineItems[itemIndex]
+    newTiers[tierIndex].lineItems[itemIndex] = { ...item, [field]: value, total: item.quantity * item.unitPrice }
     setTiers(newTiers)
   }
 
   const removeLineItem = (tierIndex: number, itemId: string) => {
     const newTiers = [...tiers]
-    newTiers[tierIndex].lineItems = newTiers[tierIndex].lineItems.filter((item) => item.id !== itemId)
-    setTiers(newTiers)
-    calculateTierTotals(tierIndex)
-  }
-
-  const updateLineItem = (tierIndex: number, itemId: string, field: keyof LineItem, value: string | number) => {
-    const newTiers = [...tiers]
-    const itemIndex = newTiers[tierIndex].lineItems.findIndex((item) => item.id === itemId)
-    if (itemIndex !== -1) {
-      newTiers[tierIndex].lineItems[itemIndex] = {
-        ...newTiers[tierIndex].lineItems[itemIndex],
-        [field]: value,
-      }
-
-      const item = newTiers[tierIndex].lineItems[itemIndex]
-      item.total = item.quantity * item.unitPrice
-
-      setTiers(newTiers)
-      calculateTierTotals(tierIndex)
-    }
-  }
-
-  const calculateTierTotals = (tierIndex: number) => {
-    const newTiers = [...tiers]
-    const tier = newTiers[tierIndex]
-    tier.subtotal = tier.lineItems.reduce((sum, item) => sum + item.total, 0)
-    tier.tax = tier.subtotal * (quoteInfo.taxRate / 100)
-    tier.total = tier.subtotal + tier.tax
+    newTiers[tierIndex].lineItems = newTiers[tierIndex].lineItems.filter((i) => i.id !== itemId)
     setTiers(newTiers)
   }
 
   const saveQuote = async (status: "draft" | "sent") => {
     setIsLoading(true)
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) {
-      alert("You must be logged in")
-      setIsLoading(false)
-      return
-    }
-
-    const { error } = await supabase.from("quotes").insert([
-      {
-        user_id: user.id,
+    if (quoteId) {
+      await supabase.from("quotes").update({
         client_name: clientInfo.name,
         client_email: clientInfo.email,
         client_phone: clientInfo.phone,
         project_title: quoteInfo.title,
         project_description: clientInfo.projectDescription,
-        good_total: tiers[0].total,
-        better_total: tiers[1].total,
-        best_total: tiers[2].total,
+        good_total: tiers[0].subtotal,
+        better_total: tiers[1].subtotal,
+        best_total: tiers[2].subtotal,
         good_items: tiers[0].lineItems,
         better_items: tiers[1].lineItems,
         best_items: tiers[2].lineItems,
         deposit_percentage: quoteInfo.depositPercentage,
         valid_until: quoteInfo.validUntil,
         status,
-      },
-    ])
-
-    if (error) {
-      console.error("Error saving quote:", error)
-      alert(error.message)
+      }).eq("id", quoteId)
     } else {
-      router.push("/dashboard")
+      await supabase.from("quotes").insert([{
+        user_id: user.id,
+        client_name: clientInfo.name,
+        client_email: clientInfo.email,
+        client_phone: clientInfo.phone,
+        project_title: quoteInfo.title,
+        project_description: clientInfo.projectDescription,
+        good_total: tiers[0].subtotal,
+        better_total: tiers[1].subtotal,
+        best_total: tiers[2].subtotal,
+        good_items: tiers[0].lineItems,
+        better_items: tiers[1].lineItems,
+        best_items: tiers[2].lineItems,
+        deposit_percentage: quoteInfo.depositPercentage,
+        valid_until: quoteInfo.validUntil,
+        status,
+      }])
     }
 
     setIsLoading(false)
+    router.push("/dashboard")
   }
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <header className="border-b border-border/40">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <Link
-              href="/dashboard"
-              className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Dashboard
+            <Link href="/dashboard" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground">
+              <ArrowLeft className="h-4 w-4 mr-2" /> Back to Dashboard
             </Link>
             <Separator orientation="vertical" className="h-6" />
-            <h1 className="text-xl font-semibold">Create New Quote</h1>
+            <h1 className="text-xl font-semibold">{quoteId ? "Edit Quote" : "Create New Quote"}</h1>
           </div>
           <div className="flex items-center space-x-2">
-            <Button variant="outline" onClick={() => saveQuote("draft")} disabled={isLoading}>
-              <Save className="h-4 w-4 mr-2" />
-              Save Draft
-            </Button>
-            <Button onClick={() => saveQuote("sent")} disabled={isLoading}>
-              <Send className="h-4 w-4 mr-2" />
-              Send Quote
-            </Button>
+            <Button variant="outline" onClick={() => saveQuote("draft")} disabled={isLoading}><Save className="h-4 w-4 mr-2" /> Save Draft</Button>
+            <Button onClick={() => saveQuote("sent")} disabled={isLoading}><Send className="h-4 w-4 mr-2" /> {quoteId ? "Update & Send" : "Send Quote"}</Button>
           </div>
         </div>
       </header>
 
-      {/* Rest of your form remains unchanged */}
-      <div className="container mx-auto px-4 py-8 max-w-6xl">
-        {/* ... form code (client info, tiers, etc.) ... */}
+      <div className="container mx-auto px-4 py-8 max-w-6xl space-y-8">
+        <Card>
+          <CardHeader>
+            <CardTitle>Client Information</CardTitle>
+            <CardDescription>Enter client details</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Input placeholder="Client Name" value={clientInfo.name} onChange={(e) => setClientInfo({ ...clientInfo, name: e.target.value })} />
+            <Input placeholder="Email" type="email" value={clientInfo.email} onChange={(e) => setClientInfo({ ...clientInfo, email: e.target.value })} />
+            <Input placeholder="Phone" value={clientInfo.phone} onChange={(e) => setClientInfo({ ...clientInfo, phone: e.target.value })} />
+            <Input placeholder="Project Title" value={quoteInfo.title} onChange={(e) => setQuoteInfo({ ...quoteInfo, title: e.target.value })} />
+            <Textarea placeholder="Project Description" value={clientInfo.projectDescription} onChange={(e) => setClientInfo({ ...clientInfo, projectDescription: e.target.value })} />
+          </CardContent>
+        </Card>
+
+        {tiers.map((tier, tierIndex) => (
+          <Card key={tier.name}>
+            <CardHeader>
+              <CardTitle>{tier.name} Option</CardTitle>
+              <CardDescription>{tier.description}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {tier.lineItems.map((item) => (
+                <div key={item.id} className="flex space-x-2 items-center">
+                  <Input placeholder="Description" value={item.description} onChange={(e) => updateLineItem(tierIndex, item.id, "description", e.target.value)} />
+                  <Input type="number" placeholder="Qty" value={item.quantity} onChange={(e) => updateLineItem(tierIndex, item.id, "quantity", Number(e.target.value))} />
+                  <Input type="number" placeholder="Unit Price" value={item.unitPrice} onChange={(e) => updateLineItem(tierIndex, item.id, "unitPrice", Number(e.target.value))} />
+                  <span className="w-20 text-right">${item.total.toFixed(2)}</span>
+                  <Button variant="ghost" size="icon" onClick={() => removeLineItem(tierIndex, item.id)}><Trash2 className="h-4 w-4" /></Button>
+                </div>
+              ))}
+              <Button variant="outline" size="sm" onClick={() => addLineItem(tierIndex)}><Plus className="h-4 w-4 mr-2" /> Add Item</Button>
+              <div className="text-right font-semibold">Subtotal: ${tier.subtotal.toFixed(2)}</div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
     </div>
   )
