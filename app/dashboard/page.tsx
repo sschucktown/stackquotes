@@ -44,9 +44,17 @@ export default function DashboardPage() {
     const supabase = createClient()
 
     const fetchQuotes = async () => {
+      const { data: { user }, error: userError } = await supabase.auth.getUser()
+      if (userError || !user) {
+        console.error("Auth error fetching quotes:", userError)
+        setLoading(false)
+        return
+      }
+
       const { data, error } = await supabase
         .from("quotes")
         .select("*")
+        .eq("user_id", user.id)
         .order("created_at", { ascending: false })
 
       if (error) console.error("Error fetching quotes:", error)
@@ -61,7 +69,8 @@ export default function DashboardPage() {
   const stats = {
     totalQuotes: quotes.length,
     acceptedQuotes: quotes.filter((q) => q.status === "accepted").length,
-    pendingQuotes: quotes.filter((q) => q.status === "pending").length,
+    pendingQuotes: quotes.filter((q) => q.status === "pending" || q.status === "sent").length,
+    draftQuotes: quotes.filter((q) => q.status === "draft").length,
     totalRevenue: quotes
       .filter((q) => q.status === "accepted")
       .reduce((sum, q) => sum + Number(q.best_total || 0), 0),
@@ -99,6 +108,7 @@ export default function DashboardPage() {
       case "accepted":
         return "bg-green-500/10 text-green-500 border-green-500/20"
       case "pending":
+      case "sent":
         return "bg-yellow-500/10 text-yellow-500 border-yellow-500/20"
       case "draft":
         return "bg-gray-500/10 text-gray-500 border-gray-500/20"
@@ -172,6 +182,16 @@ export default function DashboardPage() {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Drafts</CardTitle>
+              <FileText className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.draftQuotes}</div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Revenue</CardTitle>
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
@@ -222,6 +242,7 @@ export default function DashboardPage() {
                   <SelectItem value="all">All Status</SelectItem>
                   <SelectItem value="draft">Draft</SelectItem>
                   <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="sent">Sent</SelectItem>
                   <SelectItem value="accepted">Accepted</SelectItem>
                   <SelectItem value="declined">Declined</SelectItem>
                 </SelectContent>
@@ -288,9 +309,11 @@ export default function DashboardPage() {
                             <Eye className="h-4 w-4 mr-2" />
                             View Details
                           </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <Edit className="h-4 w-4 mr-2" />
-                            Edit Quote
+                          <DropdownMenuItem asChild>
+                            <Link href={`/quotes/new?id=${quote.id}`}>
+                              <Edit className="h-4 w-4 mr-2" />
+                              Edit Quote
+                            </Link>
                           </DropdownMenuItem>
                           <DropdownMenuItem>
                             <Copy className="h-4 w-4 mr-2" />
