@@ -319,9 +319,10 @@ export default function DashboardPage() {
                         <DropdownMenuContent
                           align="end"
                           sideOffset={4}
-                          className="bg-white dark:bg-gray-900 border shadow-md z-50"
+                          className="bg-red-500 text-white p-10 z-[9999] block opacity-100"
                           {...(typeof document !== "undefined" ? { container: document.body } : {})}
                         >
+                          <div className="font-bold">DEBUG MENU VISIBLE</div>
                           <DropdownMenuItem onClick={() => alert("View Details")}>
                             <Eye className="h-4 w-4 mr-2" />
                             View Details
@@ -330,13 +331,13 @@ export default function DashboardPage() {
                             <Edit className="h-4 w-4 mr-2" />
                             Edit Quote
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => alert("Duplicate (not implemented yet)")}>
+                          <DropdownMenuItem>
                             <Copy className="h-4 w-4 mr-2" />
                             Duplicate
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
-                            className="text-red-600"
+                            className="text-white bg-red-700"
                             onClick={() => handleDelete(quote.id)}
                           >
                             <Trash2 className="h-4 w-4 mr-2" />
