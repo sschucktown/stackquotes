@@ -11,8 +11,6 @@ export async function POST(req: Request) {
     const { quoteId } = await req.json()
 
     const supabase = createClient()
-
-    // Fetch quote details from Supabase
     const { data: quote, error } = await supabase
       .from("quotes")
       .select("*")
@@ -23,7 +21,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Quote not found" }, { status: 404 })
     }
 
-    // Generate PDF with pdfkit
+    // Build PDF
     const doc = new PDFDocument()
     doc.fontSize(18).text(`Quote: ${quote.project_title}`, { underline: true })
     doc.moveDown()
@@ -40,15 +38,13 @@ export async function POST(req: Request) {
     doc.moveDown()
     doc.text(`Notes:`)
     doc.text(quote.notes || "None", { indent: 20 })
-
     doc.end()
 
-    // Convert PDF to buffer
     const pdfBuffer = await getStream.buffer(doc)
 
-    // Send email via Resend
+    // Send with Resend
     const result = await resend.emails.send({
-      from: "StackQuotes <onboarding@resend.dev>", // ✅ use verified sender
+      from: "StackQuotes <onboarding@resend.dev>", // ✅ string, not function
       to: quote.client_email,
       subject: `Quote: ${quote.project_title}`,
       text: `Hi ${quote.client_name}, please find your quote attached.`,
@@ -60,8 +56,12 @@ export async function POST(req: Request) {
       ],
     })
 
-    console.log("Resend response:", result)
+    if (result.error) {
+      console.error("Resend API error:", result.error)
+      return NextResponse.json({ error: result.error }, { status: 500 })
+    }
 
+    console.log("Email sent successfully:", result)
     return NextResponse.json({ success: true, data: result })
   } catch (err) {
     console.error("Send quote error:", err)
