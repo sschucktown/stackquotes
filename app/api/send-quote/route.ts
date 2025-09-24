@@ -1,70 +1,79 @@
 import { NextResponse } from "next/server"
 import { Resend } from "resend"
-import { createClient } from "@/lib/supabase/server"
 import PDFDocument from "pdfkit"
 import getStream from "get-stream"
 
+// Initialize Resend client with API key
 const resend = new Resend(process.env.RESEND_API_KEY)
 
 export async function POST(req: Request) {
   try {
-    const { quoteId } = await req.json()
+    const body = await req.json()
+    const { quote } = body
 
-    const supabase = createClient()
-    const { data: quote, error } = await supabase
-      .from("quotes")
-      .select("*")
-      .eq("id", quoteId)
-      .single()
-
-    if (error || !quote) {
-      return NextResponse.json({ error: "Quote not found" }, { status: 404 })
+    if (!process.env.RESEND_API_KEY) {
+      console.error("❌ Missing RESEND_API_KEY")
+      return NextResponse.json({ success: false, error: "API key not set" }, { status: 500 })
     }
 
-    // Build PDF
-    const doc = new PDFDocument()
-    doc.fontSize(18).text(`Quote: ${quote.project_title}`, { underline: true })
-    doc.moveDown()
-    doc.fontSize(12).text(`Client: ${quote.client_name}`)
-    doc.text(`Email: ${quote.client_email}`)
-    doc.text(`Phone: ${quote.client_phone || "N/A"}`)
-    doc.moveDown()
-    doc.text(`Project Description:`)
-    doc.text(quote.project_description || "N/A", { indent: 20 })
-    doc.moveDown()
-    doc.text(`Good Option: $${quote.good_total}`)
-    doc.text(`Better Option: $${quote.better_total}`)
-    doc.text(`Best Option: $${quote.best_total}`)
-    doc.moveDown()
-    doc.text(`Notes:`)
-    doc.text(quote.notes || "None", { indent: 20 })
-    doc.end()
+    if (!quote?.client_email) {
+      return NextResponse.json({ success: false, error: "Missing client email" }, { status: 400 })
+    }
 
-    const pdfBuffer = await getStream.buffer(doc)
+    // Generate the PDF buffer
+    const pdfBuffer = await generateQuotePdf(quote)
 
     // Send email
-    const result = await resend.emails.send({
-      from: "StackQuotes <quotes@stackquotes.com>", // must be verified in Resend
-      to: quote.client_email,
-      subject: `Quote: ${quote.project_title}`,
-      text: `Hi ${quote.client_name}, please find your quote attached.`,
+    const { data, error } = await resend.emails.send({
+      from: "StackQuotes <quotes@stackquotes.com>", // ✅ must match verified domain
+      to: [quote.client_email],
+      subject: `Your Quote from ${quote.company_name}`,
+      text: "Please find your attached quote.",
       attachments: [
         {
-          filename: `quote-${quoteId}.pdf`,
+          filename: "quote.pdf",
           content: pdfBuffer.toString("base64"),
         },
       ],
     })
 
-    if (result.error) {
-      console.error("Resend API error:", result.error)
-      return NextResponse.json({ error: result.error }, { status: 500 })
+    if (error) {
+      console.error("❌ Resend send error:", error)
+      return NextResponse.json({ success: false, error }, { status: 500 })
     }
 
-    console.log("Email sent successfully:", result)
-    return NextResponse.json({ success: true, data: result })
+    console.log("✅ Quote email sent:", data?.id)
+    return NextResponse.json({ success: true, data })
   } catch (err) {
-    console.error("Send quote error:", err)
-    return NextResponse.json({ error: "Unexpected error" }, { status: 500 })
+    console.error("❌ Send quote error:", err)
+    return NextResponse.json({ success: false, error: String(err) }, { status: 500 })
   }
+}
+
+async function generateQuotePdf(quote: any): Promise<Buffer> {
+  const doc = new PDFDocument()
+  const stream = doc.pipe(getStream.buffer())
+
+  doc.fontSize(20).text("Quote", { align: "center" })
+  doc.moveDown()
+  doc.fontSize(14).text(`Company: ${quote.company_name}`)
+  doc.text(`Client: ${quote.client_name}`)
+  doc.text(`Email: ${quote.client_email}`)
+  doc.text(`Phone: ${quote.client_phone || "N/A"}`)
+  doc.moveDown()
+  doc.text(`Project: ${quote.project_title}`)
+  doc.text(`Description: ${quote.project_description || "N/A"}`)
+  doc.moveDown()
+
+  if (quote.good_total) doc.text(`Good: $${quote.good_total}`)
+  if (quote.better_total) doc.text(`Better: $${quote.better_total}`)
+  if (quote.best_total) doc.text(`Best: $${quote.best_total}`)
+
+  doc.moveDown()
+  doc.text(`Deposit: ${quote.deposit_percentage || 0}%`)
+  doc.text(`Valid Until: ${quote.valid_until || "N/A"}`)
+  doc.text(`Notes: ${quote.notes || "N/A"}`)
+
+  doc.end()
+  return stream
 }
