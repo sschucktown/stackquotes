@@ -7,7 +7,7 @@ export async function GET() {
   try {
     const result = await resend.emails.send({
       from: "StackQuotes <quotes@stackquotes.com>",
-      to: "your@email.com",
+      to: "scottmsandie@gmail.com",
       subject: "Resend test",
       text: "If you got this, Resend is working in Vercel.",
     })
