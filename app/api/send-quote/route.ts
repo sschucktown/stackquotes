@@ -2,17 +2,40 @@ import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import PDFDocument from "pdfkit";
 import getStream from "get-stream";
+import { createClient } from "@/lib/supabase/server";
 
 const resend = new Resend(process.env.RESEND_API_KEY!);
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { clientEmail, quote } = body;
+    const { quoteId } = body;
 
-    if (!clientEmail || !quote) {
+    if (!quoteId) {
       return NextResponse.json(
-        { error: "Missing clientEmail or quote" },
+        { error: "Missing quoteId" },
+        { status: 400 }
+      );
+    }
+
+    // Fetch the quote from Supabase
+    const supabase = createClient();
+    const { data: quote, error: fetchError } = await supabase
+      .from("quotes")
+      .select("*")
+      .eq("id", quoteId)
+      .single();
+
+    if (fetchError || !quote) {
+      return NextResponse.json(
+        { error: "Quote not found" },
+        { status: 404 }
+      );
+    }
+
+    if (!quote.client_email) {
+      return NextResponse.json(
+        { error: "Quote missing client email" },
         { status: 400 }
       );
     }
@@ -38,7 +61,7 @@ export async function POST(req: Request) {
     // Send email with Resend
     const { data, error } = await resend.emails.send({
       from: "StackQuotes <noreply@stackquotes.com>", // ✅ must use verified domain
-      to: [clientEmail],
+      to: [quote.client_email],
       subject: `Quote: ${quote.project_title}`,
       html: "<p>Please find your quote attached.</p>",
       attachments: [
