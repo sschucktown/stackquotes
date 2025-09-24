@@ -37,7 +37,7 @@ export async function POST(req: Request) {
 
     // Send via Resend
     const { data, error: sendError } = await resend.emails.send({
-      from: "StackQuotes <no-reply@stackquotes.com>",
+      from: "Acme <onboarding@resend.dev>",
       to: quote.client_email,
       subject: `Quote: ${quote.project_title}`,
       text: `Hi ${quote.client_name}, please find your quote attached.`,
