@@ -3,7 +3,6 @@ import { Resend } from "resend"
 import PDFDocument from "pdfkit"
 import getStream from "get-stream"
 
-// Initialize Resend client with API key
 const resend = new Resend(process.env.RESEND_API_KEY)
 
 export async function POST(req: Request) {
@@ -12,37 +11,42 @@ export async function POST(req: Request) {
     const { quote } = body
 
     if (!process.env.RESEND_API_KEY) {
-      console.error("❌ Missing RESEND_API_KEY")
-      return NextResponse.json({ success: false, error: "API key not set" }, { status: 500 })
+      return NextResponse.json({ success: false, error: "Missing API key" }, { status: 500 })
     }
 
     if (!quote?.client_email) {
       return NextResponse.json({ success: false, error: "Missing client email" }, { status: 400 })
     }
 
-    // Generate the PDF buffer
+    // Generate PDF
     const pdfBuffer = await generateQuotePdf(quote)
 
-    // Send email
-    const { data, error } = await resend.emails.send({
-      from: "StackQuotes <quotes@stackquotes.com>", // ✅ must match verified domain
+    // Debug log
+    console.log("📤 Sending email:", {
+      from: "StackQuotes <quotes@stackquotes.com>",
       to: [quote.client_email],
-      subject: `Your Quote from ${quote.company_name}`,
+      subject: `Your Quote from ${quote.company_name || "StackQuotes"}`,
+    })
+
+    const { data, error } = await resend.emails.send({
+      from: "StackQuotes <quotes@stackquotes.com>",   // ✅ string, not function
+      to: [quote.client_email],
+      subject: `Your Quote from ${quote.company_name || "StackQuotes"}`,
       text: "Please find your attached quote.",
       attachments: [
         {
           filename: "quote.pdf",
-          content: pdfBuffer.toString("base64"),
+          content: Buffer.from(pdfBuffer).toString("base64"), // ✅ force base64
         },
       ],
     })
 
     if (error) {
-      console.error("❌ Resend send error:", error)
-      return NextResponse.json({ success: false, error }, { status: 500 })
+      console.error("❌ Resend error:", error)
+      return NextResponse.json({ success: false, error }, { status: 400 })
     }
 
-    console.log("✅ Quote email sent:", data?.id)
+    console.log("✅ Email sent:", data)
     return NextResponse.json({ success: true, data })
   } catch (err) {
     console.error("❌ Send quote error:", err)
