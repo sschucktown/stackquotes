@@ -44,7 +44,7 @@ export async function POST(req: Request) {
 
     // Send email
     const result = await resend.emails.send({
-      from: "StackQuotes <onboarding@resend.dev>", // must be verified in Resend
+      from: "StackQuotes <quotes@stackquotes.com>", // must be verified in Resend
       to: quote.client_email,
       subject: `Quote: ${quote.project_title}`,
       text: `Hi ${quote.client_name}, please find your quote attached.`,
