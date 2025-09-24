@@ -318,7 +318,9 @@ export default function DashboardPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent
                           align="end"
-                          className="bg-white dark:bg-gray-900 border shadow-md"
+                          sideOffset={4}
+                          className="bg-white dark:bg-gray-900 border shadow-md z-50"
+                          {...(typeof document !== "undefined" ? { container: document.body } : {})}
                         >
                           <DropdownMenuItem onClick={() => alert("View Details")}>
                             <Eye className="h-4 w-4 mr-2" />
