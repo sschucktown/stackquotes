@@ -111,6 +111,7 @@ export default function NewQuotePage() {
         return
       }
 
+      // Update Supabase status
       const { error } = await supabase
         .from("quotes")
         .update({
@@ -121,6 +122,17 @@ export default function NewQuotePage() {
         .eq("id", quoteId)
 
       if (error) throw error
+
+      // Call API to send PDF email
+      const response = await fetch("/api/send-quote", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ quoteId }),
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to send email")
+      }
 
       router.push("/dashboard")
     } catch (err) {
