@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server"
 import { Resend } from "resend"
 import { createClient } from "@/lib/supabase/server"
-import { jsPDF } from "jspdf"
+import PDFDocument from "pdfkit"
+import getStream from "get-stream"
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
@@ -22,41 +23,48 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Quote not found" }, { status: 404 })
     }
 
-    // Generate PDF with jsPDF
-    const doc = new jsPDF()
-    doc.setFontSize(18)
-    doc.text(`Quote: ${quote.project_title}`, 20, 20)
-    doc.setFontSize(12)
-    doc.text(`Client: ${quote.client_name}`, 20, 40)
-    doc.text(`Email: ${quote.client_email}`, 20, 50)
-    doc.text(`Phone: ${quote.client_phone || "N/A"}`, 20, 60)
-    doc.text(`Description: ${quote.project_description}`, 20, 80)
-    doc.text(`Total (Best Option): $${quote.best_total}`, 20, 100)
+    // Generate PDF with pdfkit
+    const doc = new PDFDocument()
+    doc.fontSize(18).text(`Quote: ${quote.project_title}`, { underline: true })
+    doc.moveDown()
+    doc.fontSize(12).text(`Client: ${quote.client_name}`)
+    doc.text(`Email: ${quote.client_email}`)
+    doc.text(`Phone: ${quote.client_phone || "N/A"}`)
+    doc.moveDown()
+    doc.text(`Project Description:`)
+    doc.text(quote.project_description || "N/A", { indent: 20 })
+    doc.moveDown()
+    doc.text(`Good Option: $${quote.good_total}`)
+    doc.text(`Better Option: $${quote.better_total}`)
+    doc.text(`Best Option: $${quote.best_total}`)
+    doc.moveDown()
+    doc.text(`Notes:`)
+    doc.text(quote.notes || "None", { indent: 20 })
 
-    const pdfBytes = doc.output("arraybuffer")
+    doc.end()
 
-    // Send via Resend
-    const { data, error: sendError } = await resend.emails.send({
-      from: "Acme <onboarding@resend.dev>",
+    // Convert PDF to buffer
+    const pdfBuffer = await getStream.buffer(doc)
+
+    // Send email via Resend
+    const result = await resend.emails.send({
+      from: "StackQuotes <onboarding@resend.dev>", // ✅ use verified sender
       to: quote.client_email,
       subject: `Quote: ${quote.project_title}`,
       text: `Hi ${quote.client_name}, please find your quote attached.`,
       attachments: [
         {
           filename: `quote-${quoteId}.pdf`,
-          content: Buffer.from(pdfBytes).toString("base64"),
+          content: pdfBuffer.toString("base64"),
         },
       ],
     })
 
-    if (sendError) {
-      console.error(sendError)
-      return NextResponse.json({ error: "Failed to send email" }, { status: 500 })
-    }
+    console.log("Resend response:", result)
 
-    return NextResponse.json({ success: true, data })
+    return NextResponse.json({ success: true, data: result })
   } catch (err) {
-    console.error(err)
+    console.error("Send quote error:", err)
     return NextResponse.json({ error: "Unexpected error" }, { status: 500 })
   }
 }
