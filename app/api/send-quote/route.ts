@@ -1,16 +1,13 @@
 import { NextResponse } from "next/server"
-import Resend from "resend"
+import { Resend } from "resend"
 import { createClient } from "@/lib/supabase/server"
 import PDFDocument from "pdfkit"
 import getStream from "get-stream"
 
-// ✅ default import
 const resend = new Resend(process.env.RESEND_API_KEY)
 
 export async function POST(req: Request) {
   try {
-    console.log("Resend package version:", require("resend/package.json").version)
-
     const { quoteId } = await req.json()
 
     const supabase = createClient()
@@ -24,7 +21,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Quote not found" }, { status: 404 })
     }
 
-    // Generate PDF
+    // Build PDF
     const doc = new PDFDocument()
     doc.fontSize(18).text(`Quote: ${quote.project_title}`, { underline: true })
     doc.moveDown()
@@ -45,42 +42,27 @@ export async function POST(req: Request) {
 
     const pdfBuffer = await getStream.buffer(doc)
 
-    // Try sending with attachment
-    try {
-      const result = await resend.emails.send({
-        from: "StackQuotes <onboarding@resend.dev>",
-        to: quote.client_email,
-        subject: `Quote: ${quote.project_title}`,
-        text: `Hi ${quote.client_name}, please find your quote attached.`,
-        attachments: [
-          {
-            filename: `quote-${quoteId}.pdf`,
-            content: pdfBuffer.toString("base64"),
-          },
-        ],
-      })
+    // Send email
+    const result = await resend.emails.send({
+      from: "StackQuotes <onboarding@resend.dev>", // must be verified in Resend
+      to: quote.client_email,
+      subject: `Quote: ${quote.project_title}`,
+      text: `Hi ${quote.client_name}, please find your quote attached.`,
+      attachments: [
+        {
+          filename: `quote-${quoteId}.pdf`,
+          content: pdfBuffer.toString("base64"),
+        },
+      ],
+    })
 
-      console.log("Resend result:", result)
-
-      if (result.error) {
-        console.error("Resend API error:", result.error)
-        return NextResponse.json({ error: result.error }, { status: 500 })
-      }
-
-      return NextResponse.json({ success: true, data: result })
-    } catch (err) {
-      console.error("Attachment send failed, retrying without PDF:", err)
-
-      // Fallback: plain email without PDF
-      const fallback = await resend.emails.send({
-        from: "StackQuotes <onboarding@resend.dev>",
-        to: quote.client_email,
-        subject: `Quote: ${quote.project_title}`,
-        text: `Hi ${quote.client_name},\n\nYour quote is ready but the PDF failed to attach. Please log in to view it.`,
-      })
-
-      return NextResponse.json({ success: true, data: fallback })
+    if (result.error) {
+      console.error("Resend API error:", result.error)
+      return NextResponse.json({ error: result.error }, { status: 500 })
     }
+
+    console.log("Email sent successfully:", result)
+    return NextResponse.json({ success: true, data: result })
   } catch (err) {
     console.error("Send quote error:", err)
     return NextResponse.json({ error: "Unexpected error" }, { status: 500 })
