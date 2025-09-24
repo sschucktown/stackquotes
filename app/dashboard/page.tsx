@@ -311,35 +311,37 @@ export default function DashboardPage() {
                       </div>
                       <Badge className={`text-xs ${getStatusColor(quote.status)}`}>{quote.status}</Badge>
                       <DropdownMenu>
-  <DropdownMenuTrigger asChild>
-    <Button variant="ghost" size="sm">
-      <MoreHorizontal className="h-4 w-4" />
-    </Button>
-  </DropdownMenuTrigger>
-  <DropdownMenuContent align="end" className="bg-white dark:bg-gray-900 border shadow-md">
-    <DropdownMenuItem onClick={() => alert("View Details")}>
-      <Eye className="h-4 w-4 mr-2" />
-      View Details
-    </DropdownMenuItem>
-    <DropdownMenuItem onClick={() => (window.location.href = `/quotes/new?id=${quote.id}`)}>
-      <Edit className="h-4 w-4 mr-2" />
-      Edit Quote
-    </DropdownMenuItem>
-    <DropdownMenuItem onClick={() => alert("Duplicate (not implemented yet)")}>
-      <Copy className="h-4 w-4 mr-2" />
-      Duplicate
-    </DropdownMenuItem>
-    <DropdownMenuSeparator />
-    <DropdownMenuItem
-      className="text-red-600"
-      onClick={() => handleDelete(quote.id)}
-    >
-      <Trash2 className="h-4 w-4 mr-2" />
-      Delete
-    </DropdownMenuItem>
-  </DropdownMenuContent>
-</DropdownMenu>
-
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                          align="end"
+                          className="bg-white dark:bg-gray-900 border shadow-md"
+                        >
+                          <DropdownMenuItem onClick={() => alert("View Details")}>
+                            <Eye className="h-4 w-4 mr-2" />
+                            View Details
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => (window.location.href = `/quotes/new?id=${quote.id}`)}>
+                            <Edit className="h-4 w-4 mr-2" />
+                            Edit Quote
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => alert("Duplicate (not implemented yet)")}>
+                            <Copy className="h-4 w-4 mr-2" />
+                            Duplicate
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            className="text-red-600"
+                            onClick={() => handleDelete(quote.id)}
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </div>
                 ))}
