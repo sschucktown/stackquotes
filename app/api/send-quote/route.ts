@@ -2,40 +2,17 @@ import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import PDFDocument from "pdfkit";
 import getStream from "get-stream";
-import { createClient } from "@/lib/supabase/server";
 
 const resend = new Resend(process.env.RESEND_API_KEY!);
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { quoteId } = body;
+    const { clientEmail, quote } = body;
 
-    if (!quoteId) {
+    if (!clientEmail || !quote) {
       return NextResponse.json(
-        { error: "Missing quoteId" },
-        { status: 400 }
-      );
-    }
-
-    // Fetch the quote from Supabase
-    const supabase = createClient();
-    const { data: quote, error: fetchError } = await supabase
-      .from("quotes")
-      .select("*")
-      .eq("id", quoteId)
-      .single();
-
-    if (fetchError || !quote) {
-      return NextResponse.json(
-        { error: "Quote not found" },
-        { status: 404 }
-      );
-    }
-
-    if (!quote.client_email) {
-      return NextResponse.json(
-        { error: "Quote missing client email" },
+        { error: "Missing clientEmail or quote" },
         { status: 400 }
       );
     }
@@ -59,33 +36,33 @@ export async function POST(req: Request) {
     const pdfBuffer = await getStream.buffer(doc);
 
     // Send email with Resend
-    const { data, error } = await resend.emails.send({
-      from: "StackQuotes <noreply@stackquotes.com>", // ✅ must use verified domain
-      to: [quote.client_email],
+    const result = await resend.emails.send({
+      from: "StackQuotes <noreply@stackquotes.com>", // must match verified domain
+      to: [clientEmail],
       subject: `Quote: ${quote.project_title}`,
       html: "<p>Please find your quote attached.</p>",
       attachments: [
         {
           filename: "quote.pdf",
-          content: pdfBuffer.toString("base64"),
+          content: pdfBuffer, // ✅ send buffer directly
         },
       ],
     });
 
-    console.log("Resend result:", { data, error });
+    console.log("📧 Resend result:", JSON.stringify(result, null, 2));
 
-    if (error) {
+    if (result.error) {
       return NextResponse.json(
-        { success: false, error },
+        { success: false, error: result.error },
         { status: 400 }
       );
     }
 
-    return NextResponse.json({ success: true, data });
+    return NextResponse.json({ success: true, data: result.data });
   } catch (err: any) {
-    console.error("Send quote error:", err);
+    console.error("❌ Send quote error:", err);
     return NextResponse.json(
-      { success: false, error: err.message },
+      { success: false, error: err.message, stack: err.stack },
       { status: 500 }
     );
   }
