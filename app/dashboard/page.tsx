@@ -311,40 +311,17 @@ export default function DashboardPage() {
                       </div>
                       <Badge className={`text-xs ${getStatusColor(quote.status)}`}>{quote.status}</Badge>
                       <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent
-                          align="end"
-                          sideOffset={4}
-                          className="bg-red-500 text-white p-10 z-[9999] block opacity-100"
-                          {...(typeof document !== "undefined" ? { container: document.body } : {})}
-                        >
-                          <div className="font-bold">DEBUG MENU VISIBLE</div>
-                          <DropdownMenuItem onClick={() => alert("View Details")}>
-                            <Eye className="h-4 w-4 mr-2" />
-                            View Details
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => (window.location.href = `/quotes/new?id=${quote.id}`)}>
-                            <Edit className="h-4 w-4 mr-2" />
-                            Edit Quote
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <Copy className="h-4 w-4 mr-2" />
-                            Duplicate
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            className="text-white bg-red-700"
-                            onClick={() => handleDelete(quote.id)}
-                          >
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+  <DropdownMenuTrigger>
+    <MoreHorizontal className="h-6 w-6 cursor-pointer text-red-500" />
+  </DropdownMenuTrigger>
+  <DropdownMenuContent
+    className="bg-red-500 text-white p-10 z-[9999] block opacity-100"
+    {...(typeof document !== "undefined" ? { container: document.body } : {})}
+  >
+    <div className="font-bold">DEBUG MENU VISIBLE</div>
+  </DropdownMenuContent>
+</DropdownMenu>
+
                     </div>
                   </div>
                 ))}
