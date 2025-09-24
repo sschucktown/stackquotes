@@ -6,7 +6,7 @@ const resend = new Resend(process.env.RESEND_API_KEY)
 export async function GET() {
   try {
     const result = await resend.emails.send({
-      from: "StackQuotes <onboarding@resend.dev>",
+      from: "StackQuotes <stackquotesapp@gmail.com>",
       to: "your@email.com",
       subject: "Resend test",
       text: "If you got this, Resend is working in Vercel.",
