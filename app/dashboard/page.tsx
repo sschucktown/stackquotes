@@ -321,11 +321,9 @@ export default function DashboardPage() {
                             <Eye className="h-4 w-4 mr-2" />
                             View Details
                           </DropdownMenuItem>
-                          <DropdownMenuItem asChild>
-                            <Link href={`/quotes/new?id=${quote.id}`}>
-                              <Edit className="h-4 w-4 mr-2" />
-                              Edit Quote
-                            </Link>
+                          <DropdownMenuItem onClick={() => (window.location.href = `/quotes/new?id=${quote.id}`)}>
+                            <Edit className="h-4 w-4 mr-2" />
+                            Edit Quote
                           </DropdownMenuItem>
                           <DropdownMenuItem>
                             <Copy className="h-4 w-4 mr-2" />
