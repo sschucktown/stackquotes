@@ -1,296 +1,227 @@
-﻿"use client"
+"use client"
 
-import { useCallback, useEffect, useState } from "react"
-import type { ChangeEvent, FormEvent } from "react"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from "react"
+import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
-import { ArrowLeft, Loader2, Plus, Save } from "lucide-react"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Button } from "@/components/ui/button"
+import { useToast } from "@/hooks/use-toast"
+import { Loader2 } from "lucide-react"
 
 type ProfileForm = {
   company_name: string
   contact_name: string
-  email: string
   phone: string
+  email: string
   address: string
 }
 
 export default function ProfilePage() {
-  const supabase = createClient()
-  const [userId, setUserId] = useState<string | null>(null)
-  const [formData, setFormData] = useState<ProfileForm>({
+  const supabase = useMemo(() => createClient(), [])
+  const router = useRouter()
+  const { toast } = useToast()
+
+  const [form, setForm] = useState<ProfileForm>({
     company_name: "",
     contact_name: "",
-    email: "",
     phone: "",
+    email: "",
     address: "",
   })
+  const [userId, setUserId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState(false)
-
-  const loadProfile = useCallback(async () => {
-    setError(null)
-    setLoading(true)
-
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser()
-
-    if (userError || !user) {
-      console.error("Error fetching authenticated user:", userError)
-      setError("You need to be signed in to manage your profile.")
-      setLoading(false)
-      return
-    }
-
-    setUserId(user.id)
-
-    const { data, error: profileError } = await supabase
-      .from("profiles")
-      .select("company_name, contact_name, email, phone, address")
-      .eq("id", user.id)
-      .maybeSingle()
-
-    if (profileError) {
-      console.error("Error loading profile:", profileError)
-      setError("We couldn't load your profile. Please try again.")
-      setFormData({
-        company_name: "",
-        contact_name: "",
-        email: user.email ?? "",
-        phone: "",
-        address: "",
-      })
-      setLoading(false)
-      return
-    }
-
-    const nextData: ProfileForm = {
-      company_name: data?.company_name ?? "",
-      contact_name: data?.contact_name ?? "",
-      email: data?.email ?? user.email ?? "",
-      phone: data?.phone ?? "",
-      address: data?.address ?? "",
-    }
-
-    setFormData(nextData)
-    setLoading(false)
-  }, [supabase])
 
   useEffect(() => {
-    void loadProfile()
-  }, [loadProfile])
+    let isMounted = true
 
-  const handleChange =
-    (field: keyof ProfileForm) =>
-    (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      const value = event.target.value
-      setFormData((prev) => ({ ...prev, [field]: value }))
-      if (error) setError(null)
-      if (success) setSuccess(false)
+    const loadProfile = async () => {
+      setLoading(true)
+
+      try {
+        const {
+          data: { user },
+          error: userError,
+        } = await supabase.auth.getUser()
+
+        if (userError || !user) {
+          toast({
+            variant: "destructive",
+            title: "Session expired",
+            description: "Please sign in again to continue.",
+          })
+          router.push("/login")
+          return
+        }
+
+        setUserId(user.id)
+
+        const { data, error } = await supabase.from("profiles").select("*").eq("id", user.id).single()
+
+        if (error) {
+          toast({
+            variant: "destructive",
+            title: "Unable to load profile",
+            description: error.message,
+          })
+        } else if (data && isMounted) {
+          setForm({
+            company_name: data.company_name ?? "",
+            contact_name: data.contact_name ?? "",
+            phone: data.phone ?? "",
+            email: data.email ?? user.email ?? "",
+            address: data.address ?? "",
+          })
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false)
+        }
+      }
     }
+
+    loadProfile()
+
+    return () => {
+      isMounted = false
+    }
+  }, [router, supabase, toast])
+
+  const handleChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = event.target
+    setForm((prev) => ({ ...prev, [name]: value }))
+  }
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (!userId) {
-      setError("You need to be signed in to update your profile.")
-      return
-    }
+    if (!userId) return
 
-    setSuccess(false)
     setSaving(true)
-    setError(null)
 
-    const sanitized: ProfileForm = {
-      company_name: formData.company_name.trim(),
-      contact_name: formData.contact_name.trim(),
-      email: formData.email.trim(),
-      phone: formData.phone.trim(),
-      address: formData.address.trim(),
+    const payload = {
+      company_name: form.company_name.trim(),
+      contact_name: form.contact_name.trim(),
+      email: form.email.trim(),
+      phone: form.phone.trim() || null,
+      address: form.address.trim() || null,
     }
 
-    const { error: updateError } = await supabase.from("profiles").upsert({
-      id: userId,
-      company_name: sanitized.company_name,
-      contact_name: sanitized.contact_name,
-      email: sanitized.email,
-      phone: sanitized.phone || null,
-      address: sanitized.address || null,
-    })
+    try {
+      const { error } = await supabase.from("profiles").update(payload).eq("id", userId)
 
-    if (updateError) {
-      console.error("Error updating profile:", updateError)
-      setError("We couldn't save your profile. Please try again.")
-    } else {
-      setFormData({
-        ...sanitized,
-      })
-      setSuccess(true)
+      if (error) {
+        toast({
+          variant: "destructive",
+          title: "Unable to save profile",
+          description: error.message,
+        })
+      } else {
+        toast({
+          title: "Profile updated",
+          description: "Your contractor details have been saved.",
+        })
+        setForm((prev) => ({
+          ...prev,
+          company_name: payload.company_name,
+          contact_name: payload.contact_name,
+          email: payload.email,
+          phone: payload.phone ?? "",
+          address: payload.address ?? "",
+        }))
+      }
+    } finally {
+      setSaving(false)
     }
+  }
 
-    setSaving(false)
+  if (loading) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    )
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border/40">
-        <div className="container mx-auto flex items-center justify-between px-4 py-4">
-          <div className="flex items-center space-x-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-              <span className="text-sm font-bold text-primary-foreground">SQ</span>
-            </div>
-            <span className="text-xl font-semibold text-foreground">StackQuotes</span>
+    <Card className="border-border/50 bg-background/60 backdrop-blur">
+      <CardHeader>
+        <CardTitle>Contractor Profile</CardTitle>
+        <CardDescription>Keep your business details up to date for quotes and client communication.</CardDescription>
+      </CardHeader>
+      <form onSubmit={handleSubmit}>
+        <CardContent className="grid gap-6">
+          <div className="grid gap-2">
+            <Label htmlFor="company_name">Company name</Label>
+            <Input
+              id="company_name"
+              name="company_name"
+              value={form.company_name}
+              onChange={handleChange}
+              placeholder="Acme Construction"
+              required
+            />
           </div>
-          <div className="flex items-center space-x-3">
-            <Link href="/dashboard">
-              <Button variant="ghost">
-                <ArrowLeft className="h-4 w-4" />
-                Dashboard
-              </Button>
-            </Link>
-            <Link href="/quotes/new">
-              <Button>
-                <Plus className="h-4 w-4" />
-                New Quote
-              </Button>
-            </Link>
+          <div className="grid gap-2">
+            <Label htmlFor="contact_name">Primary contact</Label>
+            <Input
+              id="contact_name"
+              name="contact_name"
+              value={form.contact_name}
+              onChange={handleChange}
+              placeholder="Jordan Smith"
+              required
+            />
           </div>
-        </div>
-      </header>
-
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-8 max-w-3xl space-y-2">
-          <h1 className="text-3xl font-bold">Account profile</h1>
-          <p className="text-muted-foreground">
-            Manage the company details and contact information that appear on your quotes and proposals.
-          </p>
-        </div>
-
-        <Card className="max-w-3xl border-border/50">
-          <CardHeader>
-            <CardTitle>Business details</CardTitle>
-            <CardDescription>Keep this information up to date to deliver the right details to clients.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {error && (
-              <Alert variant="destructive">
-                <AlertTitle>Something went wrong</AlertTitle>
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-
-            {success && (
-              <Alert>
-                <AlertTitle>Profile updated</AlertTitle>
-                <AlertDescription>Your changes have been saved successfully.</AlertDescription>
-              </Alert>
-            )}
-
-            {loading ? (
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                <span>Loading your profile...</span>
-              </div>
+          <div className="grid gap-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              name="email"
+              type="email"
+              value={form.email}
+              onChange={handleChange}
+              placeholder="you@stackquotes.com"
+              required
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="phone">Phone</Label>
+            <Input
+              id="phone"
+              name="phone"
+              value={form.phone}
+              onChange={handleChange}
+              placeholder="(555) 123-4567"
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="address">Business address</Label>
+            <Textarea
+              id="address"
+              name="address"
+              value={form.address}
+              onChange={handleChange}
+              placeholder="123 Main Street, Suite 200, Springfield, IL"
+              rows={4}
+            />
+          </div>
+        </CardContent>
+        <CardFooter className="flex justify-end">
+          <Button type="submit" disabled={saving}>
+            {saving ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Saving
+              </>
             ) : (
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="company_name">Company name</Label>
-                    <Input
-                      id="company_name"
-                      name="company_name"
-                      value={formData.company_name}
-                      onChange={handleChange("company_name")}
-                      placeholder="Acme Renovations"
-                      required
-                      disabled={saving}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="contact_name">Primary contact</Label>
-                    <Input
-                      id="contact_name"
-                      name="contact_name"
-                      value={formData.contact_name}
-                      onChange={handleChange("contact_name")}
-                      placeholder="Alex Contractor"
-                      required
-                      disabled={saving}
-                    />
-                  </div>
-                </div>
-
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      name="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={handleChange("email")}
-                      placeholder="you@company.com"
-                      required
-                      disabled={saving}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Phone (optional)</Label>
-                    <Input
-                      id="phone"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handleChange("phone")}
-                      placeholder="(555) 123-4567"
-                      disabled={saving}
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="address">Business address (optional)</Label>
-                  <Textarea
-                    id="address"
-                    name="address"
-                    value={formData.address}
-                    onChange={handleChange("address")}
-                    placeholder={`123 Main Street
-Suite 200
-Springfield, IL 62704`}
-                    rows={4}
-                    disabled={saving}
-                  />
-                </div>
-
-                <div className="flex flex-col items-start justify-between gap-4 border-t border-border/40 pt-4 text-sm text-muted-foreground md:flex-row md:items-center">
-                  <p>These details are shared on client-facing documents.</p>
-                  <Button type="submit" disabled={saving}>
-                    {saving ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Saving...
-                      </>
-                    ) : (
-                      <>
-                        <Save className="h-4 w-4" />
-                        Save changes
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </form>
+              "Save changes"
             )}
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+          </Button>
+        </CardFooter>
+      </form>
+    </Card>
   )
 }
