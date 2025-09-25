@@ -1,3 +1,6 @@
+import fs from "node:fs";
+import path from "node:path";
+
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import PDFDocument from "pdfkit";
@@ -17,8 +20,21 @@ export async function POST(req: Request) {
       );
     }
 
+    const fontPath = path.join(
+      process.cwd(),
+      "public",
+      "fonts",
+      "Inter-Regular.ttf"
+    );
+
+    if (!fs.existsSync(fontPath)) {
+      throw new Error(`PDF font file missing at path: ${fontPath}`);
+    }
+
     // Generate PDF
     const doc = new PDFDocument();
+    doc.registerFont("Inter", fontPath);
+    doc.font("Inter");
     doc.fontSize(18).text("Quote", { align: "center" });
     doc.moveDown();
     doc.fontSize(12).text(`Project: ${quote.project_title}`);
