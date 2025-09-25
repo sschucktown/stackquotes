@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import PDFDocument from "pdfkit";
-import getStream from "get-stream";
+import type * as PDFKit from "pdfkit";
 
 const resend = new Resend(process.env.RESEND_API_KEY!);
 
@@ -36,6 +36,17 @@ const summarizeItems = (items?: QuoteItem[] | null) =>
     ? items.filter((item) => item?.description).map((item) => String(item?.description))
     : [];
 
+const toBuffer = (doc: PDFKit.PDFDocument) =>
+  new Promise<Buffer>((resolve, reject) => {
+    const chunks: Buffer[] = [];
+
+    doc.on("data", (chunk) =>
+      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk))
+    );
+    doc.on("end", () => resolve(Buffer.concat(chunks)));
+    doc.on("error", reject);
+  });
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -47,6 +58,8 @@ export async function POST(req: Request) {
 
     // Generate PDF
     const doc = new PDFDocument();
+    const pdfBufferPromise = toBuffer(doc);
+
     doc.fontSize(18).text("Quote", { align: "center" });
     doc.moveDown();
     doc.fontSize(12).text(`Project: ${quote.project_title}`);
@@ -56,12 +69,12 @@ export async function POST(req: Request) {
     doc.text("Description:");
     doc.text(quote.project_description || "N/A");
     doc.moveDown();
-    doc.text(`Good: $${quote.good_total}`);
-    doc.text(`Better: $${quote.better_total}`);
-    doc.text(`Best: $${quote.best_total}`);
+    doc.text(`Good: ${currency(quote.good_total)}`);
+    doc.text(`Better: ${currency(quote.better_total)}`);
+    doc.text(`Best: ${currency(quote.best_total)}`);
     doc.end();
 
-    const pdfBuffer = await getStream.buffer(doc);
+    const pdfBuffer = await pdfBufferPromise;
 
     // Send email with Resend
     const result = await resend.emails.send({
@@ -73,12 +86,12 @@ export async function POST(req: Request) {
       attachments: [
         {
           filename: "quote.pdf",
-          content: pdfBuffer, // ✅ send buffer directly
+          content: pdfBuffer,
         },
       ],
     });
 
-    console.log("📧 Resend result:", JSON.stringify(result, null, 2));
+    console.log("Resend result:", JSON.stringify(result, null, 2));
 
     if (result.error) {
       return NextResponse.json({ success: false, error: result.error }, { status: 400 });
@@ -86,7 +99,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true, data: result.data });
   } catch (err: any) {
-    console.error("❌ Send quote error:", err);
+    console.error("Send quote error:", err);
     return NextResponse.json(
       { success: false, error: err.message, stack: err.stack },
       { status: 500 }
