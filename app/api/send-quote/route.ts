@@ -1,10 +1,7 @@
-import fs from "node:fs";
-import path from "node:path";
-
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import PDFDocument from "pdfkit";
-import getStream from "get-stream";
+import { getStreamAsBuffer } from "get-stream";
 
 const resend = new Resend(process.env.RESEND_API_KEY!);
 
@@ -20,21 +17,9 @@ export async function POST(req: Request) {
       );
     }
 
-    const fontPath = path.join(
-      process.cwd(),
-      "public",
-      "fonts",
-      "Inter-Regular.ttf"
-    );
-
-    if (!fs.existsSync(fontPath)) {
-      throw new Error(`PDF font file missing at path: ${fontPath}`);
-    }
-
     // Generate PDF
     const doc = new PDFDocument();
-    doc.registerFont("Inter", fontPath);
-    doc.font("Inter");
+    doc.font("Helvetica");
     doc.fontSize(18).text("Quote", { align: "center" });
     doc.moveDown();
     doc.fontSize(12).text(`Project: ${quote.project_title}`);
@@ -49,7 +34,8 @@ export async function POST(req: Request) {
     doc.text(`Best: $${quote.best_total}`);
     doc.end();
 
-    const pdfBuffer = await getStream.buffer(doc);
+    const pdfBuffer = await getStreamAsBuffer(doc);
+    const pdfBase64 = pdfBuffer.toString("base64");
 
     // Send email with Resend
     const result = await resend.emails.send({
@@ -60,12 +46,13 @@ export async function POST(req: Request) {
       attachments: [
         {
           filename: "quote.pdf",
-          content: pdfBuffer, // ✅ send buffer directly
+          content: pdfBase64,
+          type: "application/pdf",
         },
       ],
     });
 
-    console.log("📧 Resend result:", JSON.stringify(result, null, 2));
+    console.log("Resend result:", JSON.stringify(result, null, 2));
 
     if (result.error) {
       return NextResponse.json(
@@ -76,7 +63,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true, data: result.data });
   } catch (err: any) {
-    console.error("❌ Send quote error:", err);
+    console.error("Send quote error:", err);
     return NextResponse.json(
       { success: false, error: err.message, stack: err.stack },
       { status: 500 }
