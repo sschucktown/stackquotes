@@ -25,8 +25,10 @@ import {
   Eye,
   Edit,
   Copy,
+  Send,
   Trash2,
   TrendingUp,
+  User,
   Users,
   Calendar,
 } from "lucide-react"
@@ -40,6 +42,7 @@ export default function DashboardPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [sortBy, setSortBy] = useState("newest")
+  const [sendingQuoteId, setSendingQuoteId] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchQuotes = async () => {
@@ -78,6 +81,71 @@ export default function DashboardPage() {
     setQuotes((prev) => prev.filter((q) => q.id !== id)) // remove from UI
   }
 
+  const handleSendQuote = async (quote: any) => {
+    if (!quote?.client_email) {
+      alert("Missing client email. Please edit the quote before sending.")
+      return
+    }
+
+    const confirmMessage =
+      quote.status === "sent"
+        ? "This will resend the quote to the client. Continue?"
+        : "Send this quote to the client and mark it as sent?"
+
+    if (!confirm(confirmMessage)) return
+
+    const timestamp = new Date().toISOString()
+    let updatedQuote = { ...quote }
+
+    try {
+      setSendingQuoteId(quote.id)
+
+      const { data, error } = await supabase
+        .from("quotes")
+        .update({
+          status: "sent",
+          updated_at: timestamp,
+        })
+        .eq("id", quote.id)
+        .select()
+        .single()
+
+      if (error) throw error
+
+      updatedQuote = data || { ...quote, status: "sent", updated_at: timestamp }
+
+      setQuotes((prev) =>
+        prev.map((q) => (q.id === updatedQuote.id ? { ...q, ...updatedQuote } : q))
+      )
+
+      const response = await fetch("/api/send-quote", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          clientEmail: updatedQuote.client_email,
+          quote: updatedQuote,
+        }),
+      })
+
+      const result = await response.json()
+
+      if (!response.ok || result?.error) {
+        const message =
+          typeof result?.error === "string"
+            ? result.error
+            : result?.error?.message || "Unknown error"
+        throw new Error(message)
+      }
+
+      alert("Quote sent successfully!")
+    } catch (err) {
+      console.error("Error sending quote:", err)
+      const message = err instanceof Error ? err.message : "Unknown error"
+      alert("Failed to send quote: " + message)
+    } finally {
+      setSendingQuoteId(null)
+    }
+  }
   const stats = {
     totalQuotes: quotes.length,
     acceptedQuotes: quotes.filter((q) => q.status === "accepted").length,
@@ -143,6 +211,12 @@ export default function DashboardPage() {
             <span className="text-xl font-semibold text-foreground">StackQuotes</span>
           </div>
           <div className="flex items-center space-x-4">
+            <Link href="/dashboard/profile">
+              <Button variant="outline">
+                <User className="h-4 w-4 mr-2" />
+                Profile
+              </Button>
+            </Link>
             <Link href="/quotes/new">
               <Button>
                 <Plus className="h-4 w-4 mr-2" />
@@ -332,6 +406,13 @@ export default function DashboardPage() {
                             <Copy className="h-4 w-4 mr-2" />
                             Duplicate
                           </DropdownMenuItem>
+                          <DropdownMenuItem
+                            disabled={sendingQuoteId === quote.id}
+                            onClick={() => handleSendQuote(quote)}
+                          >
+                            <Send className="h-4 w-4 mr-2" />
+                            {quote.status === "sent" ? "Resend Quote" : "Send Quote"}
+                          </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
                             className="text-red-600"
@@ -371,3 +452,5 @@ export default function DashboardPage() {
     </div>
   )
 }
+
+
