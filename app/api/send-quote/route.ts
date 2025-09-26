@@ -23,6 +23,9 @@ type QuotePayload = {
   valid_until?: string | null;
   notes?: string | null;
   status?: string | null;
+  id?: string | null;
+  payment_link?: string | null;
+  proposal_link?: string | null;
 };
 
 const currency = (value?: number | null) =>
@@ -42,6 +45,36 @@ const toBuffer = (doc: PDFKit.PDFDocument) =>
     doc.on("error", reject);
   });
 
+const resolveBaseUrl = (req: Request) => {
+  const envUrl =
+    process.env.NEXT_PUBLIC_APP_URL ||
+    process.env.APP_URL ||
+    process.env.VERCEL_URL;
+
+  if (envUrl && envUrl.trim()) {
+    const trimmed = envUrl.trim();
+    return trimmed.startsWith("http") ? trimmed : `https://${trimmed}`;
+  }
+
+  const origin = req.headers.get("origin");
+  if (origin) {
+    return origin;
+  }
+
+  return "http://localhost:3000";
+};
+
+const toAbsoluteUrl = (url?: string | null, base?: string) => {
+  if (!url) return undefined;
+  const trimmed = url.trim();
+  if (!trimmed) return undefined;
+  if (/^https?:\/\//i.test(trimmed)) {
+    return trimmed;
+  }
+  if (!base) return undefined;
+  return `${base.replace(/\/$/, "")}/${trimmed.replace(/^\//, "")}`;
+};
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -53,6 +86,12 @@ export async function POST(req: Request) {
 
     const depositPercentage = Number(quote.deposit_percentage ?? 0);
     const hasDeposit = depositPercentage > 0;
+
+    const baseUrl = resolveBaseUrl(req);
+    const paymentLink =
+      toAbsoluteUrl(quote.payment_link, baseUrl) ||
+      toAbsoluteUrl(quote.proposal_link, baseUrl) ||
+      (quote.id ? toAbsoluteUrl(`/proposal/${quote.id}`, baseUrl) : undefined);
 
     const tiers = [
       { label: "Good Option", total: quote.good_total },
@@ -102,9 +141,16 @@ export async function POST(req: Request) {
         });
       }
       doc.moveDown();
-      doc.text(
-        "Pay the deposit using the secure link we provide once you confirm your preferred option. Reach out if you need the link resent."
-      );
+      if (paymentLink) {
+        doc.text("Pay the deposit using our secure online link:");
+        doc.moveDown(0.2);
+        doc.fillColor("blue").text(paymentLink, { link: paymentLink, underline: true });
+        doc.fillColor("black");
+      } else {
+        doc.text(
+          "We'll send your secure payment link after you confirm your preferred option. Reach out if you need us to resend it."
+        );
+      }
     } else {
       doc.text("No deposit payment is required to approve this quote.");
     }
@@ -115,7 +161,7 @@ export async function POST(req: Request) {
 
     const greetingName = quote.client_name?.trim().split(" ")[0] || "there";
     const projectTitle = quote.project_title ?? "your project";
-    const depositLinesHtml = hasDeposit && tiers.length
+    const depositInstructionHtmlLines = hasDeposit && tiers.length
       ? `<ul>${tiers
           .map(
             (tier) => `<li>${tier.label}: ${currency(depositAmount(tier.total))}</li>`
@@ -129,14 +175,22 @@ export async function POST(req: Request) {
           .join("\n")
       : "";
 
+    const paymentLinkHtml = paymentLink
+      ? `<p>Approve your preferred option and pay securely: <a href="${paymentLink}">${paymentLink}</a></p>`
+      : `<p>Approve your preferred option and let us know if you need the secure payment link resent.</p>`;
+
+    const paymentLinkText = paymentLink
+      ? `Approve your preferred option and pay securely: ${paymentLink}`
+      : "Approve your preferred option and let us know if you need the secure payment link resent.";
+
     const depositInstructionHtml = hasDeposit
-      ? `<p><strong>Deposit required:</strong> ${depositPercentage}% is due upon approval.</p>${depositLinesHtml}<p>Approve your preferred option and use the secure payment link we send to pay the deposit and lock in scheduling.</p>`
+      ? `<p><strong>Deposit required:</strong> ${depositPercentage}% is due upon approval.</p>${depositInstructionHtmlLines}${paymentLinkHtml}`
       : "<p>No deposit payment is required to approve this quote.</p>";
 
     const depositInstructionText = hasDeposit
       ? `Deposit required: ${depositPercentage}% due upon approval.${
           depositLinesText ? `\n${depositLinesText}` : ""
-        }\nApprove your preferred option and use the secure payment link we send to pay the deposit.`
+        }\n${paymentLinkText}`
       : "No deposit payment is required to approve this quote.";
 
     const emailHtml = `
