@@ -31,11 +31,6 @@ const currency = (value?: number | null) =>
     maximumFractionDigits: 2,
   })}`;
 
-const summarizeItems = (items?: QuoteItem[] | null) =>
-  Array.isArray(items)
-    ? items.filter((item) => item?.description).map((item) => String(item?.description))
-    : [];
-
 const toBuffer = (doc: PDFKit.PDFDocument) =>
   new Promise<Buffer>((resolve, reject) => {
     const chunks: Buffer[] = [];
@@ -56,15 +51,36 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing clientEmail or quote" }, { status: 400 });
     }
 
+    const depositPercentage = Number(quote.deposit_percentage ?? 0);
+    const hasDeposit = depositPercentage > 0;
+
+    const tiers = [
+      { label: "Good Option", total: quote.good_total },
+      { label: "Better Option", total: quote.better_total },
+      { label: "Best Option", total: quote.best_total },
+    ].filter((tier) => Number(tier.total ?? 0) > 0);
+
+    const depositAmount = (total?: number | null) => {
+      const numericTotal = Number(total ?? 0);
+      if (!hasDeposit || numericTotal <= 0) return 0;
+      return numericTotal * (depositPercentage / 100);
+    };
+
     // Generate PDF
     const doc = new PDFDocument();
     const pdfBufferPromise = toBuffer(doc);
 
     doc.fontSize(18).text("Quote", { align: "center" });
     doc.moveDown();
-    doc.fontSize(12).text(`Project: ${quote.project_title}`);
-    doc.text(`Client: ${quote.client_name}`);
-    doc.text(`Email: ${quote.client_email}`);
+    doc.fontSize(12).text(`Project: ${quote.project_title ?? "Untitled Project"}`);
+    doc.text(`Client: ${quote.client_name ?? "N/A"}`);
+    doc.text(`Email: ${quote.client_email ?? "N/A"}`);
+    if (quote.client_phone) {
+      doc.text(`Phone: ${quote.client_phone}`);
+    }
+    if (quote.valid_until) {
+      doc.text(`Valid until: ${quote.valid_until}`);
+    }
     doc.moveDown();
     doc.text("Description:");
     doc.text(quote.project_description || "N/A");
@@ -72,21 +88,88 @@ export async function POST(req: Request) {
     doc.text(`Good: ${currency(quote.good_total)}`);
     doc.text(`Better: ${currency(quote.better_total)}`);
     doc.text(`Best: ${currency(quote.best_total)}`);
+    doc.moveDown();
+
+    if (hasDeposit) {
+      doc.text(
+        `Deposit required: ${depositPercentage}% due upon approval of your selected option.`
+      );
+      if (tiers.length) {
+        doc.moveDown(0.5);
+        tiers.forEach((tier) => {
+          const tierDeposit = depositAmount(tier.total);
+          doc.text(`${tier.label} deposit: ${currency(tierDeposit)}`);
+        });
+      }
+      doc.moveDown();
+      doc.text(
+        "Pay the deposit using the secure link we provide once you confirm your preferred option. Reach out if you need the link resent."
+      );
+    } else {
+      doc.text("No deposit payment is required to approve this quote.");
+    }
+
     doc.end();
 
     const pdfBuffer = await pdfBufferPromise;
+
+    const greetingName = quote.client_name?.trim().split(" ")[0] || "there";
+    const projectTitle = quote.project_title ?? "your project";
+    const depositLinesHtml = hasDeposit && tiers.length
+      ? `<ul>${tiers
+          .map(
+            (tier) => `<li>${tier.label}: ${currency(depositAmount(tier.total))}</li>`
+          )
+          .join("")}</ul>`
+      : "";
+
+    const depositLinesText = hasDeposit && tiers.length
+      ? tiers
+          .map((tier) => `${tier.label}: ${currency(depositAmount(tier.total))}`)
+          .join("\n")
+      : "";
+
+    const depositInstructionHtml = hasDeposit
+      ? `<p><strong>Deposit required:</strong> ${depositPercentage}% is due upon approval.</p>${depositLinesHtml}<p>Approve your preferred option and use the secure payment link we send to pay the deposit and lock in scheduling.</p>`
+      : "<p>No deposit payment is required to approve this quote.</p>";
+
+    const depositInstructionText = hasDeposit
+      ? `Deposit required: ${depositPercentage}% due upon approval.${
+          depositLinesText ? `\n${depositLinesText}` : ""
+        }\nApprove your preferred option and use the secure payment link we send to pay the deposit.`
+      : "No deposit payment is required to approve this quote.";
+
+    const emailHtml = `
+      <p>Hi ${greetingName},</p>
+      <p>Your quote for <strong>${projectTitle}</strong> is attached as a PDF.</p>
+      ${depositInstructionHtml}
+      <p>Let us know if you have any questions or need adjustments.</p>
+      <p>Thanks,<br/>The StackQuotes Team</p>
+    `;
+
+    const emailText = `Hi ${greetingName},
+
+We're excited to share your quote for ${projectTitle}. The PDF is attached.
+
+${depositInstructionText}
+
+Let us know if you have any questions or need adjustments.
+
+Thanks,
+The StackQuotes Team`;
 
     // Send email with Resend
     const result = await resend.emails.send({
       from: "StackQuotes <noreply@stackquotes.com>",
       to: [clientEmail],
       subject: `Quote: ${quote.project_title ?? "Untitled Project"}`,
-      html: "<p>Please find your quote attached.</p>",
-      text: "Please find your quote attached.",
+      html: emailHtml,
+      text: emailText,
       attachments: [
         {
           filename: "quote.pdf",
           content: pdfBuffer,
+          type: "application/pdf",
         },
       ],
     });
