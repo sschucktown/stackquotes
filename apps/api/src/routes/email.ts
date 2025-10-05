@@ -1,4 +1,4 @@
-﻿import { Hono } from "hono";
+import { Hono } from "hono";
 import { z } from "zod";
 import { requireUser } from "../lib/auth.js";
 import { getServiceClient } from "../lib/supabase.js";

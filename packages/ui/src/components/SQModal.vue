@@ -1,4 +1,4 @@
-﻿<template>
+ï»¿<template>
   <teleport to="body">
     <transition name="fade">
       <div
@@ -20,7 +20,7 @@
                 @click="emit('close')"
                 aria-label="Close modal"
               >
-                ×
+                Ã—
               </button>
             </header>
             <div class="max-h-[70vh] overflow-y-auto pr-1">
@@ -43,7 +43,7 @@ const props = defineProps<{
   description?: string;
 }>();
 
-const emit = defineEmits<["close"]>();
+const emit = defineEmits<{ (e: 'close'): void }>();
 </script>
 
 <style scoped>

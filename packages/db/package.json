@@ -1,4 +1,4 @@
-﻿{
+{
   "name": "@stackquotes/db",
   "version": "0.1.0",
   "private": true,
@@ -12,8 +12,8 @@
     }
   },
   "scripts": {
-    "build": "tsup src/index.ts --format esm,cjs --dts",
-    "dev": "tsup src/index.ts --watch --format esm,cjs --dts",
+    "build": "tsup src/index.ts --format esm",
+    "dev": "tsup src/index.ts --format esm --watch",
     "lint": "eslint \"src/**/*.ts\"",
     "typecheck": "tsc -p tsconfig.build.json --noEmit"
   },

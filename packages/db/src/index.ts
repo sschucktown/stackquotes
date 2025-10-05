@@ -1,4 +1,4 @@
-﻿import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { loadServerConfig } from "@stackquotes/config";
 import type {
   Client,
@@ -108,12 +108,24 @@ const lineItemTotals = (lineItems: LineItem[]) => {
   return { lineItems: normalised, subtotal };
 };
 
+const toLineItems = (value: Json): LineItem[] => {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  return (value as unknown as LineItem[]).map((item) => ({
+    ...item,
+    quantity: Number(item.quantity || 0),
+    unitPrice: Number(item.unitPrice || 0),
+    total: Number(item.total || Number(item.quantity || 0) * Number(item.unitPrice || 0)),
+  }));
+};
+
 const buildEstimateRecord = (row: DatabaseEstimateRow): Estimate => ({
   id: row.id,
   userId: row.user_id,
   clientId: row.client_id,
   projectTitle: row.project_title,
-  lineItems: (row.line_items as LineItem[]) ?? [],
+  lineItems: toLineItems(row.line_items),
   subtotal: row.subtotal,
   tax: row.tax,
   total: row.total,

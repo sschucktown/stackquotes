@@ -1,4 +1,4 @@
-﻿{
+{
   "name": "@stackquotes/config",
   "version": "0.1.0",
   "private": true,
@@ -21,6 +21,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "tsup": "^8.0.1"
+    "tsup": "^8.5.0",
+    "@types/node": "^20.19.19"
   }
 }

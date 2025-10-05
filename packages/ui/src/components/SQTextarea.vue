@@ -1,4 +1,4 @@
-﻿<template>
+ï»¿<template>
   <label class="flex flex-col gap-1 text-sm font-medium text-slate-700">
     <span v-if="label">{{ label }}</span>
     <textarea
@@ -32,7 +32,7 @@ const props = withDefaults(
   }
 );
 
-const emit = defineEmits<["update:modelValue"]>();
+const emit = defineEmits<{ (e: 'update:modelValue', value: string): void }>();
 
 const textareaClasses = computed(() =>
   clsx(

@@ -1,4 +1,4 @@
-﻿import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
+import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import type { Estimate, Client, UserSettings } from "@stackquotes/types";
 
 interface PdfOptions {

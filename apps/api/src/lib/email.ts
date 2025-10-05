@@ -1,4 +1,4 @@
-﻿import { Resend } from "resend";
+import { Resend } from "resend";
 import { loadServerConfig } from "@stackquotes/config";
 
 export const sendEstimateEmail = async (options: {

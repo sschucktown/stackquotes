@@ -1,4 +1,4 @@
-﻿<template>
+ï»¿<template>
   <label class="flex flex-col gap-1 text-sm font-medium text-slate-700">
     <span v-if="label">{{ label }}</span>
     <select
@@ -27,7 +27,7 @@ const props = defineProps<{
   error?: string;
 }>();
 
-const emit = defineEmits<["update:modelValue"]>();
+const emit = defineEmits<{ (e: 'update:modelValue', value: string | number): void }>();
 
 const selectClasses = computed(() =>
   clsx(

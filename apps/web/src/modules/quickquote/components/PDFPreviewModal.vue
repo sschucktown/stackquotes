@@ -1,4 +1,4 @@
-﻿<template>
+ï»¿<template>
   <SQModal
     :open="open"
     title="Estimate PDF"
@@ -8,7 +8,7 @@
     <div v-if="pdfUrl" class="aspect-[8.5/11] w-full overflow-hidden rounded-lg border border-slate-200">
       <iframe :src="pdfUrl" class="h-full w-full" title="Estimate PDF" />
     </div>
-    <p v-else class="text-sm text-slate-500">Generating PDF…</p>
+    <p v-else class="text-sm text-slate-500">Generating PDFâ€¦</p>
 
     <template #footer>
       <SQButton variant="ghost" @click="$emit('close')">Close</SQButton>
@@ -30,5 +30,5 @@ const props = defineProps<{
   pdfUrl: string | null;
 }>();
 
-defineEmits<["close"]>();
+defineEmits<{ (e: 'close'): void }>();
 </script>

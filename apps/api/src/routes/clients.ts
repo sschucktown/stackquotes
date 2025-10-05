@@ -1,4 +1,4 @@
-﻿import { Hono } from "hono";
+import { Hono } from "hono";
 import { z } from "zod";
 import { createClientRecord, listClients } from "@stackquotes/db";
 import { requireUser } from "../lib/auth.js";

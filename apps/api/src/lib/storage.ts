@@ -1,4 +1,4 @@
-﻿import { getServiceClient } from "./supabase";
+import { getServiceClient } from "./supabase";
 
 export const uploadPdf = async (
   path: string,
