@@ -1,6 +1,7 @@
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
+import { cors } from "hono/cors";
 import { estimatesRouter } from "./routes/estimates.js";
 import { clientsRouter } from "./routes/clients.js";
 import { pdfRouter } from "./routes/pdf.js";
@@ -8,6 +9,12 @@ import { emailRouter } from "./routes/email.js";
 import { settingsRouter } from "./routes/settings.js";
 
 const app = new Hono();
+
+app.use("*", cors({
+  origin: (origin) => origin ?? "*",
+  allowMethods: ["GET", "POST", "PATCH", "OPTIONS"],
+  allowHeaders: ["Content-Type", "Authorization"],
+}));
 
 app.use("*", async (c, next) => {
   try {
