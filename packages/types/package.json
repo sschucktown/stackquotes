@@ -1,0 +1,21 @@
+﻿{
+  "name": "@stackquotes/types",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format esm,cjs --dts",
+    "dev": "tsup src/index.ts --watch --format esm,cjs --dts",
+    "lint": "eslint \"src/**/*.ts\"",
+    "typecheck": "tsc -p tsconfig.build.json --noEmit"
+  },
+  "dependencies": {}
+}

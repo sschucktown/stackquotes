@@ -1,0 +1,11 @@
+﻿node_modules
+pnpm-lock.yaml
+.DS_Store
+.env*
+dist
+build
+.cache
+.vscode
+.idea
+coverage
+supabase/.branches

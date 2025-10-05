@@ -1,1 +1,24 @@
-
+﻿{
+  "$schema": "https://turbo.build/schema.json",
+  "pipeline": {
+    "lint": {
+      "cache": true,
+      "outputs": []
+    },
+    "typecheck": {
+      "dependsOn": ["^typecheck"],
+      "outputs": []
+    },
+    "test": {
+      "dependsOn": ["^test"],
+      "outputs": []
+    },
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**", "build/**", "*.d.ts", "!node_modules/**"]
+    },
+    "dev": {
+      "cache": false
+    }
+  }
+}

@@ -1,0 +1,23 @@
+﻿{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "baseUrl": ".",
+    "paths": {
+      "@stackquotes/config": ["packages/config/src/index.ts"],
+      "@stackquotes/db": ["packages/db/src/index.ts"],
+      "@stackquotes/types": ["packages/types/src/index.ts"],
+      "@stackquotes/ui": ["packages/ui/src/index.ts"],
+      "@stackquotes/*": ["packages/*/src"]
+    }
+  },
+  "exclude": ["node_modules", "dist", "build"]
+}
