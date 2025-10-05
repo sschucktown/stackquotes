@@ -1,36 +1,16 @@
-﻿{
-  "name": "@stackquotes/web",
+{
+  "name": "stackquotes",
   "version": "0.1.0",
   "private": true,
-  "type": "module",
+  "packageManager": "pnpm@10.17.1",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview",
-    "lint": "eslint \"src/**/*.{ts,tsx,vue}\"",
-    "typecheck": "vue-tsc -p tsconfig.app.json --noEmit"
-  },
-  "dependencies": {
-    "@headlessui/vue": "^1.7.19",
-    "@heroicons/vue": "^2.1.5",
-    "@stackquotes/config": "workspace:*",
-    "@stackquotes/types": "workspace:*",
-    "@stackquotes/ui": "workspace:*",
-    "@supabase/supabase-js": "^2.45.3",
-    "@vueuse/core": "^10.9.0",
-    "pinia": "^2.1.7",
-    "vue": "^3.4.29",
-    "vue-router": "^4.3.2",
-    "zod": "^3.23.8"
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "typecheck": "turbo run typecheck"
   },
   "devDependencies": {
-    "@types/node": "^20.14.9",
-    "@vitejs/plugin-vue": "^5.0.5",
-    "autoprefixer": "^10.4.19",
-    "postcss": "^8.4.38",
-    "tailwindcss": "^3.4.9",
-    "typescript": "^5.5.4",
-    "vite": "^5.2.0",
-    "vue-tsc": "^2.0.28"
+    "turbo": "^2.1.3"
   }
 }
