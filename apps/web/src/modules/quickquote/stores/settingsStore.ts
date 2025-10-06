@@ -1,6 +1,10 @@
 ﻿import { defineStore } from "pinia";
 import type { UserSettings } from "@stackquotes/types";
-import { fetchSettings, updateSettings, uploadLogo } from "@modules/quickquote/api/settings";
+import {
+  fetchSettings,
+  updateSettings,
+  uploadLogo as uploadLogoRequest,
+} from "@modules/quickquote/api/settings";
 
 interface SettingsState {
   data: UserSettings | null;
@@ -33,6 +37,15 @@ export const useSettingsStore = defineStore("settings", {
       }
       this.data = data ?? null;
       return data;
+    },
+    async uploadLogo(file: File) {
+      const { data, error } = await uploadLogoRequest(file);
+      if (error) {
+        this.error = error;
+        throw new Error(error);
+      }
+      this.data = data ?? this.data;
+      return data ?? null;
     },
   },
 });
