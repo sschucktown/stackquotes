@@ -7,6 +7,16 @@ import { clientsRouter } from "./routes/clients.js";
 import { pdfRouter } from "./routes/pdf.js";
 import { emailRouter } from "./routes/email.js";
 import { settingsRouter } from "./routes/settings.js";
+import * as dotenv from "dotenv";
+import { fileURLToPath } from "url";
+import { dirname, resolve } from "path";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+dotenv.config({ path: resolve(__dirname, "../../.env") });
+
+console.log("🧭 Looking for .env at:", envPath);
+console.log("🧭 Exists?", existsSync(envPath));
 
 const app = new Hono();
 console.log("SUPABASE_URL:", process.env.SUPABASE_URL);
