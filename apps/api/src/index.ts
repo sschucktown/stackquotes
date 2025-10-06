@@ -1,3 +1,6 @@
+// ---------------------------------------------
+// StackQuotes API – Entry Point
+// ---------------------------------------------
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
@@ -10,20 +13,40 @@ import { settingsRouter } from "./routes/settings.js";
 import * as dotenv from "dotenv";
 import { fileURLToPath } from "url";
 import { dirname, resolve } from "path";
+import { existsSync } from "fs";
 
+// ---------------------------------------------
+// Load Environment Variables
+// ---------------------------------------------
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-dotenv.config({ path: resolve(__dirname, "../../.env") });
+const envPath = resolve(__dirname, "../../../.env"); // ✅ three levels up to reach repo root
 
+if (existsSync(envPath)) {
+  dotenv.config({ path: envPath });
+  console.log("✅ Loaded .env from:", envPath);
+} else {
+  console.error("🚨 .env not found at:", envPath);
+}
+
+console.log("✅ SUPABASE_URL:", process.env.SUPABASE_URL ?? "(undefined)");
+
+// ---------------------------------------------
+// Initialize Hono App
+// ---------------------------------------------
 const app = new Hono();
-console.log("SUPABASE_URL:", process.env.SUPABASE_URL);
 
-app.use("*", cors({
-  origin: (origin) => origin ?? "*",
-  allowMethods: ["GET", "POST", "PATCH", "OPTIONS"],
-  allowHeaders: ["Content-Type", "Authorization"],
-}));
+// --- CORS ---
+app.use(
+  "*",
+  cors({
+    origin: (origin) => origin ?? "*",
+    allowMethods: ["GET", "POST", "PATCH", "OPTIONS"],
+    allowHeaders: ["Content-Type", "Authorization"],
+  })
+);
 
+// --- Global Error Boundary ---
 app.use("*", async (c, next) => {
   try {
     await next();
@@ -36,6 +59,9 @@ app.use("*", async (c, next) => {
   }
 });
 
+// ---------------------------------------------
+// Routes
+// ---------------------------------------------
 app.get("/health", (c) => c.json({ ok: true }));
 app.route("/api/estimates", estimatesRouter);
 app.route("/api/clients", clientsRouter);
@@ -43,15 +69,17 @@ app.route("/api/pdf", pdfRouter);
 app.route("/api/email", emailRouter);
 app.route("/api/settings", settingsRouter);
 
+// ---------------------------------------------
+// Server
+// ---------------------------------------------
 const port = Number(process.env.PORT ?? 8787);
 
 serve({
   fetch: app.fetch,
   port,
 });
-console.log("SUPABASE_URL:", process.env.SUPABASE_URL);
 
-console.log(`StackQuotes API running on http://localhost:${port}`);
+console.log(`🚀 StackQuotes API running on http://localhost:${port}`);
 
+// ---------------------------------------------
 export type AppType = typeof app;
-
