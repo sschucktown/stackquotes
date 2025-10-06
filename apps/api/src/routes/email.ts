@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { requireUser } from "../lib/auth.js";
 import { getServiceClient } from "../lib/supabase.js";
-import { getEstimate, getClient } from "@stackquotes/db";
+import { getEstimate, getClient, updateEstimateRecord } from "@stackquotes/db";
 import { sendEstimateEmail } from "../lib/email.js";
 
 const schema = z.object({
@@ -30,12 +30,15 @@ emailRouter.post("/send", async (c) => {
     return c.json({ error: "Client not found" });
   }
 
+  const shouldMarkAsSent = estimate.status === "draft";
+  const statusForEmail = shouldMarkAsSent ? "sent" : estimate.status;
+
   const html = `
     <h1>${estimate.projectTitle}</h1>
     <p>${payload.message}</p>
     <ul>
       <li>Total: $${estimate.total.toFixed(2)}</li>
-      <li>Status: ${estimate.status}</li>
+      <li>Status: ${statusForEmail}</li>
     </ul>
     ${payload.downloadUrl ? `<p><a href="${payload.downloadUrl}">Download Estimate PDF</a></p>` : ""}
   `;
@@ -46,6 +49,15 @@ emailRouter.post("/send", async (c) => {
     html,
   });
 
-  return c.json({ data: { sent: true } });
+  if (shouldMarkAsSent) {
+    await updateEstimateRecord(supabase, {
+      id: estimate.id,
+      userId: user.id,
+      status: "sent",
+    });
+  }
+
+  return c.json({ data: { sent: true, status: statusForEmail } });
 });
+
 

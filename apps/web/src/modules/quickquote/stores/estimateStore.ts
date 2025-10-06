@@ -101,12 +101,17 @@ export const useEstimateStore = defineStore("estimates", {
       return data;
     },
     async emailEstimate(payload: { estimateId: string; to: string; subject: string; message: string; downloadUrl?: string }) {
-      const { error } = await sendEstimateEmail(payload);
+      const { data, error } = await sendEstimateEmail(payload);
       if (error) {
         this.error = error;
         throw new Error(error);
       }
-      return true;
+      if (data?.status) {
+        this.items = this.items.map((estimate) =>
+          estimate.id === payload.estimateId ? { ...estimate, status: data.status } : estimate
+        );
+      }
+      return data;
     },
   },
 });
