@@ -6,8 +6,8 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
-    "build": "tsup src/index.ts --format esm,cjs --sourcemap",
+    "dev": "tsx --env-file ../../.env watch src/index.ts",
+    "build": "tsup src/index.ts --format esm",
     "start": "node dist/index.js",
     "lint": "eslint \"src/**/*.{ts,tsx}\"",
     "typecheck": "tsc -p tsconfig.json --noEmit"
