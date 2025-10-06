@@ -15,9 +15,6 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 dotenv.config({ path: resolve(__dirname, "../../.env") });
 
-console.log("🧭 Looking for .env at:", envPath);
-console.log("🧭 Exists?", existsSync(envPath));
-
 const app = new Hono();
 console.log("SUPABASE_URL:", process.env.SUPABASE_URL);
 
