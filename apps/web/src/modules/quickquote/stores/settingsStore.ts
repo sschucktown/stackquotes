@@ -1,6 +1,6 @@
 ﻿import { defineStore } from "pinia";
 import type { UserSettings } from "@stackquotes/types";
-import { fetchSettings, updateSettings } from "@modules/quickquote/api/settings";
+import { fetchSettings, updateSettings, uploadLogo } from "@modules/quickquote/api/settings";
 
 interface SettingsState {
   data: UserSettings | null;

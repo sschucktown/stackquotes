@@ -1,4 +1,4 @@
-import Vibrant from "node-vibrant/lib/node";
+import { Vibrant } from "node-vibrant/node";
 import type { UserSettings } from "@stackquotes/types";
 
 const FALLBACK_ACCENT = "#2563eb";

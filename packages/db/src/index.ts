@@ -343,16 +343,30 @@ export async function upsertUserSettings(
   client: SupabaseClient,
   input: SettingsInput
 ): Promise<UserSettings> {
-  const payload = {
+  const payload: Partial<DatabaseUserSettingsRow> & { user_id: string } = {
     user_id: input.userId,
-    default_tax_rate: input.defaultTaxRate ?? 0,
-    footer_text: input.footerText ?? null,
-    logo_url: input.logoUrl ?? null,
-    company_name: input.companyName ?? null,
-    org_id: input.orgId ?? null,
-    accent_color: input.accentColor ?? null,
-    estimate_template: input.estimateTemplate ?? null,
   };
+  if (input.defaultTaxRate !== undefined) {
+    payload.default_tax_rate = input.defaultTaxRate;
+  }
+  if (input.footerText !== undefined) {
+    payload.footer_text = input.footerText ?? null;
+  }
+  if (input.logoUrl !== undefined) {
+    payload.logo_url = input.logoUrl ?? null;
+  }
+  if (input.companyName !== undefined) {
+    payload.company_name = input.companyName ?? null;
+  }
+  if (input.orgId !== undefined) {
+    payload.org_id = input.orgId ?? null;
+  }
+  if (input.accentColor !== undefined) {
+    payload.accent_color = input.accentColor ?? null;
+  }
+  if (input.estimateTemplate !== undefined) {
+    payload.estimate_template = input.estimateTemplate ?? null;
+  }
 
   const { data, error } = await client
     .from("user_settings")
