@@ -23,11 +23,13 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const envPath = resolve(__dirname, "../../../.env"); // ✅ three levels up to reach repo root
 
-if (existsSync(envPath)) {
-  dotenv.config({ path: envPath });
-  console.log("✅ Loaded .env from:", envPath);
-} else {
-  console.error("🚨 .env not found at:", envPath);
+if (process.env.NODE_ENV !== "production") {
+  if (existsSync(envPath)) {
+    dotenv.config({ path: envPath });
+    console.log("✅ Loaded .env from:", envPath);
+  } else {
+    console.warn("⚠️ .env not found at:", envPath);
+  }
 }
 
 console.log("✅ SUPABASE_URL:", process.env.SUPABASE_URL ?? "(undefined)");

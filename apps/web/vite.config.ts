@@ -4,17 +4,17 @@ import path from "path";
 
 export default defineConfig({
   plugins: [vue()],
-  build: {
-    outDir: "dist"
-  },
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src"),
-      "@stackquotes/config": path.resolve(__dirname, "../../packages/config/src")
-    }
+      "@": path.resolve(__dirname, "src"),
+      "@modules": path.resolve(__dirname, "src/modules"),
+      "@stackquotes/ui": path.resolve(__dirname, "../../packages/ui/src"),
+      "@stackquotes/config": path.resolve(__dirname, "../../packages/config/src"),
+      "@stackquotes/types": path.resolve(__dirname, "../../packages/types/src"),
+    },
   },
-  server: {
-    port: 5173,
-    strictPort: true
-  }
+  build: {
+    outDir: "dist",
+    emptyOutDir: true,
+  },
 });
