@@ -9,6 +9,7 @@ import { emailRouter } from "./routes/email.js";
 import { settingsRouter } from "./routes/settings.js";
 
 const app = new Hono();
+console.log("SUPABASE_URL:", process.env.SUPABASE_URL);
 
 app.use("*", cors({
   origin: (origin) => origin ?? "*",
@@ -41,6 +42,7 @@ serve({
   fetch: app.fetch,
   port,
 });
+console.log("SUPABASE_URL:", process.env.SUPABASE_URL);
 
 console.log(`StackQuotes API running on http://localhost:${port}`);
 
