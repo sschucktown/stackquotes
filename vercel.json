@@ -3,7 +3,8 @@
   "builds": [
     {
       "src": "apps/web/package.json",
-      "use": "@vercel/next"
+      "use": "@vercel/static-build",
+      "config": { "distDir": "apps/web/dist" }
     },
     {
       "src": "apps/api/src/index.ts",
@@ -11,14 +12,8 @@
     }
   ],
   "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "/apps/api/src/index.ts"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/apps/web/$1"
-    }
+    { "src": "/api/(.*)", "dest": "/apps/api/src/index.ts" },
+    { "src": "/(.*)", "dest": "/apps/web/$1" }
   ],
   "env": {
     "SUPABASE_URL": "@supabase_url",
