@@ -4,15 +4,19 @@
   "private": true,
   "packageManager": "pnpm@10.17.1",
   "scripts": {
-    "dev": "turbo run dev",
+    "dev": "turbo run dev --parallel --no-cache",
+    "dev:web": "pnpm --filter @stackquotes/web dev",
+    "dev:api": "pnpm --filter @stackquotes/api dev",
     "build": "turbo run build",
     "lint": "turbo run lint",
     "test": "turbo run test",
-    "typecheck": "turbo run typecheck"
+    "typecheck": "turbo run typecheck",
+    "vercel-build": "pnpm --filter @stackquotes/web build"
   },
   "devDependencies": {
     "tsup": "^8.5.0",
-    "turbo": "^2.5.8"
+    "turbo": "^2.5.8",
+    "concurrently": "^8.2.0"
   },
   "dependencies": {
     "dotenv": "^17.2.3"
