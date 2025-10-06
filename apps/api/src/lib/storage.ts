@@ -28,6 +28,23 @@ export const uploadPdf = async (
   return signed.signedUrl;
 };
 
+export const getEstimatePdfSignedUrl = async (
+  userId: string,
+  estimateId: string,
+  options: { expiresIn?: number } = {}
+): Promise<string | null> => {
+  const bucket = await getBucket("estimates", { public: false });
+  const path = `${userId}/${estimateId}.pdf`;
+  const { data, error } = await bucket.createSignedUrl(path, options.expiresIn ?? 60 * 60 * 24);
+  if (error) {
+    if ("statusCode" in error && error.statusCode === 404) {
+      return null;
+    }
+    throw error;
+  }
+  return data?.signedUrl ?? null;
+};
+
 export const uploadPublicAsset = async (
   bucketName: string,
   path: string,

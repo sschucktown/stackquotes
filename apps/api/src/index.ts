@@ -10,6 +10,7 @@ import { clientsRouter } from "./routes/clients.js";
 import { pdfRouter } from "./routes/pdf.js";
 import { emailRouter } from "./routes/email.js";
 import { settingsRouter } from "./routes/settings.js";
+import { shareRouter } from "./routes/share.js";
 import * as dotenv from "dotenv";
 import { fileURLToPath } from "url";
 import { dirname, resolve } from "path";
@@ -68,6 +69,7 @@ app.route("/api/clients", clientsRouter);
 app.route("/api/pdf", pdfRouter);
 app.route("/api/email", emailRouter);
 app.route("/api/settings", settingsRouter);
+app.route("/api/share", shareRouter);
 
 // ---------------------------------------------
 // Server

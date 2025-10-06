@@ -23,6 +23,10 @@ create table if not exists public.estimates (
   status text not null default 'draft',
   converted_to_proposal boolean not null default false,
   job_id text,
+  approval_token uuid,
+  approval_token_expires_at timestamptz,
+  approved_at timestamptz,
+  approved_by text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -82,4 +86,5 @@ create policy "Settings are only visible to their owner"
 
 create index if not exists estimates_user_id_idx on public.estimates(user_id);
 create index if not exists estimates_status_idx on public.estimates(status);
+create index if not exists estimates_approval_token_idx on public.estimates(approval_token);
 create index if not exists clients_user_id_idx on public.clients(user_id);

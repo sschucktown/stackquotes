@@ -7,6 +7,7 @@ import type {
   LineItem,
   UserSettings,
 } from "@stackquotes/types";
+import { randomUUID } from "node:crypto";
 
 type Json = Record<string, unknown> | Json[] | string | number | boolean | null;
 
@@ -23,6 +24,10 @@ export interface DatabaseEstimateRow {
   status: string;
   converted_to_proposal: boolean;
   job_id?: string | null;
+  approval_token: string | null;
+  approval_token_expires_at: string | null;
+  approved_at: string | null;
+  approved_by: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -137,6 +142,10 @@ const buildEstimateRecord = (row: DatabaseEstimateRow): Estimate => ({
   jobId: row.job_id ?? undefined,
   createdAt: row.created_at,
   updatedAt: row.updated_at,
+  approvalToken: row.approval_token ?? null,
+  approvalTokenExpiresAt: row.approval_token_expires_at ?? null,
+  approvedAt: row.approved_at ?? null,
+  approvedBy: row.approved_by ?? null,
 });
 
 const buildClientRecord = (row: DatabaseClientRow): Client => ({
@@ -259,6 +268,111 @@ export async function updateEstimateRecord(
     .update(payload)
     .eq("id", input.id)
     .eq("user_id", existing.userId)
+    .select("*")
+    .single();
+  if (error) throw error;
+  return buildEstimateRecord(data as DatabaseEstimateRow);
+}
+
+const DEFAULT_APPROVAL_EXPIRY_DAYS = 30;
+
+export interface IssueEstimateApprovalTokenInput {
+  estimateId: string;
+  userId: string;
+  expiresAt?: Date;
+  resetApproval?: boolean;
+}
+
+export interface IssueEstimateApprovalTokenResult {
+  token: string;
+  estimate: Estimate;
+}
+
+export async function issueEstimateApprovalToken(
+  client: SupabaseClient,
+  input: IssueEstimateApprovalTokenInput
+): Promise<IssueEstimateApprovalTokenResult> {
+  const token = randomUUID();
+  const expiresAt =
+    input.expiresAt ?? new Date(Date.now() + DEFAULT_APPROVAL_EXPIRY_DAYS * 24 * 60 * 60 * 1000);
+  const payload: Partial<DatabaseEstimateRow> = {
+    approval_token: token,
+    approval_token_expires_at: expiresAt.toISOString(),
+  };
+  if (input.resetApproval ?? true) {
+    payload.approved_at = null;
+    payload.approved_by = null;
+  }
+  const { data, error } = await client
+    .from("estimates")
+    .update(payload)
+    .eq("id", input.estimateId)
+    .eq("user_id", input.userId)
+    .select("*")
+    .single();
+  if (error) throw error;
+  return {
+    token,
+    estimate: buildEstimateRecord(data as DatabaseEstimateRow),
+  };
+}
+
+export async function getEstimateByApprovalToken(
+  client: SupabaseClient,
+  token: string
+): Promise<Estimate | null> {
+  const { data, error } = await client
+    .from("estimates")
+    .select("*")
+    .eq("approval_token", token)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  const row = data as DatabaseEstimateRow;
+  if (row.approval_token_expires_at) {
+    const expiresAt = new Date(row.approval_token_expires_at);
+    if (Number.isFinite(expiresAt.getTime()) && expiresAt.getTime() < Date.now()) {
+      return null;
+    }
+  }
+  return buildEstimateRecord(row);
+}
+
+export interface ApproveEstimateByTokenOptions {
+  approverName?: string | null;
+}
+
+export async function approveEstimateByToken(
+  client: SupabaseClient,
+  token: string,
+  options: ApproveEstimateByTokenOptions = {}
+): Promise<Estimate | null> {
+  const existing = await getEstimateByApprovalToken(client, token);
+  if (!existing) return null;
+  if (existing.approvedAt) {
+    if (options.approverName && options.approverName !== existing.approvedBy) {
+      const { data, error } = await client
+        .from("estimates")
+        .update({
+          approved_by: options.approverName,
+        })
+        .eq("id", existing.id)
+        .select("*")
+        .single();
+      if (error) throw error;
+      return buildEstimateRecord(data as DatabaseEstimateRow);
+    }
+    return existing;
+  }
+  const approvedAt = new Date().toISOString();
+  const { data, error } = await client
+    .from("estimates")
+    .update({
+      status: "accepted",
+      approved_at: approvedAt,
+      approved_by: options.approverName ?? null,
+    })
+    .eq("id", existing.id)
     .select("*")
     .single();
   if (error) throw error;

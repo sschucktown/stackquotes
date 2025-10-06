@@ -9,6 +9,7 @@ interface EmailTemplateContext {
   message: string;
   downloadUrl?: string;
   template?: EstimateTemplateKey;
+  approvalUrl?: string;
 }
 
 const currencyFormatter = new Intl.NumberFormat("en-US", {
@@ -110,16 +111,29 @@ const renderTotals = (estimate: Estimate, theme: BrandTheme, variant: "card" | "
   </table>`;
 };
 
-const buildCta = (theme: BrandTheme, downloadUrl?: string): string => {
-  if (!downloadUrl) {
+const buildCta = (
+  theme: BrandTheme,
+  options: { approvalUrl?: string; downloadUrl?: string }
+): string => {
+  const { approvalUrl, downloadUrl } = options;
+  if (!approvalUrl && !downloadUrl) {
     return "";
   }
+  const primaryHref = approvalUrl ?? downloadUrl!;
+  const primaryLabel = approvalUrl ? "View & Approve Estimate" : "Download Estimate PDF";
+  const secondary =
+    approvalUrl && downloadUrl
+      ? `<p style="margin-top:12px; font-size:14px; color:#64748b;">
+          Prefer a copy? <a href="${downloadUrl}" style="color:${theme.accent}; text-decoration:none;">Download the PDF</a>.
+        </p>`
+      : "";
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:32px;">
     <tr>
       <td>
-        <a href="${downloadUrl}" style="display:inline-block; padding:14px 24px; background:${theme.accent}; color:${theme.accentText}; font-weight:600; border-radius:999px; text-decoration:none;">
-          View & Approve Estimate
+        <a href="${primaryHref}" style="display:inline-block; padding:14px 24px; background:${theme.accent}; color:${theme.accentText}; font-weight:600; border-radius:999px; text-decoration:none;">
+          ${primaryLabel}
         </a>
+        ${secondary}
       </td>
     </tr>
   </table>`;
@@ -129,7 +143,10 @@ const renderModern = (context: EmailTemplateContext, theme: BrandTheme): string 
   const messageHtml = formatMessage(context.message);
   const lineItemsHtml = renderLineItemsTable(context.estimate, theme);
   const totalsHtml = renderTotals(context.estimate, theme, "card");
-  const ctaHtml = buildCta(theme, context.downloadUrl);
+  const ctaHtml = buildCta(theme, {
+    approvalUrl: context.approvalUrl,
+    downloadUrl: context.downloadUrl,
+  });
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -187,7 +204,10 @@ const renderPremium = (context: EmailTemplateContext, theme: BrandTheme): string
   const messageHtml = formatMessage(context.message);
   const lineItemsHtml = renderLineItemsTable(context.estimate, theme, { zebra: true });
   const totalsHtml = renderTotals(context.estimate, theme, "card");
-  const ctaHtml = buildCta(theme, context.downloadUrl);
+  const ctaHtml = buildCta(theme, {
+    approvalUrl: context.approvalUrl,
+    downloadUrl: context.downloadUrl,
+  });
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -247,7 +267,10 @@ const renderClassic = (context: EmailTemplateContext, theme: BrandTheme): string
   const messageHtml = formatMessage(context.message);
   const lineItemsHtml = renderLineItemsTable(context.estimate, theme);
   const totalsHtml = renderTotals(context.estimate, theme, "stacked");
-  const ctaHtml = buildCta(theme, context.downloadUrl);
+  const ctaHtml = buildCta(theme, {
+    approvalUrl: context.approvalUrl,
+    downloadUrl: context.downloadUrl,
+  });
 
   return `<!DOCTYPE html>
 <html lang="en">

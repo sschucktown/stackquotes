@@ -28,6 +28,10 @@ export interface Estimate {
   jobId?: string | null;
   createdAt: string;
   updatedAt: string;
+  approvalToken?: string | null;
+  approvalTokenExpiresAt?: string | null;
+  approvedAt?: string | null;
+  approvedBy?: string | null;
 }
 
 export interface Client {
@@ -73,5 +77,12 @@ export interface EmailPayload {
 export interface ApiResponse<T> {
   data?: T;
   error?: string;
+}
+
+export interface PublicEstimatePayload {
+  estimate: Estimate;
+  client: Client;
+  settings: UserSettings | null;
+  downloadUrl?: string | null;
 }
 

@@ -2,7 +2,13 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { requireUser } from "../lib/auth.js";
 import { getServiceClient } from "../lib/supabase.js";
-import { getEstimate, getClient, getUserSettings, updateEstimateRecord } from "@stackquotes/db";
+import {
+  getEstimate,
+  getClient,
+  getUserSettings,
+  updateEstimateRecord,
+  issueEstimateApprovalToken,
+} from "@stackquotes/db";
 import { sendEstimateEmail } from "../lib/email.js";
 import { renderEstimateEmail } from "../lib/templates/email.js";
 
@@ -33,16 +39,25 @@ emailRouter.post("/send", async (c) => {
   }
   const settings = await getUserSettings(supabase, user.id);
 
-  const shouldMarkAsSent = estimate.status === "draft";
-  const statusForEmail = shouldMarkAsSent ? "sent" : estimate.status;
+  const { token, estimate: estimateWithToken } = await issueEstimateApprovalToken(supabase, {
+    estimateId: estimate.id,
+    userId: user.id,
+  });
+
+  const baseAppUrl = process.env.BASE_APP_URL?.replace(/\/$/, "");
+  const approvalUrl = baseAppUrl ? `${baseAppUrl}/share/estimate/${token}` : undefined;
+
+  const shouldMarkAsSent = estimateWithToken.status === "draft";
+  const statusForEmail = shouldMarkAsSent ? "sent" : estimateWithToken.status;
 
   const rendered = await renderEstimateEmail({
-    estimate,
+    estimate: estimateWithToken,
     client,
     settings,
     message: payload.message,
     downloadUrl: payload.downloadUrl,
     template: payload.template ?? settings?.estimateTemplate ?? undefined,
+    approvalUrl,
   });
 
   await sendEstimateEmail({
@@ -60,7 +75,14 @@ emailRouter.post("/send", async (c) => {
     });
   }
 
-  return c.json({ data: { sent: true, status: statusForEmail, template: rendered.template } });
+  return c.json({
+    data: {
+      sent: true,
+      status: statusForEmail,
+      template: rendered.template,
+      approvalUrl,
+    },
+  });
 });
 
 

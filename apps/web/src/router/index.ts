@@ -23,6 +23,13 @@ const router = createRouter({
       redirect: "/quickquote",
     },
     {
+      path: "/share/estimate/:token",
+      name: "public-estimate-approval",
+      component: () => import("@/pages/public/EstimateApprovalPage.vue"),
+      props: true,
+      meta: { public: true },
+    },
+    {
       path: "/login",
       name: "login",
       component: () => import("@/pages/auth/LoginPage.vue"),
