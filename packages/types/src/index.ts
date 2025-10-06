@@ -2,6 +2,8 @@
 
 export type EstimateStatus = "draft" | "sent" | "accepted" | "declined";
 
+export type EstimateTemplateKey = "modern" | "premium" | "classic";
+
 export interface LineItem {
   id: string;
   description: string;
@@ -45,6 +47,8 @@ export interface UserSettings {
   logoUrl?: string;
   companyName?: string;
   orgId?: string | null;
+  accentColor?: string | null;
+  estimateTemplate?: EstimateTemplateKey;
 }
 
 export interface EstimateFilters {
@@ -63,6 +67,7 @@ export interface EmailPayload {
   subject: string;
   message: string;
   downloadUrl?: string;
+  template?: EstimateTemplateKey;
 }
 
 export interface ApiResponse<T> {

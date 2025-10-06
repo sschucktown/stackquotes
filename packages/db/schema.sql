@@ -34,6 +34,8 @@ create table if not exists public.user_settings (
   logo_url text,
   company_name text,
   org_id text,
+  accent_color text,
+  estimate_template text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );

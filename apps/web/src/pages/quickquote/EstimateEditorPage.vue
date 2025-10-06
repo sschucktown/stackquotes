@@ -20,6 +20,7 @@
         :model-value="currentEstimate"
         :submitting="saving"
         :submit-label="isNew ? 'Create Estimate' : 'Save Changes'"
+        :default-tax-rate="defaultTaxRate"
         @submit="save"
       />
 
@@ -29,6 +30,11 @@
         <form class="mt-4 grid gap-4 md:grid-cols-2" @submit.prevent="sendEmail">
           <SQInput v-model="emailForm.to" type="email" label="Recipient" required />
           <SQInput v-model="emailForm.subject" label="Subject" required />
+          <SQSelect v-model="emailForm.template" label="Template">
+            <option value="modern">Modern Minimal</option>
+            <option value="premium">Premium Bold</option>
+            <option value="classic">Classic Contractor</option>
+          </SQSelect>
           <div class="md:col-span-2">
             <SQTextarea v-model="emailForm.message" label="Message" rows="4" required />
           </div>
@@ -56,23 +62,27 @@ import EstimateForm from "@modules/quickquote/components/EstimateForm.vue";
 import PDFPreviewModal from "@modules/quickquote/components/PDFPreviewModal.vue";
 import { useEstimateStore } from "@modules/quickquote/stores/estimateStore";
 import { useClientStore } from "@modules/quickquote/stores/clientStore";
+import { useSettingsStore } from "@modules/quickquote/stores/settingsStore";
 import type { EstimateFormPayload } from "@modules/quickquote/composables/useEstimateForm";
 
 const props = defineProps<{ id: string }>();
 const router = useRouter();
 const estimateStore = useEstimateStore();
 const clientStore = useClientStore();
+const settingsStore = useSettingsStore();
 
 const saving = ref(false);
 const showPdf = ref(false);
 const emailSending = ref(false);
 const emailSuccess = ref(false);
 const emailError = ref("");
+const templateInitialized = ref(false);
 
 const emailForm = reactive({
   to: "",
   subject: "",
   message: "Hi there,\n\nPlease review the attached estimate and let me know if you have any questions.\n",
+  template: "modern",
 });
 
 const isNew = computed(() => props.id === "new");
@@ -83,6 +93,9 @@ onMounted(() => {
   }
   if (!clientStore.items.length) {
     clientStore.load();
+  }
+  if (!settingsStore.data && !settingsStore.loading) {
+    settingsStore.load();
   }
 });
 
@@ -95,6 +108,8 @@ const currentClient = computed(() => {
   if (!currentEstimate.value) return null;
   return clientStore.items.find((client) => client.id === currentEstimate.value?.clientId) ?? null;
 });
+
+const defaultTaxRate = computed(() => settingsStore.data?.defaultTaxRate);
 
 watch(
   currentEstimate,
@@ -113,6 +128,26 @@ watch(currentClient, (client) => {
     emailForm.to = client.email;
   }
 });
+
+watch(
+  () => settingsStore.data?.estimateTemplate,
+  (template) => {
+    if (template && !templateInitialized.value) {
+      emailForm.template = template;
+      templateInitialized.value = true;
+    }
+  },
+  { immediate: true }
+);
+
+watch(
+  () => emailForm.template,
+  () => {
+    if (!templateInitialized.value) {
+      templateInitialized.value = true;
+    }
+  }
+);
 
 const save = async (payload: EstimateFormPayload) => {
   saving.value = true;
@@ -166,6 +201,7 @@ const sendEmail = async () => {
       subject: emailForm.subject,
       message: emailForm.message,
       downloadUrl: pdf?.downloadUrl ?? undefined,
+      template: emailForm.template,
     });
     emailSuccess.value = true;
   } catch (error) {

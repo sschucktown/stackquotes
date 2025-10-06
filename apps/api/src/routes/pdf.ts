@@ -31,9 +31,8 @@ pdfRouter.post("/generate", async (c) => {
 
   const settings = await getUserSettings(supabase, user.id);
   const pdfBytes = await generateEstimatePdf(estimate, client, {
-    companyName: settings?.companyName,
-    logoUrl: settings?.logoUrl,
-    footerText: settings?.footerText,
+    settings,
+    template: settings?.estimateTemplate ?? undefined,
   });
   const storagePath = `${user.id}/${estimate.id}.pdf`;
   const downloadUrl = await uploadPdf(storagePath, pdfBytes);

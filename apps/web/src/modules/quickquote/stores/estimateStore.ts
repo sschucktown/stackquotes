@@ -1,5 +1,5 @@
 ﻿import { defineStore } from "pinia";
-import type { Estimate, EstimateFilters, LineItem } from "@stackquotes/types";
+import type { Estimate, EstimateFilters, EstimateTemplateKey, LineItem } from "@stackquotes/types";
 import {
   createEstimate,
   duplicateEstimate,
@@ -100,7 +100,7 @@ export const useEstimateStore = defineStore("estimates", {
       this.activePdfUrl = data?.downloadUrl ?? null;
       return data;
     },
-    async emailEstimate(payload: { estimateId: string; to: string; subject: string; message: string; downloadUrl?: string }) {
+    async emailEstimate(payload: { estimateId: string; to: string; subject: string; message: string; downloadUrl?: string; template?: EstimateTemplateKey }) {
       const { data, error } = await sendEstimateEmail(payload);
       if (error) {
         this.error = error;

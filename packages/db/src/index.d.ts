@@ -33,6 +33,8 @@ export interface DatabaseUserSettingsRow {
     logo_url: string | null;
     company_name: string | null;
     org_id: string | null;
+    accent_color: string | null;
+    estimate_template: string | null;
 }
 export interface EstimateInput {
     userId: string;

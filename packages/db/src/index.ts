@@ -44,6 +44,8 @@ export interface DatabaseUserSettingsRow {
   logo_url: string | null;
   company_name: string | null;
   org_id: string | null;
+  accent_color: string | null;
+  estimate_template: string | null;
 }
 
 export interface EstimateInput {
@@ -154,6 +156,8 @@ const buildSettingsRecord = (row: DatabaseUserSettingsRow): UserSettings => ({
   logoUrl: row.logo_url ?? undefined,
   companyName: row.company_name ?? undefined,
   orgId: row.org_id ?? undefined,
+  accentColor: row.accent_color ?? undefined,
+  estimateTemplate: (row.estimate_template as UserSettings["estimateTemplate"]) ?? undefined,
 });
 
 export async function listEstimates(
@@ -346,6 +350,8 @@ export async function upsertUserSettings(
     logo_url: input.logoUrl ?? null,
     company_name: input.companyName ?? null,
     org_id: input.orgId ?? null,
+    accent_color: input.accentColor ?? null,
+    estimate_template: input.estimateTemplate ?? null,
   };
 
   const { data, error } = await client

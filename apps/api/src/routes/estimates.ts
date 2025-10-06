@@ -3,6 +3,7 @@ import { z } from "zod";
 import {
   createEstimateRecord,
   duplicateEstimate,
+  getUserSettings,
   listEstimates,
   updateEstimateRecord,
 } from "@stackquotes/db";
@@ -55,7 +56,11 @@ estimatesRouter.post("/create", async (c) => {
   const user = await requireUser(c);
   const payload = createSchema.parse(await c.req.json());
   const supabase = getServiceClient();
-  const data = await createEstimateRecord(supabase, { ...payload, userId: user.id });
+  const settings =
+    payload.taxRate === undefined ? await getUserSettings(supabase, user.id) : null;
+  const taxRate =
+    payload.taxRate !== undefined ? payload.taxRate : settings?.defaultTaxRate ?? 0;
+  const data = await createEstimateRecord(supabase, { ...payload, taxRate, userId: user.id });
   return c.json({ data });
 });
 

@@ -19,6 +19,7 @@
     "@stackquotes/types": "workspace:*",
     "@supabase/supabase-js": "^2.45.3",
     "hono": "^4.4.6",
+    "node-vibrant": "^4.0.3",
     "pdf-lib": "^1.17.1",
     "resend": "^3.0.0",
     "stripe": "^15.11.0",
