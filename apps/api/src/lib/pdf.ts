@@ -23,6 +23,7 @@ interface PdfTemplateContext {
   accentColor: { r: number; g: number; b: number };
   options: PdfRenderOptions;
   footerText?: string;
+  watermarkText: string;
   logo?: {
     image: PDFImage;
     width: number;
@@ -31,6 +32,7 @@ interface PdfTemplateContext {
 }
 
 const LETTER_SIZE: [number, number] = [612, 792];
+const DEFAULT_WATERMARK_TEXT = "Powered by StackQuotes";
 
 const hexToRgb = (hex: string): { r: number; g: number; b: number } => {
   const normalized = normalizeHex(hex).slice(1);
@@ -92,6 +94,26 @@ const wrapText = (text: string, font: PDFFont, size: number, maxWidth: number): 
   });
   if (current) lines.push(current);
   return lines.length ? lines : [text];
+};
+
+const drawWatermark = (ctx: PdfTemplateContext) => {
+  const { watermarkText } = ctx;
+  if (!watermarkText) return;
+
+  const { page, fonts } = ctx;
+  const { width } = page.getSize();
+  const size = 10;
+  const textWidth = fonts.serif.widthOfTextAtSize(watermarkText, size);
+  const x = Math.max((width - textWidth) / 2, 24);
+  const y = 24;
+
+  page.drawText(watermarkText, {
+    x,
+    y,
+    size,
+    font: fonts.serif,
+    color: rgb(148 / 255, 163 / 255, 184 / 255),
+  });
 };
 
 const drawLineItems = (
@@ -348,6 +370,8 @@ const renderModernPdf = (ctx: PdfTemplateContext) => {
       color: { r: 148 / 255, g: 163 / 255, b: 184 / 255 },
     });
   }
+
+  drawWatermark(ctx);
 };
 
 const renderPremiumPdf = (ctx: PdfTemplateContext) => {
@@ -441,6 +465,8 @@ const renderPremiumPdf = (ctx: PdfTemplateContext) => {
       color: { r: 148 / 255, g: 163 / 255, b: 184 / 255 },
     });
   }
+
+  drawWatermark(ctx);
 };
 
 const renderClassicPdf = (ctx: PdfTemplateContext) => {
@@ -573,6 +599,8 @@ const renderClassicPdf = (ctx: PdfTemplateContext) => {
       color: { r: 112 / 255, g: 128 / 255, b: 144 / 255 },
     });
   }
+
+  drawWatermark(ctx);
 };
 
 const PDF_RENDERERS: Record<EstimateTemplateKey, (ctx: PdfTemplateContext) => void> = {
@@ -645,6 +673,7 @@ export async function generateEstimatePdf(
     accentColor,
     options,
     footerText: settings?.footerText ?? undefined,
+    watermarkText: DEFAULT_WATERMARK_TEXT,
     logo,
   };
 

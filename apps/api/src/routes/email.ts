@@ -10,6 +10,7 @@ import {
   issueEstimateApprovalToken,
 } from "@stackquotes/db";
 import { sendEstimateEmail } from "../lib/email.js";
+import { loadServerConfig } from "@stackquotes/config";
 import { renderEstimateEmail } from "../lib/templates/email.js";
 
 const schema = z.object({
@@ -22,6 +23,26 @@ const schema = z.object({
 });
 
 export const emailRouter = new Hono();
+
+const stripTrailingSlash = (value?: string | null): string | undefined =>
+  value ? value.replace(/\/$/, "") : undefined;
+
+const getRequestOrigin = (url: string): string | undefined => {
+  try {
+    const parsed = new URL(url);
+    return `${parsed.protocol}//${parsed.host}`;
+  } catch {
+    return undefined;
+  }
+};
+
+let cachedServerConfig: ReturnType<typeof loadServerConfig> | null = null;
+const getServerConfig = () => {
+  if (!cachedServerConfig) {
+    cachedServerConfig = loadServerConfig();
+  }
+  return cachedServerConfig;
+};
 
 emailRouter.post("/send", async (c) => {
   const user = await requireUser(c);
@@ -44,7 +65,10 @@ emailRouter.post("/send", async (c) => {
     userId: user.id,
   });
 
-  const baseAppUrl = process.env.BASE_APP_URL?.replace(/\/$/, "");
+  const config = getServerConfig();
+  const baseAppUrl =
+    stripTrailingSlash(config.BASE_APP_URL) ??
+    stripTrailingSlash(getRequestOrigin(c.req.url));
   const approvalUrl = baseAppUrl ? `${baseAppUrl}/share/estimate/${token}` : undefined;
 
   const shouldMarkAsSent = estimateWithToken.status === "draft";

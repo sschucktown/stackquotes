@@ -106,7 +106,7 @@ export async function buildBrandTheme(options: BuildThemeOptions = {}): Promise<
   const accentDark = darken(accent, 0.2);
 
   return {
-    companyName: companyName ?? "StackQuotes",
+    companyName: companyName ?? "Your Company",
     logoUrl,
     accent,
     accentLight,
