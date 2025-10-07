@@ -1,4 +1,4 @@
-import { getServiceClient } from "./supabase";
+import { getServiceClient } from "./supabase.js";
 
 const getBucket = async (name: string, options: { public: boolean }) => {
   const supabase = getServiceClient();

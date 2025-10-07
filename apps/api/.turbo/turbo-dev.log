@@ -2,20 +2,14 @@
 > @stackquotes/api@0.1.0 dev C:\Dev\Projects\stackquotes\apps\api
 > tsx watch src/index.ts
 
-[dotenv@17.2.3] injecting env (9) from ..\..\.env -- tip: ✅ audit secrets and track compliance: https://dotenvx.com/ops
+[dotenv@17.2.3] injecting env (9) from ..\..\.env -- tip: ⚙️  specify custom .env file path with { path: '/custom/path/.env' }
 ✅ Loaded .env from: C:\Dev\Projects\stackquotes\.env
 ✅ SUPABASE_URL: https://jtmxuquifxlxthftoldf.supabase.co
 🚀 StackQuotes API running on http://localhost:8787
-{
-  code: 'PGRST204',
-  details: null,
-  hint: null,
-  message: "Could not find the 'accent_color' column of 'user_settings' in the schema cache"
-}
 Failed to extract accent color from logo TypeError: swatch?.getHex is not a function
     at extractAccentFromLogo (C:\Dev\Projects\stackquotes\apps\api\src\lib\brand.ts:93:20)
     at async buildBrandTheme (C:\Dev\Projects\stackquotes\apps\api\src\lib\brand.ts:102:26)
-    at async generateEstimatePdf (C:\Dev\Projects\stackquotes\apps\api\src\lib\pdf.ts:600:17)
+    at async generateEstimatePdf (C:\Dev\Projects\stackquotes\apps\api\src\lib\pdf.ts:628:17)
     at async <anonymous> (C:\Dev\Projects\stackquotes\apps\api\src\routes\pdf.ts:33:20)
     at async dispatch (file:///C:/Dev/Projects/stackquotes/node_modules/.pnpm/hono@4.9.10/node_modules/hono/dist/compose.js:22:17)
     at async <anonymous> (C:\Dev\Projects\stackquotes\apps\api\src\index.ts:55:5)
@@ -27,60 +21,11 @@ Failed to extract accent color from logo TypeError: swatch?.getHex is not a func
     at extractAccentFromLogo (C:\Dev\Projects\stackquotes\apps\api\src\lib\brand.ts:93:20)
     at async buildBrandTheme (C:\Dev\Projects\stackquotes\apps\api\src\lib\brand.ts:102:26)
     at async renderEstimateEmail (C:\Dev\Projects\stackquotes\apps\api\src\lib\templates\email.ts:370:17)
-    at async <anonymous> (C:\Dev\Projects\stackquotes\apps\api\src\routes\email.ts:53:20)
+    at async <anonymous> (C:\Dev\Projects\stackquotes\apps\api\src\routes\email.ts:77:20)
     at async dispatch (file:///C:/Dev/Projects/stackquotes/node_modules/.pnpm/hono@4.9.10/node_modules/hono/dist/compose.js:22:17)
     at async <anonymous> (C:\Dev\Projects\stackquotes\apps\api\src\index.ts:55:5)
     at async dispatch (file:///C:/Dev/Projects/stackquotes/node_modules/.pnpm/hono@4.9.10/node_modules/hono/dist/compose.js:22:17)
     at async cors2 (file:///C:/Dev/Projects/stackquotes/node_modules/.pnpm/hono@4.9.10/node_modules/hono/dist/middleware/cors/index.js:84:5)
     at async dispatch (file:///C:/Dev/Projects/stackquotes/node_modules/.pnpm/hono@4.9.10/node_modules/hono/dist/compose.js:22:17)
     at async file:///C:/Dev/Projects/stackquotes/node_modules/.pnpm/hono@4.9.10/node_modules/hono/dist/hono-base.js:201:25
-4:32:06 PM [tsx] change in ./src\lib\brand.ts Restarting...
-c[dotenv@17.2.3] injecting env (9) from ..\..\.env -- tip: 🔐 prevent committing .env to code: https://dotenvx.com/precommit
-✅ Loaded .env from: C:\Dev\Projects\stackquotes\.env
-✅ SUPABASE_URL: https://jtmxuquifxlxthftoldf.supabase.co
-🚀 StackQuotes API running on http://localhost:8787
-4:32:32 PM [tsx] change in ./src\lib\pdf.ts Restarting...
-c[dotenv@17.2.3] injecting env (9) from ..\..\.env -- tip: ⚙️  write to custom object with { processEnv: myObject }
-✅ Loaded .env from: C:\Dev\Projects\stackquotes\.env
-✅ SUPABASE_URL: https://jtmxuquifxlxthftoldf.supabase.co
-🚀 StackQuotes API running on http://localhost:8787
-4:32:42 PM [tsx] change in ./src\lib\pdf.ts Restarting...
-c[dotenv@17.2.3] injecting env (9) from ..\..\.env -- tip: 🔐 prevent building .env in docker: https://dotenvx.com/prebuild
-✅ Loaded .env from: C:\Dev\Projects\stackquotes\.env
-✅ SUPABASE_URL: https://jtmxuquifxlxthftoldf.supabase.co
-🚀 StackQuotes API running on http://localhost:8787
-4:32:47 PM [tsx] change in ./src\lib\pdf.ts Restarting...
-c[dotenv@17.2.3] injecting env (9) from ..\..\.env -- tip: 🛠️  run anywhere with `dotenvx run -- yourcommand`
-✅ Loaded .env from: C:\Dev\Projects\stackquotes\.env
-✅ SUPABASE_URL: https://jtmxuquifxlxthftoldf.supabase.co
-🚀 StackQuotes API running on http://localhost:8787
-4:32:55 PM [tsx] change in ./src\lib\pdf.ts Restarting...
-c[dotenv@17.2.3] injecting env (9) from ..\..\.env -- tip: ⚙️  write to custom object with { processEnv: myObject }
-✅ Loaded .env from: C:\Dev\Projects\stackquotes\.env
-✅ SUPABASE_URL: https://jtmxuquifxlxthftoldf.supabase.co
-🚀 StackQuotes API running on http://localhost:8787
-4:32:59 PM [tsx] change in ./src\lib\pdf.ts Restarting...
-c[dotenv@17.2.3] injecting env (9) from ..\..\.env -- tip: ⚙️  write to custom object with { processEnv: myObject }
-✅ Loaded .env from: C:\Dev\Projects\stackquotes\.env
-✅ SUPABASE_URL: https://jtmxuquifxlxthftoldf.supabase.co
-🚀 StackQuotes API running on http://localhost:8787
-4:33:06 PM [tsx] change in ./src\lib\pdf.ts Restarting...
-c[dotenv@17.2.3] injecting env (9) from ..\..\.env -- tip: 🔑 add access controls to secrets: https://dotenvx.com/ops
-✅ Loaded .env from: C:\Dev\Projects\stackquotes\.env
-✅ SUPABASE_URL: https://jtmxuquifxlxthftoldf.supabase.co
-🚀 StackQuotes API running on http://localhost:8787
-4:33:28 PM [tsx] change in ./src\lib\pdf.ts Restarting...
-c[dotenv@17.2.3] injecting env (9) from ..\..\.env -- tip: 🔄 add secrets lifecycle management: https://dotenvx.com/ops
-✅ Loaded .env from: C:\Dev\Projects\stackquotes\.env
-✅ SUPABASE_URL: https://jtmxuquifxlxthftoldf.supabase.co
-🚀 StackQuotes API running on http://localhost:8787
-4:37:05 PM [tsx] change in ./src\routes\email.ts Restarting...
-c[dotenv@17.2.3] injecting env (9) from ..\..\.env -- tip: ⚙️  suppress all logs with { quiet: true }
-✅ Loaded .env from: C:\Dev\Projects\stackquotes\.env
-✅ SUPABASE_URL: https://jtmxuquifxlxthftoldf.supabase.co
-🚀 StackQuotes API running on http://localhost:8787
-4:37:28 PM [tsx] change in ./src\routes\email.ts Restarting...
-c[dotenv@17.2.3] injecting env (9) from ..\..\.env -- tip: 🔑 add access controls to secrets: https://dotenvx.com/ops
-✅ Loaded .env from: C:\Dev\Projects\stackquotes\.env
-✅ SUPABASE_URL: https://jtmxuquifxlxthftoldf.supabase.co
-🚀 StackQuotes API running on http://localhost:8787
+5:32:56 PM [tsx] change in ./src\lib\auth.ts Restarting...

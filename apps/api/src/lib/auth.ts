@@ -1,5 +1,5 @@
 import type { Context } from "hono";
-import { getServiceClient } from "./supabase";
+import { getServiceClient } from "./supabase.js";
 
 export interface AuthenticatedUser {
   id: string;
