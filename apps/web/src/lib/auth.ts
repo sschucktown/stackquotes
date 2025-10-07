@@ -22,6 +22,17 @@ export const useAuth = () => {
   const signIn = (email: string, password: string) => supabase.auth.signInWithPassword({ email, password });
   const signUp = (email: string, password: string) => supabase.auth.signUp({ email, password });
   const signOut = () => supabase.auth.signOut();
+  const signInWithGoogle = (redirectPath?: string) => {
+    const target = typeof redirectPath === "string" && redirectPath.startsWith("/") ? redirectPath : "/quickquote";
+    const redirectUrl = new URL(`${window.location.origin}/login`);
+    redirectUrl.searchParams.set("redirect", target);
+    return supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: redirectUrl.toString(),
+      },
+    });
+  };
 
   return {
     user,
@@ -31,6 +42,7 @@ export const useAuth = () => {
     signIn,
     signUp,
     signOut,
+    signInWithGoogle,
   };
 };
 
