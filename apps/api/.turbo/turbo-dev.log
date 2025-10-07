@@ -1,0 +1,12 @@
+
+> @stackquotes/api@0.1.0 dev C:\Users\u329702\IdeaProjects\stackquotes\apps\api
+> tsx watch src/index.ts
+
+[dotenv@17.2.3] injecting env (9) from ..\..\.env -- tip: 🔑 add access controls to secrets: https://dotenvx.com/ops
+✅ Loaded .env from: C:\Users\u329702\IdeaProjects\stackquotes\.env
+✅ SUPABASE_URL: https://jtmxuquifxlxthftoldf.supabase.co
+🚀 StackQuotes API running on http://localhost:8787
+{
+  code: 'PGRST204',
+  details: null,
+  hint: null,
