@@ -4,6 +4,7 @@ import { getUserSettings, upsertUserSettings } from "@stackquotes/db";
 import { uploadPublicAsset } from "../lib/storage.js";
 import { requireUser } from "../lib/auth.js";
 import { getServiceClient } from "../lib/supabase.js";
+import { Buffer } from "node:buffer";
 
 const hexColor = z
   .string()
@@ -33,17 +34,17 @@ settingsRouter.post("/logo/upload", async (c) => {
   const payload = uploadLogoSchema.parse(await c.req.json());
   const supabase = getServiceClient();
 
-  const base64 = payload.data.includes(',') ? payload.data.split(',').pop() ?? '' : payload.data;
+  const base64 = payload.data.includes(",") ? payload.data.split(",").pop() ?? "" : payload.data;
   if (!base64) {
     c.status(400);
     return c.json({ error: "Invalid file data" });
   }
-  const buffer = Buffer.from(base64, 'base64');
-  const sanitizedName = payload.fileName.replace(/[^a-zA-Z0-9.\-_]/g, '_');
-  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+  const buffer = Buffer.from(base64, "base64");
+  const sanitizedName = payload.fileName.replace(/[^a-zA-Z0-9.\-_]/g, "_");
+  const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
   const storagePath = `${user.id}/logos/${timestamp}-${sanitizedName}`.toLowerCase();
 
-  const publicUrl = await uploadPublicAsset('brand-assets', storagePath, new Uint8Array(buffer), {
+  const publicUrl = await uploadPublicAsset("brand-assets", storagePath, new Uint8Array(buffer), {
     contentType: payload.contentType,
   });
 

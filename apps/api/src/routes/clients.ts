@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 import { createClientRecord, listClients } from "@stackquotes/db";
+import type { ClientInput } from "@stackquotes/db";
 import { requireUser } from "../lib/auth.js";
 import { getServiceClient } from "../lib/supabase.js";
 
@@ -24,7 +25,14 @@ clientsRouter.post("/create", async (c) => {
   const user = await requireUser(c);
   const payload = createSchema.parse(await c.req.json());
   const supabase = getServiceClient();
-  const data = await createClientRecord(supabase, { ...payload, userId: user.id });
+  const createInput: ClientInput = {
+    userId: user.id,
+    name: payload.name,
+    email: payload.email,
+    phone: payload.phone,
+    address: payload.address,
+  };
+  const data = await createClientRecord(supabase, createInput);
   return c.json({ data });
 });
 

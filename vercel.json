@@ -8,7 +8,10 @@
     },
     {
       "src": "apps/api/src/index.ts",
-      "use": "@vercel/node"
+      "use": "@vercel/node",
+      "config": {
+        "tsconfig": "apps/api/tsconfig.json"
+      }
     }
   ],
   "routes": [

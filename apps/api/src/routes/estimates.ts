@@ -7,15 +7,20 @@ import {
   listEstimates,
   updateEstimateRecord,
 } from "@stackquotes/db";
+import type {
+  EstimateInput,
+  EstimateUpdateInput,
+  EstimateDuplicateInput,
+} from "@stackquotes/db";
 import { requireUser } from "../lib/auth.js";
 import { getServiceClient } from "../lib/supabase.js";
 
 const lineItemSchema = z.object({
-  id: z.string().optional(),
+  id: z.string().min(1),
   description: z.string().min(1),
   quantity: z.number().min(0),
   unitPrice: z.number().min(0),
-  total: z.number().optional(),
+  total: z.number(),
   cost: z.number().optional().nullable(),
 });
 
@@ -60,7 +65,17 @@ estimatesRouter.post("/create", async (c) => {
     payload.taxRate === undefined ? await getUserSettings(supabase, user.id) : null;
   const taxRate =
     payload.taxRate !== undefined ? payload.taxRate : settings?.defaultTaxRate ?? 0;
-  const data = await createEstimateRecord(supabase, { ...payload, taxRate, userId: user.id });
+  const createInput: EstimateInput = {
+    userId: user.id,
+    clientId: payload.clientId,
+    projectTitle: payload.projectTitle,
+    lineItems: payload.lineItems,
+    notes: payload.notes,
+    status: payload.status,
+    taxRate,
+    jobId: payload.jobId ?? undefined,
+  };
+  const data = await createEstimateRecord(supabase, createInput);
   return c.json({ data });
 });
 
@@ -68,7 +83,13 @@ estimatesRouter.patch("/update", async (c) => {
   const user = await requireUser(c);
   const payload = updateSchema.parse(await c.req.json());
   const supabase = getServiceClient();
-  const data = await updateEstimateRecord(supabase, { ...payload, userId: user.id });
+  const { id, ...rest } = payload;
+  const updateInput: EstimateUpdateInput = {
+    userId: user.id,
+    id,
+    ...rest,
+  };
+  const data = await updateEstimateRecord(supabase, updateInput);
   return c.json({ data });
 });
 
@@ -76,7 +97,11 @@ estimatesRouter.post("/duplicate", async (c) => {
   const user = await requireUser(c);
   const payload = duplicateSchema.parse(await c.req.json());
   const supabase = getServiceClient();
-  const data = await duplicateEstimate(supabase, { ...payload, userId: user.id });
+  const duplicateInput: EstimateDuplicateInput = {
+    userId: user.id,
+    id: payload.id,
+  };
+  const data = await duplicateEstimate(supabase, duplicateInput);
   return c.json({ data });
 });
 

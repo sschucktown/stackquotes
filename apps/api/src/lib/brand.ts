@@ -1,4 +1,5 @@
 import { Vibrant } from "node-vibrant/node";
+import { Buffer } from "node:buffer";
 import type { UserSettings } from "@stackquotes/types";
 
 const FALLBACK_ACCENT = "#2563eb";
@@ -90,7 +91,8 @@ export async function extractAccentFromLogo(logoUrl?: string): Promise<string | 
       palette.DarkVibrant ||
       palette.LightMuted ||
       palette.DarkMuted;
-    return swatch?.getHex() ?? null;
+    const swatchWithHex = swatch as { getHex?: () => string; hex?: string } | undefined;
+    return swatchWithHex?.getHex?.() ?? swatchWithHex?.hex ?? null;
   } catch (error) {
     console.warn("Failed to extract accent color from logo", error);
     return null;
