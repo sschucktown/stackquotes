@@ -79,3 +79,8 @@ Failed to extract accent color from logo TypeError: swatch?.getHex is not a func
 ✅ Loaded .env from: C:\Dev\Projects\stackquotes\.env
 ✅ SUPABASE_URL: https://jtmxuquifxlxthftoldf.supabase.co
 🚀 StackQuotes API running on http://localhost:8787
+4:37:28 PM [tsx] change in ./src\routes\email.ts Restarting...
+c[dotenv@17.2.3] injecting env (9) from ..\..\.env -- tip: 🔑 add access controls to secrets: https://dotenvx.com/ops
+✅ Loaded .env from: C:\Dev\Projects\stackquotes\.env
+✅ SUPABASE_URL: https://jtmxuquifxlxthftoldf.supabase.co
+🚀 StackQuotes API running on http://localhost:8787

@@ -11,3 +11,9 @@
 [34mCJS[39m Build start
 [32mCJS[39m [1mdist\index.cjs [22m[32m2.78 KB[39m
 [32mCJS[39m ⚡️ Build success in 674ms
+[32mESM[39m [1mdist\index.js [22m[32m1.53 KB[39m
+[32mESM[39m ⚡️ Build success in 675ms
+[34mCLI[39m Watching for changes in "."
+[34mCLI[39m Ignoring changes in "**/{.git,node_modules}/**" | "dist"
+[34mDTS[39m Build start
+[32mDTS[39m ⚡️ Build success in 4169ms

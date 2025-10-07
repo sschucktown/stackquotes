@@ -11,3 +11,4 @@
 [32mESM[39m [1mdist\index.js [22m[32m9.67 KB[39m
 [32mESM[39m ⚡️ Build success in 536ms
 [34mCLI[39m Watching for changes in "."
+[34mCLI[39m Ignoring changes in "**/{.git,node_modules}/**" | "dist"
