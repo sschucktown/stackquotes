@@ -1,11 +1,42 @@
 {
   "version": 2,
   "installCommand": "pnpm install --frozen-lockfile",
-  "buildCommand": "pnpm vercel-build",
+  "buildCommand": "pnpm run vercel-build",
   "outputDirectory": "apps/web/dist",
+  "builds": [
+    {
+      "src": "apps/web/package.json",
+      "use": "@vercel/static-build",
+      "config": { "distDir": "dist" }
+    },
+    {
+      "src": "apps/api/src/index.ts",
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": [
+          "apps/api/dist/**",
+          "packages/config/dist/**",
+          "packages/types/dist/**"
+        ]
+      }
+    }
+  ],
+  "functions": {
+    "api/[[...stackquotes]].ts": {
+      "includedFiles": [
+        "apps/api/dist/**",
+        "packages/config/dist/**",
+        "packages/types/dist/**"
+      ]
+    }
+  },
   "routes": [
-    { "src": "/api/(.*)", "dest": "/api/[[...stackquotes]]" },
+    { "src": "/api/(.*)", "dest": "apps/api/src/index.ts" },
     { "handle": "filesystem" },
     { "src": "/(.*)", "dest": "/index.html" }
-  ]
+  ],
+  "env": {
+    "BASE_APP_URL": "https://stackquotes.vercel.app",
+    "VITE_API_BASE_URL": "https://stackquotes.vercel.app/api"
+  }
 }
