@@ -15,7 +15,7 @@
     "lint": "turbo run lint",
     "test": "turbo run test",
     "typecheck": "turbo run typecheck",
-    "vercel-build": "pnpm --filter @stackquotes/web build"
+    "vercel-build": "turbo run build --filter=@stackquotes/web --filter=@stackquotes/api --filter=@stackquotes/config --filter=@stackquotes/types"
   },
   "devDependencies": {
     "tsup": "^8.5.0",
