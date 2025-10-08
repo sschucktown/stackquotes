@@ -21,15 +21,6 @@
       }
     }
   ],
-  "functions": {
-    "api/[[...stackquotes]].ts": {
-      "includedFiles": [
-        "apps/api/dist/**",
-        "packages/config/dist/**",
-        "packages/types/dist/**"
-      ]
-    }
-  },
   "routes": [
     { "src": "/api/(.*)", "dest": "apps/api/src/index.ts" },
     { "handle": "filesystem" },
