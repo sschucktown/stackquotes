@@ -4,20 +4,18 @@
     {
       "src": "apps/web/package.json",
       "use": "@vercel/static-build",
-      "config": { "distDir": "dist" }
+      "config": { "distDir": "apps/web/dist" }
     },
     {
       "src": "apps/api/src/index.ts",
       "use": "@vercel/node",
-      "config": {
-        "tsconfig": "apps/api/tsconfig.json"
-      }
+      "config": { "tsconfig": "apps/api/tsconfig.json" }
     }
   ],
   "routes": [
-    { "src": "/api/(.*)", "dest": "/apps/api/src/index.ts" },
+    { "src": "/api/(.*)", "dest": "apps/api/src/index.ts" },
     { "handle": "filesystem" },
-    { "src": "/(.*)", "dest": "/index.html" }
+    { "src": "/(.*)", "dest": "apps/web/dist/index.html" }
   ],
   "env": {
     "BASE_APP_URL": "https://stackquotes.vercel.app",
