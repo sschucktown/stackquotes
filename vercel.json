@@ -4,7 +4,7 @@
     {
       "src": "apps/web/package.json",
       "use": "@vercel/static-build",
-      "config": { "distDir": "apps/web/dist" }
+      "config": { "distDir": "dist" }
     },
     {
       "src": "apps/api/src/index.ts",
@@ -15,7 +15,7 @@
   "routes": [
     { "src": "/api/(.*)", "dest": "apps/api/src/index.ts" },
     { "handle": "filesystem" },
-    { "src": "/(.*)", "dest": "apps/web/dist/index.html" }
+    { "src": "/(.*)", "dest": "/index.html" }
   ],
   "env": {
     "BASE_APP_URL": "https://stackquotes.vercel.app",

@@ -54,3 +54,5 @@
 7:59:43 PM [tsx] change in ./src\lib\auth.ts Restarting...
 c[dotenv@17.2.3] injecting env (9) from ..\..\.env -- tip: 🔐 encrypt with Dotenvx: https://dotenvx.com
 ✅ Loaded .env from: C:\Dev\Projects\stackquotes\.env
+✅ SUPABASE_URL: https://jtmxuquifxlxthftoldf.supabase.co
+🚀 StackQuotes API running on http://localhost:8787
