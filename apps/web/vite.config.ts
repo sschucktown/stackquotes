@@ -10,11 +10,23 @@ export default defineConfig({
       "@modules": path.resolve(__dirname, "src/modules"),
       "@stackquotes/ui": path.resolve(__dirname, "../../packages/ui/src"),
       "@stackquotes/config": path.resolve(__dirname, "../../packages/config/src"),
-      "@stackquotes/types": path.resolve(__dirname, "../../packages/types/src"),
-    },
+      "@stackquotes/types": path.resolve(__dirname, "../../packages/types/src")
+    }
   },
   build: {
-    outDir: path.resolve(__dirname, "../../dist"),
+    // ✅ Keep the output local to apps/web
+    outDir: "dist",
     emptyOutDir: true,
+    sourcemap: false,
+    rollupOptions: {
+      input: path.resolve(__dirname, "index.html")
+    }
   },
+  server: {
+    port: 5173,
+    host: true
+  },
+  preview: {
+    port: 4173
+  }
 });
