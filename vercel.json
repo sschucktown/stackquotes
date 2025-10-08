@@ -4,17 +4,17 @@
     {
       "src": "apps/web/package.json",
       "use": "@vercel/static-build",
-      "config": { "distDir": "apps/web/dist" }
+      "config": { "distDir": "dist" }
     },
     {
       "src": "apps/api/src/index.ts",
       "use": "@vercel/node"
     }
   ],
-  "buildCommand": "pnpm --filter @stackquotes/web build",
+  "buildCommand": "cd apps/web && pnpm install --no-frozen-lockfile && pnpm build && mkdir -p ../../dist && cp -r dist/* ../../dist/",
   "routes": [
     { "src": "/api/(.*)", "dest": "apps/api/src/index.ts" },
-    { "src": "/(.*)", "dest": "apps/web/dist/index.html" }
+    { "src": "/(.*)", "dest": "/dist/index.html" }
   ],
   "env": {
     "BASE_APP_URL": "https://stackquotes.vercel.app",
