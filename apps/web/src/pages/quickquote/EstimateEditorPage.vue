@@ -63,6 +63,7 @@ import PDFPreviewModal from "@modules/quickquote/components/PDFPreviewModal.vue"
 import { useEstimateStore } from "@modules/quickquote/stores/estimateStore";
 import { useClientStore } from "@modules/quickquote/stores/clientStore";
 import { useSettingsStore } from "@modules/quickquote/stores/settingsStore";
+import type { EstimateTemplateKey } from "@stackquotes/types";
 import type { EstimateFormPayload } from "@modules/quickquote/composables/useEstimateForm";
 
 const props = defineProps<{ id: string }>();
@@ -78,7 +79,12 @@ const emailSuccess = ref(false);
 const emailError = ref("");
 const templateInitialized = ref(false);
 
-const emailForm = reactive({
+const emailForm = reactive<{
+  to: string;
+  subject: string;
+  message: string;
+  template: EstimateTemplateKey;
+}>({
   to: "",
   subject: "",
   message: "Hi there,\n\nPlease review the attached estimate and let me know if you have any questions.\n",

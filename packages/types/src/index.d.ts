@@ -1,5 +1,6 @@
 export type UUID = string;
 export type EstimateStatus = "draft" | "sent" | "accepted" | "declined";
+export type EstimateTemplateKey = "modern" | "premium" | "classic";
 export interface LineItem {
     id: string;
     description: string;
@@ -23,6 +24,10 @@ export interface Estimate {
     jobId?: string | null;
     createdAt: string;
     updatedAt: string;
+    approvalToken?: string | null;
+    approvalTokenExpiresAt?: string | null;
+    approvedAt?: string | null;
+    approvedBy?: string | null;
 }
 export interface Client {
     id: UUID;
@@ -40,6 +45,8 @@ export interface UserSettings {
     logoUrl?: string;
     companyName?: string;
     orgId?: string | null;
+    accentColor?: string | null;
+    estimateTemplate?: EstimateTemplateKey;
 }
 export interface EstimateFilters {
     status?: EstimateStatus;
@@ -55,9 +62,16 @@ export interface EmailPayload {
     subject: string;
     message: string;
     downloadUrl?: string;
+    template?: EstimateTemplateKey;
 }
 export interface ApiResponse<T> {
     data?: T;
     error?: string;
+}
+export interface PublicEstimatePayload {
+    estimate: Estimate;
+    client: Client;
+    settings: UserSettings | null;
+    downloadUrl?: string | null;
 }
 //# sourceMappingURL=index.d.ts.map

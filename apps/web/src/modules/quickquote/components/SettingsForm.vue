@@ -40,6 +40,7 @@
 
 <script setup lang="ts">
 import { reactive, ref, watchEffect } from "vue";
+import type { EstimateTemplateKey } from "@stackquotes/types";
 import { useSettingsStore } from "@modules/quickquote/stores/settingsStore";
 
 const settingsStore = useSettingsStore();
@@ -48,7 +49,15 @@ const logoUploading = ref(false);
 const logoError = ref("");
 const DEFAULT_ACCENT = "#2563eb";
 
-const form = reactive({
+const form = reactive<{
+  companyName: string;
+  logoUrl: string;
+  footerText: string;
+  defaultTaxRate: number;
+  accentColor: string;
+  estimateTemplate: EstimateTemplateKey;
+  autoAccent: boolean;
+}>({
   companyName: "",
   logoUrl: "",
   footerText: "",

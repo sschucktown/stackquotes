@@ -4,7 +4,7 @@
       :model-value="lineItem.description"
       label="Description"
       placeholder="e.g. Kitchen Remodel"
-      @update:model-value="(value) => onUpdate({ description: value as string })"
+      @update:model-value="handleDescriptionChange"
     />
     <SQInput
       :model-value="lineItem.quantity"
@@ -12,7 +12,7 @@
       type="number"
       min="0"
       step="0.1"
-      @update:model-value="(value) => onUpdate({ quantity: Number(value) })"
+      @update:model-value="handleQuantityChange"
     />
     <SQInput
       :model-value="lineItem.unitPrice"
@@ -20,7 +20,7 @@
       type="number"
       min="0"
       step="0.01"
-      @update:model-value="(value) => onUpdate({ unitPrice: Number(value) })"
+      @update:model-value="handleUnitPriceChange"
     />
     <div class="flex flex-col gap-1 text-sm font-medium text-slate-700">
       <span>Total</span>
@@ -65,5 +65,19 @@ const currency = (value: number) => `$${value.toFixed(2)}`;
 
 const onUpdate = (payload: Partial<LineItem>) => {
   emit("update", { ...payload, id: lineItem.value.id });
+};
+
+const handleDescriptionChange = (value: string | number | null | undefined) => {
+  onUpdate({ description: typeof value === "string" ? value : `${value ?? ""}` });
+};
+
+const handleQuantityChange = (value: string | number | null | undefined) => {
+  const quantity = Number(value ?? 0);
+  onUpdate({ quantity: Number.isFinite(quantity) ? quantity : 0 });
+};
+
+const handleUnitPriceChange = (value: string | number | null | undefined) => {
+  const unitPrice = Number(value ?? 0);
+  onUpdate({ unitPrice: Number.isFinite(unitPrice) ? unitPrice : 0 });
 };
 </script>

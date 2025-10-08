@@ -7,7 +7,7 @@
           :key="status.value"
           :variant="activeStatus === status.value ? 'primary' : 'ghost'"
           size="sm"
-          @click="$emit('update:status', status.value)"
+          @click="setStatus(status.value)"
         >
           {{ status.label }}
         </SQButton>
@@ -16,7 +16,7 @@
         <SQInput
           :model-value="search"
           placeholder="Search estimates"
-          @update:model-value="$emit('update:search', $event as string)"
+          @update:model-value="onSearchInput"
         />
       </div>
     </div>
@@ -76,7 +76,7 @@ const emit = defineEmits<{
   (e: "update:search", value: string): void;
 }>();
 
-const statuses = [
+const statuses: Array<{ value: Estimate["status"] | undefined; label: string }> = [
   { value: undefined, label: "All" },
   { value: "draft", label: "Draft" },
   { value: "sent", label: "Sent" },
@@ -100,5 +100,13 @@ const toneForStatus = (status: Estimate["status"]) => {
     default:
       return "default";
   }
+};
+
+const setStatus = (value: Estimate["status"] | undefined) => {
+  emit("update:status", value);
+};
+
+const onSearchInput = (value: string | number | null | undefined) => {
+  emit("update:search", typeof value === "string" ? value : value?.toString() ?? "");
 };
 </script>

@@ -73,12 +73,14 @@ const create = async () => {
   submitting.value = true;
   try {
     const client = await clientStore.create({ ...form });
-    emit("update:modelValue", client.id);
-    showForm.value = false;
-    form.name = "";
-    form.email = "";
-    form.phone = "";
-    form.address = "";
+    if (client) {
+      emit("update:modelValue", client.id);
+      showForm.value = false;
+      form.name = "";
+      form.email = "";
+      form.phone = "";
+      form.address = "";
+    }
   } finally {
     submitting.value = false;
   }

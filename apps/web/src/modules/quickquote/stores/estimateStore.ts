@@ -1,11 +1,12 @@
 ﻿import { defineStore } from "pinia";
-import type { Estimate, EstimateFilters, EstimateTemplateKey, LineItem } from "@stackquotes/types";
+import type { Estimate, EstimateFilters, EstimateTemplateKey } from "@stackquotes/types";
 import {
   createEstimate,
   duplicateEstimate,
   fetchEstimates,
   updateEstimate,
 } from "@modules/quickquote/api/estimates";
+import type { EstimatePayload } from "@modules/quickquote/api/estimates";
 import { generatePdf } from "@modules/quickquote/api/pdf";
 import { sendEstimateEmail } from "@modules/quickquote/api/email";
 
@@ -50,13 +51,7 @@ export const useEstimateStore = defineStore("estimates", {
       }
       this.loading = false;
     },
-    async create(payload: {
-      clientId: string;
-      projectTitle: string;
-      lineItems: LineItem[];
-      notes?: string;
-      taxRate?: number;
-    }) {
+    async create(payload: EstimatePayload) {
       this.error = null;
       const { data, error } = await createEstimate(payload);
       if (error) {
@@ -68,7 +63,7 @@ export const useEstimateStore = defineStore("estimates", {
       }
       return data;
     },
-    async update(id: string, payload: Partial<{ lineItems: LineItem[]; projectTitle: string; notes: string; status: Estimate["status"]; taxRate: number }>) {
+    async update(id: string, payload: Partial<EstimatePayload>) {
       this.error = null;
       const { data, error } = await updateEstimate(id, payload);
       if (error) {

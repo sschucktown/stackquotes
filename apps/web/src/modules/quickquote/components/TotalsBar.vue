@@ -22,7 +22,7 @@
         max="1"
         step="0.01"
         hint="0.00 - 1.00"
-        @update:model-value="(value) => $emit('update:taxRate', Number(value))"
+        @update:model-value="handleTaxRateChange"
       />
     </div>
 
@@ -41,5 +41,14 @@ const props = defineProps<{
   taxRate: number;
 }>();
 
+const emit = defineEmits<{
+  (e: "update:taxRate", value: number): void;
+}>();
+
 const currency = (value: number) => `$${value.toFixed(2)}`;
+
+const handleTaxRateChange = (value: string | number | null | undefined) => {
+  const numeric = Number(value ?? 0);
+  emit("update:taxRate", Number.isFinite(numeric) ? numeric : 0);
+};
 </script>
