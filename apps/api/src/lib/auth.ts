@@ -20,7 +20,10 @@ export const requireUser = async (c: Context): Promise<AuthenticatedUser> => {
   }
 
   const supabase = getServiceClient();
-  const { data, error } = await supabase.auth.getUser(token);
+  const { data, error } = await (supabase.auth as { getUser: (jwt: string) => Promise<{
+    data: { user: { id: string; email?: string | null } | null };
+    error: Error | null;
+  }> }).getUser(token);
   if (error || !data?.user) {
     c.status(401);
     throw new Error("Invalid or expired token");

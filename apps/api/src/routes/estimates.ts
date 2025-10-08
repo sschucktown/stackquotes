@@ -12,6 +12,7 @@ import type {
   EstimateUpdateInput,
   EstimateDuplicateInput,
 } from "@stackquotes/db";
+import type { LineItem } from "@stackquotes/types";
 import { requireUser } from "../lib/auth.js";
 import { getServiceClient } from "../lib/supabase.js";
 
@@ -65,11 +66,19 @@ estimatesRouter.post("/create", async (c) => {
     payload.taxRate === undefined ? await getUserSettings(supabase, user.id) : null;
   const taxRate =
     payload.taxRate !== undefined ? payload.taxRate : settings?.defaultTaxRate ?? 0;
+  const lineItems: LineItem[] = payload.lineItems.map((item) => ({
+    id: item.id,
+    description: item.description,
+    quantity: item.quantity,
+    unitPrice: item.unitPrice,
+    total: item.total,
+    cost: item.cost ?? undefined,
+  }));
   const createInput: EstimateInput = {
     userId: user.id,
     clientId: payload.clientId,
     projectTitle: payload.projectTitle,
-    lineItems: payload.lineItems,
+    lineItems,
     notes: payload.notes,
     status: payload.status,
     taxRate,
@@ -83,11 +92,21 @@ estimatesRouter.patch("/update", async (c) => {
   const user = await requireUser(c);
   const payload = updateSchema.parse(await c.req.json());
   const supabase = getServiceClient();
-  const { id, ...rest } = payload;
+  const { id, lineItems, ...rest } = payload;
   const updateInput: EstimateUpdateInput = {
     userId: user.id,
     id,
     ...rest,
+    lineItems: lineItems
+      ? lineItems.map<LineItem>((item) => ({
+          id: item.id,
+          description: item.description,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          total: item.total,
+          cost: item.cost ?? undefined,
+        }))
+      : undefined,
   };
   const data = await updateEstimateRecord(supabase, updateInput);
   return c.json({ data });
