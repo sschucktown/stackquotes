@@ -1,10 +1,14 @@
 {
   "version": 2,
+  "installCommand": "pnpm install --frozen-lockfile",
   "builds": [
     {
       "src": "apps/web/package.json",
       "use": "@vercel/static-build",
-      "config": { "distDir": "dist" }
+      "config": {
+        "distDir": "dist",
+        "installCommand": "pnpm install --frozen-lockfile"
+      }
     },
     {
       "src": "apps/api/src/index.ts",
