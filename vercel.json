@@ -6,8 +6,8 @@
       "src": "apps/web/package.json",
       "use": "@vercel/static-build",
       "config": {
-        "distDir": "dist",
-        "installCommand": "pnpm install --frozen-lockfile"
+        "distDir": "apps/web/dist",
+        "buildCommand": "pnpm run build"
       }
     },
     {
