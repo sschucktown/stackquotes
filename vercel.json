@@ -4,7 +4,7 @@
   "buildCommand": "pnpm vercel-build",
   "outputDirectory": "apps/web/dist",
   "routes": [
-    { "src": "/api/(.*)", "dest": "/api/$1" },
+    { "src": "/api/(.*)", "dest": "/api/[[...stackquotes]]" },
     { "handle": "filesystem" },
     { "src": "/(.*)", "dest": "/index.html" }
   ]
