@@ -2,7 +2,7 @@
   "version": 2,
   "builds": [
     {
-      "src": "apps/web/package.json",
+      "src": "package.json",
       "use": "@vercel/static-build",
       "config": { "distDir": "apps/web/dist" }
     },
@@ -11,6 +11,7 @@
       "use": "@vercel/node"
     }
   ],
+  "installCommand": "pnpm install --frozen-lockfile",
   "buildCommand": "pnpm vercel-build",
   "routes": [
     { "src": "/api/(.*)", "dest": "apps/api/src/index.ts" },
