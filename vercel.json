@@ -28,8 +28,8 @@
   ],
   "env": {
     "BASE_APP_URL": "https://stackquotes.vercel.app",
-    "BASE_API_URL": "https://api.stackquotes.app",
-    "EMAIL_TRACKING_BASE_URL": "https://api.stackquotes.app",
+    "BASE_API_URL": "https://stackquotes.vercel.app",
+    "EMAIL_TRACKING_BASE_URL": "https://stackquotes.vercel.app",
     "VITE_API_BASE_URL": "https://stackquotes.vercel.app/api"
   }
 }
