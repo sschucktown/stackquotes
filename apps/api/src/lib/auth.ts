@@ -1,4 +1,5 @@
 import type { Context } from "hono";
+import { HTTPException } from "hono/http-exception";
 import { getServiceClient } from "./supabase.js";
 
 export interface AuthenticatedUser {
@@ -9,14 +10,12 @@ export interface AuthenticatedUser {
 export const requireUser = async (c: Context): Promise<AuthenticatedUser> => {
   const header = c.req.header("authorization") || c.req.header("Authorization");
   if (!header) {
-    c.status(401);
-    throw new Error("Missing Authorization header");
+    throw new HTTPException(401, { message: "Missing Authorization header" });
   }
 
   const token = header.replace(/bearer /i, "");
   if (!token) {
-    c.status(401);
-    throw new Error("Missing bearer token");
+    throw new HTTPException(401, { message: "Missing bearer token" });
   }
 
   const supabase = getServiceClient();
@@ -25,8 +24,7 @@ export const requireUser = async (c: Context): Promise<AuthenticatedUser> => {
     error: Error | null;
   }> }).getUser(token);
   if (error || !data?.user) {
-    c.status(401);
-    throw new Error("Invalid or expired token");
+    throw new HTTPException(401, { message: "Invalid or expired token" });
   }
 
   return { id: data.user.id, email: data.user.email ?? undefined };
