@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import type { Context } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { cors } from "hono/cors";
 import { estimatesRouter } from "./routes/estimates.js";
@@ -63,7 +64,9 @@ export const createApp = () => {
     }
   });
 
-  app.get("/health", (c) => c.json({ ok: true }));
+  const healthHandler = (c: Context) => c.json({ ok: true });
+  app.get("/health", healthHandler);
+  app.get("/api/health", healthHandler);
   app.route("/api/estimates", estimatesRouter);
   app.route("/api/clients", clientsRouter);
   app.route("/api/pdf", pdfRouter);
