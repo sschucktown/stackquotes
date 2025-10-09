@@ -16,7 +16,8 @@
         "includeFiles": [
           "apps/api/dist/**",
           "packages/config/dist/**",
-          "packages/types/dist/**"
+          "packages/types/dist/**",
+          "packages/db/dist/**"
         ]
       }
     }
