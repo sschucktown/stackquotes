@@ -1,5 +1,5 @@
 import { type SupabaseClient } from "@supabase/supabase-js";
-import type { Client, Estimate, EstimateFilters, LineItem, UserSettings } from "@stackquotes/types";
+import type { Client, Estimate, EstimateFilters, LineItem, ProposalEvent, UserSettings } from "@stackquotes/types";
 type Json = Record<string, unknown> | Json[] | string | number | boolean | null;
 export interface DatabaseEstimateRow {
     id: string;
@@ -36,6 +36,15 @@ export interface DatabaseUserSettingsRow {
     accent_color: string | null;
     estimate_template: string | null;
 }
+export interface DatabaseProposalEventRow {
+    id: string;
+    user_id: string;
+    estimate_id: string;
+    event: string;
+    token: string | null;
+    metadata: Json | null;
+    created_at: string;
+}
 export interface EstimateInput {
     userId: string;
     clientId: string;
@@ -64,6 +73,17 @@ export interface ClientInput {
 export interface SettingsInput extends Partial<UserSettings> {
     userId: string;
 }
+export interface ProposalEventInput {
+    userId: string;
+    estimateId: string;
+    event: string;
+    token?: string;
+    metadata?: Record<string, unknown> | null;
+}
+export interface ProposalEventFilter {
+    estimateIds?: string[];
+    event?: string;
+}
 export interface SupabaseFactoryOptions {
     useServiceRole?: boolean;
     env?: Record<string, string | undefined>;
@@ -79,6 +99,13 @@ export declare function getClient(client: SupabaseClient, userId: string, client
 export declare function createClientRecord(client: SupabaseClient, input: ClientInput): Promise<Client>;
 export declare function getUserSettings(client: SupabaseClient, userId: string): Promise<UserSettings | null>;
 export declare function upsertUserSettings(client: SupabaseClient, input: SettingsInput): Promise<UserSettings>;
+export declare function createProposalEvent(client: SupabaseClient, input: ProposalEventInput): Promise<ProposalEvent>;
+export declare function findProposalEventByToken(client: SupabaseClient, token: string, options?: {
+    event?: string;
+    estimateId?: string;
+}): Promise<ProposalEvent | null>;
+export declare function listProposalEvents(client: SupabaseClient, filter?: ProposalEventFilter): Promise<ProposalEvent[]>;
+export declare function getLatestProposalEvent(client: SupabaseClient, estimateId: string, event: string): Promise<ProposalEvent | null>;
 export declare const schemaPath: string;
 export type { SupabaseClient };
 //# sourceMappingURL=index.d.ts.map

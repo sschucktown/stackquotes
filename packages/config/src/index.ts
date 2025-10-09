@@ -10,6 +10,8 @@ const serverSchema = z.object({
   STRIPE_SECRET_KEY: z.string().optional(),
   STRIPE_PRODUCT_ID: z.string().optional(),
   BASE_APP_URL: z.string().url().optional(),
+  BASE_API_URL: z.string().url().optional(),
+  EMAIL_TRACKING_BASE_URL: z.string().url().optional(),
 });
 
 const clientSchema = z.object({

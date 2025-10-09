@@ -5,6 +5,7 @@ import type {
   Estimate,
   EstimateFilters,
   LineItem,
+  ProposalEvent,
   UserSettings,
 } from "@stackquotes/types";
 import { randomUUID } from "node:crypto";
@@ -53,6 +54,16 @@ export interface DatabaseUserSettingsRow {
   estimate_template: string | null;
 }
 
+export interface DatabaseProposalEventRow {
+  id: string;
+  user_id: string;
+  estimate_id: string;
+  event: string;
+  token: string | null;
+  metadata: Json | null;
+  created_at: string;
+}
+
 export interface EstimateInput {
   userId: string;
   clientId: string;
@@ -84,6 +95,19 @@ export interface ClientInput {
 
 export interface SettingsInput extends Partial<UserSettings> {
   userId: string;
+}
+
+export interface ProposalEventInput {
+  userId: string;
+  estimateId: string;
+  event: string;
+  token?: string;
+  metadata?: Record<string, unknown> | null;
+}
+
+export interface ProposalEventFilter {
+  estimateIds?: string[];
+  event?: string;
 }
 
 export interface SupabaseFactoryOptions {
@@ -146,6 +170,7 @@ const buildEstimateRecord = (row: DatabaseEstimateRow): Estimate => ({
   approvalTokenExpiresAt: row.approval_token_expires_at ?? null,
   approvedAt: row.approved_at ?? null,
   approvedBy: row.approved_by ?? null,
+  viewedAt: null,
 });
 
 const buildClientRecord = (row: DatabaseClientRow): Client => ({
@@ -169,6 +194,16 @@ const buildSettingsRecord = (row: DatabaseUserSettingsRow): UserSettings => ({
   estimateTemplate: (row.estimate_template as UserSettings["estimateTemplate"]) ?? undefined,
 });
 
+const buildProposalEventRecord = (row: DatabaseProposalEventRow): ProposalEvent => ({
+  id: row.id,
+  userId: row.user_id,
+  estimateId: row.estimate_id,
+  event: row.event,
+  token: row.token ?? null,
+  metadata: (row.metadata as Record<string, unknown> | null) ?? null,
+  createdAt: row.created_at,
+});
+
 export async function listEstimates(
   client: SupabaseClient,
   userId: string,
@@ -189,7 +224,28 @@ export async function listEstimates(
 
   const { data, error } = await query;
   if (error) throw error;
-  return (data as DatabaseEstimateRow[]).map((row) => buildEstimateRecord(row));
+  const estimateRows = (data as DatabaseEstimateRow[]) ?? [];
+  if (estimateRows.length === 0) {
+    return [];
+  }
+
+  const records = estimateRows.map((row) => buildEstimateRecord(row));
+  const estimateIds = records.map((estimate) => estimate.id);
+  const openEvents = await listProposalEvents(client, {
+    estimateIds,
+    event: "email_open",
+  });
+  const viewedMap = new Map<string, string>();
+  for (const event of openEvents) {
+    if (!viewedMap.has(event.estimateId)) {
+      viewedMap.set(event.estimateId, event.createdAt);
+    }
+  }
+
+  return records.map((estimate) => ({
+    ...estimate,
+    viewedAt: viewedMap.get(estimate.id) ?? null,
+  }));
 }
 
 export async function getEstimate(
@@ -205,7 +261,12 @@ export async function getEstimate(
     .maybeSingle();
   if (error) throw error;
   if (!data) return null;
-  return buildEstimateRecord(data as DatabaseEstimateRow);
+  const record = buildEstimateRecord(data as DatabaseEstimateRow);
+  const openEvent = await getLatestProposalEvent(client, record.id, "email_open");
+  return {
+    ...record,
+    viewedAt: openEvent?.createdAt ?? null,
+  };
 }
 
 export async function createEstimateRecord(
@@ -271,7 +332,12 @@ export async function updateEstimateRecord(
     .select("*")
     .single();
   if (error) throw error;
-  return buildEstimateRecord(data as DatabaseEstimateRow);
+  const record = buildEstimateRecord(data as DatabaseEstimateRow);
+  const openEvent = await getLatestProposalEvent(client, record.id, "email_open");
+  return {
+    ...record,
+    viewedAt: openEvent?.createdAt ?? existing.viewedAt ?? null,
+  };
 }
 
 const DEFAULT_APPROVAL_EXPIRY_DAYS = 30;
@@ -311,9 +377,14 @@ export async function issueEstimateApprovalToken(
     .select("*")
     .single();
   if (error) throw error;
+  const record = buildEstimateRecord(data as DatabaseEstimateRow);
+  const openEvent = await getLatestProposalEvent(client, record.id, "email_open");
   return {
     token,
-    estimate: buildEstimateRecord(data as DatabaseEstimateRow),
+    estimate: {
+      ...record,
+      viewedAt: openEvent?.createdAt ?? null,
+    },
   };
 }
 
@@ -335,7 +406,12 @@ export async function getEstimateByApprovalToken(
       return null;
     }
   }
-  return buildEstimateRecord(row);
+  const record = buildEstimateRecord(row);
+  const openEvent = await getLatestProposalEvent(client, record.id, "email_open");
+  return {
+    ...record,
+    viewedAt: openEvent?.createdAt ?? null,
+  };
 }
 
 export interface ApproveEstimateByTokenOptions {
@@ -360,7 +436,12 @@ export async function approveEstimateByToken(
         .select("*")
         .single();
       if (error) throw error;
-      return buildEstimateRecord(data as DatabaseEstimateRow);
+      const record = buildEstimateRecord(data as DatabaseEstimateRow);
+      const openEvent = await getLatestProposalEvent(client, record.id, "email_open");
+      return {
+        ...record,
+        viewedAt: openEvent?.createdAt ?? existing.viewedAt ?? null,
+      };
     }
     return existing;
   }
@@ -376,7 +457,12 @@ export async function approveEstimateByToken(
     .select("*")
     .single();
   if (error) throw error;
-  return buildEstimateRecord(data as DatabaseEstimateRow);
+  const record = buildEstimateRecord(data as DatabaseEstimateRow);
+  const openEvent = await getLatestProposalEvent(client, record.id, "email_open");
+  return {
+    ...record,
+    viewedAt: openEvent?.createdAt ?? existing.viewedAt ?? null,
+  };
 }
 
 export async function duplicateEstimate(
@@ -489,6 +575,75 @@ export async function upsertUserSettings(
     .single();
   if (error) throw error;
   return buildSettingsRecord(data as DatabaseUserSettingsRow);
+}
+
+export async function createProposalEvent(
+  client: SupabaseClient,
+  input: ProposalEventInput
+): Promise<ProposalEvent> {
+  const payload = {
+    user_id: input.userId,
+    estimate_id: input.estimateId,
+    event: input.event,
+    token: input.token ?? null,
+    metadata: input.metadata ?? null,
+  } satisfies Partial<DatabaseProposalEventRow> & { user_id: string; estimate_id: string; event: string };
+  const { data, error } = await client.from("proposal_events").insert(payload).select("*").single();
+  if (error) throw error;
+  return buildProposalEventRecord(data as DatabaseProposalEventRow);
+}
+
+export async function findProposalEventByToken(
+  client: SupabaseClient,
+  token: string,
+  options: { event?: string; estimateId?: string } = {}
+): Promise<ProposalEvent | null> {
+  let query = client.from("proposal_events").select("*").eq("token", token).limit(1);
+  if (options.event) {
+    query = query.eq("event", options.event);
+  }
+  if (options.estimateId) {
+    query = query.eq("estimate_id", options.estimateId);
+  }
+  const { data, error } = await query.maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  return buildProposalEventRecord(data as DatabaseProposalEventRow);
+}
+
+export async function listProposalEvents(
+  client: SupabaseClient,
+  filter: ProposalEventFilter = {}
+): Promise<ProposalEvent[]> {
+  let query = client.from("proposal_events").select("*");
+  if (filter.estimateIds && filter.estimateIds.length > 0) {
+    query = query.in("estimate_id", filter.estimateIds);
+  }
+  if (filter.event) {
+    query = query.eq("event", filter.event);
+  }
+  query = query.order("created_at", { ascending: false });
+  const { data, error } = await query;
+  if (error) throw error;
+  return (data as DatabaseProposalEventRow[]).map((row) => buildProposalEventRecord(row));
+}
+
+export async function getLatestProposalEvent(
+  client: SupabaseClient,
+  estimateId: string,
+  event: string
+): Promise<ProposalEvent | null> {
+  const { data, error } = await client
+    .from("proposal_events")
+    .select("*")
+    .eq("estimate_id", estimateId)
+    .eq("event", event)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  return buildProposalEventRecord(data as DatabaseProposalEventRow);
 }
 
 export const schemaPath = new URL("../schema.sql", import.meta.url).pathname;

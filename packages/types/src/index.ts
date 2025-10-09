@@ -32,6 +32,7 @@ export interface Estimate {
   approvalTokenExpiresAt?: string | null;
   approvedAt?: string | null;
   approvedBy?: string | null;
+  viewedAt?: string | null;
 }
 
 export interface Client {
@@ -84,5 +85,15 @@ export interface PublicEstimatePayload {
   client: Client;
   settings: UserSettings | null;
   downloadUrl?: string | null;
+}
+
+export interface ProposalEvent {
+  id: UUID;
+  userId: UUID;
+  estimateId: UUID;
+  event: string;
+  token?: UUID | null;
+  metadata?: Record<string, unknown> | null;
+  createdAt: string;
 }
 

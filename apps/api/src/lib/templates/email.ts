@@ -10,6 +10,7 @@ interface EmailTemplateContext {
   downloadUrl?: string;
   template?: EstimateTemplateKey;
   approvalUrl?: string;
+  trackingPixelUrl?: string;
 }
 
 const currencyFormatter = new Intl.NumberFormat("en-US", {
@@ -373,9 +374,17 @@ export async function renderEstimateEmail(context: EmailTemplateContext): Promis
     accentColor: context.settings?.accentColor ?? undefined,
   });
   const renderer = EMAIL_RENDERERS[template] ?? EMAIL_RENDERERS.modern;
+  const trackingPixelHtml = context.trackingPixelUrl
+    ? `<img src="${context.trackingPixelUrl}" width="1" height="1" style="display:none;" alt="" />`
+    : "";
+  const rawHtml = renderer(context, theme);
+  const html =
+    trackingPixelHtml && rawHtml.includes("</body>")
+      ? rawHtml.replace("</body>", `${trackingPixelHtml}</body>`)
+      : `${rawHtml}${trackingPixelHtml}`;
   return {
     template,
     theme,
-    html: renderer(context, theme),
+    html,
   };
 }

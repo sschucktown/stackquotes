@@ -44,6 +44,16 @@ create table if not exists public.user_settings (
   updated_at timestamptz not null default now()
 );
 
+create table if not exists public.proposal_events (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  estimate_id uuid not null references public.estimates(id) on delete cascade,
+  event text not null,
+  token uuid,
+  metadata jsonb,
+  created_at timestamptz not null default now()
+);
+
 create or replace function public.touch_updated_at()
 returns trigger as $$
 begin
@@ -65,6 +75,7 @@ create trigger user_settings_set_updated
 alter table public.clients enable row level security;
 alter table public.estimates enable row level security;
 alter table public.user_settings enable row level security;
+alter table public.proposal_events enable row level security;
 
 create policy "Clients are only visible to their owner"
   on public.clients
@@ -84,7 +95,16 @@ create policy "Settings are only visible to their owner"
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
 
+create policy "Proposal events are only visible to their owner"
+  on public.proposal_events
+  for all
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
 create index if not exists estimates_user_id_idx on public.estimates(user_id);
 create index if not exists estimates_status_idx on public.estimates(status);
 create index if not exists estimates_approval_token_idx on public.estimates(approval_token);
 create index if not exists clients_user_id_idx on public.clients(user_id);
+create index if not exists proposal_events_user_id_idx on public.proposal_events(user_id);
+create index if not exists proposal_events_estimate_id_idx on public.proposal_events(estimate_id);
+create unique index if not exists proposal_events_token_idx on public.proposal_events(token) where token is not null;

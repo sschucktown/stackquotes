@@ -37,7 +37,7 @@
             </p>
           </div>
           <div class="flex items-center gap-2">
-            <SQBadge :tone="toneForStatus(estimate.status)">{{ estimate.status }}</SQBadge>
+            <SQBadge :tone="toneForEstimate(estimate)">{{ labelForEstimate(estimate) }}</SQBadge>
             <SQButton size="sm" variant="ghost" @click.stop="$emit('duplicate', estimate.id)">
               Duplicate
             </SQButton>
@@ -100,6 +100,20 @@ const toneForStatus = (status: Estimate["status"]) => {
     default:
       return "default";
   }
+};
+
+const toneForEstimate = (estimate: Estimate) => {
+  if (estimate.status === "sent" && estimate.viewedAt) {
+    return "success";
+  }
+  return toneForStatus(estimate.status);
+};
+
+const labelForEstimate = (estimate: Estimate) => {
+  if (estimate.status === "sent" && estimate.viewedAt) {
+    return "Viewed";
+  }
+  return estimate.status;
 };
 
 const setStatus = (value: Estimate["status"] | undefined) => {
