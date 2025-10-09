@@ -1,11 +1,14 @@
 
 > @stackquotes/api@0.1.0 build C:\Dev\Projects\stackquotes\apps\api
-> tsup src/index.ts --format esm
+> tsup src/index.ts --format esm --dts --external dotenv
 
 [34mCLI[39m Building entry: src/index.ts
 [34mCLI[39m Using tsconfig: tsconfig.json
 [34mCLI[39m tsup v8.5.0
 [34mCLI[39m Target: es2022
 [34mESM[39m Build start
-[32mESM[39m [1mdist\index.js [22m[32m73.41 KB[39m
-[32mESM[39m ⚡️ Build success in 100ms
+[32mESM[39m [1mdist\index.js [22m[32m57.24 KB[39m
+[32mESM[39m ⚡️ Build success in 275ms
+[34mDTS[39m Build start
+[32mDTS[39m ⚡️ Build success in 4343ms
+[32mDTS[39m [1mdist\index.d.ts [22m[32m334.00 B[39m

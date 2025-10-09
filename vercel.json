@@ -17,7 +17,8 @@
           "apps/api/dist/**",
           "packages/config/dist/**",
           "packages/types/dist/**",
-          "packages/db/dist/**"
+          "packages/db/dist/**",
+          "node_modules/dotenv/**"
         ]
       }
     }
