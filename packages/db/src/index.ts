@@ -115,6 +115,14 @@ export interface SupabaseFactoryOptions {
   env?: Record<string, string | undefined>;
 }
 
+const isMissingProposalEventsTable = (error: unknown): boolean => {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+  const code = (error as { code?: string }).code;
+  return code === "42P01";
+};
+
 export const createSupabase = (options: SupabaseFactoryOptions = {}): SupabaseClient => {
   const config = loadServerConfig(options.env);
   return createClient(
@@ -589,7 +597,21 @@ export async function createProposalEvent(
     metadata: input.metadata ?? null,
   } satisfies Partial<DatabaseProposalEventRow> & { user_id: string; estimate_id: string; event: string };
   const { data, error } = await client.from("proposal_events").insert(payload).select("*").single();
-  if (error) throw error;
+  if (error) {
+    if (isMissingProposalEventsTable(error)) {
+      console.warn("[db] proposal_events table missing; skipping createProposalEvent");
+      return {
+        id: randomUUID(),
+        userId: input.userId,
+        estimateId: input.estimateId,
+        event: input.event,
+        token: input.token ?? null,
+        metadata: input.metadata ?? null,
+        createdAt: new Date().toISOString(),
+      };
+    }
+    throw error;
+  }
   return buildProposalEventRecord(data as DatabaseProposalEventRow);
 }
 
@@ -606,7 +628,12 @@ export async function findProposalEventByToken(
     query = query.eq("estimate_id", options.estimateId);
   }
   const { data, error } = await query.maybeSingle();
-  if (error) throw error;
+  if (error) {
+    if (isMissingProposalEventsTable(error)) {
+      return null;
+    }
+    throw error;
+  }
   if (!data) return null;
   return buildProposalEventRecord(data as DatabaseProposalEventRow);
 }
@@ -624,7 +651,12 @@ export async function listProposalEvents(
   }
   query = query.order("created_at", { ascending: false });
   const { data, error } = await query;
-  if (error) throw error;
+  if (error) {
+    if (isMissingProposalEventsTable(error)) {
+      return [];
+    }
+    throw error;
+  }
   return (data as DatabaseProposalEventRow[]).map((row) => buildProposalEventRecord(row));
 }
 
@@ -641,7 +673,12 @@ export async function getLatestProposalEvent(
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
-  if (error) throw error;
+  if (error) {
+    if (isMissingProposalEventsTable(error)) {
+      return null;
+    }
+    throw error;
+  }
   if (!data) return null;
   return buildProposalEventRecord(data as DatabaseProposalEventRow);
 }
