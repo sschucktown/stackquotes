@@ -55,11 +55,12 @@
 <script setup lang="ts">
 import type { Estimate } from "@stackquotes/types";
 import { computed } from "vue";
+import type { EstimatePipelineStatus } from "@modules/quickquote/stores/estimateStore";
 
 const props = withDefaults(
   defineProps<{
     estimates: Estimate[];
-    status?: Estimate["status"] | undefined;
+    status?: EstimatePipelineStatus | undefined;
     search?: string;
   }>(),
   {
@@ -72,14 +73,15 @@ const props = withDefaults(
 const emit = defineEmits<{
   (e: "select", id: string): void;
   (e: "duplicate", id: string): void;
-  (e: "update:status", status?: Estimate["status"]): void;
+  (e: "update:status", status?: EstimatePipelineStatus): void;
   (e: "update:search", value: string): void;
 }>();
 
-const statuses: Array<{ value: Estimate["status"] | undefined; label: string }> = [
+const statuses: Array<{ value: EstimatePipelineStatus | undefined; label: string }> = [
   { value: undefined, label: "All" },
   { value: "draft", label: "Draft" },
   { value: "sent", label: "Sent" },
+  { value: "seen", label: "Seen" },
   { value: "accepted", label: "Accepted" },
   { value: "declined", label: "Declined" },
 ];
@@ -89,8 +91,10 @@ const search = computed(() => props.search);
 
 const currency = (value: number) => `$${value.toFixed(2)}`;
 
-const toneForStatus = (status: Estimate["status"]) => {
+const toneForStatus = (status: EstimatePipelineStatus) => {
   switch (status) {
+    case "seen":
+      return "success";
     case "accepted":
       return "success";
     case "declined":
@@ -111,12 +115,12 @@ const toneForEstimate = (estimate: Estimate) => {
 
 const labelForEstimate = (estimate: Estimate) => {
   if (estimate.status === "sent" && estimate.viewedAt) {
-    return "Viewed";
+    return "Seen";
   }
   return estimate.status;
 };
 
-const setStatus = (value: Estimate["status"] | undefined) => {
+const setStatus = (value: EstimatePipelineStatus | undefined) => {
   emit("update:status", value);
 };
 

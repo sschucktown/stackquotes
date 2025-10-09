@@ -123,6 +123,84 @@ const isMissingProposalEventsTable = (error: unknown): boolean => {
   return code === "42P01";
 };
 
+const parseTimestamp = (value: string): number | null => {
+  const time = Date.parse(value);
+  return Number.isNaN(time) ? null : time;
+};
+
+const getViewedEventsForEstimates = async (
+  client: SupabaseClient,
+  estimateIds: string[]
+): Promise<Map<string, ProposalEvent>> => {
+  if (estimateIds.length === 0) {
+    return new Map();
+  }
+
+  const [openEvents, trackingEvents] = await Promise.all([
+    listProposalEvents(client, { estimateIds, event: "email_open" }),
+    listProposalEvents(client, { estimateIds, event: "email_tracking" }),
+  ]);
+
+  const latestTrackingByEstimate = new Map<
+    string,
+    { event: ProposalEvent; timestamp: number | null }
+  >();
+  for (const event of trackingEvents) {
+    const timestamp = parseTimestamp(event.createdAt);
+    const current = latestTrackingByEstimate.get(event.estimateId);
+    if (!current || (timestamp ?? -Infinity) > (current.timestamp ?? -Infinity)) {
+      latestTrackingByEstimate.set(event.estimateId, { event, timestamp });
+    }
+  }
+
+  const sortedOpenEvents = [...openEvents].sort((a, b) => {
+    const aTime = parseTimestamp(a.createdAt) ?? 0;
+    const bTime = parseTimestamp(b.createdAt) ?? 0;
+    return aTime - bTime;
+  });
+
+  const result = new Map<string, ProposalEvent>();
+  for (const event of sortedOpenEvents) {
+    const tracking = latestTrackingByEstimate.get(event.estimateId);
+    const openToken =
+      typeof event.metadata === "object" && event.metadata && "trackingToken" in event.metadata
+        ? (event.metadata.trackingToken as string | undefined)
+        : undefined;
+    const openTimestamp = parseTimestamp(event.createdAt);
+
+    if (tracking) {
+      const trackingToken = tracking.event.token ?? undefined;
+      const trackingTimestamp = tracking.timestamp ?? null;
+      if (trackingToken) {
+        if (!openToken || openToken !== trackingToken) {
+          continue;
+        }
+      } else if (
+        trackingTimestamp !== null &&
+        openTimestamp !== null &&
+        openTimestamp < trackingTimestamp
+      ) {
+        continue;
+      }
+    } else if (result.has(event.estimateId)) {
+      continue;
+    }
+
+    if (!result.has(event.estimateId)) {
+      result.set(event.estimateId, event);
+    }
+  }
+
+  if (result.size === 0 && latestTrackingByEstimate.size === 0) {
+    for (const event of sortedOpenEvents) {
+      if (!result.has(event.estimateId)) {
+        result.set(event.estimateId, event);
+      }
+    }
+  }
+
+  return result;
+};
 export const createSupabase = (options: SupabaseFactoryOptions = {}): SupabaseClient => {
   const config = loadServerConfig(options.env);
   return createClient(
@@ -239,20 +317,10 @@ export async function listEstimates(
 
   const records = estimateRows.map((row) => buildEstimateRecord(row));
   const estimateIds = records.map((estimate) => estimate.id);
-  const openEvents = await listProposalEvents(client, {
-    estimateIds,
-    event: "email_open",
-  });
-  const viewedMap = new Map<string, string>();
-  for (const event of openEvents) {
-    if (!viewedMap.has(event.estimateId)) {
-      viewedMap.set(event.estimateId, event.createdAt);
-    }
-  }
-
+  const viewedEvents = await getViewedEventsForEstimates(client, estimateIds);
   return records.map((estimate) => ({
     ...estimate,
-    viewedAt: viewedMap.get(estimate.id) ?? null,
+    viewedAt: viewedEvents.get(estimate.id)?.createdAt ?? null,
   }));
 }
 
@@ -665,6 +733,9 @@ export async function getLatestProposalEvent(
   estimateId: string,
   event: string
 ): Promise<ProposalEvent | null> {
+  if (event === "email_open") {
+    return getLatestViewedEventForEstimate(client, estimateId);
+  }
   const { data, error } = await client
     .from("proposal_events")
     .select("*")
@@ -686,4 +757,5 @@ export async function getLatestProposalEvent(
 export const schemaPath = new URL("../schema.sql", import.meta.url).pathname;
 
 export type { SupabaseClient };
+
 

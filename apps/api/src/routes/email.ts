@@ -106,9 +106,9 @@ emailRouter.get("/open", async (c) => {
         userId: trackingEvent.userId,
         estimateId: trackingEvent.estimateId,
         event: "email_open",
-        token,
         metadata: {
           source: "tracking_pixel",
+          trackingToken: token,
           ip,
           userAgent,
         },

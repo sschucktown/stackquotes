@@ -10,13 +10,25 @@ import type { EstimatePayload } from "@modules/quickquote/api/estimates";
 import { generatePdf } from "@modules/quickquote/api/pdf";
 import { sendEstimateEmail } from "@modules/quickquote/api/email";
 
+export type EstimatePipelineStatus = Estimate["status"] | "seen";
+
 interface EstimateState {
   items: Estimate[];
   loading: boolean;
   error: string | null;
-  filters: EstimateFilters;
+  filters: {
+    status?: EstimatePipelineStatus;
+    search?: string;
+  };
   activePdfUrl: string | null;
 }
+
+const toPipelineStatus = (estimate: Estimate): EstimatePipelineStatus => {
+  if (estimate.status === "sent" && estimate.viewedAt) {
+    return "seen";
+  }
+  return estimate.status;
+};
 
 export const useEstimateStore = defineStore("estimates", {
   state: (): EstimateState => ({
@@ -28,26 +40,37 @@ export const useEstimateStore = defineStore("estimates", {
   }),
   getters: {
     groupedByStatus(state) {
-      return state.items.reduce<Record<Estimate["status"], Estimate[]>>(
+      return state.items.reduce<
+        Record<EstimatePipelineStatus, Estimate[]>
+      >(
         (acc, estimate) => {
-          (acc[estimate.status] ??= []).push(estimate);
+          const key = toPipelineStatus(estimate);
+          (acc[key] ??= []).push(estimate);
           return acc;
         },
-        { draft: [], sent: [], accepted: [], declined: [] }
+        { draft: [], sent: [], seen: [], accepted: [], declined: [] }
       );
     },
     getById: (state) => (id: string) => state.items.find((estimate) => estimate.id === id) ?? null,
   },
   actions: {
-    async load(filters: EstimateFilters = {}) {
+    async load(filters: { status?: EstimatePipelineStatus; search?: string } = {}) {
       this.loading = true;
       this.error = null;
       this.filters = filters;
-      const { data, error } = await fetchEstimates(filters);
+      const { status, ...rest } = filters;
+      const apiFilters: EstimateFilters = {
+        ...rest,
+        status: status && status !== "seen" ? status : undefined,
+      };
+      const { data, error } = await fetchEstimates(apiFilters);
       if (error) {
         this.error = error;
       } else if (data) {
-        this.items = data;
+        this.items =
+          status === "seen"
+            ? data.filter((estimate) => estimate.status === "sent" && Boolean(estimate.viewedAt))
+            : data;
       }
       this.loading = false;
     },

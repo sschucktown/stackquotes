@@ -33,6 +33,7 @@
           <ul class="space-y-2 text-sm text-slate-600">
             <li>Draft: {{ counts.draft.length }}</li>
             <li>Sent: {{ counts.sent.length }}</li>
+            <li>Seen: {{ counts.seen.length }}</li>
             <li>Accepted: {{ counts.accepted.length }}</li>
             <li>Declined: {{ counts.declined.length }}</li>
           </ul>
@@ -59,10 +60,9 @@ import { useAuth } from "@/lib/auth";
 import EstimateList from "@modules/quickquote/components/EstimateList.vue";
 import PDFPreviewModal from "@modules/quickquote/components/PDFPreviewModal.vue";
 import SettingsForm from "@modules/quickquote/components/SettingsForm.vue";
-import { useEstimateStore } from "@modules/quickquote/stores/estimateStore";
+import { useEstimateStore, type EstimatePipelineStatus } from "@modules/quickquote/stores/estimateStore";
 import { useClientStore } from "@modules/quickquote/stores/clientStore";
 import { useSettingsStore } from "@modules/quickquote/stores/settingsStore";
-import type { EstimateStatus } from "@stackquotes/types";
 
 const router = useRouter();
 const estimateStore = useEstimateStore();
@@ -70,7 +70,7 @@ const clientStore = useClientStore();
 const settingsStore = useSettingsStore();
 const { signOut: supabaseSignOut } = useAuth();
 
-const statusFilter = ref<EstimateStatus | undefined>(undefined);
+const statusFilter = ref<EstimatePipelineStatus | undefined>(undefined);
 const searchTerm = ref("");
 const goToSettings = ref(false);
 
@@ -87,7 +87,7 @@ watch([statusFilter, searchTerm], ([status, search]) => {
 const filteredEstimates = computed(() => estimateStore.items);
 const counts = computed(() => estimateStore.groupedByStatus);
 
-const setStatus = (status?: EstimateStatus) => {
+const setStatus = (status?: EstimatePipelineStatus) => {
   statusFilter.value = status;
 };
 
