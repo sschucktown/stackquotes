@@ -1,13 +1,8 @@
 {
-  "functions": {
-    "apps/api/src/index.ts": {
-      "runtime": "vercel-edge@2.0.0"
-    }
-  },
+  "builds": [
+    { "src": "apps/api/src/index.ts", "use": "@vercel/node" }
+  ],
   "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "apps/api/src/index.ts"
-    }
+    { "src": "/api/(.*)", "dest": "apps/api/src/index.ts" }
   ]
 }
