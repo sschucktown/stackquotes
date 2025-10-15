@@ -19,11 +19,6 @@
     }
   ],
   "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "apps/api/dist/index.js",
-      "methods": ["GET", "POST", "PATCH", "OPTIONS"]
-    },
     { "src": "/assets/(.*)", "dest": "/apps/web/assets/$1" },
     { "handle": "filesystem" },
     { "src": "/(.*)", "dest": "/apps/web/index.html" }
