@@ -1,10 +1,10 @@
 {
   "functions": {
     "api/index.ts": {
-      "runtime": "@vercel/edge@1.0.0"
+      "runtime": "@vercel/node@3.0.0"
     }
   },
-  "buildCommand": "echo 'Edge API build – no static output'",
+  "buildCommand": "echo 'Hono API build (no static output)'",
   "outputDirectory": ".",
   "routes": [
     { "src": "/api/(.*)", "dest": "/api/index.ts" }
