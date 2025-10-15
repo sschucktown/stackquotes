@@ -40,3 +40,15 @@ export const duplicateEstimate = (id: string) =>
     body: JSON.stringify({ id }),
   });
 
+export const acceptEstimate = (id: string) =>
+  apiFetch<Estimate>("/estimates/accept", {
+    method: "POST",
+    body: JSON.stringify({ id }),
+  });
+
+export const declineEstimate = (id: string) =>
+  apiFetch<Estimate>("/estimates/decline", {
+    method: "POST",
+    body: JSON.stringify({ id }),
+  });
+

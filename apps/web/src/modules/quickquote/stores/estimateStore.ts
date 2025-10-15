@@ -1,7 +1,9 @@
 ﻿import { defineStore } from "pinia";
 import type { Estimate, EstimateFilters, EstimateTemplateKey } from "@stackquotes/types";
 import {
+  acceptEstimate,
   createEstimate,
+  declineEstimate,
   duplicateEstimate,
   fetchEstimates,
   updateEstimate,
@@ -9,8 +11,9 @@ import {
 import type { EstimatePayload } from "@modules/quickquote/api/estimates";
 import { generatePdf } from "@modules/quickquote/api/pdf";
 import { sendEstimateEmail } from "@modules/quickquote/api/email";
+import { derivePipelineStatus } from "../utils/status";
 
-export type EstimatePipelineStatus = Estimate["status"] | "seen";
+export type EstimatePipelineStatus = Estimate["status"];
 
 interface EstimateState {
   items: Estimate[];
@@ -22,13 +25,6 @@ interface EstimateState {
   };
   activePdfUrl: string | null;
 }
-
-const toPipelineStatus = (estimate: Estimate): EstimatePipelineStatus => {
-  if (estimate.status === "sent" && estimate.viewedAt) {
-    return "seen";
-  }
-  return estimate.status;
-};
 
 export const useEstimateStore = defineStore("estimates", {
   state: (): EstimateState => ({
@@ -44,7 +40,7 @@ export const useEstimateStore = defineStore("estimates", {
         Record<EstimatePipelineStatus, Estimate[]>
       >(
         (acc, estimate) => {
-          const key = toPipelineStatus(estimate);
+          const key = derivePipelineStatus(estimate);
           (acc[key] ??= []).push(estimate);
           return acc;
         },
@@ -61,7 +57,7 @@ export const useEstimateStore = defineStore("estimates", {
       const { status, ...rest } = filters;
       const apiFilters: EstimateFilters = {
         ...rest,
-        status: status && status !== "seen" ? status : undefined,
+        status,
       };
       const { data, error } = await fetchEstimates(apiFilters);
       if (error) {
@@ -69,7 +65,7 @@ export const useEstimateStore = defineStore("estimates", {
       } else if (data) {
         this.items =
           status === "seen"
-            ? data.filter((estimate) => estimate.status === "sent" && Boolean(estimate.viewedAt))
+            ? data.filter((estimate) => derivePipelineStatus(estimate) === "seen")
             : data;
       }
       this.loading = false;
@@ -84,6 +80,7 @@ export const useEstimateStore = defineStore("estimates", {
       if (data) {
         this.items.unshift(data);
       }
+      void this.reload();
       return data;
     },
     async update(id: string, payload: Partial<EstimatePayload>) {
@@ -96,6 +93,7 @@ export const useEstimateStore = defineStore("estimates", {
       if (data) {
         this.items = this.items.map((estimate) => (estimate.id === id ? data : estimate));
       }
+      void this.reload();
       return data;
     },
     async duplicate(id: string) {
@@ -107,6 +105,7 @@ export const useEstimateStore = defineStore("estimates", {
       if (data) {
         this.items.unshift(data);
       }
+      void this.reload();
       return data;
     },
     async createPdf(id: string) {
@@ -129,7 +128,38 @@ export const useEstimateStore = defineStore("estimates", {
           estimate.id === payload.estimateId ? { ...estimate, status: data.status } : estimate
         );
       }
+      void this.reload();
       return data;
+    },
+    async markAccepted(id: string) {
+      this.error = null;
+      const { data, error } = await acceptEstimate(id);
+      if (error) {
+        this.error = error;
+        throw new Error(error);
+      }
+      if (data) {
+        this.items = this.items.map((estimate) => (estimate.id === id ? data : estimate));
+      }
+      await this.reload();
+      return data;
+    },
+    async markDeclined(id: string) {
+      this.error = null;
+      const { data, error } = await declineEstimate(id);
+      if (error) {
+        this.error = error;
+        throw new Error(error);
+      }
+      if (data) {
+        this.items = this.items.map((estimate) => (estimate.id === id ? data : estimate));
+      }
+      await this.reload();
+      return data;
+    },
+    async reload() {
+      const filters = { ...this.filters };
+      await this.load(filters);
     },
   },
 });

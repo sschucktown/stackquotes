@@ -5,6 +5,8 @@ import {
   getClient,
   getUserSettings,
   approveEstimateByToken,
+  updateEstimateStatus,
+  createProposalEvent,
 } from "@stackquotes/db";
 import { getServiceClient } from "../lib/supabase.js";
 import { getEstimatePdfSignedUrl } from "../lib/storage.js";
@@ -29,10 +31,27 @@ export const shareRouter = new Hono();
 shareRouter.get("/estimate/:token", async (c) => {
   const { token } = tokenParams.parse(c.req.param());
   const supabase = getServiceClient();
-  const estimate = await getEstimateByApprovalToken(supabase, token);
+  let estimate = await getEstimateByApprovalToken(supabase, token);
   if (!estimate) {
     c.status(404);
     return c.json({ error: "This approval link is invalid or has expired." });
+  }
+
+  if (estimate.status === "sent") {
+    try {
+      estimate = await updateEstimateStatus(supabase, {
+        userId: estimate.userId,
+        estimateId: estimate.id,
+        status: "seen",
+      });
+      await createProposalEvent(supabase, {
+        userId: estimate.userId,
+        estimateId: estimate.id,
+        event: "seen",
+      });
+    } catch (error) {
+      console.error("[api/share] failed to mark estimate as seen", error);
+    }
   }
 
   const client = await getClient(supabase, estimate.userId, estimate.clientId);

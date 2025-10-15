@@ -17,11 +17,12 @@
     </header>
 
     <main class="mx-auto grid max-w-6xl gap-6 px-6 py-8 lg:grid-cols-[2fr_1fr]">
-      <section>
+      <section class="space-y-4">
         <EstimateList
           :estimates="filteredEstimates"
           :status="statusFilter"
           :search="searchTerm"
+          :clients="clientStore.items"
           @update:status="setStatus"
           @update:search="setSearch"
           @select="openEstimate"
@@ -30,12 +31,24 @@
       </section>
       <aside class="space-y-6">
         <SQCard title="Pipeline" padded>
-          <ul class="space-y-2 text-sm text-slate-600">
-            <li>Draft: {{ counts.draft.length }}</li>
-            <li>Sent: {{ counts.sent.length }}</li>
-            <li>Seen: {{ counts.seen.length }}</li>
-            <li>Accepted: {{ counts.accepted.length }}</li>
-            <li>Declined: {{ counts.declined.length }}</li>
+          <ul class="space-y-3 text-sm">
+            <li
+              v-for="status in statusOrder"
+              :key="status"
+              class="flex items-center justify-between rounded-lg border border-slate-100 bg-slate-50/50 px-3 py-2"
+            >
+              <span
+                :class="[
+                  statusClass(status),
+                  'rounded-full px-2 py-1 text-xs font-medium transition-colors',
+                ]"
+              >
+                {{ statusLabel(status) }}
+              </span>
+              <span class="text-sm font-semibold text-slate-700">
+                {{ counts[status]?.length ?? 0 }}
+              </span>
+            </li>
           </ul>
         </SQCard>
         <SQCard title="Settings" padded>
@@ -63,6 +76,7 @@ import SettingsForm from "@modules/quickquote/components/SettingsForm.vue";
 import { useEstimateStore, type EstimatePipelineStatus } from "@modules/quickquote/stores/estimateStore";
 import { useClientStore } from "@modules/quickquote/stores/clientStore";
 import { useSettingsStore } from "@modules/quickquote/stores/settingsStore";
+import { STATUS_ORDER, statusClass as statusClassName, statusLabel as statusLabelName } from "@modules/quickquote/utils/status";
 
 const router = useRouter();
 const estimateStore = useEstimateStore();
@@ -86,6 +100,9 @@ watch([statusFilter, searchTerm], ([status, search]) => {
 
 const filteredEstimates = computed(() => estimateStore.items);
 const counts = computed(() => estimateStore.groupedByStatus);
+const statusOrder = STATUS_ORDER;
+const statusClass = (status: EstimatePipelineStatus) => statusClassName(status);
+const statusLabel = (status: EstimatePipelineStatus) => statusLabelName(status);
 
 const setStatus = (status?: EstimatePipelineStatus) => {
   statusFilter.value = status;

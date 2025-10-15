@@ -2,10 +2,12 @@ import { Hono } from "hono";
 import { z } from "zod";
 import {
   createEstimateRecord,
+  createProposalEvent,
   duplicateEstimate,
   getUserSettings,
   listEstimates,
   updateEstimateRecord,
+  updateEstimateStatus,
 } from "@stackquotes/db";
 import type {
   EstimateInput,
@@ -30,7 +32,7 @@ const createSchema = z.object({
   projectTitle: z.string().min(1),
   lineItems: z.array(lineItemSchema).min(1),
   notes: z.string().optional(),
-  status: z.enum(["draft", "sent", "accepted", "declined"]).optional(),
+  status: z.enum(["draft", "sent", "seen", "accepted", "declined"]).optional(),
   taxRate: z.number().min(0).max(1).optional(),
   jobId: z.string().optional().nullable(),
 });
@@ -40,11 +42,15 @@ const updateSchema = createSchema.partial().extend({
 });
 
 const listSchema = z.object({
-  status: z.enum(["draft", "sent", "accepted", "declined"]).optional(),
+  status: z.enum(["draft", "sent", "seen", "accepted", "declined"]).optional(),
   search: z.string().optional(),
 });
 
 const duplicateSchema = z.object({
+  id: z.string().uuid(),
+});
+
+const statusActionSchema = z.object({
   id: z.string().uuid(),
 });
 
@@ -122,5 +128,59 @@ estimatesRouter.post("/duplicate", async (c) => {
   };
   const data = await duplicateEstimate(supabase, duplicateInput);
   return c.json({ data });
+});
+
+estimatesRouter.post("/accept", async (c) => {
+  const user = await requireUser(c);
+  const payload = statusActionSchema.parse(await c.req.json());
+  const supabase = getServiceClient();
+  try {
+    const data = await updateEstimateStatus(supabase, {
+      userId: user.id,
+      estimateId: payload.id,
+      status: "accepted",
+      approvedAt: new Date().toISOString(),
+      approvedBy: user.id,
+    });
+    await createProposalEvent(supabase, {
+      userId: user.id,
+      estimateId: data.id,
+      event: "accepted",
+    });
+    return c.json({ data });
+  } catch (error) {
+    if (error instanceof Error && error.message === "Estimate not found") {
+      c.status(404);
+      return c.json({ error: "Estimate not found" });
+    }
+    throw error;
+  }
+});
+
+estimatesRouter.post("/decline", async (c) => {
+  const user = await requireUser(c);
+  const payload = statusActionSchema.parse(await c.req.json());
+  const supabase = getServiceClient();
+  try {
+    const data = await updateEstimateStatus(supabase, {
+      userId: user.id,
+      estimateId: payload.id,
+      status: "declined",
+      approvedAt: null,
+      approvedBy: null,
+    });
+    await createProposalEvent(supabase, {
+      userId: user.id,
+      estimateId: data.id,
+      event: "declined",
+    });
+    return c.json({ data });
+  } catch (error) {
+    if (error instanceof Error && error.message === "Estimate not found") {
+      c.status(404);
+      return c.json({ error: "Estimate not found" });
+    }
+    throw error;
+  }
 });
 

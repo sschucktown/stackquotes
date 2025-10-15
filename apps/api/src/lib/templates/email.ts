@@ -117,27 +117,30 @@ const buildCta = (
   options: { approvalUrl?: string; downloadUrl?: string }
 ): string => {
   const { approvalUrl, downloadUrl } = options;
-  if (!approvalUrl && !downloadUrl) {
-    return "";
+  const links: string[] = [];
+  if (approvalUrl) {
+    links.push(
+      `<a href="${approvalUrl}" style="color:${theme.accent}; text-decoration:none;">Open the estimate online</a>`
+    );
   }
-  const primaryHref = approvalUrl ?? downloadUrl!;
-  const primaryLabel = approvalUrl ? "View & Approve Estimate" : "Download Estimate PDF";
-  const secondary =
-    approvalUrl && downloadUrl
-      ? `<p style="margin-top:12px; font-size:14px; color:#64748b;">
-          Prefer a copy? <a href="${downloadUrl}" style="color:${theme.accent}; text-decoration:none;">Download the PDF</a>.
-        </p>`
+  if (downloadUrl) {
+    links.push(
+      `<a href="${downloadUrl}" style="color:${theme.accent}; text-decoration:none;">Download a PDF copy</a>`
+    );
+  }
+  const extra =
+    links.length > 0
+      ? `<p style="margin:12px 0 0; color:#475569; font-size:14px;">${links.join(
+          " &middot; "
+        )}</p>`
       : "";
-  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:32px;">
-    <tr>
-      <td>
-        <a href="${primaryHref}" style="display:inline-block; padding:14px 24px; background:${theme.accent}; color:${theme.accentText}; font-weight:600; border-radius:999px; text-decoration:none;">
-          ${primaryLabel}
-        </a>
-        ${secondary}
-      </td>
-    </tr>
-  </table>`;
+  return `<div style="margin-top:32px; padding:20px; border-radius:16px; background:${theme.accentLight};">
+    <p style="margin:0; font-size:12px; font-weight:600; letter-spacing:0.08em; color:${theme.accentDark}; text-transform:uppercase;">Next steps</p>
+    <p style="margin:12px 0 0; color:#334155; line-height:1.6;">
+      When you're ready to move forward, simply reply to this email and we'll put together a detailed proposal with a few options to choose from.
+    </p>
+    ${extra}
+  </div>`;
 };
 
 const renderModern = (context: EmailTemplateContext, theme: BrandTheme): string => {
