@@ -68,11 +68,17 @@ export const createApp = () => {
   app.get("/health", healthHandler);
   app.get("/api/health", healthHandler);
   app.route("/api/estimates", estimatesRouter);
+    app.route("/estimates", estimatesRouter);
   app.route("/api/clients", clientsRouter);
+    app.route("/clients", clientsRouter);
   app.route("/api/pdf", pdfRouter);
+    app.route("/pdf", pdfRouter);
   app.route("/api/email", emailRouter);
+    app.route("/email", emailRouter);
   app.route("/api/settings", settingsRouter);
+    app.route("/settings", settingsRouter);
   app.route("/api/share", shareRouter);
+    app.route("/share", shareRouter);
 
   return app;
 };
