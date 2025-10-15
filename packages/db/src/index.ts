@@ -85,6 +85,14 @@ export interface EstimateDuplicateInput {
   userId: string;
 }
 
+export interface EstimateStatusUpdateInput {
+  userId: string;
+  estimateId: string;
+  status: Estimate["status"];
+  approvedBy?: string | null;
+  approvedAt?: string | null;
+}
+
 export interface ClientInput {
   userId: string;
   name: string;
@@ -405,6 +413,51 @@ export async function updateEstimateRecord(
     .update(payload)
     .eq("id", input.id)
     .eq("user_id", existing.userId)
+    .select("*")
+    .single();
+  if (error) throw error;
+  const record = buildEstimateRecord(data as DatabaseEstimateRow);
+  const openEvent = await getLatestProposalEvent(client, record.id, "email_open");
+  return {
+    ...record,
+    viewedAt: openEvent?.createdAt ?? existing.viewedAt ?? null,
+  };
+}
+
+export async function updateEstimateStatus(
+  client: SupabaseClient,
+  input: EstimateStatusUpdateInput
+): Promise<Estimate> {
+  const existing = await getEstimate(client, input.userId, input.estimateId);
+  if (!existing) {
+    throw new Error("Estimate not found");
+  }
+
+  const payload: Partial<DatabaseEstimateRow> = {
+    status: input.status,
+  };
+
+  if (input.status === "accepted") {
+    payload.approved_at = input.approvedAt ?? new Date().toISOString();
+    payload.approved_by = input.approvedBy ?? existing.approvedBy ?? null;
+  } else {
+    if (input.approvedAt !== undefined) {
+      payload.approved_at = input.approvedAt;
+    } else {
+      payload.approved_at = null;
+    }
+    if (input.approvedBy !== undefined) {
+      payload.approved_by = input.approvedBy;
+    } else {
+      payload.approved_by = null;
+    }
+  }
+
+  const { data, error } = await client
+    .from("estimates")
+    .update(payload)
+    .eq("id", existing.id)
+    .eq("user_id", input.userId)
     .select("*")
     .single();
   if (error) throw error;

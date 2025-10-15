@@ -46,9 +46,12 @@
             </div>
             <div>
               <dt class="text-xs uppercase tracking-wide text-slate-500">Status</dt>
-              <dd class="text-sm capitalize text-slate-800">{{ estimate.status }}</dd>
-              <dd v-if="approvalTimestamp" class="text-xs text-emerald-600">
-                Approved {{ approvalTimestamp }}
+              <dd class="mt-1 text-sm">
+                <span
+                  :class="[statusBadgeClass, 'rounded-full px-2 py-1 text-xs font-medium transition-colors']"
+                >
+                  {{ statusBadgeLabel }}
+                </span>
               </dd>
             </div>
             <div>
@@ -102,38 +105,24 @@
         </section>
 
         <section class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 class="text-lg font-semibold text-slate-900">Approve This Estimate</h2>
-          <p v-if="approved" class="mt-2 text-sm text-emerald-600">
-            Thank you! Your approval has been recorded
-            <span v-if="approvalTimestamp">({{ approvalTimestamp }})</span>.
+          <h2 class="text-lg font-semibold text-slate-900">Next Steps</h2>
+          <p class="mt-2 text-sm text-slate-600">
+            When you're ready to move forward, simply reply to the original email and we'll put
+            together a detailed proposal with a few tailored options to choose from.
           </p>
-          <p v-else class="mt-2 text-sm text-slate-600">
-            Confirm your approval to notify {{ settings?.companyName ?? "the contractor" }}.
-          </p>
-
-          <div class="mt-4 space-y-4">
-            <div class="flex flex-wrap items-center gap-3">
-              <a
-                v-if="downloadUrl"
-                :href="downloadUrl"
-                target="_blank"
-                rel="noopener"
-                class="text-sm font-medium text-blue-600 underline"
-              >
-                Download PDF
-              </a>
-              <span v-else class="text-sm text-slate-500">
-                PDF generation pending. Refresh this page after a moment.
-              </span>
-            </div>
-
-            <form v-if="!approved" class="space-y-4" @submit.prevent="onApprove">
-              <SQInput v-model="approverName" label="Your name" placeholder="Full name" required />
-              <div class="flex flex-wrap items-center gap-3">
-                <SQButton type="submit" :loading="approving">Approve Estimate</SQButton>
-                <p v-if="approveError" class="text-sm text-red-500">{{ approveError }}</p>
-              </div>
-            </form>
+          <div class="mt-4 flex flex-wrap items-center gap-3">
+            <a
+              v-if="downloadUrl"
+              :href="downloadUrl"
+              target="_blank"
+              rel="noopener"
+              class="text-sm font-medium text-blue-600 underline"
+            >
+              Download PDF
+            </a>
+            <span v-else class="text-sm text-slate-500">
+              PDF generation pending. Refresh this page after a moment.
+            </span>
           </div>
         </section>
       </div>
@@ -144,7 +133,8 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
 import type { Client, Estimate, UserSettings } from "@stackquotes/types";
-import { fetchSharedEstimate, approveSharedEstimate } from "@modules/public/api/estimates";
+import { fetchSharedEstimate } from "@modules/public/api/estimates";
+import { statusClass, statusLabel } from "@modules/quickquote/utils/status";
 
 const props = defineProps<{
   token: string;
@@ -156,19 +146,12 @@ const estimate = ref<Estimate | null>(null);
 const client = ref<Client | null>(null);
 const settings = ref<UserSettings | null>(null);
 const downloadUrl = ref<string | null>(null);
-const approverName = ref("");
-const approving = ref(false);
-const approveError = ref("");
-
-const approved = computed(
-  () => estimate.value?.status === "accepted" || Boolean(estimate.value?.approvedAt)
+const statusBadgeClass = computed(() =>
+  estimate.value ? statusClass(estimate.value.status) : "bg-slate-200 text-slate-700"
 );
-
-const approvalTimestamp = computed(() => {
-  if (!estimate.value?.approvedAt) return null;
-  const date = new Date(estimate.value.approvedAt);
-  return Number.isNaN(date.getTime()) ? estimate.value.approvedAt : date.toLocaleString();
-});
+const statusBadgeLabel = computed(() =>
+  estimate.value ? statusLabel(estimate.value.status) : ""
+);
 
 const currencyFormatter = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -199,38 +182,11 @@ async function loadData() {
     client.value = response.data.client;
     settings.value = response.data.settings ?? null;
     downloadUrl.value = response.data.downloadUrl ?? null;
-    if (!approverName.value && response.data.client?.name) {
-      approverName.value = response.data.client.name;
-    }
   } catch (err) {
     error.value =
       err instanceof Error ? err.message : "Unexpected error loading this estimate.";
   } finally {
     loading.value = false;
-  }
-}
-
-async function onApprove() {
-  if (!estimate.value) return;
-  approving.value = true;
-  approveError.value = "";
-  try {
-    const payload = approverName.value.trim().length
-      ? { name: approverName.value.trim() }
-      : {};
-    const response = await approveSharedEstimate(props.token, payload);
-    if (response.error) {
-      approveError.value = response.error;
-      return;
-    }
-    if (response.data) {
-      estimate.value = response.data;
-    }
-  } catch (err) {
-    approveError.value =
-      err instanceof Error ? err.message : "Unexpected error approving the estimate.";
-  } finally {
-    approving.value = false;
   }
 }
 

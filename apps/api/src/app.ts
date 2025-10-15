@@ -2,21 +2,24 @@ import { Hono } from "hono";
 import type { Context } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { cors } from "hono/cors";
+
 import { estimatesRouter } from "./routes/estimates.js";
 import { clientsRouter } from "./routes/clients.js";
 import { pdfRouter } from "./routes/pdf.js";
 import { emailRouter } from "./routes/email.js";
 import { settingsRouter } from "./routes/settings.js";
 import { shareRouter } from "./routes/share.js";
+
 import * as dotenv from "dotenv";
 import { fileURLToPath } from "url";
 import { dirname, resolve } from "path";
 import { existsSync } from "fs";
 
+// ----------------------------
+// Environment loader (dev only)
+// ----------------------------
 const loadEnvironment = () => {
-  if (process.env.NODE_ENV === "production") {
-    return;
-  }
+  if (process.env.NODE_ENV === "production") return;
 
   const moduleUrl = import.meta.url;
   const __filename = fileURLToPath(moduleUrl);
@@ -33,6 +36,9 @@ const loadEnvironment = () => {
 
 let isEnvLoaded = false;
 
+// ----------------------------
+// App factory
+// ----------------------------
 export const createApp = () => {
   if (!isEnvLoaded) {
     loadEnvironment();
@@ -43,6 +49,7 @@ export const createApp = () => {
 
   const app = new Hono();
 
+  // Global CORS
   app.use(
     "*",
     cors({
@@ -52,6 +59,7 @@ export const createApp = () => {
     })
   );
 
+  // Global error handler
   app.use("*", async (c, next) => {
     try {
       await next();
@@ -60,19 +68,26 @@ export const createApp = () => {
       if (error instanceof HTTPException) {
         return c.json({ error: error.message }, error.status);
       }
-      return c.json({ error: (error as Error).message ?? "Unexpected error" }, 500);
+      return c.json(
+        { error: (error as Error).message ?? "Unexpected error" },
+        500
+      );
     }
   });
 
+  // Health check
   const healthHandler = (c: Context) => c.json({ ok: true });
   app.get("/health", healthHandler);
-  app.get("/api/health", healthHandler);
-  app.route("/api/estimates", estimatesRouter);
-  app.route("/api/clients", clientsRouter);
-  app.route("/api/pdf", pdfRouter);
-  app.route("/api/email", emailRouter);
-  app.route("/api/settings", settingsRouter);
-  app.route("/api/share", shareRouter);
+
+  // ----------------------------
+  // Route mounts (no /api prefix)
+  // ----------------------------
+  app.route("/estimates", estimatesRouter);
+  app.route("/clients", clientsRouter);
+  app.route("/pdf", pdfRouter);
+  app.route("/email", emailRouter);
+  app.route("/settings", settingsRouter);
+  app.route("/share", shareRouter);
 
   return app;
 };

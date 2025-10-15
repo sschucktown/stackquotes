@@ -63,6 +63,13 @@ export interface EstimateDuplicateInput {
     id: string;
     userId: string;
 }
+export interface EstimateStatusUpdateInput {
+    userId: string;
+    estimateId: string;
+    status: Estimate["status"];
+    approvedBy?: string | null;
+    approvedAt?: string | null;
+}
 export interface ClientInput {
     userId: string;
     name: string;
@@ -93,6 +100,7 @@ export declare function listEstimates(client: SupabaseClient, userId: string, fi
 export declare function getEstimate(client: SupabaseClient, userId: string, estimateId: string): Promise<Estimate | null>;
 export declare function createEstimateRecord(client: SupabaseClient, input: EstimateInput): Promise<Estimate>;
 export declare function updateEstimateRecord(client: SupabaseClient, input: EstimateUpdateInput): Promise<Estimate>;
+export declare function updateEstimateStatus(client: SupabaseClient, input: EstimateStatusUpdateInput): Promise<Estimate>;
 export declare function duplicateEstimate(client: SupabaseClient, input: EstimateDuplicateInput): Promise<Estimate>;
 export declare function listClients(client: SupabaseClient, userId: string): Promise<Client[]>;
 export declare function getClient(client: SupabaseClient, userId: string, clientId: string): Promise<Client | null>;

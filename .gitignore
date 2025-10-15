@@ -10,3 +10,5 @@ build
 coverage
 supabase/.branches
 .vercel
+# Turbo build cache
+**/.turbo/

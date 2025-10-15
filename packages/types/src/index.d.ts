@@ -1,5 +1,5 @@
 export type UUID = string;
-export type EstimateStatus = "draft" | "sent" | "accepted" | "declined";
+export type EstimateStatus = "draft" | "sent" | "seen" | "accepted" | "declined";
 export type EstimateTemplateKey = "modern" | "premium" | "classic";
 export interface LineItem {
     id: string;
