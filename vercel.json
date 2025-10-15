@@ -4,6 +4,7 @@
       "runtime": "@vercel/node@3.0.0"
     }
   },
+  "nodeVersion": "18.x",
   "buildCommand": "echo 'Hono API build (no static output)'",
   "outputDirectory": ".",
   "routes": [

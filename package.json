@@ -7,6 +7,9 @@
     "apps/*",
     "packages/*"
   ],
+  "engines": {
+    "node": "18.x"
+  },
   "scripts": {
     "dev": "turbo run dev --parallel --no-cache",
     "dev:web": "pnpm --filter @stackquotes/web dev",
