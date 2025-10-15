@@ -6,8 +6,6 @@ import type { ReadableStream as NodeReadableStream } from "node:stream/web";
 
 const app = createApp();
 
-export const config = { runtime: "edge" };
-
 if (!process.env.VERCEL) {
   const port = Number(process.env.PORT ?? 8787);
   serve({
