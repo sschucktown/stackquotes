@@ -16,6 +16,7 @@ const getHandler = async (): Promise<NodeHandler> => {
 
 export const config = {
   runtime: "nodejs",
+  includeFiles: ["apps/api/dist/**"],
 };
 
 export default async function stackquotes(
