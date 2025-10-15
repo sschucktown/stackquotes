@@ -19,6 +19,7 @@
     }
   ],
   "routes": [
+    { "src": "/api/(.*)", "dest": "api/[...stackquotes]" },
     { "src": "/assets/(.*)", "dest": "/apps/web/assets/$1" },
     { "handle": "filesystem" },
     { "src": "/(.*)", "dest": "/apps/web/index.html" }
