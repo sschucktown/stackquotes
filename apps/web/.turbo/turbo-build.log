@@ -17,4 +17,4 @@ computing gzip size...
 [2mdist/[22m[36massets/DashboardPage-QaqL9q7q.js         [39m[1m[2m  9.30 kB[22m[1m[22m[2m │ gzip:  3.56 kB[22m
 [2mdist/[22m[36massets/EstimateEditorPage-CBx2iON2.js    [39m[1m[2m 15.71 kB[22m[1m[22m[2m │ gzip:  5.32 kB[22m
 [2mdist/[22m[36massets/index-2Yue42SO.js                 [39m[1m[2m314.00 kB[22m[1m[22m[2m │ gzip: 94.77 kB[22m
-[32m✓ built in 3.29s[39m
+[32m✓ built in 3.37s[39m
