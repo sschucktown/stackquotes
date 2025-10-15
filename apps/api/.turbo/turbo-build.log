@@ -7,8 +7,8 @@
 [34mCLI[39m tsup v8.5.0
 [34mCLI[39m Target: es2022
 [34mESM[39m Build start
-[32mESM[39m [1mdist\index.js [22m[32m57.24 KB[39m
-[32mESM[39m ⚡️ Build success in 275ms
+[32mESM[39m [1mdist\index.js [22m[32m58.61 KB[39m
+[32mESM[39m ⚡️ Build success in 273ms
 [34mDTS[39m Build start
-[32mDTS[39m ⚡️ Build success in 4343ms
-[32mDTS[39m [1mdist\index.d.ts [22m[32m334.00 B[39m
+[32mDTS[39m ⚡️ Build success in 4342ms
+[32mDTS[39m [1mdist\index.d.ts [22m[32m501.00 B[39m

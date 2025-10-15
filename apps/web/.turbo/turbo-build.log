@@ -9,12 +9,12 @@ rendering chunks...
 computing gzip size...
 [2mdist/[22m[32mindex.html                               [39m[1m[2m  0.44 kB[22m[1m[22m[2m │ gzip:  0.30 kB[22m
 [2mdist/[22m[35massets/index-B-h2SS_r.css                [39m[1m[2m 16.67 kB[22m[1m[22m[2m │ gzip:  3.95 kB[22m
-[2mdist/[22m[36massets/http-zNGowrP_.js                  [39m[1m[2m  0.83 kB[22m[1m[22m[2m │ gzip:  0.46 kB[22m
-[2mdist/[22m[36massets/LoginPage-DhCoas39.js             [39m[1m[2m  3.07 kB[22m[1m[22m[2m │ gzip:  1.57 kB[22m
-[2mdist/[22m[36massets/RegisterPage-BWWzhs3f.js          [39m[1m[2m  3.28 kB[22m[1m[22m[2m │ gzip:  1.62 kB[22m
-[2mdist/[22m[36massets/clientStore-Cj-T-Gu1.js           [39m[1m[2m  4.27 kB[22m[1m[22m[2m │ gzip:  1.70 kB[22m
-[2mdist/[22m[36massets/EstimateApprovalPage-DfITLmVZ.js  [39m[1m[2m  7.24 kB[22m[1m[22m[2m │ gzip:  2.68 kB[22m
-[2mdist/[22m[36massets/DashboardPage-BH-XR09A.js         [39m[1m[2m  8.31 kB[22m[1m[22m[2m │ gzip:  3.24 kB[22m
-[2mdist/[22m[36massets/EstimateEditorPage-DpqCSBw2.js    [39m[1m[2m 13.28 kB[22m[1m[22m[2m │ gzip:  4.60 kB[22m
-[2mdist/[22m[36massets/index-DP0UT-hJ.js                 [39m[1m[2m313.99 kB[22m[1m[22m[2m │ gzip: 94.75 kB[22m
-[32m✓ built in 4.37s[39m
+[2mdist/[22m[36massets/http-ChMmKktk.js                  [39m[1m[2m  0.83 kB[22m[1m[22m[2m │ gzip:  0.46 kB[22m
+[2mdist/[22m[36massets/LoginPage-DIqm_RSM.js             [39m[1m[2m  3.07 kB[22m[1m[22m[2m │ gzip:  1.57 kB[22m
+[2mdist/[22m[36massets/RegisterPage-DfF3_fml.js          [39m[1m[2m  3.28 kB[22m[1m[22m[2m │ gzip:  1.62 kB[22m
+[2mdist/[22m[36massets/clientStore-eEpWl9CM.js           [39m[1m[2m  4.45 kB[22m[1m[22m[2m │ gzip:  1.79 kB[22m
+[2mdist/[22m[36massets/EstimateApprovalPage-D2lVWfCJ.js  [39m[1m[2m  7.24 kB[22m[1m[22m[2m │ gzip:  2.68 kB[22m
+[2mdist/[22m[36massets/DashboardPage-CsYDzT_Z.js         [39m[1m[2m  8.41 kB[22m[1m[22m[2m │ gzip:  3.26 kB[22m
+[2mdist/[22m[36massets/EstimateEditorPage-p8vtafvp.js    [39m[1m[2m 13.28 kB[22m[1m[22m[2m │ gzip:  4.60 kB[22m
+[2mdist/[22m[36massets/index-D7WdZRnQ.js                 [39m[1m[2m313.99 kB[22m[1m[22m[2m │ gzip: 94.75 kB[22m
+[32m✓ built in 5.61s[39m

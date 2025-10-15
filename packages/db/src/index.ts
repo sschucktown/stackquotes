@@ -728,6 +728,14 @@ export async function listProposalEvents(
   return (data as DatabaseProposalEventRow[]).map((row) => buildProposalEventRecord(row));
 }
 
+const getLatestViewedEventForEstimate = async (
+  client: SupabaseClient,
+  estimateId: string
+): Promise<ProposalEvent | null> => {
+  const events = await getViewedEventsForEstimates(client, [estimateId]);
+  return events.get(estimateId) ?? null;
+};
+
 export async function getLatestProposalEvent(
   client: SupabaseClient,
   estimateId: string,
@@ -757,5 +765,3 @@ export async function getLatestProposalEvent(
 export const schemaPath = new URL("../schema.sql", import.meta.url).pathname;
 
 export type { SupabaseClient };
-
-
