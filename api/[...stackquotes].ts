@@ -1,12 +1,7 @@
-import { Hono } from "hono";
-import { clientsRouter } from "../apps/api/src/routes/clients.js";
-
-const app = new Hono();
-
-app.route("/api/clients", clientsRouter);
+import handler from "../apps/api/dist/index.js";
 
 export const config = {
-  runtime: "edge",
+  runtime: "nodejs",
 };
 
-export default app;
+export default handler;
