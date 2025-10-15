@@ -8,7 +8,7 @@ let cachedHandler: NodeHandler | null = null;
 
 const getHandler = async (): Promise<NodeHandler> => {
   if (!cachedHandler) {
-    const { createApp } = await import("../apps/api/src/index.js");
+    const { createApp } = await import("../apps/api/dist/index.js");
     cachedHandler = handle(createApp());
   }
   return cachedHandler;

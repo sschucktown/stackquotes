@@ -1,5 +1,5 @@
 
-> @stackquotes/config@0.1.0 build C:\Dev\Projects\stackquotes\packages\config
+> @stackquotes/config@0.1.0 build C:\Users\u329702\IdeaProjects\stackquotes\packages\config
 > tsup src/index.ts --format esm,cjs --dts
 
 [34mCLI[39m Building entry: src/index.ts
@@ -9,10 +9,10 @@
 [34mESM[39m Build start
 [34mCJS[39m Build start
 [32mESM[39m [1mdist\index.js [22m[32m1.63 KB[39m
-[32mESM[39m ⚡️ Build success in 634ms
+[32mESM[39m ⚡️ Build success in 64ms
 [32mCJS[39m [1mdist\index.cjs [22m[32m2.90 KB[39m
-[32mCJS[39m ⚡️ Build success in 638ms
+[32mCJS[39m ⚡️ Build success in 64ms
 [34mDTS[39m Build start
-[32mDTS[39m ⚡️ Build success in 2663ms
-[32mDTS[39m [1mdist\index.d.ts  [22m[32m2.48 KB[39m
-[32mDTS[39m [1mdist\index.d.cts [22m[32m2.48 KB[39m
+[32mDTS[39m ⚡️ Build success in 1682ms
+[32mDTS[39m [1mdist\index.d.ts  [22m[32m2.54 KB[39m
+[32mDTS[39m [1mdist\index.d.cts [22m[32m2.54 KB[39m
