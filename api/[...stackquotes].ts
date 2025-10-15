@@ -1,32 +1,12 @@
-/// <reference types="node" />
+import { Hono } from "hono";
+import { clientsRouter } from "../apps/api/src/routes/clients.js";
 
-import type { IncomingMessage, ServerResponse } from "node:http";
+const app = new Hono();
 
-type NodeHandler = (req: IncomingMessage, res: ServerResponse) => Promise<void> | void;
-
-let cachedHandler: NodeHandler | null = null;
-
-const getHandler = async (): Promise<NodeHandler> => {
-  if (!cachedHandler) {
-    const mod = await import("../apps/api/dist/index.js");
-    const exported = mod.default ?? mod.handler;
-    if (typeof exported !== "function") {
-      throw new Error("apps/api/dist/index.js does not export a default handler function");
-    }
-    cachedHandler = exported as NodeHandler;
-  }
-  return cachedHandler;
-};
+app.route("/api/clients", clientsRouter);
 
 export const config = {
-  runtime: "nodejs",
-  includeFiles: ["apps/api/dist/**"],
+  runtime: "edge",
 };
 
-export default async function stackquotes(
-  req: IncomingMessage,
-  res: ServerResponse
-): Promise<void> {
-  const handler = await getHandler();
-  return handler(req, res);
-}
+export default app;
