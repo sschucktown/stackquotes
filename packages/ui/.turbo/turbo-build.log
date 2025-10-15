@@ -1,4 +1,4 @@
 
-> @stackquotes/ui@0.1.0 build C:\Dev\Projects\stackquotes\packages\ui
+> @stackquotes/ui@0.1.0 build C:\Users\u329702\IdeaProjects\stackquotes\packages\ui
 > vue-tsc -p tsconfig.vue.json --declaration --emitDeclarationOnly --outDir dist
 

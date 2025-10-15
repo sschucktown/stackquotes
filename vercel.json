@@ -9,7 +9,7 @@
       "config": { "distDir": "dist" }
     },
     {
-      "src": "apps/api/dist/index.js",
+      "src": "api/[...stackquotes].ts",
       "use": "@vercel/node",
       "config": {
         "includeFiles": [
