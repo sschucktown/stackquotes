@@ -16,7 +16,12 @@ const getHandler = async (): Promise<NodeHandler> => {
 
 export const config = {
   runtime: "nodejs",
-  includeFiles: ["apps/api/dist/**"],
+  includeFiles: [
+    "apps/api/dist/**",
+    "packages/db/dist/**",
+    "packages/config/dist/**",
+    "packages/types/dist/**"
+  ],
 };
 
 export default async function stackquotes(
