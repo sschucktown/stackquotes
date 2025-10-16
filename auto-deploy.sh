@@ -16,8 +16,8 @@ while true; do
   echo "🔨 Building $PROJECT..."
   pnpm --filter $PROJECT run build || true
 
-  echo "🚀 Deploying prebuilt build to Vercel..."
-  DEPLOY_OUTPUT=$(vercel deploy --prebuilt --prod --yes 2>&1 || true)
+  echo "🚀 Deploying build to Vercel (remote build)..."
+  DEPLOY_OUTPUT=$(vercel deploy --prod --yes 2>&1 || true)
   echo "$DEPLOY_OUTPUT"
 
   # Extract deployment URL
