@@ -4,8 +4,10 @@
       "runtime": "@vercel/node@5.0.0"
     }
   },
-  "buildCommand": "echo 'Hono API build (no static output)'",
+  "installCommand": "pnpm install --filter ./apps/api... --ignore-scripts",
+  "buildCommand": "echo 'Skipping lint and TypeScript build (already compiled)'",
   "outputDirectory": ".",
+  "ignoreCommand": "echo 'Skipping ESLint and typecheck for Vercel build'",
   "routes": [
     { "src": "/api/(.*)", "dest": "/api/index.ts" }
   ]
