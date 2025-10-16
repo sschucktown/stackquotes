@@ -1,6 +1,3 @@
-// @ts-nocheck
-import { createApp } from "../apps/api/src/app.js";
-
-const app = createApp();
-
+// Redirect entry to your real API
+import app from "../apps/api/src/index.js";
 export default app;

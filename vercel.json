@@ -1,13 +1,18 @@
 {
   "functions": {
-    "apps/api/src/index.ts": {
+    "api/index.ts": {
       "runtime": "@vercel/node@5.0.0"
     }
   },
   "installCommand": "pnpm install --filter ./apps/api... --ignore-scripts",
   "buildCommand": "pnpm --filter @stackquotes/api run build",
-  "outputDirectory": "apps/api/dist",
   "routes": [
-    { "src": "/api/(.*)", "dest": "apps/api/dist/index.js" }
-  ]
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/index.ts"
+    }
+  ],
+  "engines": {
+    "node": "22.x"
+  }
 }
