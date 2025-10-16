@@ -11,7 +11,7 @@
           <QuickActionButton variant="inline" />
         </header>
 
-        <main class="flex-1 overflow-y-auto pb-20 lg:pb-0">
+        <main class="flex-1 overflow-y-auto pb-24 px-4 sm:px-6 lg:px-8">
           <RouterView />
         </main>
 
