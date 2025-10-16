@@ -1,3 +1,3 @@
-// Redirect entry to your real API
-import app from "../apps/api/src/index.js";
-export default app;
+// Redirect entry to your real API build output.
+import handler from "../apps/api/dist/index.js";
+export default handler;

@@ -2,14 +2,21 @@
   "functions": {
     "api/index.ts": {
       "runtime": "@vercel/node@5.0.0"
+    },
+    "api/[...stackquotes].ts": {
+      "runtime": "@vercel/node@5.0.0"
     }
   },
-  "installCommand": "pnpm install --no-frozen-lockfile --filter ./apps/api...",
+  "installCommand": "pnpm install --no-frozen-lockfile",
   "buildCommand": "pnpm --filter @stackquotes/api run build",
   "routes": [
     {
       "src": "/api/(.*)",
       "dest": "/api/index.ts"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/api/[...stackquotes].ts"
     }
   ],
   "outputDirectory": "."
