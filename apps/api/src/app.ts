@@ -78,6 +78,7 @@ export const createApp = () => {
   // Health check
   const healthHandler = (c: Context) => c.json({ ok: true });
   app.get("/health", healthHandler);
+  app.get("/api/health", healthHandler);
 
   // ----------------------------
   // Route mounts (all under /api)

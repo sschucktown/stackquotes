@@ -19,10 +19,6 @@ const router = createRouter({
   history: createWebHistory(),
   routes: [
     {
-      path: "/",
-      redirect: "/quickquote",
-    },
-    {
       path: "/share/estimate/:token",
       name: "public-estimate-approval",
       component: () => import("@/pages/public/EstimateApprovalPage.vue"),
@@ -42,15 +38,40 @@ const router = createRouter({
       meta: { public: true },
     },
     {
-      path: "/quickquote",
-      name: "quickquote-dashboard",
-      component: () => import("@/pages/quickquote/DashboardPage.vue"),
-    },
-    {
-      path: "/quickquote/estimates/:id",
-      name: "quickquote-estimate",
-      component: () => import("@/pages/quickquote/EstimateEditorPage.vue"),
-      props: true,
+      path: "/",
+      component: () => import("@/layouts/AppShell.vue"),
+      children: [
+        {
+          path: "",
+          redirect: "/dashboard",
+        },
+        {
+          path: "dashboard",
+          name: "dashboard-home",
+          component: () => import("@/pages/dashboard/DashboardHome.vue"),
+        },
+        {
+          path: "quickquote",
+          name: "quickquote-dashboard",
+          component: () => import("@/pages/quickquote/DashboardPage.vue"),
+        },
+        {
+          path: "quickquote/estimates/:id",
+          name: "quickquote-estimate",
+          component: () => import("@/pages/quickquote/EstimateEditorPage.vue"),
+          props: true,
+        },
+        {
+          path: "smart-proposals",
+          name: "smart-proposals",
+          component: () => import("@/pages/smartproposals/SmartProposalsPage.vue"),
+        },
+        {
+          path: "analytics",
+          name: "analytics",
+          component: () => import("@/pages/analytics/AnalyticsPage.vue"),
+        },
+      ],
     },
   ],
 });
