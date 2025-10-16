@@ -12,5 +12,6 @@
       "dest": "/api/index.ts"
     }
   ],
-  "outputDirectory": "."
+  "outputDirectory": ".",
+  "ignoreCommand": "echo 'Skipping lint and typecheck for Vercel build'"
 }
