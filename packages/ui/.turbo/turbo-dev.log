@@ -1,0 +1,8 @@
+
+> @stackquotes/ui@0.1.0 dev C:\Dev\Projects\stackquotes\packages\ui
+> vue-tsc -p tsconfig.vue.json --watch --noEmit
+
+[2J[3J[H8:35:10 AM - Starting compilation in watch mode...
+
+
+8:35:19 AM - Found 0 errors. Watching for file changes.
