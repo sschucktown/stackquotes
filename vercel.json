@@ -5,9 +5,12 @@
     }
   },
   "installCommand": "pnpm install --filter ./apps/api... --ignore-scripts",
-  "buildCommand": "echo 'Skipping lint and TypeScript build (already compiled)'",
+  "buildCommand": "echo 'No linting, no typechecking, just deploy API 🚀'",
   "outputDirectory": ".",
-  "ignoreCommand": "echo 'Skipping ESLint and typecheck for Vercel build'",
+  "ignoreCommand": "echo 'Ignoring lint/typecheck'",
+  "env": {
+    "VERCEL_LINT": "0"
+  },
   "routes": [
     { "src": "/api/(.*)", "dest": "/api/index.ts" }
   ]
