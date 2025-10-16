@@ -5,17 +5,13 @@
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-
   "scripts": {
-    "preinstall": "mkdir -p node_modules/.bin && echo \"#!/usr/bin/env node\nconsole.log('Skipping ESLint (noop placeholder)')\" > node_modules/.bin/eslint && chmod +x node_modules/.bin/eslint || true",
-    "postinstall": "mkdir -p node_modules/.bin && echo \"#!/usr/bin/env node\nconsole.log('Skipping ESLint (noop placeholder)')\" > node_modules/.bin/eslint && chmod +x node_modules/.bin/eslint || true",
     "dev": "tsx watch src/index.ts",
-    "build": "mkdir -p node_modules/.bin && echo \"#!/usr/bin/env node\nconsole.log('Skipping ESLint (noop placeholder)')\" > node_modules/.bin/eslint && chmod +x node_modules/.bin/eslint && tsup --config tsup.config.ts",
+    "build": "tsup --config tsup.config.ts",
     "start": "node dist/index.js",
-    "lint": "echo 'Lint disabled on Vercel'; exit 0",
+    "lint": "echo 'lint disabled on Vercel'; exit 0",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
-
   "dependencies": {
     "@hono/node-server": "^1.19.5",
     "@stackquotes/config": "workspace:*",
@@ -29,7 +25,6 @@
     "stripe": "^15.12.0",
     "zod": "^3.25.6"
   },
-
   "devDependencies": {
     "@types/node": "^22.5.0",
     "eslint": "^9.0.0",
@@ -37,7 +32,6 @@
     "tsx": "^4.10.3",
     "typescript": "^5.5.4"
   },
-
   "engines": {
     "node": "22.x"
   }

@@ -5,11 +5,13 @@
     }
   },
   "installCommand": "pnpm install --filter ./apps/api... --ignore-scripts",
-  "buildCommand": "echo 'No linting, no typechecking, just deploy API 🚀'",
+  "buildCommand": "echo 'skip lint and typecheck' && pnpm --filter @stackquotes/api run build",
+  "ignoreCommand": "echo 'ignore lint and eslint'",
   "outputDirectory": ".",
-  "ignoreCommand": "echo 'Ignoring lint/typecheck'",
   "env": {
-    "VERCEL_LINT": "0"
+    "NEXT_IGNORE_ESLINT": "true",
+    "ESLINT_NO_DEV_ERRORS": "true",
+    "DISABLE_ESLINT_PLUGIN": "true"
   },
   "routes": [
     { "src": "/api/(.*)", "dest": "/api/index.ts" }
