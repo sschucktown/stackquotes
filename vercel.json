@@ -6,18 +6,11 @@
   },
   "installCommand": "pnpm install --filter ./apps/api... --ignore-scripts",
   "buildCommand": "echo 'skip lint and typecheck' && pnpm --filter @stackquotes/api run build",
-  "ignoreCommand": "echo 'skip eslint discovery'",
   "env": {
     "NEXT_DISABLE_ESLINT": "true",
     "ESLINT_NO_DEV_ERRORS": "true",
     "DISABLE_ESLINT_PLUGIN": "true"
   },
-  "ignore": [
-    ".eslintrc.*",
-    "eslint.config.js",
-    "**/.eslintrc*",
-    "**/eslint.config.js"
-  ],
   "routes": [
     { "src": "/api/(.*)", "dest": "/api/index.ts" }
   ]
