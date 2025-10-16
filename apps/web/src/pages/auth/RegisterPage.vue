@@ -42,7 +42,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { onMounted, ref } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useAuth } from "@/lib/auth";
 
@@ -54,7 +54,34 @@ const loading = ref(false);
 const googleLoading = ref(false);
 const router = useRouter();
 const route = useRoute();
-const { signUp, signInWithGoogle, isSafeRedirect } = useAuth();
+const {
+  signUp,
+  signInWithGoogle,
+  sanitizeRedirect,
+  getStoredRedirect,
+  setStoredRedirect,
+  clearStoredRedirect,
+} = useAuth();
+
+const getRedirectFromQuery = (): string | undefined => {
+  const raw = route.query.redirect;
+  if (typeof raw === "string") return raw;
+  if (Array.isArray(raw)) return raw[0];
+  return undefined;
+};
+
+onMounted(() => {
+  const requestedRedirect = getRedirectFromQuery();
+  const safeRedirect = sanitizeRedirect(requestedRedirect);
+  if (safeRedirect) {
+    setStoredRedirect(safeRedirect);
+  } else if (requestedRedirect) {
+    const sanitizedQuery = { ...route.query } as Record<string, unknown>;
+    delete sanitizedQuery.redirect;
+    router.replace({ query: sanitizedQuery });
+    clearStoredRedirect();
+  }
+});
 
 const submit = async () => {
   if (password.value !== confirm.value) {
@@ -69,15 +96,18 @@ const submit = async () => {
     error.value = signUpError.message;
     return;
   }
-  router.push("/quickquote");
+  const redirect = getStoredRedirect() ?? "/quickquote";
+  clearStoredRedirect();
+  router.push(redirect);
 };
 
 const handleGoogleSignIn = async () => {
   googleLoading.value = true;
   error.value = "";
   try {
-    const requestedRedirect = route.query.redirect as string | undefined;
-    const redirectPath = isSafeRedirect(requestedRedirect) ? requestedRedirect : "/quickquote";
+    const requestedRedirect = getRedirectFromQuery();
+    const redirectPath = sanitizeRedirect(requestedRedirect) ?? getStoredRedirect() ?? "/quickquote";
+    setStoredRedirect(redirectPath);
     const { error: oauthError } = await signInWithGoogle(redirectPath);
     if (oauthError) {
       error.value = oauthError.message;

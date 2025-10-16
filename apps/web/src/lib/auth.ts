@@ -25,10 +25,48 @@ export const useAuth = () => {
   const isSafeRedirect = (value?: string): value is string =>
     typeof value === "string" && value.startsWith("/") && !value.startsWith("/api");
 
+  const sanitizeRedirect = (value?: string) => (isSafeRedirect(value) ? value : undefined);
+
+  const redirectStorageKey = "stackquotes:redirect";
+
+  const getStorage = () => {
+    if (typeof window === "undefined") return null;
+    try {
+      return window.sessionStorage;
+    } catch {
+      return null;
+    }
+  };
+
+  const getStoredRedirect = () => {
+    const storage = getStorage();
+    if (!storage) return undefined;
+    const value = storage.getItem(redirectStorageKey) ?? undefined;
+    return sanitizeRedirect(value ?? undefined);
+  };
+
+  const setStoredRedirect = (value?: string) => {
+    const storage = getStorage();
+    if (!storage) return;
+    const safe = sanitizeRedirect(value);
+    if (safe) {
+      storage.setItem(redirectStorageKey, safe);
+    } else {
+      storage.removeItem(redirectStorageKey);
+    }
+  };
+
+  const clearStoredRedirect = () => {
+    const storage = getStorage();
+    if (!storage) return;
+    storage.removeItem(redirectStorageKey);
+  };
+
   const signInWithGoogle = (redirectPath?: string) => {
-    const target = isSafeRedirect(redirectPath) ? redirectPath : "/quickquote";
+    const target = sanitizeRedirect(redirectPath) ?? "/quickquote";
+    setStoredRedirect(target);
     const redirectUrl = new URL(`${window.location.origin}/login`);
-    redirectUrl.searchParams.set("redirect", target);
+    redirectUrl.searchParams.set("oauth", "google");
     return supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
@@ -47,6 +85,9 @@ export const useAuth = () => {
     signOut,
     signInWithGoogle,
     isSafeRedirect,
+    sanitizeRedirect,
+    getStoredRedirect,
+    setStoredRedirect,
+    clearStoredRedirect,
   };
 };
-
