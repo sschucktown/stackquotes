@@ -14,7 +14,6 @@ export default defineConfig({
     }
   },
   build: {
-    // ✅ Keep the output local to apps/web
     outDir: "dist",
     emptyOutDir: true,
     sourcemap: false,
@@ -29,7 +28,8 @@ export default defineConfig({
       "/api": {
         target: process.env.VITE_API_PROXY_TARGET ?? "http://localhost:8787",
         changeOrigin: true,
-        rewrite: (requestPath) => requestPath.replace(/^\/api/, "")
+        // ✅ KEEP /api in the path for Hono routes
+        rewrite: (path) => path, 
       }
     }
   },
