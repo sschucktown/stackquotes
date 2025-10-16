@@ -1,17 +1,13 @@
 {
   "functions": {
-    "api/index.ts": {
+    "apps/api/src/index.ts": {
       "runtime": "@vercel/node@5.0.0"
     }
   },
   "installCommand": "pnpm install --filter ./apps/api... --ignore-scripts",
-  "buildCommand": "echo 'skip lint and typecheck' && pnpm --filter @stackquotes/api run build",
-  "env": {
-    "NEXT_DISABLE_ESLINT": "true",
-    "ESLINT_NO_DEV_ERRORS": "true",
-    "DISABLE_ESLINT_PLUGIN": "true"
-  },
+  "buildCommand": "pnpm --filter @stackquotes/api run build",
+  "outputDirectory": "apps/api/dist",
   "routes": [
-    { "src": "/api/(.*)", "dest": "/api/index.ts" }
+    { "src": "/api/(.*)", "dest": "apps/api/dist/index.js" }
   ]
 }
