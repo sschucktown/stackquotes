@@ -4,7 +4,7 @@
       "runtime": "@vercel/node@5.0.0"
     }
   },
-  "installCommand": "pnpm install --filter ./apps/api... --ignore-scripts",
+  "installCommand": "pnpm install --no-frozen-lockfile --filter ./apps/api...",
   "buildCommand": "pnpm --filter @stackquotes/api run build",
   "routes": [
     {
@@ -12,6 +12,5 @@
       "dest": "/api/index.ts"
     }
   ],
-  "outputDirectory": ".",
-  "ignoreCommand": "echo 'Skipping lint and typecheck for Vercel build'"
+  "outputDirectory": "."
 }
