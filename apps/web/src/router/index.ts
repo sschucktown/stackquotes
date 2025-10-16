@@ -1,4 +1,4 @@
-﻿import { createRouter, createWebHistory } from "vue-router";
+import { createRouter, createWebHistory } from "vue-router";
 import { watch } from "vue";
 import { useAuth } from "@/lib/auth";
 
@@ -56,6 +56,16 @@ const router = createRouter({
           component: () => import("@/pages/quickquote/DashboardPage.vue"),
         },
         {
+          path: "quickquotes",
+          redirect: { name: "quickquote-dashboard" },
+        },
+        {
+          path: "quickquote/new",
+          name: "quickquote-new",
+          component: () => import("@/pages/quickquote/EstimateEditorPage.vue"),
+          props: () => ({ id: "new" }),
+        },
+        {
           path: "quickquote/estimates/:id",
           name: "quickquote-estimate",
           component: () => import("@/pages/quickquote/EstimateEditorPage.vue"),
@@ -89,7 +99,7 @@ router.beforeEach(async (to) => {
     return { name: "login" };
   }
   if (to.meta.public && auth.isAuthenticated.value) {
-    const redirectTarget = auth.getStoredRedirect() ?? "/quickquote";
+    const redirectTarget = auth.getStoredRedirect() ?? "/dashboard";
     auth.clearStoredRedirect();
     return { path: redirectTarget };
   }
@@ -97,3 +107,4 @@ router.beforeEach(async (to) => {
 });
 
 export default router;
+
