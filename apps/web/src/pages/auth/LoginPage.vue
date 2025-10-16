@@ -52,7 +52,7 @@ const loading = ref(false);
 const googleLoading = ref(false);
 const router = useRouter();
 const route = useRoute();
-const { signIn, signInWithGoogle } = useAuth();
+const { signIn, signInWithGoogle, isSafeRedirect } = useAuth();
 
 const submit = async () => {
   loading.value = true;
@@ -63,7 +63,8 @@ const submit = async () => {
     error.value = signInError.message;
     return;
   }
-  const redirect = (route.query.redirect as string) ?? "/quickquote";
+  const requestedRedirect = route.query.redirect as string | undefined;
+  const redirect = isSafeRedirect(requestedRedirect) ? requestedRedirect : "/quickquote";
   router.push(redirect);
 };
 
@@ -71,7 +72,8 @@ const handleGoogleSignIn = async () => {
   googleLoading.value = true;
   error.value = "";
   try {
-    const redirectPath = typeof route.query.redirect === "string" ? route.query.redirect : "/quickquote";
+    const requestedRedirect = route.query.redirect as string | undefined;
+    const redirectPath = isSafeRedirect(requestedRedirect) ? requestedRedirect : "/quickquote";
     const { error: oauthError } = await signInWithGoogle(redirectPath);
     if (oauthError) {
       error.value = oauthError.message;

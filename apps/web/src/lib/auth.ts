@@ -22,8 +22,11 @@ export const useAuth = () => {
   const signIn = (email: string, password: string) => supabase.auth.signInWithPassword({ email, password });
   const signUp = (email: string, password: string) => supabase.auth.signUp({ email, password });
   const signOut = () => supabase.auth.signOut();
+  const isSafeRedirect = (value?: string): value is string =>
+    typeof value === "string" && value.startsWith("/") && !value.startsWith("/api");
+
   const signInWithGoogle = (redirectPath?: string) => {
-    const target = typeof redirectPath === "string" && redirectPath.startsWith("/") ? redirectPath : "/quickquote";
+    const target = isSafeRedirect(redirectPath) ? redirectPath : "/quickquote";
     const redirectUrl = new URL(`${window.location.origin}/login`);
     redirectUrl.searchParams.set("redirect", target);
     return supabase.auth.signInWithOAuth({
@@ -43,6 +46,7 @@ export const useAuth = () => {
     signUp,
     signOut,
     signInWithGoogle,
+    isSafeRedirect,
   };
 };
 

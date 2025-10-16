@@ -59,7 +59,11 @@ router.beforeEach(async (to) => {
   const auth = useAuth();
   await waitForAuth();
   if (!to.meta.public && !auth.isAuthenticated.value) {
-    return { name: "login", query: { redirect: to.fullPath } };
+    const redirectTarget = auth.isSafeRedirect(to.fullPath) ? to.fullPath : undefined;
+    return {
+      name: "login",
+      ...(redirectTarget ? { query: { redirect: redirectTarget } } : {}),
+    };
   }
   if (to.meta.public && auth.isAuthenticated.value) {
     return { path: "/quickquote" };
