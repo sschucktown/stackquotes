@@ -80,14 +80,14 @@ export const createApp = () => {
   app.get("/health", healthHandler);
 
   // ----------------------------
-  // Route mounts (no /api prefix)
+  // Route mounts (all under /api)
   // ----------------------------
-  app.route("/estimates", estimatesRouter);
-  app.route("/clients", clientsRouter);
-  app.route("/pdf", pdfRouter);
-  app.route("/email", emailRouter);
-  app.route("/settings", settingsRouter);
-  app.route("/share", shareRouter);
+  app.route("/api/estimates", estimatesRouter);
+  app.route("/api/clients", clientsRouter);
+  app.route("/api/pdf", pdfRouter);
+  app.route("/api/email", emailRouter);
+  app.route("/api/settings", settingsRouter);
+  app.route("/api/share", shareRouter);
 
   return app;
 };
