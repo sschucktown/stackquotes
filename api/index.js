@@ -1,4 +1,3 @@
-const { Readable } = require("node:stream");
 const modulePromise = import("../apps/api/dist/index.js");
 
 const getHandler = async () => {
@@ -10,20 +9,47 @@ const getHandler = async () => {
   return { handler, mod };
 };
 
-const toFetchRequest = (req) => {
+const createHeaders = (nodeHeaders) => {
+  const headers = new Headers();
+  for (const key of Object.keys(nodeHeaders)) {
+    const value = nodeHeaders[key];
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        if (typeof item === "string") {
+          headers.append(key, item);
+        }
+      }
+    } else if (typeof value === "string") {
+      headers.append(key, value);
+    }
+  }
+  return headers;
+};
+
+const toFetchRequest = async (req) => {
   const url = new URL(req.url ?? "/", `https://${req.headers.host ?? "localhost"}`);
+  const headers = createHeaders(req.headers);
   const init = {
     method: req.method,
-    headers: req.headers,
+    headers,
   };
+
   if (req.method && !["GET", "HEAD"].includes(req.method.toUpperCase())) {
-    if (typeof Readable.toWeb === "function") {
-      init.body = Readable.toWeb(req);
-    } else {
-      init.body = req;
+    const chunks = [];
+    for await (const chunk of req) {
+      if (typeof chunk === "string") {
+        chunks.push(Buffer.from(chunk));
+      } else if (Buffer.isBuffer(chunk)) {
+        chunks.push(chunk);
+      } else {
+        chunks.push(Buffer.from(chunk));
+      }
     }
-    init.duplex = "half";
+    const bodyBuffer = chunks.length ? Buffer.concat(chunks) : Buffer.alloc(0);
+    headers.set("content-length", String(bodyBuffer.byteLength));
+    init.body = bodyBuffer;
   }
+
   return new Request(url.toString(), init);
 };
 
@@ -32,7 +58,7 @@ module.exports = async function handler(req, res) {
   if (handler.length > 1) {
     return handler(req, res);
   }
-  const request = toFetchRequest(req);
+  const request = await toFetchRequest(req);
   const response = await handler(request);
 
   res.statusCode = response.status;
