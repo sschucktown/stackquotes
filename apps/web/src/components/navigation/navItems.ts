@@ -1,10 +1,5 @@
 import type { Component } from "vue";
-import {
-  HomeIcon,
-  DocumentDuplicateIcon,
-  Squares2X2Icon,
-  ChartBarIcon,
-} from "@heroicons/vue/24/outline";
+import { HomeIcon, DocumentTextIcon, UsersIcon, CubeIcon, Cog6ToothIcon } from "@heroicons/vue/24/outline";
 
 export interface NavItemConfig {
   label: string;
@@ -21,21 +16,27 @@ export const NAV_ITEMS: NavItemConfig[] = [
     matches: (name) => name === "dashboard-home",
   },
   {
-    label: "QuickQuotes",
-    name: "quickquote-dashboard",
-    icon: DocumentDuplicateIcon,
-    matches: (name) => name?.startsWith("quickquote-") ?? false,
+    label: "Proposals",
+    name: "proposals",
+    icon: DocumentTextIcon,
+    matches: (name) => name === "proposals",
   },
   {
-    label: "SmartProposals",
-    name: "smart-proposals",
-    icon: Squares2X2Icon,
-    matches: (name) => name === "smart-proposals",
+    label: "Clients",
+    name: "clients",
+    icon: UsersIcon,
+    matches: (name) => name === "clients",
   },
   {
-    label: "Analytics",
-    name: "analytics",
-    icon: ChartBarIcon,
-    matches: (name) => name === "analytics",
+    label: "Materials",
+    name: "materials",
+    icon: CubeIcon,
+    matches: (name) => name === "materials",
+  },
+  {
+    label: "Settings",
+    name: "settings",
+    icon: Cog6ToothIcon,
+    matches: (name) => name === "settings",
   },
 ];

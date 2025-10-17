@@ -51,6 +51,26 @@ const router = createRouter({
           component: () => import("@/pages/dashboard/DashboardHome.vue"),
         },
         {
+          path: "proposals",
+          name: "proposals",
+          component: () => import("@/pages/proposals/ProposalsPage.vue"),
+        },
+        {
+          path: "clients",
+          name: "clients",
+          component: () => import("@/pages/clients/ClientsPage.vue"),
+        },
+        {
+          path: "materials",
+          name: "materials",
+          component: () => import("@/pages/materials/MaterialsPage.vue"),
+        },
+        {
+          path: "settings",
+          name: "settings",
+          component: () => import("@/pages/settings/SettingsPage.vue"),
+        },
+        {
           path: "quickquote",
           name: "quickquote-dashboard",
           component: () => import("@/pages/quickquote/DashboardPage.vue"),
@@ -70,16 +90,6 @@ const router = createRouter({
           name: "quickquote-estimate",
           component: () => import("@/pages/quickquote/EstimateEditorPage.vue"),
           props: true,
-        },
-        {
-          path: "smart-proposals",
-          name: "smart-proposals",
-          component: () => import("@/pages/smartproposals/SmartProposalsPage.vue"),
-        },
-        {
-          path: "analytics",
-          name: "analytics",
-          component: () => import("@/pages/analytics/AnalyticsPage.vue"),
         },
       ],
     },
@@ -107,4 +117,3 @@ router.beforeEach(async (to) => {
 });
 
 export default router;
-

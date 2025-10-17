@@ -3,6 +3,7 @@
     type="button"
     class="group transition focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
     :class="wrapperClass"
+    :title="variant === 'desktop' && collapsed ? label : undefined"
     @click="$emit('click')"
   >
     <component
@@ -10,7 +11,7 @@
       :class="iconClass"
     />
     <span
-      v-if="variant === 'desktop'"
+      v-if="variant === 'desktop' && !collapsed"
       class="text-sm font-medium transition"
       :class="labelClass"
     >
@@ -35,10 +36,12 @@ const props = withDefaults(
     icon: Component;
     active?: boolean;
     variant?: "mobile" | "desktop";
+    collapsed?: boolean;
   }>(),
   {
     active: false,
     variant: "mobile",
+    collapsed: false,
   }
 );
 
@@ -50,6 +53,7 @@ const wrapperClass = computed(() => {
   if (props.variant === "desktop") {
     return [
       "flex w-full items-center gap-3 rounded-xl px-3 py-2",
+      props.collapsed ? "justify-center px-2" : "",
       props.active
         ? "bg-blue-50 text-blue-600"
         : "text-slate-500 hover:bg-slate-100 hover:text-slate-700",
