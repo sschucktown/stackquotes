@@ -22,6 +22,7 @@ const toFetchRequest = (req) => {
     } else {
       init.body = req;
     }
+    init.duplex = "half";
   }
   return new Request(url.toString(), init);
 };
