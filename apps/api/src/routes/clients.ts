@@ -13,6 +13,20 @@ const createSchema = z.object({
   address: z.string().optional(),
 });
 
+const withTimeout = async <T>(promise: Promise<T>, ms: number, label: string): Promise<T> => {
+  let timeoutId: NodeJS.Timeout | null = null;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => {
+      reject(new Error(`${label} timed out after ${ms}ms`));
+    }, ms);
+  });
+  try {
+    return await Promise.race([promise, timeoutPromise]);
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId);
+  }
+};
+
 export const clientsRouter = new Hono();
 
 clientsRouter.get("/list", async (c) => {
@@ -22,7 +36,7 @@ clientsRouter.get("/list", async (c) => {
     const user = await requireUser(c);
     console.log(`[clients/list] request=${requestId} user=${user.id}`);
     const supabase = getServiceClient();
-    const data = await listClients(supabase, user.id);
+    const data = await withTimeout(listClients(supabase, user.id), 15000, "listClients");
     console.log(`[clients/list] request=${requestId} success count=${data.length}`);
     return c.json({ data });
   } catch (error) {
@@ -48,11 +62,13 @@ clientsRouter.post("/create", async (c) => {
       phone: payload.phone,
       address: payload.address,
     };
-    const data = await createClientRecord(supabase, createInput);
+    const data = await withTimeout(createClientRecord(supabase, createInput), 15000, "createClientRecord");
     console.log(`[clients/create] request=${requestId} success client=${data.id}`);
     return c.json({ data });
   } catch (error) {
     console.error(`[clients/create] request=${requestId} failed`, error);
-    return c.json({ error: (error as Error).message ?? "Unknown error" }, 500);
+    const message = (error as Error).message ?? "Unknown error";
+    const status = message.includes("timed out") ? 504 : 500;
+    return c.json({ error: message }, status);
   }
 });
