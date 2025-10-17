@@ -51,8 +51,10 @@ clientsRouter.post("/create", async (c) => {
   try {
     const user = await requireUser(c);
     console.log(`[clients/create] request=${requestId} user=${user.id}`);
-    const payload = createSchema.parse(await c.req.json());
-    console.log(`[clients/create] request=${requestId} payload`, payload);
+    const rawBody = await withTimeout(c.req.text(), 8000, "read body");
+    console.log(`[clients/create] request=${requestId} rawBody=${rawBody}`);
+    const payload = createSchema.parse(JSON.parse(rawBody));
+    console.log(`[clients/create] request=${requestId} payload parsed`);
     const supabase = getServiceClient();
     console.log(`[clients/create] request=${requestId} supabase client ready`);
     const createInput: ClientInput = {
