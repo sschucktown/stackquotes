@@ -1,6 +1,13 @@
 import { createApp } from "./app.js";
+import { handle } from "@hono/node-server/vercel";
 
 const app = createApp();
+
+export const config = {
+  runtime: "nodejs18.x",
+};
+
+export default handle(app);
 
 if (!process.env.VERCEL) {
   import("@hono/node-server").then(({ serve }) => {
@@ -12,11 +19,5 @@ if (!process.env.VERCEL) {
     console.log(`[api] StackQuotes API running on http://localhost:${port}`);
   });
 }
-
-export const config = {
-  runtime: "nodejs18.x",
-};
-
-export default app.fetch;
 export type AppType = typeof app;
 export { createApp } from "./app.js";
