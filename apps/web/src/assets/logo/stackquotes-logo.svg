@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="128" viewBox="0 0 512 128">
+  <rect x="0" y="12" width="128" height="104" rx="20" fill="#1D6FD8" />
+  <text x="40" y="86" text-anchor="middle" font-size="64" font-weight="700" fill="#ffffff" font-family="'Inter', 'Segoe UI', sans-serif">S</text>
+  <text x="88" y="86" text-anchor="middle" font-size="64" font-weight="700" fill="#ffffff" font-family="'Inter', 'Segoe UI', sans-serif">Q</text>
+  <text x="148" y="85" font-size="52" font-weight="600" fill="#1D6FD8" font-family="'Inter', 'Segoe UI', sans-serif">StackQuotes</text>
+</svg>

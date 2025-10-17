@@ -52,7 +52,7 @@ import { useRoute, useRouter, RouterLink } from "vue-router";
 import { ChevronDoubleLeftIcon, ChevronDoubleRightIcon } from "@heroicons/vue/24/outline";
 import NavItem from "./NavItem.vue";
 import { NAV_ITEMS, type NavItemConfig } from "./navItems";
-import logo from "@/assets/logo/stackquotes-logo.png";
+import logo from "@/assets/logo/stackquotes-logo.svg";
 
 const collapsed = ref(false);
 const router = useRouter();
