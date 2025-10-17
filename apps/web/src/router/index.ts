@@ -39,7 +39,7 @@ const router = createRouter({
     },
     {
       path: "/",
-      component: () => import("@/layouts/AppShell.vue"),
+      component: () => import("@/layouts/AppLayout.vue"),
       children: [
         {
           path: "",
@@ -51,45 +51,36 @@ const router = createRouter({
           component: () => import("@/pages/dashboard/DashboardHome.vue"),
         },
         {
-          path: "proposals",
-          name: "proposals",
-          component: () => import("@/pages/proposals/ProposalsPage.vue"),
-        },
-        {
-          path: "clients",
-          name: "clients",
-          component: () => import("@/pages/clients/ClientsPage.vue"),
-        },
-        {
-          path: "materials",
-          name: "materials",
-          component: () => import("@/pages/materials/MaterialsPage.vue"),
-        },
-        {
-          path: "settings",
-          name: "settings",
-          component: () => import("@/pages/settings/SettingsPage.vue"),
-        },
-        {
-          path: "quickquote",
+          path: "quickquotes",
           name: "quickquote-dashboard",
           component: () => import("@/pages/quickquote/DashboardPage.vue"),
         },
         {
-          path: "quickquotes",
-          redirect: { name: "quickquote-dashboard" },
-        },
-        {
-          path: "quickquote/new",
+          path: "quickquotes/new",
           name: "quickquote-new",
           component: () => import("@/pages/quickquote/EstimateEditorPage.vue"),
           props: () => ({ id: "new" }),
         },
         {
-          path: "quickquote/estimates/:id",
+          path: "quickquotes/:id",
           name: "quickquote-estimate",
           component: () => import("@/pages/quickquote/EstimateEditorPage.vue"),
           props: true,
+        },
+        {
+          path: "smart-proposals",
+          name: "smart-proposals",
+          component: () => import("@/pages/smartproposals/SmartProposalsPage.vue"),
+        },
+        {
+          path: "analytics",
+          name: "analytics",
+          component: () => import("@/pages/analytics/AnalyticsPage.vue"),
+        },
+        {
+          path: "settings",
+          name: "settings",
+          component: () => import("@/pages/settings/SettingsPage.vue"),
         },
       ],
     },
