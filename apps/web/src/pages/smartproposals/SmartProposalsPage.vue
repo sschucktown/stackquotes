@@ -1,119 +1,109 @@
 <template>
-  <div class="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
-    <header class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <div class="space-y-1">
-        <h1 class="text-2xl font-semibold text-slate-900">SmartProposals</h1>
-        <p class="text-sm text-slate-500">
-          Every accepted QuickQuote automatically becomes a Good / Better / Best proposal ready to present.
-        </p>
-      </div>
-      <div class="flex items-center gap-3 text-sm text-slate-500">
-        <span class="font-medium text-slate-700">Quick tip:</span>
-        <span>Mark a QuickQuote as accepted to refresh this workspace.</span>
-      </div>
-    </header>
-
-    <div v-if="loading" class="grid gap-4 md:grid-cols-3">
-      <div v-for="index in 3" :key="`skeleton-${index}`" class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div class="h-4 w-24 animate-pulse rounded bg-slate-200" />
-        <div class="mt-4 h-6 w-32 animate-pulse rounded bg-slate-200" />
-        <div class="mt-6 space-y-3">
-          <div v-for="row in 4" :key="row" class="h-3 w-full animate-pulse rounded bg-slate-100" />
+  <div class="min-h-screen bg-slate-50">
+    <div class="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-8 sm:px-6 lg:px-8">
+      <header class="flex flex-col gap-3 rounded-3xl bg-white/80 p-6 shadow-sm ring-1 ring-slate-100 transition-all duration-200 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">SmartProposals</p>
+          <h1 class="text-2xl font-semibold text-slate-900">Proposal Studio</h1>
+          <p class="text-sm text-slate-600">Every accepted QuickQuote becomes a Good / Better / Best proposal ready to present.</p>
         </div>
-        <div class="mt-6 h-10 w-full animate-pulse rounded bg-slate-200" />
-      </div>
-    </div>
+        <div class="flex items-center gap-3 rounded-2xl bg-slate-50 px-4 py-3 text-xs text-slate-500">
+          <span class="inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+          <span>Mark a QuickQuote as accepted to refresh this workspace.</span>
+        </div>
+      </header>
 
-    <template v-else>
-      <section v-if="currentProposal" class="space-y-4">
-        <header class="flex flex-col gap-2 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p class="text-sm uppercase tracking-wide text-slate-500">Active Proposal</p>
-            <h2 class="text-xl font-semibold text-slate-900">
-              {{ proposalTitle }}
-            </h2>
-            <p class="text-xs text-slate-500">
-              Generated {{ formatRelativeDate(currentProposal.createdAt) }} &middot; Status:
-              <span :class="statusPillClass">
-                {{ currentProposal.status }}
-              </span>
-            </p>
+      <section v-if="loading" class="grid gap-4 md:grid-cols-3">
+        <div
+          v-for="index in 3"
+          :key="`proposal-skeleton-${index}`"
+          class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm ring-1 ring-slate-100 transition"
+        >
+          <div class="h-4 w-24 animate-pulse rounded bg-slate-200" />
+          <div class="mt-4 h-6 w-32 animate-pulse rounded bg-slate-200" />
+          <div class="mt-6 space-y-3">
+            <div v-for="row in 5" :key="`skeleton-row-${row}`" class="h-3 animate-pulse rounded bg-slate-100" />
           </div>
-          <div class="flex flex-col items-end gap-2 text-sm text-slate-500">
-            <label class="text-xs uppercase tracking-wide">Switch Proposals</label>
-            <select
-              v-model="selectedProposalId"
-              class="w-56 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm focus:border-sq-primary focus:outline-none focus:ring-2 focus:ring-sq-primary/40"
+          <div class="mt-6 h-10 w-full animate-pulse rounded bg-slate-200" />
+        </div>
+      </section>
+
+      <template v-else>
+        <section v-if="currentProposal" class="space-y-5">
+          <Transition name="fade">
+            <header
+              class="flex flex-col gap-3 rounded-3xl bg-white/90 p-6 shadow-sm ring-1 ring-slate-100 transition-all duration-200 sm:flex-row sm:items-center sm:justify-between"
             >
-              <option
-                v-for="proposal in activeCollection"
-                :key="proposal.id"
-                :value="proposal.id"
-              >
-                {{ proposalLabel(proposal) }}
-              </option>
-            </select>
-          </div>
-        </header>
-
-        <div class="grid gap-4 md:grid-cols-3">
-          <article
-            v-for="option in currentProposal.options"
-            :key="option.name"
-            class="flex flex-col rounded-xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md"
-          >
-            <header class="space-y-1">
-              <div class="flex items-center justify-between">
-                <h3 class="text-lg font-semibold text-slate-900">{{ option.name }}</h3>
-                <span
-                  class="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs text-slate-500"
-                >
-                  {{ multiplierLabel(option.multiplier) }}
-                </span>
+              <div>
+                <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Active Proposal</p>
+                <h2 class="text-xl font-semibold text-slate-900">{{ proposalTitle }}</h2>
+                <p class="text-xs text-slate-500">
+                  Generated {{ formatRelativeDate(currentProposal.createdAt) }} · Status
+                  <span :class="statusPillClass">{{ currentProposal.status }}</span>
+                </p>
               </div>
-              <p class="text-sm text-slate-500">
-                {{ option.summary || defaultSummary(option.name) }}
-              </p>
-              <p class="text-xl font-semibold text-slate-900">
-                {{ formatCurrency(option.subtotal) }}
-              </p>
+              <div class="flex flex-col items-end gap-2 text-sm text-slate-500">
+                <label class="text-xs uppercase tracking-wide">Switch Proposals</label>
+                <select
+                  v-model="selectedProposalId"
+                  class="w-60 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm transition focus:border-[#3A7D99] focus:outline-none focus:ring-2 focus:ring-[#3A7D99]/40"
+                >
+                  <option v-for="proposal in activeCollection" :key="proposal.id" :value="proposal.id">
+                    {{ proposalLabel(proposal) }}
+                  </option>
+                </select>
+              </div>
             </header>
+          </Transition>
 
-            <ul class="mt-4 flex-1 space-y-2 text-sm text-slate-600">
-              <li
-                v-for="item in option.lineItems"
-                :key="item.description"
-                class="flex items-start justify-between gap-2"
-              >
-                <span class="font-medium text-slate-700">{{ item.description }}</span>
-                <span class="whitespace-nowrap text-slate-500">
-                  {{ formatCurrency(item.total) }}
-                </span>
-              </li>
-            </ul>
-
-            <SQButton
-              class="mt-6"
-              :loading="accepting && pendingOption === option.name"
-              variant="secondary"
-              @click="handleAccept(option.name)"
+          <TransitionGroup name="fade-up" tag="div" class="grid gap-5 md:grid-cols-3">
+            <article
+              v-for="option in currentProposal.options"
+              :key="option.name"
+              class="flex flex-col rounded-2xl border border-slate-200 bg-white/90 p-6 shadow-sm ring-1 ring-slate-100 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
             >
-              Accept {{ option.name }}
-            </SQButton>
-          </article>
-        </div>
-      </section>
+              <header class="space-y-2">
+                <div class="flex items-center justify-between">
+                  <h3 class="text-lg font-semibold text-slate-900">{{ option.name }}</h3>
+                  <span class="inline-flex items-center rounded-full bg-slate-50 px-2 py-0.5 text-xs text-slate-500 ring-1 ring-slate-200">
+                    {{ multiplierLabel(option.multiplier) }}
+                  </span>
+                </div>
+                <p class="text-sm text-slate-600">{{ option.summary || defaultSummary(option.name) }}</p>
+                <p class="text-xl font-semibold text-slate-900">{{ formatCurrency(option.subtotal) }}</p>
+              </header>
 
-      <section v-else class="rounded-2xl border border-dashed border-slate-300 bg-white/70 p-6 text-center text-sm text-slate-600 shadow-sm">
-        <p class="font-medium text-slate-700">No SmartProposals yet.</p>
-        <p class="mt-2">
-          Accept a QuickQuote from your pipeline and we&apos;ll draft Good / Better / Best options automatically.
-        </p>
-        <p class="mt-4 text-xs text-slate-500">
-          Need a demo? We&apos;ve seeded QuoteIQ with sample metrics so you can explore the experience today.
-        </p>
-      </section>
-    </template>
+              <ul class="mt-4 flex-1 space-y-2 text-sm text-slate-600">
+                <li v-for="item in option.lineItems" :key="item.description" class="flex items-start justify-between gap-2">
+                  <span class="font-medium text-slate-700">{{ item.description }}</span>
+                  <span class="whitespace-nowrap text-slate-500">{{ formatCurrency(item.total) }}</span>
+                </li>
+              </ul>
+
+              <SQButton
+                class="mt-6 transform transition-all duration-200 hover:-translate-y-0.5"
+                :class="['!bg-[#3A7D99] !text-white hover:!bg-[#4f8faa] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3A7D99]/60']"
+                :loading="accepting && pendingOption === option.name"
+                @click="handleAccept(option.name)"
+              >
+                Accept {{ option.name }}
+              </SQButton>
+            </article>
+          </TransitionGroup>
+        </section>
+
+        <section
+          v-else
+          class="rounded-3xl border border-dashed border-slate-300 bg-white/80 p-8 text-center text-sm text-slate-600 shadow-sm"
+        >
+          <p class="text-base font-semibold text-slate-800">No SmartProposals yet.</p>
+          <p class="mt-2">Accept a QuickQuote and we&apos;ll draft Good / Better / Best options automatically.</p>
+          <p class="mt-4 text-xs text-slate-500">
+            Need a demo? QuoteIQ analytics are seeded with sample data so you can explore the experience today.
+          </p>
+        </section>
+      </template>
+    </div>
   </div>
 </template>
 
@@ -187,9 +177,9 @@ const multiplierLabel = (multiplier?: number | null) => {
 };
 
 const defaultSummary = (name: string) => {
-  if (name === "Good") return "Lean scope to win price-sensitive projects.";
-  if (name === "Best") return "Premium upgrade package to wow your client.";
-  return "Balanced option aligned with your QuickQuote baseline.";
+  if (name === "Good") return "Value-forward essentials for budget-conscious clients.";
+  if (name === "Best") return "Premium upgrade package to delight your client.";
+  return "Balanced scope aligned with your QuickQuote baseline.";
 };
 
 const statusPillClass = computed(() => {
@@ -233,3 +223,37 @@ const handleAccept = async (optionName: string) => {
   }
 };
 </script>
+
+<style scoped>
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.25s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+.fade-up-enter-active,
+.fade-up-leave-active {
+  transition: all 0.25s ease;
+}
+.fade-up-enter-from,
+.fade-up-leave-to {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fade-enter-active,
+  .fade-leave-active,
+  .fade-up-enter-active,
+  .fade-up-leave-active {
+    transition: none !important;
+  }
+  .fade-up-enter-from,
+  .fade-up-leave-to {
+    transform: none !important;
+  }
+}
+</style>
