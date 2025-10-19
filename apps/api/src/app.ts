@@ -9,6 +9,8 @@ import { pdfRouter } from "./routes/pdf.js";
 import { emailRouter } from "./routes/email.js";
 import { settingsRouter } from "./routes/settings.js";
 import { shareRouter } from "./routes/share.js";
+import { proposalsRouter } from "./routes/proposals.js";
+import { contractorRouter } from "./routes/contractor.js";
 
 import * as dotenv from "dotenv";
 import { fileURLToPath } from "url";
@@ -89,6 +91,8 @@ export const createApp = () => {
   app.route("/api/email", emailRouter);
   app.route("/api/settings", settingsRouter);
   app.route("/api/share", shareRouter);
+  app.route("/api/proposals", proposalsRouter);
+  app.route("/api/contractor", contractorRouter);
 
   return app;
 };

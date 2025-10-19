@@ -97,3 +97,48 @@ export interface ProposalEvent {
   createdAt: string;
 }
 
+export interface ProposalOptionLineItem {
+  description: string;
+  quantity: number;
+  unitCost: number;
+  total: number;
+}
+
+export interface ProposalOption {
+  name: string;
+  summary?: string | null;
+  lineItems: ProposalOptionLineItem[];
+  subtotal: number;
+  multiplier?: number | null;
+}
+
+export interface ProposalTotal {
+  name: string;
+  total: number;
+}
+
+export interface Proposal {
+  id: UUID;
+  userId: UUID;
+  quickquoteId: UUID | null;
+  options: ProposalOption[];
+  totals: ProposalTotal[];
+  status: string;
+  acceptedOption?: string | null;
+  createdAt: string;
+}
+
+export interface ContractorProfile {
+  userId: UUID;
+  businessName?: string | null;
+  ownerName?: string | null;
+  tradeType?: string | null;
+  city?: string | null;
+  state?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  logoUrl?: string | null;
+  createdAt: string;
+  updatedAt?: string;
+}
+

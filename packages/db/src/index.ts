@@ -2,15 +2,21 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { loadServerConfig } from "@stackquotes/config";
 import type {
   Client,
+  ContractorProfile,
   Estimate,
   EstimateFilters,
   LineItem,
+  Proposal,
   ProposalEvent,
+  ProposalOption,
+  ProposalTotal,
   UserSettings,
 } from "@stackquotes/types";
 import { randomUUID } from "node:crypto";
 
 type Json = Record<string, unknown> | Json[] | string | number | boolean | null;
+
+const toJson = <T>(value: T): Json => JSON.parse(JSON.stringify(value)) as Json;
 
 export interface DatabaseEstimateRow {
   id: string;
@@ -61,6 +67,32 @@ export interface DatabaseProposalEventRow {
   event: string;
   token: string | null;
   metadata: Json | null;
+  created_at: string;
+}
+
+export interface DatabaseContractorProfileRow {
+  id: string;
+  user_id: string;
+  business_name: string | null;
+  owner_name: string | null;
+  trade_type: string | null;
+  city: string | null;
+  state: string | null;
+  phone: string | null;
+  email: string | null;
+  logo_url: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DatabaseProposalRow {
+  id: string;
+  user_id: string;
+  quickquote_id: string | null;
+  options: Json;
+  totals: Json;
+  status: string;
+  accepted_option: string | null;
   created_at: string;
 }
 
@@ -116,6 +148,26 @@ export interface ProposalEventInput {
 export interface ProposalEventFilter {
   estimateIds?: string[];
   event?: string;
+}
+
+export interface ProposalInput {
+  userId: string;
+  quickquoteId?: string | null;
+  options: ProposalOption[];
+  totals: ProposalTotal[];
+  status?: string;
+  acceptedOption?: string | null;
+}
+
+export interface ProposalStatusUpdateInput {
+  userId: string;
+  proposalId: string;
+  status: string;
+  acceptedOption?: string | null;
+}
+
+export interface ContractorProfileInput extends Partial<Omit<ContractorProfile, "userId" | "createdAt" | "updatedAt">> {
+  userId: string;
 }
 
 export interface SupabaseFactoryOptions {
@@ -298,6 +350,79 @@ const buildProposalEventRecord = (row: DatabaseProposalEventRow): ProposalEvent 
   createdAt: row.created_at,
 });
 
+const normaliseProposalLineItem = (item: unknown): { description: string; quantity: number; unitCost: number; total: number } => {
+  const record = (item as Record<string, unknown>) ?? {};
+  const quantity = Number(record.quantity ?? 0);
+  const unitCost = Number(record.unitCost ?? record.unit_price ?? record.unit ?? 0);
+  const total = Number(record.total ?? quantity * unitCost);
+  return {
+    description: String(record.description ?? record.desc ?? ""),
+    quantity,
+    unitCost,
+    total,
+  };
+};
+
+const coerceProposalOptions = (value: Json): ProposalOption[] => {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  return (value as ProposalOption[]).map((option) => {
+    const record = option as Record<string, unknown>;
+    const rawLineItems = Array.isArray(record.lineItems) ? record.lineItems : [];
+    const lineItems = rawLineItems.map((item) => normaliseProposalLineItem(item));
+    const subtotal =
+      typeof record.subtotal === "number"
+        ? record.subtotal
+        : lineItems.reduce((sum, item) => sum + item.total, 0);
+    return {
+      name: String(record.name ?? "Option"),
+      summary: record.summary !== undefined && record.summary !== null ? String(record.summary) : null,
+      lineItems,
+      subtotal,
+      multiplier:
+        record.multiplier !== undefined && record.multiplier !== null
+          ? Number(record.multiplier)
+          : null,
+    };
+  });
+};
+
+const coerceProposalTotals = (value: Json): ProposalTotal[] => {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  return (value as ProposalTotal[]).map((entry) => ({
+    name: String((entry as Record<string, unknown>).name ?? "Option"),
+    total: Number((entry as Record<string, unknown>).total ?? 0),
+  }));
+};
+
+const buildProposalRecord = (row: DatabaseProposalRow): Proposal => ({
+  id: row.id,
+  userId: row.user_id,
+  quickquoteId: row.quickquote_id ?? null,
+  options: coerceProposalOptions(row.options),
+  totals: coerceProposalTotals(row.totals),
+  status: row.status,
+  acceptedOption: row.accepted_option ?? null,
+  createdAt: row.created_at,
+});
+
+const buildContractorProfileRecord = (row: DatabaseContractorProfileRow): ContractorProfile => ({
+  userId: row.user_id,
+  businessName: row.business_name ?? null,
+  ownerName: row.owner_name ?? null,
+  tradeType: row.trade_type ?? null,
+  city: row.city ?? null,
+  state: row.state ?? null,
+  phone: row.phone ?? null,
+  email: row.email ?? null,
+  logoUrl: row.logo_url ?? null,
+  createdAt: row.created_at,
+  updatedAt: row.updated_at,
+});
+
 export async function listEstimates(
   client: SupabaseClient,
   userId: string,
@@ -440,6 +565,7 @@ export async function updateEstimateStatus(
   if (input.status === "accepted") {
     payload.approved_at = input.approvedAt ?? new Date().toISOString();
     payload.approved_by = input.approvedBy ?? existing.approvedBy ?? null;
+    payload.converted_to_proposal = true;
   } else {
     if (input.approvedAt !== undefined) {
       payload.approved_at = input.approvedAt;
@@ -450,6 +576,9 @@ export async function updateEstimateStatus(
       payload.approved_by = input.approvedBy;
     } else {
       payload.approved_by = null;
+    }
+    if (input.status === "draft" || input.status === "declined") {
+      payload.converted_to_proposal = false;
     }
   }
 
@@ -779,6 +908,107 @@ export async function listProposalEvents(
     throw error;
   }
   return (data as DatabaseProposalEventRow[]).map((row) => buildProposalEventRecord(row));
+}
+
+export async function createProposalRecord(
+  client: SupabaseClient,
+  input: ProposalInput
+): Promise<Proposal> {
+  const payload: Partial<DatabaseProposalRow> & { user_id: string } = {
+    user_id: input.userId,
+    quickquote_id: input.quickquoteId ?? null,
+    options: toJson(input.options),
+    totals: toJson(input.totals),
+    status: input.status ?? "Generated",
+    accepted_option: input.acceptedOption ?? null,
+  };
+  const { data, error } = await client.from("proposals").insert(payload).select("*").single();
+  if (error) throw error;
+  return buildProposalRecord(data as DatabaseProposalRow);
+}
+
+export async function listProposals(client: SupabaseClient, userId: string): Promise<Proposal[]> {
+  const { data, error } = await client
+    .from("proposals")
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data as DatabaseProposalRow[]).map((row) => buildProposalRecord(row));
+}
+
+export async function findProposalByQuickquote(
+  client: SupabaseClient,
+  userId: string,
+  quickquoteId: string
+): Promise<Proposal | null> {
+  const { data, error } = await client
+    .from("proposals")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("quickquote_id", quickquoteId)
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  return buildProposalRecord(data as DatabaseProposalRow);
+}
+
+export async function updateProposalStatus(
+  client: SupabaseClient,
+  input: ProposalStatusUpdateInput
+): Promise<Proposal> {
+  const { data, error } = await client
+    .from("proposals")
+    .update({
+      status: input.status,
+      accepted_option: input.acceptedOption ?? null,
+    })
+    .eq("user_id", input.userId)
+    .eq("id", input.proposalId)
+    .select("*")
+    .single();
+  if (error) throw error;
+  return buildProposalRecord(data as DatabaseProposalRow);
+}
+
+export async function getContractorProfile(
+  client: SupabaseClient,
+  userId: string
+): Promise<ContractorProfile | null> {
+  const { data, error } = await client
+    .from("contractor_profiles")
+    .select("*")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  return buildContractorProfileRecord(data as DatabaseContractorProfileRow);
+}
+
+export async function upsertContractorProfile(
+  client: SupabaseClient,
+  input: ContractorProfileInput
+): Promise<ContractorProfile> {
+  const payload: Partial<DatabaseContractorProfileRow> & { user_id: string } = {
+    user_id: input.userId,
+    business_name: input.businessName ?? null,
+    owner_name: input.ownerName ?? null,
+    trade_type: input.tradeType ?? null,
+    city: input.city ?? null,
+    state: input.state ?? null,
+    phone: input.phone ?? null,
+    email: input.email ?? null,
+    logo_url: input.logoUrl ?? null,
+    updated_at: new Date().toISOString(),
+  };
+  const { data, error } = await client
+    .from("contractor_profiles")
+    .upsert(payload, { onConflict: "user_id" })
+    .select("*")
+    .single();
+  if (error) throw error;
+  return buildContractorProfileRecord(data as DatabaseContractorProfileRow);
 }
 
 const getLatestViewedEventForEstimate = async (

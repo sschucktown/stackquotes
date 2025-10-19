@@ -3,7 +3,10 @@ import { z } from "zod";
 import {
   createEstimateRecord,
   createProposalEvent,
+  createProposalRecord,
   duplicateEstimate,
+  findProposalByQuickquote,
+  getContractorProfile,
   getUserSettings,
   listEstimates,
   updateEstimateRecord,
@@ -17,6 +20,7 @@ import type {
 import type { LineItem } from "@stackquotes/types";
 import { requireUser } from "../lib/auth.js";
 import { getServiceClient } from "../lib/supabase.js";
+import { createSmartProposalFromLineItems } from "../lib/smartProposal.js";
 
 const lineItemSchema = z.object({
   id: z.string().min(1),
@@ -147,6 +151,24 @@ estimatesRouter.post("/accept", async (c) => {
       estimateId: data.id,
       event: "accepted",
     });
+    try {
+      const existingProposal = await findProposalByQuickquote(supabase, user.id, data.id);
+      if (!existingProposal) {
+        const profile = await getContractorProfile(supabase, user.id);
+        const { options, totals } = createSmartProposalFromLineItems(data.lineItems, {
+          businessName: profile?.businessName ?? undefined,
+        });
+        await createProposalRecord(supabase, {
+          userId: user.id,
+          quickquoteId: data.id,
+          options,
+          totals,
+          status: "Generated",
+        });
+      }
+    } catch (generationError) {
+      console.error("[estimates/accept] failed to generate proposal", generationError);
+    }
     return c.json({ data });
   } catch (error) {
     if (error instanceof Error && error.message === "Estimate not found") {
