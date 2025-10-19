@@ -172,7 +172,7 @@ const handleGoogleSignIn = async () => {
 
 const startDemo = () => {
   demoStore.activate();
-  router.push("/quickquote?demo=1");
+  router.push({ name: "quickquote-dashboard", query: { demo: "1" } });
 };
 </script>
 
