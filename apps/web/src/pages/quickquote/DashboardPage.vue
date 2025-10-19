@@ -130,7 +130,7 @@
           <Transition name="fade">
             <SettingsForm v-if="goToSettings" />
           </Transition>
-          <p v-else class="text-sm text-slate-600">
+          <p v-if="!goToSettings" class="text-sm text-slate-600">
             Personalize your proposals, tax rates, and branding defaults. Press <kbd class="rounded bg-slate-100 px-1 py-0.5 text-xs">S</kbd>
             to toggle.
           </p>
