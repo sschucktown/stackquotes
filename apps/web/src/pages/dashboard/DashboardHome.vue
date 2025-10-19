@@ -566,7 +566,7 @@ const goTo = (name: string) => {
 };
 
 const createEstimate = () => {
-  router.push("/quickquote/estimates/new");
+  router.push("/quickquotes/new");
 };
 
 const currency = (value: number) => currencyFormatter.format(value || 0);

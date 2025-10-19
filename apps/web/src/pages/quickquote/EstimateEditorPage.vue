@@ -239,7 +239,7 @@ const save = async (payload: EstimateFormPayload) => {
         taxRate: payload.taxRate,
       });
       if (result) {
-        router.replace(`/quickquote/estimates/${result.id}`);
+        router.replace(`/quickquotes/${result.id}`);
       }
     } else if (currentEstimate.value) {
       await estimateStore.update(currentEstimate.value.id, {

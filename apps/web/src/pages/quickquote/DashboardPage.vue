@@ -284,11 +284,11 @@ const setSearch = (value: string) => {
 };
 
 const openEstimate = (id: string) => {
-  router.push(`/quickquote/estimates/${id}`);
+  router.push(`/quickquotes/${id}`);
 };
 
 const createEstimate = () => {
-  router.push("/quickquote/estimates/new");
+  router.push("/quickquotes/new");
 };
 
 const duplicate = async (id: string) => {

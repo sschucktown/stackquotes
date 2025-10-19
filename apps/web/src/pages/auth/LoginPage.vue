@@ -112,8 +112,15 @@ const loading = ref(false);
 const googleLoading = ref(false);
 const router = useRouter();
 const route = useRoute();
-const { signIn, signInWithGoogle, sanitizeRedirect, getStoredRedirect, setStoredRedirect, clearStoredRedirect } =
-  useAuth();
+const {
+  signIn,
+  signInWithGoogle,
+  sanitizeRedirect,
+  getStoredRedirect,
+  setStoredRedirect,
+  clearStoredRedirect,
+  defaultRedirect,
+} = useAuth();
 const demoStore = useDemoStore();
 
 const getRedirectFromQuery = (): string | undefined => {
@@ -146,7 +153,8 @@ const submit = async () => {
     return;
   }
   demoStore.deactivate();
-  const redirect = getStoredRedirect() ?? sanitizeRedirect(getRedirectFromQuery()) ?? "/quickquote";
+  const redirect =
+    getStoredRedirect() ?? sanitizeRedirect(getRedirectFromQuery()) ?? defaultRedirect;
   clearStoredRedirect();
   router.push(redirect);
 };
@@ -157,7 +165,8 @@ const handleGoogleSignIn = async () => {
   try {
     demoStore.deactivate();
     const requestedRedirect = getRedirectFromQuery();
-    const redirectPath = sanitizeRedirect(requestedRedirect) ?? getStoredRedirect() ?? "/quickquote";
+    const redirectPath =
+      sanitizeRedirect(requestedRedirect) ?? getStoredRedirect() ?? defaultRedirect;
     setStoredRedirect(redirectPath);
     const { error: oauthError } = await signInWithGoogle(redirectPath);
     if (oauthError) {

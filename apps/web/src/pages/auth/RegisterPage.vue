@@ -121,6 +121,7 @@ const {
   getStoredRedirect,
   setStoredRedirect,
   clearStoredRedirect,
+  defaultRedirect,
 } = useAuth();
 const demoStore = useDemoStore();
 
@@ -158,7 +159,7 @@ const submit = async () => {
     return;
   }
   demoStore.deactivate();
-  const redirect = getStoredRedirect() ?? "/quickquote";
+  const redirect = getStoredRedirect() ?? defaultRedirect;
   clearStoredRedirect();
   router.push(redirect);
 };
@@ -169,7 +170,8 @@ const handleGoogleSignIn = async () => {
   try {
     demoStore.deactivate();
     const requestedRedirect = getRedirectFromQuery();
-    const redirectPath = sanitizeRedirect(requestedRedirect) ?? getStoredRedirect() ?? "/quickquote";
+    const redirectPath =
+      sanitizeRedirect(requestedRedirect) ?? getStoredRedirect() ?? defaultRedirect;
     setStoredRedirect(redirectPath);
     const { error: oauthError } = await signInWithGoogle(redirectPath);
     if (oauthError) {

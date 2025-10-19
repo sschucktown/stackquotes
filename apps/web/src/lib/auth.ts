@@ -62,8 +62,10 @@ export const useAuth = () => {
     storage.removeItem(redirectStorageKey);
   };
 
+  const defaultRedirect = "/quickquotes";
+
   const signInWithGoogle = (redirectPath?: string) => {
-    const target = sanitizeRedirect(redirectPath) ?? "/quickquote";
+    const target = sanitizeRedirect(redirectPath) ?? defaultRedirect;
     setStoredRedirect(target);
     const redirectUrl = new URL(`${window.location.origin}/login`);
     redirectUrl.searchParams.set("oauth", "google");
@@ -89,5 +91,6 @@ export const useAuth = () => {
     getStoredRedirect,
     setStoredRedirect,
     clearStoredRedirect,
+    defaultRedirect,
   };
 };
