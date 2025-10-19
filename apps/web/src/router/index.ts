@@ -92,7 +92,21 @@ router.beforeEach(async (to) => {
   const auth = useAuth();
   const demo = useDemoStore();
   await waitForAuth();
+  const wantsDemo =
+    (typeof to.query.demo === "string" && ["1", "true"].includes(to.query.demo.toLowerCase())) ||
+    (Array.isArray(to.query.demo) && to.query.demo.some((value) => ["1", "true"].includes(value.toLowerCase())));
+
+  if (wantsDemo && !demo.active) {
+    demo.activate();
+  }
+
   const isDemoActive = demo.active;
+
+  if (isDemoActive && "demo" in to.query) {
+    const { demo: _omit, ...rest } = to.query as Record<string, string | string[] | undefined>;
+    return { path: to.path, query: rest, replace: true };
+  }
+
   if (!to.meta.public && !auth.isAuthenticated.value && !isDemoActive) {
     const redirectTarget = auth.sanitizeRedirect(to.fullPath);
     if (redirectTarget) {
