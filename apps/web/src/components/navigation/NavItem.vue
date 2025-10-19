@@ -52,15 +52,15 @@ defineEmits<{
 const wrapperClass = computed(() => {
   if (props.variant === "desktop") {
     return [
-      "flex w-full items-center gap-3 rounded-xl px-3 py-2",
+      "flex w-full items-center gap-3 rounded-xl px-3 py-2 transition",
       props.collapsed ? "justify-center px-2" : "",
       props.active
-        ? "bg-blue-50 text-blue-600"
-        : "text-slate-500 hover:bg-slate-100 hover:text-slate-700",
+        ? "border-l-4 border-blue-500 bg-blue-50 text-blue-700 shadow-sm"
+        : "border-l-4 border-transparent text-slate-600 hover:border-blue-200 hover:bg-slate-50 hover:text-slate-700",
     ];
   }
   return [
-    "flex w-full flex-col items-center gap-1 rounded-lg px-3 py-2",
+    "flex w-full flex-col items-center gap-1 rounded-lg px-3 py-2 transition",
     props.active
       ? "text-blue-600"
       : "text-slate-500 hover:text-slate-700",
@@ -71,16 +71,16 @@ const iconClass = computed(() => {
   if (props.variant === "desktop") {
     return [
       "h-5 w-5 transition",
-      props.active ? "stroke-blue-600" : "stroke-slate-400 group-hover:stroke-slate-600",
+      props.active ? "text-blue-600" : "text-slate-400 group-hover:text-slate-600",
     ];
   }
   return [
     "h-5 w-5 transition",
-    props.active ? "stroke-blue-600" : "stroke-slate-400",
+    props.active ? "text-blue-600" : "text-slate-400",
   ];
 });
 
 const labelClass = computed(() =>
-  props.active ? "text-blue-600" : "text-slate-600 group-hover:text-slate-700"
+  props.active ? "text-blue-700" : "text-slate-600 group-hover:text-slate-700"
 );
 </script>

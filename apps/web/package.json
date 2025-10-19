@@ -18,6 +18,7 @@
     "@stackquotes/ui": "workspace:*",
     "@supabase/supabase-js": "^2.45.3",
     "@vueuse/core": "^10.9.0",
+    "lucide-vue-next": "^0.7.0",
     "connect-history-api-fallback": "^2.0.0",
     "date-fns": "^3.6.0",
     "pinia": "^2.1.7",
