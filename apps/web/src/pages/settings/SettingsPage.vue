@@ -108,7 +108,55 @@
               We&apos;ll use this profile to brand SmartProposals, analytics exports, and shared client links.
             </div>
 
-            <div class="md:col-span-2"></div>
+            <div class="md:col-span-2 space-y-4 rounded-2xl border border-slate-200 bg-white px-4 py-4 text-sm shadow-sm">
+              <div class="flex flex-col gap-1">
+                <p class="text-sm font-semibold text-slate-800">Public profile</p>
+                <p class="text-xs text-slate-500">
+                  Set a unique link that clients can browse to verify your business details.
+                </p>
+              </div>
+              <div class="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
+                <div>
+                  <SQInput
+                    v-model="form.publicSlug"
+                    label="Public URL slug"
+                    :placeholder="slugSuggestion"
+                    maxlength="30"
+                  />
+                  <p class="mt-2 text-xs text-slate-500">
+                    {{ publicUrl ? "Live URL:" : "Slug must be 3-30 characters." }}
+                    <a
+                      v-if="publicUrl"
+                      :href="publicUrl"
+                      target="_blank"
+                      rel="noopener"
+                      class="font-medium text-blue-600 underline decoration-blue-400/70 decoration-dotted underline-offset-2"
+                    >
+                      {{ publicUrl }}
+                    </a>
+                  </p>
+                </div>
+                <div class="flex flex-col gap-2 md:flex-row md:justify-end">
+                  <SQButton
+                    type="button"
+                    variant="secondary"
+                    class="rounded-full px-4 py-2 text-sm font-medium transition hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3A7D99]/60"
+                    :disabled="!publicUrl"
+                    @click="handleCopyLink"
+                  >
+                    {{ linkCopied ? "Link copied" : "Copy link" }}
+                  </SQButton>
+                  <SQButton
+                    type="button"
+                    class="rounded-full !bg-[#3A7D99] !px-4 !py-2 !text-white transition hover:-translate-y-0.5 hover:!bg-[#4f8faa] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3A7D99]/60"
+                    :disabled="!publicUrl"
+                    @click="viewPublicProfile"
+                  >
+                    View profile
+                  </SQButton>
+                </div>
+              </div>
+            </div>
 
             <div
               class="sticky bottom-4 mt-6 flex items-center justify-between rounded-2xl border border-slate-200 bg-white/95 px-4 py-3 shadow-inner"
@@ -185,6 +233,7 @@ const saveState = ref<"idle" | "saving" | "saved">("idle");
 let saveStateTimer: ReturnType<typeof setTimeout> | null = null;
 const isDarkMode = ref(false);
 const linkCopied = ref(false);
+let copyTimer: ReturnType<typeof setTimeout> | null = null;
 const origin = typeof window !== "undefined" ? window.location.origin : "https://stackquotes.com";
 
 const sanitizeSlugValue = (value: string) =>
@@ -195,9 +244,16 @@ const sanitizeSlugValue = (value: string) =>
     .replace(/-{2,}/g, "-")
     .replace(/^-+|-+$/g, "");
 
-const publicUrl = computed(() =>
-  form.publicSlug ? `${origin.replace(/\/$/, "")}/share/profile/${form.publicSlug}` : null
-);
+const publicUrl = computed(() => {
+  const slug = form.publicSlug.trim();
+  if (slug.length < 3) return null;
+  return `${origin.replace(/\/$/, "")}/share/profile/${slug}`;
+});
+
+const slugSuggestion = computed(() => {
+  const suggestion = sanitizeSlugValue(form.businessName || "your-business");
+  return suggestion.length >= 3 ? suggestion : "your-business";
+});
 
 const setSavedState = (state: "idle" | "saving" | "saved") => {
   saveState.value = state;
@@ -216,6 +272,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   if (saveStateTimer) clearTimeout(saveStateTimer);
+  if (copyTimer) clearTimeout(copyTimer);
 });
 
 watch(
@@ -229,6 +286,7 @@ watch(
     form.phone = profile?.phone ?? "";
     form.email = profile?.email ?? "";
     form.logoUrl = profile?.logoUrl ?? "";
+    form.publicSlug = profile?.publicSlug ?? "";
   },
   { immediate: true }
 );
@@ -237,6 +295,18 @@ watch(
   () => profileStore.saving,
   (saving) => {
     if (saving) setSavedState("saving");
+  }
+);
+
+watch(
+  () => form.publicSlug,
+  (value) => {
+    const sanitized = sanitizeSlugValue(value);
+    if (sanitized !== value) {
+      form.publicSlug = sanitized;
+      return;
+    }
+    linkCopied.value = false;
   }
 );
 
@@ -286,7 +356,11 @@ const handleLogoChange = async (event: Event) => {
 const handleSave = async () => {
   try {
     setSavedState("saving");
-    await profileStore.save({ ...form });
+    const payload = {
+      ...form,
+      publicSlug: form.publicSlug.trim() ? form.publicSlug.trim() : null,
+    };
+    await profileStore.save(payload);
     setSavedState("saved");
   } catch (error) {
     console.error(error);
@@ -297,6 +371,31 @@ const handleSave = async () => {
 const toggleDarkMode = () => {
   isDarkMode.value = !isDarkMode.value;
   document.documentElement.classList.toggle("dark", isDarkMode.value);
+};
+
+const handleCopyLink = async () => {
+  if (!publicUrl.value) return;
+  if (typeof navigator === "undefined" || !navigator.clipboard?.writeText) {
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(publicUrl.value);
+    linkCopied.value = true;
+    if (copyTimer) clearTimeout(copyTimer);
+    copyTimer = setTimeout(() => {
+      linkCopied.value = false;
+      copyTimer = null;
+    }, 2400);
+  } catch (error) {
+    console.error(error);
+    linkCopied.value = false;
+  }
+};
+
+const viewPublicProfile = () => {
+  if (!publicUrl.value) return;
+  if (typeof window === "undefined") return;
+  window.open(publicUrl.value, "_blank", "noopener");
 };
 </script>
 
