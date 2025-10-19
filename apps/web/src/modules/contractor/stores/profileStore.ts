@@ -5,20 +5,22 @@ import {
   upsertContractorProfile,
   uploadContractorLogo,
 } from "../api/profile";
+import { useDemoStore } from "@/stores/demoStore";
+import { demoContractorProfile, cloneProfile } from "@/data/demo";
 
-const seedProfile: ContractorProfile = {
-  userId: "demo-user",
-  businessName: "Charleston Deck Pros",
-  ownerName: "Sam Builder",
-  tradeType: "Decks & Outdoor Living",
-  city: "Charleston",
-  state: "SC",
-  phone: "(843) 555-1024",
-  email: "sam@charlestondeckpros.com",
-  logoUrl: "https://yourcdn.com/demo-logo.png",
-  createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString(),
-  updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7).toISOString(),
-};
+const readFileAsDataUrl = (file: File): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result !== "string") {
+        reject(new Error("Unable to read file data"));
+        return;
+      }
+      resolve(reader.result);
+    };
+    reader.onerror = () => reject(new Error("Failed to read the selected file"));
+    reader.readAsDataURL(file);
+  });
 
 interface ContractorProfileState {
   profile: ContractorProfile | null;
@@ -47,14 +49,20 @@ export const useContractorProfileStore = defineStore("contractor-profile", {
       if (this.profile && !force) return;
       this.loading = true;
       this.error = null;
+      const demo = useDemoStore();
+      if (demo.active) {
+        this.setProfile(cloneProfile(demoContractorProfile), true);
+        this.loading = false;
+        return;
+      }
       const response = await fetchContractorProfile();
       if (response.error) {
         this.error = response.error;
-        this.setProfile({ ...seedProfile }, true);
+        this.setProfile(cloneProfile(demoContractorProfile), true);
       } else if (response.data) {
         this.setProfile(response.data, false);
       } else {
-        this.setProfile({ ...seedProfile }, true);
+        this.setProfile(cloneProfile(demoContractorProfile), true);
       }
       this.loading = false;
     },
@@ -62,6 +70,19 @@ export const useContractorProfileStore = defineStore("contractor-profile", {
       this.saving = true;
       this.error = null;
       try {
+        const demo = useDemoStore();
+        if (demo.active) {
+          const current = this.profile ? cloneProfile(this.profile) : cloneProfile(demoContractorProfile);
+          const updated: ContractorProfile = { ...current };
+          Object.entries(payload).forEach(([key, value]) => {
+            if (value !== undefined) {
+              (updated as Record<string, unknown>)[key] = value;
+            }
+          });
+          updated.updatedAt = new Date().toISOString();
+          this.setProfile(updated, true);
+          return updated;
+        }
         const response = await upsertContractorProfile(payload);
         if (response.error) {
           throw new Error(response.error);
@@ -82,6 +103,15 @@ export const useContractorProfileStore = defineStore("contractor-profile", {
       this.uploading = true;
       this.error = null;
       try {
+        const demo = useDemoStore();
+        if (demo.active) {
+          const logoUrl = await readFileAsDataUrl(file);
+          const current = this.profile ? cloneProfile(this.profile) : cloneProfile(demoContractorProfile);
+          current.logoUrl = logoUrl;
+          current.updatedAt = new Date().toISOString();
+          this.setProfile(current, true);
+          return current;
+        }
         const response = await uploadContractorLogo(file);
         if (response.error) {
           throw new Error(response.error);
@@ -100,4 +130,3 @@ export const useContractorProfileStore = defineStore("contractor-profile", {
     },
   },
 });
-

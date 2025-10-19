@@ -70,6 +70,7 @@
 import { computed, onMounted, ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import { useAuth } from "@/lib/auth";
+import { useDemoStore } from "@/stores/demoStore";
 import EstimateList from "@modules/quickquote/components/EstimateList.vue";
 import PDFPreviewModal from "@modules/quickquote/components/PDFPreviewModal.vue";
 import SettingsForm from "@modules/quickquote/components/SettingsForm.vue";
@@ -83,6 +84,7 @@ const estimateStore = useEstimateStore();
 const clientStore = useClientStore();
 const settingsStore = useSettingsStore();
 const { signOut: supabaseSignOut } = useAuth();
+const demoStore = useDemoStore();
 
 const statusFilter = ref<EstimatePipelineStatus | undefined>(undefined);
 const searchTerm = ref("");
@@ -125,6 +127,7 @@ const duplicate = async (id: string) => {
 };
 
 const signOut = async () => {
+  demoStore.deactivate();
   await supabaseSignOut();
   router.push("/login");
 };

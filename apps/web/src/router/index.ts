@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from "vue-router";
 import { watch } from "vue";
 import { useAuth } from "@/lib/auth";
+import { useDemoStore } from "@/stores/demoStore";
 
 const waitForAuth = async () => {
   const { loading } = useAuth();
@@ -89,8 +90,10 @@ const router = createRouter({
 
 router.beforeEach(async (to) => {
   const auth = useAuth();
+  const demo = useDemoStore();
   await waitForAuth();
-  if (!to.meta.public && !auth.isAuthenticated.value) {
+  const isDemoActive = demo.active;
+  if (!to.meta.public && !auth.isAuthenticated.value && !isDemoActive) {
     const redirectTarget = auth.sanitizeRedirect(to.fullPath);
     if (redirectTarget) {
       auth.setStoredRedirect(redirectTarget);
@@ -99,7 +102,7 @@ router.beforeEach(async (to) => {
     }
     return { name: "login" };
   }
-  if (to.meta.public && auth.isAuthenticated.value) {
+  if (to.meta.public && (auth.isAuthenticated.value || isDemoActive)) {
     const redirectTarget = auth.getStoredRedirect() ?? "/dashboard";
     auth.clearStoredRedirect();
     return { path: redirectTarget };

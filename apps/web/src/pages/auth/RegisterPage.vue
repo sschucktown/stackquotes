@@ -29,6 +29,9 @@
             <span>Create with Google</span>
           </span>
         </SQButton>
+        <SQButton type="button" variant="ghost" class="mt-4 w-full" @click="startDemo">
+          Tour the product (demo mode)
+        </SQButton>
       </div>
 
       <p v-if="error" class="mt-3 text-sm text-red-500">{{ error }}</p>
@@ -45,6 +48,7 @@
 import { onMounted, ref } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useAuth } from "@/lib/auth";
+import { useDemoStore } from "@/stores/demoStore";
 
 const email = ref("");
 const password = ref("");
@@ -62,6 +66,7 @@ const {
   setStoredRedirect,
   clearStoredRedirect,
 } = useAuth();
+const demoStore = useDemoStore();
 
 const getRedirectFromQuery = (): string | undefined => {
   const raw = route.query.redirect;
@@ -96,6 +101,7 @@ const submit = async () => {
     error.value = signUpError.message;
     return;
   }
+  demoStore.deactivate();
   const redirect = getStoredRedirect() ?? "/quickquote";
   clearStoredRedirect();
   router.push(redirect);
@@ -105,6 +111,7 @@ const handleGoogleSignIn = async () => {
   googleLoading.value = true;
   error.value = "";
   try {
+    demoStore.deactivate();
     const requestedRedirect = getRedirectFromQuery();
     const redirectPath = sanitizeRedirect(requestedRedirect) ?? getStoredRedirect() ?? "/quickquote";
     setStoredRedirect(redirectPath);
@@ -117,5 +124,10 @@ const handleGoogleSignIn = async () => {
     error.value = (err as Error).message;
     googleLoading.value = false;
   }
+};
+
+const startDemo = () => {
+  demoStore.activate();
+  router.push("/quickquote?demo=1");
 };
 </script>

@@ -5,6 +5,22 @@ import {
   updateSettings,
   uploadLogo as uploadLogoRequest,
 } from "@modules/quickquote/api/settings";
+import { useDemoStore } from "@/stores/demoStore";
+import { demoSettings, cloneSettings } from "@/data/demo";
+
+const readFileAsDataUrl = (file: File): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result !== "string") {
+        reject(new Error("Unable to read file data"));
+        return;
+      }
+      resolve(reader.result);
+    };
+    reader.onerror = () => reject(new Error("Failed to read the selected file"));
+    reader.readAsDataURL(file);
+  });
 
 interface SettingsState {
   data: UserSettings | null;
@@ -21,6 +37,13 @@ export const useSettingsStore = defineStore("settings", {
   actions: {
     async load() {
       this.loading = true;
+      const demo = useDemoStore();
+      if (demo.active) {
+        this.data = cloneSettings(demoSettings);
+        this.error = null;
+        this.loading = false;
+        return;
+      }
       const { data, error } = await fetchSettings();
       if (error) {
         this.error = error;
@@ -30,6 +53,18 @@ export const useSettingsStore = defineStore("settings", {
       this.loading = false;
     },
     async update(payload: Partial<UserSettings>) {
+      const demo = useDemoStore();
+      if (demo.active) {
+        const current = this.data ? cloneSettings(this.data) : cloneSettings(demoSettings);
+        const updated: UserSettings = { ...current };
+        Object.entries(payload).forEach(([key, value]) => {
+          if (value !== undefined) {
+            (updated as Record<string, unknown>)[key] = value;
+          }
+        });
+        this.data = cloneSettings(updated);
+        return this.data;
+      }
       const { data, error } = await updateSettings(payload);
       if (error) {
         this.error = error;
@@ -39,6 +74,14 @@ export const useSettingsStore = defineStore("settings", {
       return data;
     },
     async uploadLogo(file: File) {
+      const demo = useDemoStore();
+      if (demo.active) {
+        const logoDataUrl = await readFileAsDataUrl(file);
+        const current = this.data ? cloneSettings(this.data) : cloneSettings(demoSettings);
+        current.logoUrl = logoDataUrl;
+        this.data = cloneSettings(current);
+        return this.data;
+      }
       const { data, error } = await uploadLogoRequest(file);
       if (error) {
         this.error = error;
