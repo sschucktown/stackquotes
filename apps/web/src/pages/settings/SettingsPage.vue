@@ -178,11 +178,26 @@ const form = reactive({
   phone: "",
   email: "",
   logoUrl: "",
+  publicSlug: "",
 });
 
 const saveState = ref<"idle" | "saving" | "saved">("idle");
 let saveStateTimer: ReturnType<typeof setTimeout> | null = null;
 const isDarkMode = ref(false);
+const linkCopied = ref(false);
+const origin = typeof window !== "undefined" ? window.location.origin : "https://stackquotes.com";
+
+const sanitizeSlugValue = (value: string) =>
+  value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9-]+/g, "-")
+    .replace(/-{2,}/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+const publicUrl = computed(() =>
+  form.publicSlug ? `${origin.replace(/\/$/, "")}/share/profile/${form.publicSlug}` : null
+);
 
 const setSavedState = (state: "idle" | "saving" | "saved") => {
   saveState.value = state;

@@ -6,6 +6,12 @@ import { getServiceClient } from "../lib/supabase.js";
 import { uploadPublicAsset } from "../lib/storage.js";
 import { getContractorProfile, upsertContractorProfile } from "@stackquotes/db";
 
+const slugSchema = z
+  .string()
+  .regex(/^[a-z0-9-]{3,30}$/i, "Slug can only include letters, numbers, and hyphens (3-30 characters)")
+  .optional()
+  .nullable();
+
 const profileSchema = z.object({
   businessName: z.string().max(120).optional().nullable(),
   ownerName: z.string().max(120).optional().nullable(),
@@ -14,6 +20,7 @@ const profileSchema = z.object({
   state: z.string().max(60).optional().nullable(),
   phone: z.string().max(60).optional().nullable(),
   email: z.string().email().optional().nullable(),
+  publicSlug: slugSchema,
   logoUrl: z.string().url().optional().nullable(),
 });
 
@@ -36,18 +43,27 @@ contractorRouter.post("/profile", async (c) => {
   const user = await requireUser(c);
   const payload = profileSchema.parse(await c.req.json());
   const supabase = getServiceClient();
-  const data = await upsertContractorProfile(supabase, {
-    userId: user.id,
-    businessName: payload.businessName ?? null,
-    ownerName: payload.ownerName ?? null,
-    tradeType: payload.tradeType ?? null,
-    city: payload.city ?? null,
-    state: payload.state ?? null,
-    phone: payload.phone ?? null,
-    email: payload.email ?? null,
-    logoUrl: payload.logoUrl ?? null,
-  });
-  return c.json({ data });
+  try {
+    const data = await upsertContractorProfile(supabase, {
+      userId: user.id,
+      businessName: payload.businessName ?? null,
+      ownerName: payload.ownerName ?? null,
+      tradeType: payload.tradeType ?? null,
+      city: payload.city ?? null,
+      state: payload.state ?? null,
+      phone: payload.phone ?? null,
+      email: payload.email ?? null,
+      publicSlug: payload.publicSlug ? payload.publicSlug.toLowerCase() : null,
+      logoUrl: payload.logoUrl ?? null,
+    });
+    return c.json({ data });
+  } catch (error) {
+    if ((error as { code?: string }).code === "23505") {
+      c.status(409);
+      return c.json({ error: "That public URL is already in use. Please choose another." });
+    }
+    throw error;
+  }
 });
 
 contractorRouter.post("/logo", async (c) => {
@@ -77,4 +93,3 @@ contractorRouter.post("/logo", async (c) => {
 
   return c.json({ data, publicUrl });
 });
-

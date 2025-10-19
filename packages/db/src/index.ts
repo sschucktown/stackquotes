@@ -80,6 +80,7 @@ export interface DatabaseContractorProfileRow {
   state: string | null;
   phone: string | null;
   email: string | null;
+  public_slug: string | null;
   logo_url: string | null;
   created_at: string;
   updated_at: string;
@@ -419,6 +420,7 @@ const buildContractorProfileRecord = (row: DatabaseContractorProfileRow): Contra
   phone: row.phone ?? null,
   email: row.email ?? null,
   logoUrl: row.logo_url ?? null,
+  publicSlug: row.public_slug ?? null,
   createdAt: row.created_at,
   updatedAt: row.updated_at,
 });
@@ -999,6 +1001,7 @@ export async function upsertContractorProfile(
     state: input.state ?? null,
     phone: input.phone ?? null,
     email: input.email ?? null,
+    public_slug: input.publicSlug ? input.publicSlug.toLowerCase() : null,
     logo_url: input.logoUrl ?? null,
     updated_at: new Date().toISOString(),
   };
@@ -1009,6 +1012,67 @@ export async function upsertContractorProfile(
     .single();
   if (error) throw error;
   return buildContractorProfileRecord(data as DatabaseContractorProfileRow);
+}
+
+export async function findContractorProfileBySlug(
+  client: SupabaseClient,
+  slug: string
+): Promise<ContractorProfile | null> {
+  const { data, error } = await client
+    .from("contractor_profiles")
+    .select("*")
+    .eq("public_slug", slug.toLowerCase())
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  return buildContractorProfileRecord(data as DatabaseContractorProfileRow);
+}
+
+export interface ProposalSummaryMetrics {
+  totalProposals: number;
+  acceptedProposals: number;
+  revenueYtd: number;
+  averageValue: number;
+}
+
+export async function getProposalSummaryForUser(
+  client: SupabaseClient,
+  userId: string
+): Promise<ProposalSummaryMetrics> {
+  const { data, error } = await client
+    .from("proposals")
+    .select("status, totals")
+    .eq("user_id", userId);
+  if (error) throw error;
+  const proposals = (data as { status: string; totals: Json }[]) ?? [];
+  let total = 0;
+  let accepted = 0;
+  let revenue = 0;
+  let aggregateValue = 0;
+  for (const proposal of proposals) {
+    total += 1;
+    const totals = Array.isArray(proposal.totals)
+      ? (proposal.totals as { name: string; total: number }[])
+      : [];
+    const highest =
+      totals.reduce(
+        (max, entry) => (typeof entry.total === "number" && entry.total > max ? entry.total : max),
+        0
+      ) ?? 0;
+    aggregateValue += highest;
+    if (proposal.status.toLowerCase() === "accepted") {
+      accepted += 1;
+      revenue += highest;
+    }
+  }
+  const averageValue = total > 0 ? aggregateValue / total : 0;
+  return {
+    totalProposals: total,
+    acceptedProposals: accepted,
+    revenueYtd: revenue,
+    averageValue,
+  };
 }
 
 const getLatestViewedEventForEstimate = async (

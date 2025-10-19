@@ -20,6 +20,7 @@ create table if not exists public.contractor_profiles (
   state text,
   phone text,
   email text,
+  public_slug text unique,
   logo_url text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -155,5 +156,6 @@ create index if not exists proposal_events_estimate_id_idx on public.proposal_ev
 create unique index if not exists proposal_events_token_idx on public.proposal_events(token) where token is not null;
 create index if not exists contractor_profiles_user_id_idx on public.contractor_profiles(user_id);
 create unique index if not exists contractor_profiles_user_unique on public.contractor_profiles(user_id);
+create unique index if not exists contractor_profiles_public_slug_unique on public.contractor_profiles(public_slug) where public_slug is not null;
 create index if not exists proposals_user_id_idx on public.proposals(user_id);
 create index if not exists proposals_quickquote_id_idx on public.proposals(quickquote_id);

@@ -138,7 +138,16 @@ export interface ContractorProfile {
   phone?: string | null;
   email?: string | null;
   logoUrl?: string | null;
+  publicSlug?: string | null;
   createdAt: string;
   updatedAt?: string;
+}
+
+export interface ProposalSummaryMetrics {
+  totalProposals: number;
+  acceptedProposals: number;
+  acceptanceRate: number;
+  averageValue: number;
+  revenueYtd: number;
 }
 
