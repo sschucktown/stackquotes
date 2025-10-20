@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from "vue-router";
 import { watch } from "vue";
 import { useAuth } from "@/lib/auth";
 import { useDemoStore } from "@/stores/demoStore";
+import { useContractorProfileStore } from "@modules/contractor/stores/profileStore";
 
 const waitForAuth = async () => {
   const { loading } = useAuth();
@@ -44,6 +45,12 @@ const router = createRouter({
       name: "register",
       component: () => import("@/pages/auth/RegisterPage.vue"),
       meta: { public: true },
+    },
+    {
+      path: "/onboarding",
+      name: "onboarding",
+      component: () => import("@/pages/onboarding/OnboardingPage.vue"),
+      meta: { public: false, skipOnboardingGuard: true },
     },
     {
       path: "/",
@@ -127,6 +134,24 @@ router.beforeEach(async (to) => {
     const redirectTarget = auth.getStoredRedirect() ?? "/dashboard";
     auth.clearStoredRedirect();
     return { path: redirectTarget };
+  }
+  if (!to.meta.public && !to.meta.skipOnboardingGuard && auth.isAuthenticated.value && !isDemoActive) {
+    const profileStore = useContractorProfileStore();
+    if (!profileStore.profile && !profileStore.loading && !profileStore.error) {
+      try {
+        await profileStore.load();
+      } catch (error) {
+        console.error("[router] failed to load contractor profile", error);
+      }
+    }
+    const needsOnboarding =
+      !profileStore.isDemo && (!profileStore.profile || !profileStore.profile.trade);
+    if (needsOnboarding && to.name !== "onboarding") {
+      return { name: "onboarding", replace: true };
+    }
+    if (!needsOnboarding && to.name === "onboarding") {
+      return { name: "dashboard-home", replace: true };
+    }
   }
   return true;
 });

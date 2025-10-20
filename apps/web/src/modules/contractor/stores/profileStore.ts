@@ -58,11 +58,13 @@ export const useContractorProfileStore = defineStore("contractor-profile", {
       const response = await fetchContractorProfile();
       if (response.error) {
         this.error = response.error;
-        this.setProfile(cloneProfile(demoContractorProfile), true);
+        if (!this.profile) {
+          this.setProfile(null, false);
+        }
       } else if (response.data) {
         this.setProfile(response.data, false);
       } else {
-        this.setProfile(cloneProfile(demoContractorProfile), true);
+        this.setProfile(null, false);
       }
       this.loading = false;
     },

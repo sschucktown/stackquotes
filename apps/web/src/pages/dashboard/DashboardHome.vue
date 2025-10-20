@@ -4,8 +4,21 @@
       <header class="space-y-2">
         <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Welcome back</p>
         <h1 class="text-3xl font-semibold text-slate-900">StackQuotes Dashboard</h1>
-        <p class="text-sm text-slate-600">Your daily pulse — quotes, wins, and insights at a glance.</p>
+        <p class="text-sm text-slate-600">Your daily pulse - quotes, wins, and insights at a glance.</p>
       </header>
+
+      <transition name="fade">
+        <div
+          v-if="showSeedingBanner"
+          class="rounded-3xl border border-blue-200 bg-blue-50/80 p-5 text-sm text-blue-700 shadow-sm"
+        >
+          <p class="text-sm font-semibold text-blue-900">Loading starter projects...</p>
+          <p class="mt-1">
+            We're generating SmartProposals for {{ onboardingTradeLabel }} jobs. Hang tight - your workspace will be ready
+            in a moment.
+          </p>
+        </div>
+      </transition>
 
       <section class="rounded-3xl bg-white/80 p-6 shadow-sm ring-1 ring-slate-100">
         <div class="flex items-center justify-between">
@@ -51,6 +64,50 @@
             </div>
           </button>
         </TransitionGroup>
+      </section>
+
+      <section
+        v-if="starterProjectsLoading || starterProjects.length"
+        class="rounded-3xl border border-slate-200 bg-white/80 p-6 shadow-sm"
+      >
+        <header class="mb-4 flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Starter Library</p>
+            <h2 class="text-base font-semibold text-slate-900">Projects seeded for you</h2>
+          </div>
+        </header>
+        <div v-if="starterProjectsLoading" class="grid gap-4 md:grid-cols-3">
+          <div v-for="n in 3" :key="`starter-skeleton-${n}`" class="h-32 rounded-2xl bg-slate-100 animate-pulse" />
+        </div>
+        <div v-else-if="starterProjects.length" class="grid gap-4 md:grid-cols-3">
+          <article
+            v-for="project in starterProjects"
+            :key="project.id"
+            class="flex h-full flex-col justify-between rounded-2xl border border-slate-200 bg-white px-4 py-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+          >
+            <div>
+              <p class="text-xs uppercase tracking-wide text-slate-500">{{ project.trade }}</p>
+              <h3 class="mt-1 text-lg font-semibold text-slate-900">{{ project.projectName }}</h3>
+              <p v-if="project.description" class="mt-1 text-sm text-slate-600">{{ project.description }}</p>
+            </div>
+            <div class="mt-4 space-y-2 text-xs text-slate-500">
+              <p v-if="project.basePrice">Baseline: {{ currency(project.basePrice ?? 0) }}</p>
+              <div class="flex flex-wrap gap-2">
+                <span
+                  v-for="proposal in project.proposals"
+                  :key="proposal.id"
+                  class="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-xs text-slate-600"
+                >
+                  <span class="font-semibold text-slate-800">{{ proposal.tier }}</span>
+                  <span v-if="proposal.totalPrice">- {{ currency(proposal.totalPrice ?? 0) }}</span>
+                </span>
+              </div>
+            </div>
+          </article>
+        </div>
+        <p v-else class="text-sm text-slate-500">
+          Starter content will appear as soon as seeding finishes.
+        </p>
       </section>
 
       <section class="grid gap-6 lg:grid-cols-[2fr_1fr]">
@@ -261,10 +318,12 @@ import {
 } from "lucide-vue-next";
 import { useEstimateStore } from "@modules/quickquote/stores/estimateStore";
 import { useClientStore } from "@modules/quickquote/stores/clientStore";
+import { useContractorProfileStore } from "@modules/contractor/stores/profileStore";
 
 const router = useRouter();
 const estimateStore = useEstimateStore();
 const clientStore = useClientStore();
+const profileStore = useContractorProfileStore();
 
 const currencyFormatter = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -279,6 +338,9 @@ const ensureDataLoaded = async () => {
   if (!clientStore.items.length && !clientStore.loading) {
     await clientStore.load();
   }
+  if (!profileStore.profile && !profileStore.loading) {
+    await profileStore.load();
+  }
 };
 
 onMounted(() => {
@@ -286,6 +348,15 @@ onMounted(() => {
 });
 
 const isLoading = computed(() => estimateStore.loading || clientStore.loading);
+
+const showSeedingBanner = computed(() => {
+  if (profileStore.isDemo) return false;
+  const profile = profileStore.profile;
+  if (!profile) return false;
+  return Boolean(profile.trade) && profile.tradeSeeded === false;
+});
+
+const onboardingTradeLabel = computed(() => profileStore.profile?.trade ?? "your trade");
 
 const summary = computed(() => {
   const sent = estimateStore.items.filter((estimate) => ["sent", "seen"].includes(estimate.status));

@@ -153,11 +153,14 @@ export const demoContractorProfile: ContractorProfile = {
   businessName: "Charleston Deck Pros",
   ownerName: "Sam Builder",
   tradeType: "Decks & Outdoor Living",
+  trade: "Deck Builder",
+  averageProjectSize: "$15-50K",
   city: "Charleston",
   state: "SC",
   phone: "(843) 555-1024",
   email: "sam@charlestondeckpros.com",
   logoUrl: "https://dummyimage.com/160x160/2563eb/ffffff&text=SQ",
+  tradeSeeded: true,
   createdAt: now(),
   updatedAt: now(),
 };
@@ -234,4 +237,3 @@ export const cloneSettings = (settings: UserSettings): UserSettings =>
 
 export const cloneProfile = (profile: ContractorProfile): ContractorProfile =>
   JSON.parse(JSON.stringify(profile)) as ContractorProfile;
-

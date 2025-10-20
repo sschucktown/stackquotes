@@ -4,7 +4,7 @@ import { Buffer } from "node:buffer";
 import { requireUser } from "../lib/auth.js";
 import { getServiceClient } from "../lib/supabase.js";
 import { uploadPublicAsset } from "../lib/storage.js";
-import { getContractorProfile, upsertContractorProfile } from "@stackquotes/db";
+import { getContractorProfile, listUserProjects, upsertContractorProfile } from "@stackquotes/db";
 
 const slugSchema = z
   .string()
@@ -16,6 +16,11 @@ const profileSchema = z.object({
   businessName: z.string().max(120).optional().nullable(),
   ownerName: z.string().max(120).optional().nullable(),
   tradeType: z.string().max(120).optional().nullable(),
+  trade: z.string().max(120).optional().nullable(),
+  averageProjectSize: z
+    .enum(["< $5K", "$5-15K", "$15-50K", "$50K+"])
+    .optional()
+    .nullable(),
   city: z.string().max(120).optional().nullable(),
   state: z.string().max(60).optional().nullable(),
   phone: z.string().max(60).optional().nullable(),
@@ -39,6 +44,13 @@ contractorRouter.get("/profile", async (c) => {
   return c.json({ data });
 });
 
+contractorRouter.get("/projects", async (c) => {
+  const user = await requireUser(c);
+  const supabase = getServiceClient();
+  const data = await listUserProjects(supabase, user.id);
+  return c.json({ data });
+});
+
 contractorRouter.post("/profile", async (c) => {
   const user = await requireUser(c);
   const payload = profileSchema.parse(await c.req.json());
@@ -49,6 +61,8 @@ contractorRouter.post("/profile", async (c) => {
       businessName: payload.businessName ?? null,
       ownerName: payload.ownerName ?? null,
       tradeType: payload.tradeType ?? null,
+      trade: payload.trade ?? payload.tradeType ?? null,
+      averageProjectSize: payload.averageProjectSize ?? null,
       city: payload.city ?? null,
       state: payload.state ?? null,
       phone: payload.phone ?? null,

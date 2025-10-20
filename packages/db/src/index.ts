@@ -9,7 +9,10 @@ import type {
   Proposal,
   ProposalEvent,
   ProposalOption,
+  ProposalOptionLineItem,
   ProposalTotal,
+  UserProjectTemplate,
+  UserProposalTemplate,
   UserSettings,
 } from "@stackquotes/types";
 import { randomUUID } from "node:crypto";
@@ -17,6 +20,22 @@ import { randomUUID } from "node:crypto";
 type Json = Record<string, unknown> | Json[] | string | number | boolean | null;
 
 const toJson = <T>(value: T): Json => JSON.parse(JSON.stringify(value)) as Json;
+
+const asNumber = (value: unknown, fallback = 0): number => {
+  if (typeof value === "number") return value;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+};
+
+const parseProposalLineItems = (value: Json): ProposalOptionLineItem[] => {
+  if (!Array.isArray(value)) return [];
+  return (value as Array<Record<string, unknown>>).map((entry) => ({
+    description: typeof entry.description === "string" ? entry.description : String(entry.description ?? ""),
+    quantity: asNumber(entry.quantity, 0),
+    unitCost: asNumber((entry.unitCost ?? entry.unit_cost) as unknown, 0),
+    total: asNumber(entry.total, 0),
+  }));
+};
 
 export interface DatabaseEstimateRow {
   id: string;
@@ -76,6 +95,9 @@ export interface DatabaseContractorProfileRow {
   business_name: string | null;
   owner_name: string | null;
   trade_type: string | null;
+  trade: string | null;
+  avg_project_size: string | null;
+  trade_seeded: boolean | null;
   city: string | null;
   state: string | null;
   phone: string | null;
@@ -84,6 +106,29 @@ export interface DatabaseContractorProfileRow {
   logo_url: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface DatabaseUserProjectRow {
+  id: string;
+  user_id: string;
+  trade: string;
+  trade_project_id: string | null;
+  project_name: string;
+  description: string | null;
+  base_price: number | null;
+  created_at: string;
+}
+
+export interface DatabaseUserProposalRow {
+  id: string;
+  user_id: string;
+  user_project_id: string | null;
+  trade: string;
+  project_name: string;
+  tier: string;
+  line_items: Json;
+  total_price: number | null;
+  created_at: string;
 }
 
 export interface DatabaseProposalRow {
@@ -415,14 +460,44 @@ const buildContractorProfileRecord = (row: DatabaseContractorProfileRow): Contra
   businessName: row.business_name ?? null,
   ownerName: row.owner_name ?? null,
   tradeType: row.trade_type ?? null,
+  trade: row.trade ?? row.trade_type ?? null,
+  averageProjectSize: row.avg_project_size ?? null,
   city: row.city ?? null,
   state: row.state ?? null,
   phone: row.phone ?? null,
   email: row.email ?? null,
   logoUrl: row.logo_url ?? null,
   publicSlug: row.public_slug ?? null,
+  tradeSeeded: row.trade_seeded ?? null,
   createdAt: row.created_at,
   updatedAt: row.updated_at,
+});
+
+const buildUserProposalRecord = (row: DatabaseUserProposalRow): UserProposalTemplate => ({
+  id: row.id,
+  userId: row.user_id,
+  userProjectId: row.user_project_id ?? null,
+  trade: row.trade,
+  projectName: row.project_name,
+  tier: row.tier,
+  lineItems: parseProposalLineItems(row.line_items),
+  totalPrice: row.total_price ?? null,
+  createdAt: row.created_at,
+});
+
+const buildUserProjectRecord = (
+  row: DatabaseUserProjectRow,
+  proposals: UserProposalTemplate[]
+): UserProjectTemplate => ({
+  id: row.id,
+  userId: row.user_id,
+  trade: row.trade,
+  tradeProjectId: row.trade_project_id,
+  projectName: row.project_name,
+  description: row.description ?? null,
+  basePrice: row.base_price ?? null,
+  createdAt: row.created_at,
+  proposals,
 });
 
 export async function listEstimates(
@@ -992,16 +1067,18 @@ export async function upsertContractorProfile(
   client: SupabaseClient,
   input: ContractorProfileInput
 ): Promise<ContractorProfile> {
-  const payload: Partial<DatabaseContractorProfileRow> & { user_id: string } = {
-    user_id: input.userId,
-    business_name: input.businessName ?? null,
-    owner_name: input.ownerName ?? null,
-    trade_type: input.tradeType ?? null,
-    city: input.city ?? null,
-    state: input.state ?? null,
-    phone: input.phone ?? null,
-    email: input.email ?? null,
-    public_slug: input.publicSlug ? input.publicSlug.toLowerCase() : null,
+    const payload: Partial<DatabaseContractorProfileRow> & { user_id: string } = {
+      user_id: input.userId,
+      business_name: input.businessName ?? null,
+      owner_name: input.ownerName ?? null,
+      trade_type: input.tradeType ?? null,
+      trade: input.trade ?? input.tradeType ?? null,
+      avg_project_size: input.averageProjectSize ?? null,
+      city: input.city ?? null,
+      state: input.state ?? null,
+      phone: input.phone ?? null,
+      email: input.email ?? null,
+      public_slug: input.publicSlug ? input.publicSlug.toLowerCase() : null,
     logo_url: input.logoUrl ?? null,
     updated_at: new Date().toISOString(),
   };
@@ -1027,6 +1104,47 @@ export async function findContractorProfileBySlug(
   if (error) throw error;
   if (!data) return null;
   return buildContractorProfileRecord(data as DatabaseContractorProfileRow);
+}
+
+export async function listUserProjects(
+  client: SupabaseClient,
+  userId: string
+): Promise<UserProjectTemplate[]> {
+  const { data: projects, error: projectsError } = await client
+    .from("user_projects")
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: true });
+  if (projectsError) throw projectsError;
+
+  const projectRows = (projects as DatabaseUserProjectRow[]) ?? [];
+  if (!projectRows.length) {
+    return [];
+  }
+
+  const projectIds = projectRows.map((project) => project.id);
+  const { data: proposals, error: proposalsError } = await client
+    .from("user_proposals")
+    .select("*")
+    .eq("user_id", userId)
+    .in("user_project_id", projectIds);
+  if (proposalsError) throw proposalsError;
+
+  const proposalRows = (proposals as DatabaseUserProposalRow[]) ?? [];
+  const proposalsByProject = new Map<string, UserProposalTemplate[]>();
+
+  for (const proposal of proposalRows) {
+    const record = buildUserProposalRecord(proposal);
+    const key = record.userProjectId ?? "__unassigned";
+    const bucket = proposalsByProject.get(key) ?? [];
+    bucket.push(record);
+    proposalsByProject.set(key, bucket);
+  }
+
+  return projectRows.map((project) => {
+    const entries = proposalsByProject.get(project.id) ?? [];
+    return buildUserProjectRecord(project, entries);
+  });
 }
 
 export interface ProposalSummaryMetrics {

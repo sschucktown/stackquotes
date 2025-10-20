@@ -133,14 +133,41 @@ export interface ContractorProfile {
   businessName?: string | null;
   ownerName?: string | null;
   tradeType?: string | null;
+  trade?: string | null;
+  averageProjectSize?: string | null;
   city?: string | null;
   state?: string | null;
   phone?: string | null;
   email?: string | null;
   logoUrl?: string | null;
   publicSlug?: string | null;
+  tradeSeeded?: boolean | null;
   createdAt: string;
   updatedAt?: string;
+}
+
+export interface UserProposalTemplate {
+  id: UUID;
+  userId: UUID;
+  userProjectId: UUID | null;
+  trade: string;
+  projectName: string;
+  tier: string;
+  lineItems: ProposalOptionLineItem[];
+  totalPrice?: number | null;
+  createdAt: string;
+}
+
+export interface UserProjectTemplate {
+  id: UUID;
+  userId: UUID;
+  trade: string;
+  tradeProjectId?: UUID | null;
+  projectName: string;
+  description?: string | null;
+  basePrice?: number | null;
+  createdAt: string;
+  proposals: UserProposalTemplate[];
 }
 
 export interface ProposalSummaryMetrics {

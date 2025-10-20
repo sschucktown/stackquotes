@@ -54,7 +54,7 @@
           <dl class="mt-8 space-y-3 text-left text-sm text-white/80">
             <div class="flex items-center justify-between">
               <dt class="text-slate-200">Trade</dt>
-              <dd class="font-medium text-white">{{ form.tradeType || "Add trade type" }}</dd>
+              <dd class="font-medium text-white">{{ form.trade || form.tradeType || "Add trade" }}</dd>
             </div>
             <div class="flex items-center justify-between">
               <dt class="text-slate-200">Phone</dt>
@@ -76,7 +76,22 @@
             <SQInput v-model="form.businessName" label="Business Name" placeholder="StackQuotes LLC" required />
             <SQInput v-model="form.ownerName" label="Owner Name" placeholder="Sam Builder" />
 
-            <SQInput v-model="form.tradeType" label="Trade Type" placeholder="Decks & Outdoor Living" />
+            <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
+              <SQSelect v-model="form.trade" label="Primary Trade" placeholder="Select trade">
+                <option
+                  v-for="option in tradeOptions"
+                  :key="option.value"
+                  :value="option.value"
+                >
+                  {{ option.label }}
+                </option>
+              </SQSelect>
+              <SQInput
+                v-model="form.tradeType"
+                label="Trade specialty (optional)"
+                placeholder="Decks & Outdoor Living"
+              />
+            </div>
             <div class="grid grid-cols-2 gap-3">
               <SQInput v-model="form.city" label="City" placeholder="Charleston" />
               <SQInput v-model="form.state" label="State" placeholder="SC" maxlength="2" />
@@ -84,6 +99,31 @@
 
             <SQInput v-model="form.phone" label="Phone" placeholder="(843) 555-1024" />
             <SQInput v-model="form.email" type="email" label="Email" placeholder="you@company.com" />
+
+            <div class="md:col-span-2 space-y-2 rounded-2xl border border-slate-200 bg-white px-4 py-4 text-sm text-slate-600 shadow-sm">
+              <div>
+                <p class="text-sm font-semibold text-slate-800">Average project size</p>
+                <p class="text-xs text-slate-500">
+                  Adjust pricing guidance for your specific project range.
+                </p>
+              </div>
+              <div class="grid gap-2 md:grid-cols-2">
+                <label
+                  v-for="size in projectSizeOptions"
+                  :key="size.value"
+                  class="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md"
+                >
+                  <input
+                    v-model="form.averageProjectSize"
+                    class="h-4 w-4 text-sq-primary focus:ring-sq-primary"
+                    type="radio"
+                    name="average-project-size"
+                    :value="size.value"
+                  />
+                  <span class="font-medium text-slate-900">{{ size.label }}</span>
+                </label>
+              </div>
+            </div>
 
             <div class="md:col-span-2 flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
               <div>
@@ -212,6 +252,7 @@ import { computed, onMounted, onBeforeUnmount, reactive, ref, watch } from "vue"
 import { format } from "date-fns";
 import SQInput from "@stackquotes/ui/components/SQInput.vue";
 import SQButton from "@stackquotes/ui/components/SQButton.vue";
+import SQSelect from "@stackquotes/ui/components/SQSelect.vue";
 import { useContractorProfileStore } from "@modules/contractor/stores/profileStore";
 import { Moon, Sun } from "lucide-vue-next";
 
@@ -221,6 +262,8 @@ const form = reactive({
   businessName: "",
   ownerName: "",
   tradeType: "",
+  trade: "",
+  averageProjectSize: "",
   city: "",
   state: "",
   phone: "",
@@ -243,6 +286,28 @@ const sanitizeSlugValue = (value: string) =>
     .replace(/[^a-z0-9-]+/g, "-")
     .replace(/-{2,}/g, "-")
     .replace(/^-+|-+$/g, "");
+
+const tradeOptions = [
+  "Plumber",
+  "Electrician",
+  "HVAC",
+  "Deck Builder",
+  "Roofer",
+  "Pool Contractor",
+  "Landscaper",
+  "Kitchen Remodeler",
+  "Bathroom Remodeler",
+  "General Remodeler",
+  "Solar Installer",
+  "Garage Builder",
+].map((label) => ({ label, value: label }));
+
+const projectSizeOptions = [
+  { label: "< $5K", value: "< $5K" },
+  { label: "$5-15K", value: "$5-15K" },
+  { label: "$15-50K", value: "$15-50K" },
+  { label: "$50K+", value: "$50K+" },
+];
 
 const publicUrl = computed(() => {
   const slug = form.publicSlug.trim();
@@ -281,6 +346,8 @@ watch(
     form.businessName = profile?.businessName ?? "";
     form.ownerName = profile?.ownerName ?? "";
     form.tradeType = profile?.tradeType ?? "";
+    form.trade = profile?.trade ?? profile?.tradeType ?? "";
+    form.averageProjectSize = profile?.averageProjectSize ?? "";
     form.city = profile?.city ?? "";
     form.state = profile?.state ?? "";
     form.phone = profile?.phone ?? "";
@@ -358,6 +425,9 @@ const handleSave = async () => {
     setSavedState("saving");
     const payload = {
       ...form,
+      trade: form.trade ? form.trade : null,
+      tradeType: form.tradeType ? form.tradeType : form.trade ? `${form.trade}` : null,
+      averageProjectSize: form.averageProjectSize ? form.averageProjectSize : null,
       publicSlug: form.publicSlug.trim() ? form.publicSlug.trim() : null,
     };
     await profileStore.save(payload);

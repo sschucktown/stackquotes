@@ -159,9 +159,8 @@ const submit = async () => {
     return;
   }
   demoStore.deactivate();
-  const redirect = getStoredRedirect() ?? defaultRedirect;
-  clearStoredRedirect();
-  router.push(redirect);
+  setStoredRedirect(defaultRedirect);
+  router.push({ name: "onboarding" });
 };
 
 const handleGoogleSignIn = async () => {
@@ -170,10 +169,8 @@ const handleGoogleSignIn = async () => {
   try {
     demoStore.deactivate();
     const requestedRedirect = getRedirectFromQuery();
-    const redirectPath =
-      sanitizeRedirect(requestedRedirect) ?? getStoredRedirect() ?? defaultRedirect;
-    setStoredRedirect(redirectPath);
-    const { error: oauthError } = await signInWithGoogle(redirectPath);
+    const onboardingRedirect = sanitizeRedirect(requestedRedirect) ?? "/onboarding";
+    const { error: oauthError } = await signInWithGoogle(onboardingRedirect);
     if (oauthError) {
       error.value = oauthError.message;
       googleLoading.value = false;
