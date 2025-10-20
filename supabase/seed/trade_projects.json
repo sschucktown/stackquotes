@@ -1,0 +1,277 @@
+[
+  {
+    "trade": "Roofing",
+    "projects": [
+      {
+        "project_name": "Asphalt Shingle Roof Replacement",
+        "description": "Tear-off and replace asphalt shingles with underlayment and flashing.",
+        "base_price": 14500
+      },
+      {
+        "project_name": "Metal Roof Installation",
+        "description": "Install standing-seam metal panels on existing decking.",
+        "base_price": 18500
+      },
+      {
+        "project_name": "Flat Roof (TPO/PVC) Replacement",
+        "description": "Tear-off and replace flat roof membrane with TPO system.",
+        "base_price": 16500
+      },
+      {
+        "project_name": "Roof Repair (Leak & Flashing)",
+        "description": "Repair minor leaks and damaged flashing around penetrations.",
+        "base_price": 1200
+      },
+      {
+        "project_name": "Gutter & Downspout Replacement",
+        "description": "Install seamless aluminum gutters and downspouts.",
+        "base_price": 1800
+      },
+      {
+        "project_name": "Roof Deck Replacement",
+        "description": "Replace damaged roof sheathing and decking boards.",
+        "base_price": 2400
+      },
+      {
+        "project_name": "Skylight Install",
+        "description": "Install energy-efficient skylight with curb flashing.",
+        "base_price": 2200
+      },
+      {
+        "project_name": "Attic Ventilation Upgrade",
+        "description": "Add ridge and soffit vents for improved airflow.",
+        "base_price": 1600
+      },
+      {
+        "project_name": "Roof Inspection & Certification",
+        "description": "Provide inspection and detailed roof report.",
+        "base_price": 400
+      },
+      {
+        "project_name": "Storm Damage Roof Replacement",
+        "description": "Full roof replacement due to hail or wind damage.",
+        "base_price": 17500
+      }
+    ]
+  },
+  {
+    "trade": "Deck Building",
+    "projects": [
+      {
+        "project_name": "Pressure-Treated Wood Deck",
+        "description": "Build a standard PT deck with railings and stairs.",
+        "base_price": 9500
+      },
+      {
+        "project_name": "Composite Deck",
+        "description": "Install composite decking with aluminum railings.",
+        "base_price": 14500
+      },
+      {
+        "project_name": "Multi-Level Deck",
+        "description": "Two-level deck with connecting stairs and lighting.",
+        "base_price": 19500
+      },
+      {
+        "project_name": "Covered Deck Addition",
+        "description": "Add roofed structure over existing deck.",
+        "base_price": 17500
+      },
+      {
+        "project_name": "Screened Porch Conversion",
+        "description": "Convert existing deck into screened porch.",
+        "base_price": 16500
+      },
+      {
+        "project_name": "Deck Refinish & Stain",
+        "description": "Power wash and refinish wood decking surface.",
+        "base_price": 1800
+      },
+      {
+        "project_name": "Deck Expansion",
+        "description": "Extend deck footprint with matching materials.",
+        "base_price": 7200
+      },
+      {
+        "project_name": "Pergola Over Deck",
+        "description": "Install decorative pergola shade structure.",
+        "base_price": 4200
+      },
+      {
+        "project_name": "Stair & Railing Replacement",
+        "description": "Replace deteriorated stairs and handrails.",
+        "base_price": 2800
+      },
+      {
+        "project_name": "Hot Tub Deck Platform",
+        "description": "Build structural platform for hot tub area.",
+        "base_price": 4800
+      }
+    ]
+  },
+  {
+    "trade": "HVAC",
+    "projects": [
+      {
+        "project_name": "Central AC Replacement",
+        "description": "Replace condenser and air handler.",
+        "base_price": 6800
+      },
+      {
+        "project_name": "Heat Pump Install",
+        "description": "Install new high-efficiency heat pump system.",
+        "base_price": 8200
+      },
+      {
+        "project_name": "Mini-Split System Install",
+        "description": "Add ductless split system for single zone.",
+        "base_price": 5800
+      },
+      {
+        "project_name": "Furnace Replacement",
+        "description": "Replace gas furnace and update venting.",
+        "base_price": 5400
+      },
+      {
+        "project_name": "Ductwork Replacement",
+        "description": "Replace old duct runs with insulated flex or metal.",
+        "base_price": 3600
+      },
+      {
+        "project_name": "Thermostat Upgrade",
+        "description": "Install smart thermostat with zoning controls.",
+        "base_price": 600
+      },
+      {
+        "project_name": "Indoor Air Quality Add-On",
+        "description": "Add UV light and media filter for cleaner air.",
+        "base_price": 950
+      },
+      {
+        "project_name": "AC Tune-Up",
+        "description": "Inspect and service existing AC system.",
+        "base_price": 250
+      },
+      {
+        "project_name": "System Diagnostic",
+        "description": "Identify performance or leak issues.",
+        "base_price": 150
+      },
+      {
+        "project_name": "Full HVAC Replacement",
+        "description": "Replace entire system with new high-efficiency unit.",
+        "base_price": 11500
+      }
+    ]
+  },
+  {
+    "trade": "Plumbing",
+    "projects": [
+      {
+        "project_name": "Water Heater Replacement",
+        "description": "Install new tank or tankless water heater.",
+        "base_price": 2200
+      },
+      {
+        "project_name": "Whole-House Repiping",
+        "description": "Replace old galvanized or polybutylene pipes.",
+        "base_price": 8800
+      },
+      {
+        "project_name": "Bathroom Rough-In",
+        "description": "Install drain and supply lines for new bath.",
+        "base_price": 3800
+      },
+      {
+        "project_name": "Kitchen Plumbing Upgrade",
+        "description": "Replace sink, disposal, dishwasher connections.",
+        "base_price": 1400
+      },
+      {
+        "project_name": "Sewer Line Replacement",
+        "description": "Excavate and replace damaged sewer line.",
+        "base_price": 6200
+      },
+      {
+        "project_name": "Main Water Line Replacement",
+        "description": "Replace main supply line from meter to home.",
+        "base_price": 5400
+      },
+      {
+        "project_name": "Fixture Install (Toilet/Sink)",
+        "description": "Install new plumbing fixture.",
+        "base_price": 450
+      },
+      {
+        "project_name": "Leak Detection & Repair",
+        "description": "Find and repair slab or wall leaks.",
+        "base_price": 850
+      },
+      {
+        "project_name": "Gas Line Install",
+        "description": "Install or reroute gas line for appliances.",
+        "base_price": 1100
+      },
+      {
+        "project_name": "Drain Cleaning",
+        "description": "Clean out clogged drains or main line.",
+        "base_price": 300
+      }
+    ]
+  },
+  {
+    "trade": "Electrical",
+    "projects": [
+      {
+        "project_name": "Panel Upgrade to 200A",
+        "description": "Replace existing service panel and breakers.",
+        "base_price": 3100
+      },
+      {
+        "project_name": "EV Charger Install",
+        "description": "Install 240V circuit and wall charger.",
+        "base_price": 1200
+      },
+      {
+        "project_name": "Whole-House Rewire",
+        "description": "Replace old wiring with modern grounded circuits.",
+        "base_price": 10500
+      },
+      {
+        "project_name": "Lighting Upgrade",
+        "description": "Install recessed LED lighting.",
+        "base_price": 1900
+      },
+      {
+        "project_name": "Generator Interlock Kit",
+        "description": "Install interlock and inlet for portable generator.",
+        "base_price": 950
+      },
+      {
+        "project_name": "Ceiling Fan Install",
+        "description": "Install ceiling fan with light kit.",
+        "base_price": 300
+      },
+      {
+        "project_name": "Outdoor Lighting",
+        "description": "Add landscape or security lighting.",
+        "base_price": 1200
+      },
+      {
+        "project_name": "GFCI Outlet Install",
+        "description": "Upgrade outlets in kitchen/bath/garage.",
+        "base_price": 150
+      },
+      {
+        "project_name": "Smoke/CO Detector Install",
+        "description": "Add interconnected detectors throughout home.",
+        "base_price": 450
+      },
+      {
+        "project_name": "Hot Tub Electrical Hookup",
+        "description": "Install 50A GFCI subpanel and conduit run.",
+        "base_price": 900
+      }
+    ]
+  }
+]
