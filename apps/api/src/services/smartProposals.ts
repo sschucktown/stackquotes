@@ -110,6 +110,7 @@ const selectPreferredOption = (proposal: Proposal): { name: string; subtotal: nu
 
 export interface DepositComputationContext {
   override?: ProposalDepositConfig | null;
+  optionName?: string | null;
 }
 
 export const computeDepositAmount = (
@@ -128,7 +129,13 @@ export const computeDepositAmount = (
     };
   }
 
-  const base = selectPreferredOption(proposal);
+  const base =
+    (context.optionName &&
+      proposal.options.find(
+        (option) => option.name?.toLowerCase?.() === context.optionName?.toLowerCase?.()
+      )) ||
+    selectPreferredOption(proposal);
+
   if (!base || base.subtotal <= 0) {
     return { amount: 0, config: depositConfig };
   }

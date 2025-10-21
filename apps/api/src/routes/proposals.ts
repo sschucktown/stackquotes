@@ -282,16 +282,19 @@ proposalsRouter.post("/send", async (c) => {
   }
 
   const depositConfig = resolveDepositConfig(payload.deposit, proposal.depositConfig ?? null);
-  const depositMeta = computeDepositAmount(proposal, { override: depositConfig });
-  const depositAmount = depositMeta.amount;
+  const selectedOption = proposal.acceptedOption ?? null;
+  const depositMeta = selectedOption
+    ? computeDepositAmount(proposal, { override: depositConfig, optionName: selectedOption })
+    : { amount: 0, config: depositConfig };
+  const depositAmount = selectedOption ? depositMeta.amount : 0;
 
   const token = ensureProposalToken(proposal);
   const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
   const sentAt = new Date().toISOString();
 
-  let paymentLinkUrl = proposal.paymentLinkUrl ?? null;
-  let paymentLinkId = proposal.paymentLinkId ?? null;
-  if (depositAmount > 0) {
+  let paymentLinkUrl = depositAmount > 0 ? proposal.paymentLinkUrl ?? null : null;
+  let paymentLinkId = depositAmount > 0 ? proposal.paymentLinkId ?? null : null;
+  if (depositAmount > 0 && !paymentLinkUrl) {
     const link = await createDepositPaymentLink({
       amount: depositAmount,
       proposalTitle: proposal.title,
@@ -335,9 +338,9 @@ proposalsRouter.post("/send", async (c) => {
     contractorName,
     messageHtml,
     proposalUrl,
-    paymentLinkUrl,
+    paymentLinkUrl: depositAmount > 0 ? paymentLinkUrl : null,
     proposalTitle: updated.title,
-    depositDisplay,
+    depositDisplay: depositAmount > 0 ? depositDisplay : null,
   });
 
   const subject = payload.subject?.trim()?.length

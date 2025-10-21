@@ -9,7 +9,7 @@ export interface PublicProposalContractorBranding {
 }
 
 export interface PublicProposalDepositMeta {
-  amount: number;
+  amount: number | null;
   config: ProposalDepositConfig | null;
 }
 
@@ -23,3 +23,15 @@ export interface PublicProposalPayload {
 
 export const fetchPublicProposal = (token: string) =>
   apiFetch<PublicProposalPayload>(`/share/proposal/${encodeURIComponent(token)}`);
+
+export const acceptPublicProposal = (token: string, optionName: string) =>
+  apiFetch<{
+    data: Proposal;
+    meta?: {
+      depositAmount: number;
+      paymentLinkUrl: string | null;
+    };
+  }>(`/share/proposal/${encodeURIComponent(token)}/accept`, {
+    method: "POST",
+    body: JSON.stringify({ optionName }),
+  });

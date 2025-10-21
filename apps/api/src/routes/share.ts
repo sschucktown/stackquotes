@@ -17,6 +17,7 @@ import {
 import { getServiceClient } from "../lib/supabase.js";
 import { computeDepositAmount } from "../services/smartProposals.js";
 import { getEstimatePdfSignedUrl } from "../lib/storage.js";
+import { createDepositPaymentLink } from "../lib/stripe.js";
 
 const tokenParams = z.object({
   token: z.string().uuid(),
@@ -45,11 +46,9 @@ const proposalTokenParams = z.object({
   token: z.string().uuid(),
 });
 
-const proposalAcceptBody = z
-  .object({
-    optionName: z.string().min(1).optional(),
-  })
-  .optional();
+const proposalAcceptBody = z.object({
+  optionName: z.string().min(1, "Option selection is required"),
+});
 
 export const shareRouter = new Hono();
 
@@ -131,7 +130,10 @@ shareRouter.get("/proposal/:token", async (c) => {
     getContractorProfile(supabase, proposal.userId),
     getClient(supabase, proposal.userId, proposal.clientId).catch(() => null),
   ]);
-  const depositMeta = computeDepositAmount(proposal);
+  const selectedOption = proposal.acceptedOption ?? null;
+  const depositMeta = selectedOption
+    ? computeDepositAmount(proposal, { optionName: selectedOption })
+    : computeDepositAmount(proposal);
 
   return c.json({
     data: {
@@ -146,10 +148,10 @@ shareRouter.get("/proposal/:token", async (c) => {
         : null,
       client,
       deposit: {
-        amount: depositMeta.amount,
+        amount: selectedOption ? depositMeta.amount : null,
         config: depositMeta.config,
       },
-      paymentLinkUrl: proposal.paymentLinkUrl ?? null,
+      paymentLinkUrl: selectedOption ? proposal.paymentLinkUrl ?? null : null,
     },
   });
 });
@@ -162,20 +164,61 @@ shareRouter.post("/proposal/:token/accept", async (c) => {
   } catch {
     body = undefined;
   }
-  const parsed = proposalAcceptBody.parse(body);
+  const parsed = proposalAcceptBody.parse(body ?? {});
   const supabase = getServiceClient();
   const proposal = await getProposalByToken(supabase, token);
   if (!proposal) {
     c.status(404);
     return c.json({ error: "This proposal link is invalid or has expired." });
   }
+
+  const client = await getClient(supabase, proposal.userId, proposal.clientId).catch(() => null);
+
+  const selected =
+    proposal.options.find(
+      (option) => option.name?.toLowerCase?.() === parsed.optionName.toLowerCase()
+    ) ?? null;
+  if (!selected) {
+    c.status(400);
+    return c.json({ error: "Selected package is not available for this proposal." });
+  }
+
+  const depositMeta = computeDepositAmount(proposal, { optionName: selected.name });
+  const depositAmount = depositMeta.amount;
+
+  let paymentLinkUrl: string | null = null;
+  let paymentLinkId: string | null = null;
+  if (depositAmount > 0) {
+    const link = await createDepositPaymentLink({
+      amount: depositAmount,
+      proposalTitle: proposal.title,
+      contractorId: proposal.userId,
+      proposalId: proposal.id,
+      customerName: client?.name ?? null,
+    });
+    if (link) {
+      paymentLinkUrl = link.url;
+      paymentLinkId = link.id;
+    }
+  }
+
   const data = await updateProposalStatus(supabase, {
     userId: proposal.userId,
     proposalId: proposal.id,
     status: "accepted",
-    acceptedOption: parsed?.optionName ?? proposal.acceptedOption ?? null,
+    acceptedOption: selected.name,
+    depositAmount,
+    depositConfig: depositMeta.config ?? null,
+    paymentLinkUrl,
+    paymentLinkId,
   });
-  return c.json({ data });
+  return c.json({
+    data,
+    meta: {
+      depositAmount,
+      paymentLinkUrl,
+    },
+  });
 });
 
 shareRouter.get("/profile/:slug", async (c) => {
