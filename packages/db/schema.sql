@@ -85,6 +85,27 @@ create table if not exists public.proposals (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.smart_proposals (
+  id uuid primary key default gen_random_uuid(),
+  contractor_id uuid not null references auth.users(id) on delete cascade,
+  client_id uuid not null references public.clients(id) on delete cascade,
+  quickquote_id uuid references public.estimates(id) on delete cascade,
+  title text,
+  description text,
+  line_items jsonb not null default '[]'::jsonb,
+  deposit_amount numeric,
+  deposit_config jsonb,
+  status text not null check (status in ('draft','sent','accepted','paid')) default 'draft',
+  public_token uuid unique,
+  public_token_expires_at timestamptz,
+  sent_at timestamptz,
+  accepted_option text,
+  payment_link_url text,
+  payment_link_id text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 create table if not exists public.trade_projects (
   id uuid primary key default gen_random_uuid(),
   trade text not null,
@@ -150,12 +171,18 @@ create trigger contractor_profiles_set_updated
   for each row
   execute procedure public.touch_updated_at();
 
+create trigger smart_proposals_set_updated
+  before update on public.smart_proposals
+  for each row
+  execute procedure public.touch_updated_at();
+
 alter table public.clients enable row level security;
 alter table public.estimates enable row level security;
 alter table public.user_settings enable row level security;
 alter table public.proposal_events enable row level security;
 alter table public.contractor_profiles enable row level security;
 alter table public.proposals enable row level security;
+alter table public.smart_proposals enable row level security;
 
 create policy "Clients are only visible to their owner"
   on public.clients
@@ -193,6 +220,12 @@ create policy "Proposals are only visible to their owner"
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
 
+create policy "SmartProposals are only visible to their owner"
+  on public.smart_proposals
+  for all
+  using (auth.uid() = contractor_id)
+  with check (auth.uid() = contractor_id);
+
 create index if not exists estimates_user_id_idx on public.estimates(user_id);
 create index if not exists estimates_status_idx on public.estimates(status);
 create index if not exists estimates_approval_token_idx on public.estimates(approval_token);
@@ -213,3 +246,7 @@ create index if not exists user_proposals_project_idx on public.user_proposals(u
 create unique index if not exists user_proposals_user_project_tier_idx on public.user_proposals(user_id, user_project_id, tier);
 create index if not exists proposals_user_id_idx on public.proposals(user_id);
 create index if not exists proposals_quickquote_id_idx on public.proposals(quickquote_id);
+create index if not exists smart_proposals_contractor_id_idx on public.smart_proposals(contractor_id);
+create index if not exists smart_proposals_client_id_idx on public.smart_proposals(client_id);
+create index if not exists smart_proposals_quickquote_id_idx on public.smart_proposals(quickquote_id);
+create unique index if not exists smart_proposals_public_token_idx on public.smart_proposals(public_token) where public_token is not null;

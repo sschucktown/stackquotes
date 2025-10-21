@@ -1,4 +1,9 @@
-import type { LineItem, ProposalOption, ProposalTotal } from "@stackquotes/types";
+import type {
+  LineItem,
+  ProposalDepositConfig,
+  ProposalOption,
+  ProposalTotal,
+} from "@stackquotes/types";
 
 export const SMART_PROPOSAL_MULTIPLIERS: Array<{ name: string; factor: number; summary: string }> =
   [
@@ -51,7 +56,12 @@ const mapOption = (
 export const createSmartProposalFromLineItems = (
   lineItems: LineItem[],
   branding: { businessName?: string | null } = {}
-): { options: ProposalOption[]; totals: ProposalTotal[] } => {
+): {
+  options: ProposalOption[];
+  totals: ProposalTotal[];
+  deposit: ProposalDepositConfig;
+  recommendedOption: string;
+} => {
   const options = SMART_PROPOSAL_MULTIPLIERS.map((entry) => mapOption(lineItems, entry));
 
   if (branding.businessName && options.length >= 3) {
@@ -66,6 +76,7 @@ export const createSmartProposalFromLineItems = (
     total: option.subtotal,
   }));
 
-  return { options, totals };
-};
+  const deposit: ProposalDepositConfig = { type: "percentage", value: 30 };
 
+  return { options, totals, deposit, recommendedOption: "Better" };
+};

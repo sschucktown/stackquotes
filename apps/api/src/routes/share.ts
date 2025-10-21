@@ -8,10 +8,14 @@ import {
   updateEstimateStatus,
   createProposalEvent,
   findContractorProfileBySlug,
+  getContractorProfile,
   getProposalSummaryForUser,
   listProposals,
+  getProposalByToken,
+  updateProposalStatus,
 } from "@stackquotes/db";
 import { getServiceClient } from "../lib/supabase.js";
+import { computeDepositAmount } from "../services/smartProposals.js";
 import { getEstimatePdfSignedUrl } from "../lib/storage.js";
 
 const tokenParams = z.object({
@@ -35,6 +39,16 @@ const approveBody = z
       .optional(),
   })
   .strict()
+  .optional();
+
+const proposalTokenParams = z.object({
+  token: z.string().uuid(),
+});
+
+const proposalAcceptBody = z
+  .object({
+    optionName: z.string().min(1).optional(),
+  })
   .optional();
 
 export const shareRouter = new Hono();
@@ -101,6 +115,67 @@ shareRouter.post("/estimate/:token/approve", async (c) => {
     return c.json({ error: "This approval link is invalid or has expired." });
   }
   return c.json({ data: estimate });
+});
+
+shareRouter.get("/proposal/:token", async (c) => {
+  const { token } = proposalTokenParams.parse(c.req.param());
+  const supabase = getServiceClient();
+  const proposal = await getProposalByToken(supabase, token);
+  if (!proposal) {
+    c.status(404);
+    return c.json({ error: "This proposal link is invalid or has expired." });
+  }
+
+  const [settings, contractorProfile, client] = await Promise.all([
+    getUserSettings(supabase, proposal.userId),
+    getContractorProfile(supabase, proposal.userId),
+    getClient(supabase, proposal.userId, proposal.clientId).catch(() => null),
+  ]);
+  const depositMeta = computeDepositAmount(proposal);
+
+  return c.json({
+    data: {
+      proposal,
+      contractor: settings || contractorProfile
+        ? {
+            businessName: contractorProfile?.businessName ?? settings?.companyName ?? null,
+            accentColor: settings?.accentColor ?? null,
+            logoUrl: contractorProfile?.logoUrl ?? settings?.logoUrl ?? null,
+            email: contractorProfile?.email ?? null,
+          }
+        : null,
+      client,
+      deposit: {
+        amount: depositMeta.amount,
+        config: depositMeta.config,
+      },
+      paymentLinkUrl: proposal.paymentLinkUrl ?? null,
+    },
+  });
+});
+
+shareRouter.post("/proposal/:token/accept", async (c) => {
+  const { token } = proposalTokenParams.parse(c.req.param());
+  let body: unknown;
+  try {
+    body = await c.req.json();
+  } catch {
+    body = undefined;
+  }
+  const parsed = proposalAcceptBody.parse(body);
+  const supabase = getServiceClient();
+  const proposal = await getProposalByToken(supabase, token);
+  if (!proposal) {
+    c.status(404);
+    return c.json({ error: "This proposal link is invalid or has expired." });
+  }
+  const data = await updateProposalStatus(supabase, {
+    userId: proposal.userId,
+    proposalId: proposal.id,
+    status: "accepted",
+    acceptedOption: parsed?.optionName ?? proposal.acceptedOption ?? null,
+  });
+  return c.json({ data });
 });
 
 shareRouter.get("/profile/:slug", async (c) => {

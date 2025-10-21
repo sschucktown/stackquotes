@@ -115,10 +115,13 @@ const seedProposalsList: Proposal[] = [
   {
     id: "seed-proposal-a",
     userId: "demo-user",
+    clientId: "seed-client-a",
     quickquoteId: "demo-001",
-    status: "Generated",
+    title: "Kitchen Remodel",
+    status: "draft",
     acceptedOption: null,
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 21).toISOString(),
+    updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 18).toISOString(),
     options: [],
     totals: [
       { name: "Good", total: 7800 },
@@ -129,10 +132,13 @@ const seedProposalsList: Proposal[] = [
   {
     id: "seed-proposal-b",
     userId: "demo-user",
+    clientId: "seed-client-b",
     quickquoteId: "demo-002",
-    status: "Accepted",
+    title: "Deck Expansion",
+    status: "accepted",
     acceptedOption: "Best",
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 17).toISOString(),
+    updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 12).toISOString(),
     options: [],
     totals: [
       { name: "Good", total: 8000 },
@@ -143,10 +149,13 @@ const seedProposalsList: Proposal[] = [
   {
     id: "seed-proposal-c",
     userId: "demo-user",
+    clientId: "seed-client-c",
     quickquoteId: "demo-003",
-    status: "Accepted",
+    title: "Basement Finish",
+    status: "accepted",
     acceptedOption: "Best",
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 14).toISOString(),
+    updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString(),
     options: [],
     totals: [
       { name: "Good", total: 7400 },
@@ -157,29 +166,35 @@ const seedProposalsList: Proposal[] = [
   {
     id: "seed-proposal-d",
     userId: "demo-user",
+    clientId: "seed-client-d",
     quickquoteId: "demo-004",
-    status: "Generated",
+    title: "Exterior Refresh",
+    status: "draft",
     acceptedOption: null,
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 9).toISOString(),
+    updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 6).toISOString(),
     options: [],
     totals: [
-      { name: "Good", total: 8100 },
-      { name: "Better", total: 9300 },
-      { name: "Best", total: 9900 },
+      { name: "Good", total: 6800 },
+      { name: "Better", total: 8100 },
+      { name: "Best", total: 8700 },
     ],
   },
   {
     id: "seed-proposal-e",
     userId: "demo-user",
+    clientId: "seed-client-e",
     quickquoteId: "demo-005",
-    status: "Generated",
+    title: "Patio Upgrade",
+    status: "draft",
     acceptedOption: null,
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 4).toISOString(),
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 6).toISOString(),
+    updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString(),
     options: [],
     totals: [
-      { name: "Good", total: 7200 },
-      { name: "Better", total: 8400 },
-      { name: "Best", total: 9000 },
+      { name: "Good", total: 6400 },
+      { name: "Better", total: 7600 },
+      { name: "Best", total: 8200 },
     ],
   },
 ];
@@ -302,3 +317,6 @@ const displayProposalLabel = (proposal: Proposal) => {
   }
 }
 </style>
+
+
+

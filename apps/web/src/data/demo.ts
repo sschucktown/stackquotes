@@ -4,6 +4,7 @@ import type {
   Estimate,
   LineItem,
   Proposal,
+  ProposalDepositConfig,
   ProposalOption,
   ProposalTotal,
   UserSettings,
@@ -171,6 +172,17 @@ const proposalMultiplier = [
   { name: "Best", coefficient: 1.2, summary: "Premium upgrade package for maximum client delight." },
 ];
 
+const DEMO_DEPOSIT: ProposalDepositConfig = { type: "percentage", value: 30 };
+
+const computeDepositAmount = (options: ProposalOption[], deposit: ProposalDepositConfig): number => {
+  if (deposit.type === "fixed") {
+    return Math.round(deposit.value * 100) / 100;
+  }
+  const target = options.find((option) => option.name === "Better") ?? options[0] ?? null;
+  if (!target) return 0;
+  return Math.round(target.subtotal * (deposit.value / 100) * 100) / 100;
+};
+
 const applyMultiplier = (items: LineItem[], coefficient: number): ProposalOption => {
   const lineItems = items.map((item) => {
     const unitCost = Math.round(item.unitPrice * coefficient * 100) / 100;
@@ -206,15 +218,28 @@ const buildProposalFromEstimate = (estimate: Estimate): Proposal => {
     name: option.name,
     total: option.subtotal,
   }));
+  const depositAmount = computeDepositAmount(options, DEMO_DEPOSIT);
   return {
     id: `demo-proposal-${estimate.id}`,
     userId: "demo-user",
+    clientId: estimate.clientId,
     quickquoteId: estimate.id,
+    title: `${estimate.projectTitle} SmartProposal`,
+    description: estimate.notes ?? null,
     options,
     totals,
-    status: estimate.status === "accepted" ? "Accepted" : "Generated",
+    status: estimate.status === "accepted" ? "accepted" : "draft",
+    depositAmount,
+    depositType: DEMO_DEPOSIT.type,
+    depositValue: DEMO_DEPOSIT.value,
+    depositConfig: DEMO_DEPOSIT,
+    publicToken: null,
+    sentAt: null,
+    paymentLinkUrl: null,
+    paymentLinkId: null,
     acceptedOption: estimate.status === "accepted" ? "Better" : null,
     createdAt,
+    updatedAt: createdAt,
   };
 };
 

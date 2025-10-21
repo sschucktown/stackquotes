@@ -98,6 +98,7 @@ export interface ProposalEvent {
 }
 
 export interface ProposalOptionLineItem {
+  id?: string;
   description: string;
   quantity: number;
   unitCost: number;
@@ -117,13 +118,34 @@ export interface ProposalTotal {
   total: number;
 }
 
+export type ProposalStatus = "draft" | "sent" | "accepted" | "paid";
+
+export type ProposalDepositType = "percentage" | "fixed";
+
+export interface ProposalDepositConfig {
+  type: ProposalDepositType;
+  value: number;
+}
+
 export interface Proposal {
   id: UUID;
   userId: UUID;
+  clientId: UUID;
   quickquoteId: UUID | null;
   options: ProposalOption[];
   totals: ProposalTotal[];
-  status: string;
+  title: string;
+  description?: string | null;
+  status: ProposalStatus | string;
+  depositAmount?: number | null;
+  depositType?: ProposalDepositType | null;
+  depositValue?: number | null;
+  depositConfig?: ProposalDepositConfig | null;
+  publicToken?: UUID | null;
+  sentAt?: string | null;
+  paymentLinkUrl?: string | null;
+  paymentLinkId?: string | null;
+  updatedAt: string;
   acceptedOption?: string | null;
   createdAt: string;
 }

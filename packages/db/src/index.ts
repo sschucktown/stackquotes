@@ -8,6 +8,7 @@ import type {
   LineItem,
   Proposal,
   ProposalEvent,
+  ProposalDepositConfig,
   ProposalOption,
   ProposalOptionLineItem,
   ProposalTotal,
@@ -131,15 +132,25 @@ export interface DatabaseUserProposalRow {
   created_at: string;
 }
 
-export interface DatabaseProposalRow {
+export interface DatabaseSmartProposalRow {
   id: string;
-  user_id: string;
+  contractor_id: string;
+  client_id: string;
   quickquote_id: string | null;
-  options: Json;
-  totals: Json;
+  title: string | null;
+  description: string | null;
+  line_items: Json;
+  deposit_amount: number | null;
+  deposit_config: Json | null;
   status: string;
+  public_token: string | null;
+  public_token_expires_at: string | null;
+  sent_at: string | null;
   accepted_option: string | null;
+  payment_link_url: string | null;
+  payment_link_id: string | null;
   created_at: string;
+  updated_at: string;
 }
 
 export interface EstimateInput {
@@ -198,11 +209,20 @@ export interface ProposalEventFilter {
 
 export interface ProposalInput {
   userId: string;
+  clientId: string;
   quickquoteId?: string | null;
+  title?: string | null;
+  description?: string | null;
   options: ProposalOption[];
-  totals: ProposalTotal[];
   status?: string;
   acceptedOption?: string | null;
+  depositAmount?: number | null;
+  depositConfig?: ProposalDepositConfig | null;
+  publicToken?: string | null;
+  publicTokenExpiresAt?: string | null;
+  sentAt?: string | null;
+  paymentLinkUrl?: string | null;
+  paymentLinkId?: string | null;
 }
 
 export interface ProposalStatusUpdateInput {
@@ -210,6 +230,32 @@ export interface ProposalStatusUpdateInput {
   proposalId: string;
   status: string;
   acceptedOption?: string | null;
+  depositAmount?: number | null;
+  depositConfig?: ProposalDepositConfig | null;
+  publicToken?: string | null;
+  publicTokenExpiresAt?: string | null;
+  sentAt?: string | null;
+  paymentLinkUrl?: string | null;
+  paymentLinkId?: string | null;
+}
+
+export interface ProposalUpdateInput {
+  userId: string;
+  proposalId: string;
+  clientId?: string;
+  quickquoteId?: string | null;
+  title?: string | null;
+  description?: string | null;
+  options?: ProposalOption[];
+  status?: string;
+  acceptedOption?: string | null;
+  depositAmount?: number | null;
+  depositConfig?: ProposalDepositConfig | null;
+  sentAt?: string | null;
+  publicToken?: string | null;
+  publicTokenExpiresAt?: string | null;
+  paymentLinkUrl?: string | null;
+  paymentLinkId?: string | null;
 }
 
 export interface ContractorProfileInput extends Partial<Omit<ContractorProfile, "userId" | "createdAt" | "updatedAt">> {
@@ -399,12 +445,13 @@ const buildProposalEventRecord = (row: DatabaseProposalEventRow): ProposalEvent 
 const isPlainRecord = (input: unknown): input is Record<string, unknown> =>
   typeof input === "object" && input !== null && !Array.isArray(input);
 
-const normaliseProposalLineItem = (item: unknown): { description: string; quantity: number; unitCost: number; total: number } => {
+const normaliseProposalLineItem = (item: unknown): ProposalOptionLineItem => {
   const record = isPlainRecord(item) ? item : {};
   const quantity = Number(record.quantity ?? 0);
   const unitCost = Number(record.unitCost ?? record.unit_price ?? record.unit ?? 0);
   const total = Number(record.total ?? quantity * unitCost);
   return {
+    id: typeof record.id === "string" ? record.id : undefined,
     description: String(record.description ?? record.desc ?? ""),
     quantity,
     unitCost,
@@ -412,54 +459,126 @@ const normaliseProposalLineItem = (item: unknown): { description: string; quanti
   };
 };
 
-const coerceProposalOptions = (value: Json): ProposalOption[] => {
-  if (!Array.isArray(value)) {
-    return [];
-  }
-  return value.map((option): ProposalOption => {
-    const record = isPlainRecord(option) ? option : {};
-    const rawLineItems = Array.isArray(record.lineItems) ? record.lineItems : [];
-    const lineItems = rawLineItems.map((item) => normaliseProposalLineItem(item));
-    const subtotal =
-      typeof record.subtotal === "number"
-        ? record.subtotal
-        : lineItems.reduce((sum, item) => sum + item.total, 0);
-    return {
-      name: String(record.name ?? "Option"),
-      summary: record.summary !== undefined && record.summary !== null ? String(record.summary) : null,
-      lineItems,
-      subtotal,
-      multiplier:
-        record.multiplier !== undefined && record.multiplier !== null
-          ? Number(record.multiplier)
-          : null,
-    };
-  });
+const coerceProposalOption = (value: unknown): ProposalOption => {
+  const record = isPlainRecord(value) ? value : {};
+  const rawLineItems = Array.isArray(record.lineItems) ? record.lineItems : [];
+  const lineItems = rawLineItems.map((item) => normaliseProposalLineItem(item));
+  const subtotal =
+    typeof record.subtotal === "number"
+      ? record.subtotal
+      : lineItems.reduce((sum, item) => sum + item.total, 0);
+  return {
+    name: String(record.name ?? "Option"),
+    summary: record.summary !== undefined && record.summary !== null ? String(record.summary) : null,
+    lineItems,
+    subtotal,
+    multiplier:
+      record.multiplier !== undefined && record.multiplier !== null
+        ? Number(record.multiplier)
+        : null,
+  };
 };
 
-const coerceProposalTotals = (value: Json): ProposalTotal[] => {
-  if (!Array.isArray(value)) {
-    return [];
-  }
-  return value.map((entry): ProposalTotal => {
-    const record = isPlainRecord(entry) ? entry : {};
-    return {
-      name: String(record.name ?? "Option"),
-      total: Number(record.total ?? 0),
-    };
-  });
+const coerceProposalOptions = (value: unknown): ProposalOption[] => {
+  if (!Array.isArray(value)) return [];
+  return value.map((option) => coerceProposalOption(option));
 };
 
-const buildProposalRecord = (row: DatabaseProposalRow): Proposal => ({
-  id: row.id,
-  userId: row.user_id,
-  quickquoteId: row.quickquote_id ?? null,
-  options: coerceProposalOptions(row.options),
-  totals: coerceProposalTotals(row.totals),
-  status: row.status,
-  acceptedOption: row.accepted_option ?? null,
-  createdAt: row.created_at,
-});
+const parseDepositConfig = (value: unknown): ProposalDepositConfig | null => {
+  if (!isPlainRecord(value)) return null;
+  const rawType = value.type;
+  if (rawType !== "percentage" && rawType !== "fixed") return null;
+  const rawValue = Number(value.value ?? value.amount ?? 0);
+  if (!Number.isFinite(rawValue) || rawValue < 0) return null;
+  return { type: rawType, value: rawValue };
+};
+
+const parseSmartProposalPayload = (
+  value: Json
+): { options: ProposalOption[]; deposit: ProposalDepositConfig | null } => {
+  if (Array.isArray(value)) {
+    return { options: coerceProposalOptions(value), deposit: null };
+  }
+  if (isPlainRecord(value)) {
+    const optionsSource = Array.isArray(value.options)
+      ? value.options
+      : Array.isArray(value.lineItems)
+        ? value.lineItems
+        : [];
+    const options = coerceProposalOptions(optionsSource);
+    const deposit = parseDepositConfig(value.deposit ?? value.depositConfig ?? null);
+    return { options, deposit };
+  }
+  return { options: [], deposit: null };
+};
+
+const computeProposalTotals = (options: ProposalOption[]): ProposalTotal[] =>
+  options.map((option) => ({
+    name: option.name,
+    total: option.subtotal,
+  }));
+
+const pickDepositBaseOption = (options: ProposalOption[]): ProposalOption | null => {
+  if (!options.length) return null;
+  const better = options.find(
+    (option) => option.name?.toLowerCase?.() === "better"
+  );
+  return better ?? options[0];
+};
+
+const computeDepositAmount = (
+  deposit: ProposalDepositConfig | null,
+  options: ProposalOption[],
+  explicitAmount: number | null
+): number | null => {
+  if (!deposit) return explicitAmount ?? null;
+  if (explicitAmount !== null && Number.isFinite(explicitAmount)) {
+    return explicitAmount;
+  }
+  const baseOption = pickDepositBaseOption(options);
+  if (!baseOption) return null;
+  if (deposit.type === "fixed") {
+    return deposit.value;
+  }
+  const subtotal = Number(baseOption.subtotal ?? 0);
+  if (!Number.isFinite(subtotal) || subtotal <= 0) return null;
+  return Math.round(subtotal * (deposit.value / 100) * 100) / 100;
+};
+
+const buildProposalRecord = (row: DatabaseSmartProposalRow): Proposal => {
+  const payload = parseSmartProposalPayload(row.line_items);
+  const options = payload.options;
+  const totals = computeProposalTotals(options);
+  const depositAmount =
+    row.deposit_amount !== null && row.deposit_amount !== undefined
+      ? Number(row.deposit_amount)
+      : null;
+  const depositConfig = payload.deposit;
+  const computedDepositAmount = computeDepositAmount(depositConfig, options, depositAmount);
+
+  return {
+    id: row.id,
+    userId: row.contractor_id,
+    clientId: row.client_id,
+    quickquoteId: row.quickquote_id ?? null,
+    title: row.title ?? "",
+    description: row.description ?? null,
+    options,
+    totals,
+    status: row.status,
+    depositAmount: computedDepositAmount,
+    depositType: depositConfig?.type ?? null,
+    depositValue: depositConfig?.value ?? null,
+    depositConfig: depositConfig ?? null,
+    publicToken: row.public_token ?? null,
+    sentAt: row.sent_at ?? null,
+    paymentLinkUrl: row.payment_link_url ?? null,
+    paymentLinkId: row.payment_link_id ?? null,
+    acceptedOption: row.accepted_option ?? null,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+};
 
 const buildContractorProfileRecord = (row: DatabaseContractorProfileRow): ContractorProfile => ({
   userId: row.user_id,
@@ -997,27 +1116,137 @@ export async function createProposalRecord(
   client: SupabaseClient,
   input: ProposalInput
 ): Promise<Proposal> {
-  const payload: Partial<DatabaseProposalRow> & { user_id: string } = {
-    user_id: input.userId,
+  const depositAmount = computeDepositAmount(
+    input.depositConfig ?? null,
+    input.options,
+    input.depositAmount ?? null
+  );
+  const lineItemsPayload =
+    input.depositConfig && input.depositConfig.value !== undefined
+      ? { options: input.options, deposit: input.depositConfig }
+      : { options: input.options };
+  const payload: Partial<DatabaseSmartProposalRow> & {
+    contractor_id: string;
+    client_id: string;
+  } = {
+    contractor_id: input.userId,
+    client_id: input.clientId,
     quickquote_id: input.quickquoteId ?? null,
-    options: toJson(input.options),
-    totals: toJson(input.totals),
-    status: input.status ?? "Generated",
+    title: input.title ?? null,
+    description: input.description ?? null,
+    line_items: toJson(lineItemsPayload),
+    deposit_amount: depositAmount,
+    deposit_config: input.depositConfig ? toJson(input.depositConfig) : null,
+    status: input.status ?? "draft",
+    public_token: input.publicToken ?? null,
+    public_token_expires_at: input.publicTokenExpiresAt ?? null,
+    sent_at: input.sentAt ?? null,
     accepted_option: input.acceptedOption ?? null,
+    payment_link_url: input.paymentLinkUrl ?? null,
+    payment_link_id: input.paymentLinkId ?? null,
   };
-  const { data, error } = await client.from("proposals").insert(payload).select("*").single();
+  const { data, error } = await client.from("smart_proposals").insert(payload).select("*").single();
   if (error) throw error;
-  return buildProposalRecord(data as DatabaseProposalRow);
+  return buildProposalRecord(data as DatabaseSmartProposalRow);
+}
+
+export async function updateProposalRecord(
+  client: SupabaseClient,
+  input: ProposalUpdateInput
+): Promise<Proposal> {
+  const updatePayload: Record<string, unknown> = {};
+  if (input.clientId !== undefined) {
+    updatePayload.client_id = input.clientId;
+  }
+  if (input.quickquoteId !== undefined) {
+    updatePayload.quickquote_id = input.quickquoteId ?? null;
+  }
+  if (input.title !== undefined) {
+    updatePayload.title = input.title ?? null;
+  }
+  if (input.description !== undefined) {
+    updatePayload.description = input.description ?? null;
+  }
+  if (input.status !== undefined) {
+    updatePayload.status = input.status;
+  }
+  if (input.acceptedOption !== undefined) {
+    updatePayload.accepted_option = input.acceptedOption ?? null;
+  }
+  if (input.sentAt !== undefined) {
+    updatePayload.sent_at = input.sentAt ?? null;
+  }
+  if (input.paymentLinkUrl !== undefined) {
+    updatePayload.payment_link_url = input.paymentLinkUrl ?? null;
+  }
+  if (input.paymentLinkId !== undefined) {
+    updatePayload.payment_link_id = input.paymentLinkId ?? null;
+  }
+  if (input.publicToken !== undefined) {
+    updatePayload.public_token = input.publicToken ?? null;
+  }
+  if (input.publicTokenExpiresAt !== undefined) {
+    updatePayload.public_token_expires_at = input.publicTokenExpiresAt ?? null;
+  }
+  if (input.paymentLinkUrl !== undefined) {
+    updatePayload.payment_link_url = input.paymentLinkUrl ?? null;
+  }
+  if (input.paymentLinkId !== undefined) {
+    updatePayload.payment_link_id = input.paymentLinkId ?? null;
+  }
+
+  let depositHandledViaOptions = false;
+
+  if (input.options !== undefined) {
+    const depositConfig =
+      input.depositConfig !== undefined ? input.depositConfig : undefined;
+    if (depositConfig !== undefined) {
+      updatePayload.deposit_config = depositConfig ? toJson(depositConfig) : null;
+    }
+    const computedDepositAmount = computeDepositAmount(
+      depositConfig ?? null,
+      input.options,
+      input.depositAmount ?? null
+    );
+    if (depositConfig !== undefined || input.depositAmount !== undefined) {
+      updatePayload.deposit_amount = computedDepositAmount;
+    }
+    const lineItemsPayload =
+      depositConfig !== undefined && depositConfig
+        ? { options: input.options, deposit: depositConfig }
+        : { options: input.options };
+    updatePayload.line_items = toJson(lineItemsPayload);
+    depositHandledViaOptions = true;
+  }
+
+  if (!depositHandledViaOptions) {
+    if (input.depositConfig !== undefined) {
+      updatePayload.deposit_config = input.depositConfig ? toJson(input.depositConfig) : null;
+    }
+    if (input.depositAmount !== undefined) {
+      updatePayload.deposit_amount = input.depositAmount;
+    }
+  }
+
+  const { data, error } = await client
+    .from("smart_proposals")
+    .update(updatePayload)
+    .eq("contractor_id", input.userId)
+    .eq("id", input.proposalId)
+    .select("*")
+    .single();
+  if (error) throw error;
+  return buildProposalRecord(data as DatabaseSmartProposalRow);
 }
 
 export async function listProposals(client: SupabaseClient, userId: string): Promise<Proposal[]> {
   const { data, error } = await client
-    .from("proposals")
+    .from("smart_proposals")
     .select("*")
-    .eq("user_id", userId)
+    .eq("contractor_id", userId)
     .order("created_at", { ascending: false });
   if (error) throw error;
-  return (data as DatabaseProposalRow[]).map((row) => buildProposalRecord(row));
+  return (data as DatabaseSmartProposalRow[]).map((row) => buildProposalRecord(row));
 }
 
 export async function findProposalByQuickquote(
@@ -1026,33 +1255,104 @@ export async function findProposalByQuickquote(
   quickquoteId: string
 ): Promise<Proposal | null> {
   const { data, error } = await client
-    .from("proposals")
+    .from("smart_proposals")
     .select("*")
-    .eq("user_id", userId)
+    .eq("contractor_id", userId)
     .eq("quickquote_id", quickquoteId)
     .limit(1)
     .maybeSingle();
   if (error) throw error;
   if (!data) return null;
-  return buildProposalRecord(data as DatabaseProposalRow);
+  return buildProposalRecord(data as DatabaseSmartProposalRow);
+}
+
+export async function getProposalById(
+  client: SupabaseClient,
+  userId: string,
+  proposalId: string
+): Promise<Proposal | null> {
+  const { data, error } = await client
+    .from("smart_proposals")
+    .select("*")
+    .eq("contractor_id", userId)
+    .eq("id", proposalId)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  return buildProposalRecord(data as DatabaseSmartProposalRow);
+}
+
+export async function getProposalByToken(
+  client: SupabaseClient,
+  token: string
+): Promise<Proposal | null> {
+  const { data, error } = await client
+    .from("smart_proposals")
+    .select("*")
+    .eq("public_token", token)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  return buildProposalRecord(data as DatabaseSmartProposalRow);
+}
+
+export async function getPreviousProposalLineItems(
+  client: SupabaseClient,
+  userId: string,
+  clientId: string
+): Promise<{ options: ProposalOption[]; depositConfig: ProposalDepositConfig | null } | null> {
+  const { data, error } = await client
+    .from("smart_proposals")
+    .select("line_items, deposit_config")
+    .eq("contractor_id", userId)
+    .eq("client_id", clientId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  const record = data as { line_items: Json; deposit_config: Json | null };
+  const payload = parseSmartProposalPayload(record.line_items);
+  const deposit =
+    record.deposit_config !== null && record.deposit_config !== undefined
+      ? parseDepositConfig(record.deposit_config)
+      : payload.deposit;
+  return { options: payload.options, depositConfig: deposit ?? null };
 }
 
 export async function updateProposalStatus(
   client: SupabaseClient,
   input: ProposalStatusUpdateInput
 ): Promise<Proposal> {
+  const updatePayload: Record<string, unknown> = {
+    status: input.status,
+    accepted_option: input.acceptedOption ?? null,
+  };
+  if (input.depositAmount !== undefined) {
+    updatePayload.deposit_amount = input.depositAmount;
+  }
+  if (input.depositConfig !== undefined) {
+    updatePayload.deposit_config = input.depositConfig ? toJson(input.depositConfig) : null;
+  }
+  if (input.publicToken !== undefined) {
+    updatePayload.public_token = input.publicToken ?? null;
+  }
+  if (input.publicTokenExpiresAt !== undefined) {
+    updatePayload.public_token_expires_at = input.publicTokenExpiresAt ?? null;
+  }
+  if (input.sentAt !== undefined) {
+    updatePayload.sent_at = input.sentAt ?? null;
+  }
+
   const { data, error } = await client
-    .from("proposals")
-    .update({
-      status: input.status,
-      accepted_option: input.acceptedOption ?? null,
-    })
-    .eq("user_id", input.userId)
+    .from("smart_proposals")
+    .update(updatePayload)
+    .eq("contractor_id", input.userId)
     .eq("id", input.proposalId)
     .select("*")
     .single();
   if (error) throw error;
-  return buildProposalRecord(data as DatabaseProposalRow);
+  return buildProposalRecord(data as DatabaseSmartProposalRow);
 }
 
 export async function getContractorProfile(
@@ -1165,20 +1465,19 @@ export async function getProposalSummaryForUser(
   userId: string
 ): Promise<ProposalSummaryMetrics> {
   const { data, error } = await client
-    .from("proposals")
-    .select("status, totals")
-    .eq("user_id", userId);
+    .from("smart_proposals")
+    .select("status, line_items")
+    .eq("contractor_id", userId);
   if (error) throw error;
-  const proposals = (data as { status: string; totals: Json }[]) ?? [];
+  const proposals = (data as { status: string; line_items: Json }[]) ?? [];
   let total = 0;
   let accepted = 0;
   let revenue = 0;
   let aggregateValue = 0;
   for (const proposal of proposals) {
     total += 1;
-    const totals = Array.isArray(proposal.totals)
-      ? (proposal.totals as { name: string; total: number }[])
-      : [];
+    const payload = parseSmartProposalPayload(proposal.line_items);
+    const totals = computeProposalTotals(payload.options);
     const highest =
       totals.reduce(
         (max, entry) => (typeof entry.total === "number" && entry.total > max ? entry.total : max),
