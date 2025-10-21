@@ -71,43 +71,54 @@ const router = createRouter({
       meta: { public: false, skipOnboardingGuard: true },
     },
     {
-      path: "/",
+      path: "/app",
       component: () => import("@/layouts/AppLayout.vue"),
       children: [
         {
+          path: "",
+          redirect: "/dashboard",
+        },
+        {
           path: "dashboard",
+          alias: "/dashboard",
           name: "dashboard-home",
           component: () => import("@/pages/dashboard/DashboardHome.vue"),
         },
         {
           path: "quickquotes",
+          alias: "/quickquotes",
           name: "quickquote-dashboard",
           component: () => import("@/pages/quickquote/DashboardPage.vue"),
         },
         {
           path: "quickquotes/new",
+          alias: "/quickquotes/new",
           name: "quickquote-new",
           component: () => import("@/pages/quickquote/EstimateEditorPage.vue"),
           props: () => ({ id: "new" }),
         },
         {
           path: "quickquotes/:id",
+          alias: "/quickquotes/:id",
           name: "quickquote-estimate",
           component: () => import("@/pages/quickquote/EstimateEditorPage.vue"),
           props: true,
         },
         {
           path: "smart-proposals",
+          alias: "/smart-proposals",
           name: "smart-proposals",
           component: () => import("@/pages/smartproposals/SmartProposalsPage.vue"),
         },
         {
           path: "analytics",
+          alias: "/analytics",
           name: "analytics",
           component: () => import("@/pages/analytics/AnalyticsPage.vue"),
         },
         {
           path: "settings",
+          alias: "/settings",
           name: "settings",
           component: () => import("@/pages/settings/SettingsPage.vue"),
         },

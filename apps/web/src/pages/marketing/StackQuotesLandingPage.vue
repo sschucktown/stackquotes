@@ -3,9 +3,9 @@
     :primary-cta="primaryCta"
     :founder-cta="founderCta"
     :demo-cta="demoCta"
-    hero-image="/demo-proposal.png"
+    :hero-image="heroImage"
     hero-alt="Preview of a three-option StackQuotes proposal"
-    founder-image="/founder.jpg"
+    :founder-image="founderImage"
     founder-alt="Portrait of the StackQuotes founder"
     :hero-stats="heroStats"
     :features="features"
@@ -15,11 +15,13 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted } from "vue";
 import { useRouter } from "vue-router";
+import { FileText, Users, Zap } from "lucide-vue-next";
+import StackQuotesLanding from "@/components/marketing/StackQuotesLanding.jsx";
 import { useAuth } from "@/lib/auth";
 import { useDemoStore } from "@/stores/demoStore";
-import StackQuotesLanding from "@/components/marketing/StackQuotesLanding.jsx";
 import { trackEvent } from "@/lib/analytics";
-import { FileText, Users, Zap } from "lucide-vue-next";
+import heroImage from "@/assets/marketing-demo-proposal.png";
+import founderImage from "@/assets/marketing-founder.png";
 
 const router = useRouter();
 const { isAuthenticated, user, setStoredRedirect } = useAuth();
@@ -34,11 +36,11 @@ const heroStats = [
   {
     label: "Avg. Time to Send",
     value: "12 minutes",
-    caption: "Start from our templated proposal library.",
+    caption: "Start from the templated proposal library.",
   },
   {
     label: "Proposal Conversion",
-    value: "3× higher",
+    value: "3x higher",
     caption: "Upgrade-driven quotes win more premium work.",
   },
   {
@@ -49,7 +51,7 @@ const heroStats = [
   {
     label: "Automated Follow-up",
     value: "Smart nudges",
-    caption: "StackQuotes pings prospects so you don’t have to.",
+    caption: "StackQuotes pings prospects so you do not have to.",
   },
 ];
 
@@ -65,11 +67,11 @@ const features = [
     icon: FileText,
   },
   {
-    title: "Instant client approvals & deposits",
+    title: "Instant client approvals and deposits",
     description:
-      "Clients approve, sign, and pay from any device. We handle secure payments so you can schedule crews faster.",
+      "Clients approve, sign, and pay from any device. Secure payments move straight to scheduling crews.",
     points: [
-      "ACH and card payments with automatic receipt and sync.",
+      "ACH and card payments with automatic receipts and sync.",
       "Real-time acceptance notifications and pipeline updates.",
     ],
     icon: Zap,
@@ -80,7 +82,7 @@ const features = [
       "See StackQuotes with sample data. Activate demo mode to walk through proposals, analytics, and follow-up sequences.",
     points: [
       "Dashboard seeded with proposal analytics for the Founding 50.",
-      "Switch between live and demo in a click—no setup required.",
+      "Switch between live and demo in a click; no setup required.",
     ],
     icon: Users,
   },
@@ -91,8 +93,8 @@ const lastMeta = {
   description: "",
 };
 
-const landingTitle = "StackQuotes — Close More Jobs with 3-Option Quotes";
-const landingDescription = "Send professional Good/Better/Best proposals in minutes — and get paid instantly.";
+const landingTitle = "StackQuotes - Close More Jobs with 3-Option Quotes";
+const landingDescription = "Send professional Good/Better/Best proposals in minutes and get paid instantly.";
 
 const updateMeta = () => {
   if (typeof document === "undefined") return;
@@ -150,7 +152,10 @@ const handleDemoClick = async () => {
 
 const handleFounderClick = async () => {
   const { authenticated } = authState.value;
-  trackEvent("cta_founder_click", { ...baseTrackProps.value, intent: authenticated ? "go-dashboard" : "join-founding-50" });
+  trackEvent("cta_founder_click", {
+    ...baseTrackProps.value,
+    intent: authenticated ? "go-dashboard" : "join-founding-50",
+  });
   if (authenticated) {
     await navigateOrReplace({ name: "dashboard-home" });
     return;
