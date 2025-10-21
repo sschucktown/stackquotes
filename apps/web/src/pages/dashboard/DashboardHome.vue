@@ -297,10 +297,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from "vue";
+import { computed, onMounted, watch } from "vue";
 import { useRouter } from "vue-router";
 import { format, formatDistanceToNowStrict, isValid, parseISO } from "date-fns";
 import { useTransition, TransitionPresets } from "@vueuse/core";
+import { storeToRefs } from "pinia";
 import SQButton from "@stackquotes/ui/components/SQButton.vue";
 import {
   ClipboardList,
@@ -319,11 +320,14 @@ import {
 import { useEstimateStore } from "@modules/quickquote/stores/estimateStore";
 import { useClientStore } from "@modules/quickquote/stores/clientStore";
 import { useContractorProfileStore } from "@modules/contractor/stores/profileStore";
+import { useStarterProjectsStore } from "@modules/contractor/stores/starterProjectsStore";
 
 const router = useRouter();
 const estimateStore = useEstimateStore();
 const clientStore = useClientStore();
 const profileStore = useContractorProfileStore();
+const starterProjectsStore = useStarterProjectsStore();
+const { items: starterProjects, loading: starterProjectsLoading } = storeToRefs(starterProjectsStore);
 
 const currencyFormatter = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -343,9 +347,25 @@ const ensureDataLoaded = async () => {
   }
 };
 
+const ensureStarterProjectsLoaded = async (force = false) => {
+  if (starterProjectsLoading.value) return;
+  if (!force && starterProjects.value.length) return;
+  await starterProjectsStore.load(force);
+};
+
 onMounted(() => {
   void ensureDataLoaded();
+  void ensureStarterProjectsLoaded();
 });
+
+watch(
+  () => profileStore.profile?.tradeSeeded,
+  (seeded, previous) => {
+    if (seeded && !previous) {
+      void ensureStarterProjectsLoaded(true);
+    }
+  }
+);
 
 const isLoading = computed(() => estimateStore.loading || clientStore.loading);
 
