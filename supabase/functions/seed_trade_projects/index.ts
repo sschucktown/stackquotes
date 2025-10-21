@@ -155,6 +155,7 @@ serve(async (req) => {
         line_items: template.line_items ?? [],
         total_price: template.total_price,
       };
+      
     };
 
     const userProposalPayload = (proposalTemplates ?? [])
