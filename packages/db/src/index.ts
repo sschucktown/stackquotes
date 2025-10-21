@@ -396,8 +396,11 @@ const buildProposalEventRecord = (row: DatabaseProposalEventRow): ProposalEvent 
   createdAt: row.created_at,
 });
 
+const isPlainRecord = (input: unknown): input is Record<string, unknown> =>
+  typeof input === "object" && input !== null && !Array.isArray(input);
+
 const normaliseProposalLineItem = (item: unknown): { description: string; quantity: number; unitCost: number; total: number } => {
-  const record = (item as Record<string, unknown>) ?? {};
+  const record = isPlainRecord(item) ? item : {};
   const quantity = Number(record.quantity ?? 0);
   const unitCost = Number(record.unitCost ?? record.unit_price ?? record.unit ?? 0);
   const total = Number(record.total ?? quantity * unitCost);
@@ -413,8 +416,8 @@ const coerceProposalOptions = (value: Json): ProposalOption[] => {
   if (!Array.isArray(value)) {
     return [];
   }
-  return (value as ProposalOption[]).map((option) => {
-    const record = option as Record<string, unknown>;
+  return value.map((option): ProposalOption => {
+    const record = isPlainRecord(option) ? option : {};
     const rawLineItems = Array.isArray(record.lineItems) ? record.lineItems : [];
     const lineItems = rawLineItems.map((item) => normaliseProposalLineItem(item));
     const subtotal =
@@ -438,10 +441,13 @@ const coerceProposalTotals = (value: Json): ProposalTotal[] => {
   if (!Array.isArray(value)) {
     return [];
   }
-  return (value as ProposalTotal[]).map((entry) => ({
-    name: String((entry as Record<string, unknown>).name ?? "Option"),
-    total: Number((entry as Record<string, unknown>).total ?? 0),
-  }));
+  return value.map((entry): ProposalTotal => {
+    const record = isPlainRecord(entry) ? entry : {};
+    return {
+      name: String(record.name ?? "Option"),
+      total: Number(record.total ?? 0),
+    };
+  });
 };
 
 const buildProposalRecord = (row: DatabaseProposalRow): Proposal => ({

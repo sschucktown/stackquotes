@@ -22,6 +22,17 @@ const readFileAsDataUrl = (file: File): Promise<string> =>
     reader.readAsDataURL(file);
   });
 
+const pickDefined = <T extends object>(source: Partial<T>): Partial<T> => {
+  const result: Partial<T> = {};
+  (Object.keys(source) as (keyof T)[]).forEach((key) => {
+    const value = source[key];
+    if (value !== undefined) {
+      result[key] = value;
+    }
+  });
+  return result;
+};
+
 interface ContractorProfileState {
   profile: ContractorProfile | null;
   loading: boolean;
@@ -75,12 +86,10 @@ export const useContractorProfileStore = defineStore("contractor-profile", {
         const demo = useDemoStore();
         if (demo.active) {
           const current = this.profile ? cloneProfile(this.profile) : cloneProfile(demoContractorProfile);
-          const updated: ContractorProfile = { ...current };
-          Object.entries(payload).forEach(([key, value]) => {
-            if (value !== undefined) {
-              (updated as Record<string, unknown>)[key] = value;
-            }
-          });
+          const updated: ContractorProfile = {
+            ...current,
+            ...pickDefined<ContractorProfile>(payload),
+          };
           updated.updatedAt = new Date().toISOString();
           this.setProfile(updated, true);
           return updated;

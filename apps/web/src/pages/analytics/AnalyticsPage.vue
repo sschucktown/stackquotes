@@ -190,10 +190,10 @@ const acceptedProposals = computed(() => proposals.value.filter((proposal) => pr
 
 const highestProposalValue = (proposal: Proposal) => {
   if (proposal.totals?.length) {
-    return proposal.totals.reduce((max, entry) => Math.max(max, entry.total), 0);
+    return proposal.totals.reduce<number>((max, entry) => Math.max(max, entry.total), 0);
   }
   if (proposal.options?.length) {
-    return proposal.options.reduce((max, option) => Math.max(max, option.subtotal), 0);
+    return proposal.options.reduce<number>((max, option) => Math.max(max, option.subtotal), 0);
   }
   return 0;
 };

@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from "vue-router";
+import type { LocationQueryRaw, LocationQueryValue } from "vue-router";
 import { watch } from "vue";
 import { useAuth } from "@/lib/auth";
 import { useDemoStore } from "@/stores/demoStore";
@@ -127,13 +128,19 @@ const router = createRouter({
   ],
 });
 
+const demoFlagValues = new Set(["1", "true"]);
+
+const isDemoFlag = (value: LocationQueryValue | null | undefined): boolean =>
+  typeof value === "string" ? demoFlagValues.has(value.toLowerCase()) : false;
+
 router.beforeEach(async (to) => {
   const auth = useAuth();
   const demo = useDemoStore();
   await waitForAuth();
-  const wantsDemo =
-    (typeof to.query.demo === "string" && ["1", "true"].includes(to.query.demo.toLowerCase())) ||
-    (Array.isArray(to.query.demo) && to.query.demo.some((value) => ["1", "true"].includes(value.toLowerCase())));
+  const demoQuery = to.query.demo;
+  const wantsDemo = Array.isArray(demoQuery)
+    ? demoQuery.some((value) => isDemoFlag(value ?? null))
+    : isDemoFlag(demoQuery ?? null);
 
   if (wantsDemo && !demo.active) {
     demo.activate();
@@ -142,8 +149,8 @@ router.beforeEach(async (to) => {
   const isDemoActive = demo.active;
 
   if (isDemoActive && "demo" in to.query) {
-    const { demo: _omit, ...rest } = to.query as Record<string, string | string[] | undefined>;
-    return { path: to.path, query: rest, replace: true };
+    const nextQuery: LocationQueryRaw = { ...to.query, demo: undefined };
+    return { path: to.path, query: nextQuery, replace: true };
   }
 
   if (!to.meta.public && !auth.isAuthenticated.value && !isDemoActive) {

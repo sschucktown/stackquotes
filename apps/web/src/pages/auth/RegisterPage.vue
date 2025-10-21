@@ -103,6 +103,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from "vue";
 import { useRouter, useRoute } from "vue-router";
+import type { LocationQueryRaw, LocationQueryValue } from "vue-router";
 import { useAuth } from "@/lib/auth";
 import { useDemoStore } from "@/stores/demoStore";
 
@@ -125,19 +126,19 @@ const {
 } = useAuth();
 const demoStore = useDemoStore();
 
-const getRedirectFromQuery = (): string | undefined => {
-  const raw = route.query.redirect;
-  if (typeof raw === "string") return raw;
-  if (Array.isArray(raw)) return raw[0];
+const firstQueryString = (value: LocationQueryValue | LocationQueryValue[] | undefined): string | undefined => {
+  if (typeof value === "string") {
+    return value;
+  }
+  if (Array.isArray(value)) {
+    const match = value.find((entry): entry is string => typeof entry === "string");
+    return match;
+  }
   return undefined;
 };
 
-const getIntentFromQuery = (): string | undefined => {
-  const raw = route.query.intent;
-  if (typeof raw === "string") return raw;
-  if (Array.isArray(raw)) return raw[0];
-  return undefined;
-};
+const getRedirectFromQuery = (): string | undefined => firstQueryString(route.query.redirect);
+const getIntentFromQuery = (): string | undefined => firstQueryString(route.query.intent);
 
 onMounted(() => {
   const requestedRedirect = getRedirectFromQuery();
@@ -145,8 +146,7 @@ onMounted(() => {
   if (safeRedirect) {
     setStoredRedirect(safeRedirect);
   } else if (requestedRedirect) {
-    const sanitizedQuery = { ...route.query } as Record<string, unknown>;
-    delete sanitizedQuery.redirect;
+    const sanitizedQuery: LocationQueryRaw = { ...route.query, redirect: undefined };
     router.replace({ query: sanitizedQuery });
     clearStoredRedirect();
   }

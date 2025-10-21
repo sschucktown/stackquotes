@@ -22,6 +22,17 @@ const readFileAsDataUrl = (file: File): Promise<string> =>
     reader.readAsDataURL(file);
   });
 
+const pickDefined = <T extends object>(source: Partial<T>): Partial<T> => {
+  const result: Partial<T> = {};
+  (Object.keys(source) as (keyof T)[]).forEach((key) => {
+    const value = source[key];
+    if (value !== undefined) {
+      result[key] = value;
+    }
+  });
+  return result;
+};
+
 interface SettingsState {
   data: UserSettings | null;
   loading: boolean;
@@ -56,12 +67,10 @@ export const useSettingsStore = defineStore("settings", {
       const demo = useDemoStore();
       if (demo.active) {
         const current = this.data ? cloneSettings(this.data) : cloneSettings(demoSettings);
-        const updated: UserSettings = { ...current };
-        Object.entries(payload).forEach(([key, value]) => {
-          if (value !== undefined) {
-            (updated as Record<string, unknown>)[key] = value;
-          }
-        });
+        const updated: UserSettings = {
+          ...current,
+          ...pickDefined<UserSettings>(payload),
+        };
         this.data = cloneSettings(updated);
         return this.data;
       }

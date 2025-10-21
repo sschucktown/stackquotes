@@ -15,6 +15,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted } from "vue";
 import { useRouter } from "vue-router";
+import type { RouteLocationRaw } from "vue-router";
 import { FileText, Users, Zap } from "lucide-vue-next";
 import StackQuotesLanding from "@/components/marketing/StackQuotesLanding.jsx";
 import { useAuth } from "@/lib/auth";
@@ -131,7 +132,7 @@ const pushWithDemo = async () => {
   await router.push({ name: "demo", query: { template: "deck" } });
 };
 
-const navigateOrReplace = async (location: { name?: string; path?: string; query?: Record<string, unknown> }) => {
+const navigateOrReplace = async (location: RouteLocationRaw) => {
   try {
     await router.push(location);
   } catch {

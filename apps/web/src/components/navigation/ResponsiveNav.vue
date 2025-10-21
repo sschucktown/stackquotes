@@ -1,5 +1,5 @@
 <template>
-  <slot :isDesktop="isDesktop.value" :isWide="isWide.value" />
+  <slot :isDesktop="isDesktop" :isWide="isWide" />
 </template>
 
 <script setup lang="ts">

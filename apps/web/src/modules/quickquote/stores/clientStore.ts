@@ -55,8 +55,8 @@ export const useClientStore = defineStore("clients", {
           userId: "demo-user",
           name: payload.name,
           email: payload.email,
-          phone: payload.phone ?? null,
-          address: payload.address ?? null,
+          phone: payload.phone,
+          address: payload.address,
           createdAt: new Date().toISOString(),
         };
         this.demoItems.push(client);
