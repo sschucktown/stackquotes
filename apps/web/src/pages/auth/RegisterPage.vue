@@ -132,6 +132,13 @@ const getRedirectFromQuery = (): string | undefined => {
   return undefined;
 };
 
+const getIntentFromQuery = (): string | undefined => {
+  const raw = route.query.intent;
+  if (typeof raw === "string") return raw;
+  if (Array.isArray(raw)) return raw[0];
+  return undefined;
+};
+
 onMounted(() => {
   const requestedRedirect = getRedirectFromQuery();
   const safeRedirect = sanitizeRedirect(requestedRedirect);
@@ -152,6 +159,7 @@ const submit = async () => {
   }
   loading.value = true;
   error.value = "";
+  const intent = getIntentFromQuery();
   const { error: signUpError } = await signUp(email.value, password.value);
   loading.value = false;
   if (signUpError) {
@@ -159,7 +167,14 @@ const submit = async () => {
     return;
   }
   demoStore.deactivate();
-  setStoredRedirect(defaultRedirect);
+  const storedRedirect = sanitizeRedirect(getStoredRedirect());
+  const intentRedirect = intent === "founding50" ? "/dashboard" : undefined;
+  const nextRedirect = storedRedirect ?? intentRedirect ?? defaultRedirect;
+  setStoredRedirect(nextRedirect);
+  if (intent === "founding50") {
+    router.push({ name: "dashboard-home" });
+    return;
+  }
   router.push({ name: "onboarding" });
 };
 
@@ -169,7 +184,11 @@ const handleGoogleSignIn = async () => {
   try {
     demoStore.deactivate();
     const requestedRedirect = getRedirectFromQuery();
-    const onboardingRedirect = sanitizeRedirect(requestedRedirect) ?? "/onboarding";
+    const intent = getIntentFromQuery();
+    const onboardingRedirect = sanitizeRedirect(requestedRedirect) ?? (intent === "founding50" ? "/dashboard" : "/onboarding");
+    if (intent === "founding50") {
+      setStoredRedirect("/dashboard");
+    }
     const { error: oauthError } = await signInWithGoogle(onboardingRedirect);
     if (oauthError) {
       error.value = oauthError.message;

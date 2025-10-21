@@ -21,18 +21,24 @@ const router = createRouter({
   history: createWebHistory(),
   routes: [
     {
+      path: "/",
+      name: "landing",
+      component: () => import("@/pages/marketing/StackQuotesLandingPage.vue"),
+      meta: { public: true, allowAuthenticated: true },
+    },
+    {
       path: "/share/estimate/:token",
       name: "public-estimate-approval",
       component: () => import("@/pages/public/EstimateApprovalPage.vue"),
       props: true,
-      meta: { public: true },
+      meta: { public: true, allowAuthenticated: true },
     },
     {
       path: "/share/profile/:slug",
       name: "public-contractor-profile",
       component: () => import("@/pages/public/ContractorProfilePage.vue"),
       props: true,
-      meta: { public: true },
+      meta: { public: true, allowAuthenticated: true },
     },
     {
       path: "/login",
@@ -47,6 +53,18 @@ const router = createRouter({
       meta: { public: true },
     },
     {
+      path: "/signup",
+      name: "signup",
+      component: () => import("@/pages/auth/RegisterPage.vue"),
+      meta: { public: true },
+    },
+    {
+      path: "/demo",
+      name: "demo",
+      component: () => import("@/pages/marketing/DemoRedirectPage.vue"),
+      meta: { public: true, allowAuthenticated: true },
+    },
+    {
       path: "/onboarding",
       name: "onboarding",
       component: () => import("@/pages/onboarding/OnboardingPage.vue"),
@@ -56,10 +74,6 @@ const router = createRouter({
       path: "/",
       component: () => import("@/layouts/AppLayout.vue"),
       children: [
-        {
-          path: "",
-          redirect: "/dashboard",
-        },
         {
           path: "dashboard",
           name: "dashboard-home",
@@ -130,7 +144,11 @@ router.beforeEach(async (to) => {
     }
     return { name: "login" };
   }
-  if (to.meta.public && (auth.isAuthenticated.value || isDemoActive)) {
+  if (
+    to.meta.public &&
+    !to.meta.allowAuthenticated &&
+    (auth.isAuthenticated.value || isDemoActive)
+  ) {
     const redirectTarget = auth.getStoredRedirect() ?? "/dashboard";
     auth.clearStoredRedirect();
     return { path: redirectTarget };
