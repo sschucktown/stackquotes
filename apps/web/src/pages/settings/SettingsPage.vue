@@ -420,14 +420,27 @@ const handleLogoChange = async (event: Event) => {
   }
 };
 
+const toNullable = (value: string) => {
+  if (!value) return null;
+  const trimmed = value.trim();
+  return trimmed.length ? trimmed : null;
+};
+
 const handleSave = async () => {
   try {
     setSavedState("saving");
+    const trade = toNullable(form.trade);
     const payload = {
-      ...form,
-      trade: form.trade ? form.trade : null,
-      tradeType: form.tradeType ? form.tradeType : form.trade ? `${form.trade}` : null,
-      averageProjectSize: form.averageProjectSize ? form.averageProjectSize : null,
+      businessName: toNullable(form.businessName),
+      ownerName: toNullable(form.ownerName),
+      trade,
+      tradeType: toNullable(form.tradeType) ?? trade,
+      averageProjectSize: toNullable(form.averageProjectSize),
+      city: toNullable(form.city),
+      state: toNullable(form.state),
+      phone: toNullable(form.phone),
+      email: toNullable(form.email),
+      logoUrl: toNullable(form.logoUrl),
       publicSlug: form.publicSlug.trim() ? form.publicSlug.trim() : null,
     };
     await profileStore.save(payload);
