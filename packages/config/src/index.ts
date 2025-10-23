@@ -8,7 +8,10 @@ const serverSchema = z.object({
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1, "SUPABASE_SERVICE_ROLE_KEY is required"),
   RESEND_API_KEY: z.string().optional(),
   STRIPE_SECRET_KEY: z.string().optional(),
+  STRIPE_WEBHOOK_SECRET: z.string().optional(),
+  STRIPE_CONNECT_CLIENT_ID: z.string().optional(),
   STRIPE_PRODUCT_ID: z.string().optional(),
+  NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().optional(),
   BASE_APP_URL: z.string().url().optional(),
   BASE_API_URL: z.string().url().optional(),
   EMAIL_TRACKING_BASE_URL: z.string().url().optional(),
@@ -19,6 +22,8 @@ const clientSchema = z.object({
   VITE_SUPABASE_ANON_KEY: z.string().min(1, "VITE_SUPABASE_ANON_KEY is required"),
   VITE_APP_NAME: z.string().default("StackQuotes"),
   VITE_API_BASE_URL: z.string().url().optional(),
+  NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().optional(),
+  VITE_STRIPE_PUBLISHABLE_KEY: z.string().optional(),
 });
 
 export type ServerConfig = z.infer<typeof serverSchema>;

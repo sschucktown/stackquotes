@@ -12,6 +12,11 @@ import type {
   ProposalOption,
   ProposalOptionLineItem,
   ProposalTotal,
+  SubscriptionPlanTier,
+  SubscriptionRecord,
+  SubscriptionStatus,
+  PaymentRecord,
+  PaymentType,
   UserProjectTemplate,
   UserProposalTemplate,
   UserSettings,
@@ -36,6 +41,46 @@ const parseProposalLineItems = (value: Json): ProposalOptionLineItem[] => {
     unitCost: asNumber((entry.unitCost ?? entry.unit_cost) as unknown, 0),
     total: asNumber(entry.total, 0),
   }));
+};
+
+const KNOWN_PLAN_TIERS = new Set<SubscriptionPlanTier>(["starter", "pro", "team"]);
+const normalisePlanTier = (value: string | null | undefined): SubscriptionPlanTier => {
+  if (!value) return "starter";
+  const normalised = value.toLowerCase();
+  return KNOWN_PLAN_TIERS.has(normalised as SubscriptionPlanTier)
+    ? (normalised as SubscriptionPlanTier)
+    : "starter";
+};
+
+const KNOWN_SUBSCRIPTION_STATUSES = new Set<SubscriptionStatus>([
+  "trialing",
+  "active",
+  "past_due",
+  "incomplete",
+  "canceled",
+  "incomplete_expired",
+  "unpaid",
+  "paused",
+  "pending",
+]);
+
+const normaliseSubscriptionStatus = (
+  value: string | null | undefined
+): SubscriptionStatus => {
+  if (!value) return "pending";
+  const normalised = value.toLowerCase();
+  return KNOWN_SUBSCRIPTION_STATUSES.has(normalised as SubscriptionStatus)
+    ? (normalised as SubscriptionStatus)
+    : "pending";
+};
+
+const KNOWN_PAYMENT_TYPES = new Set<PaymentType>(["deposit", "upsell", "installment"]);
+const normalisePaymentType = (value: string | null | undefined): PaymentType => {
+  if (!value) return "deposit";
+  const normalised = value.toLowerCase();
+  return KNOWN_PAYMENT_TYPES.has(normalised as PaymentType)
+    ? (normalised as PaymentType)
+    : "deposit";
 };
 
 export interface DatabaseEstimateRow {
@@ -105,6 +150,39 @@ export interface DatabaseContractorProfileRow {
   email: string | null;
   public_slug: string | null;
   logo_url: string | null;
+  stripe_account_id: string | null;
+  stripe_account_status: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DatabaseUserRow {
+  id: string;
+  stripe_customer_id: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
+export interface DatabaseSubscriptionRow {
+  id: string;
+  user_id: string;
+  stripe_subscription_id: string | null;
+  stripe_checkout_session_id: string | null;
+  plan_tier: string;
+  status: string;
+  current_period_end: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DatabasePaymentRow {
+  id: string;
+  contractor_id: string;
+  proposal_id: string | null;
+  stripe_payment_intent_id: string | null;
+  amount: number;
+  type: string;
+  status: string;
   created_at: string;
   updated_at: string;
 }
@@ -594,8 +672,34 @@ const buildContractorProfileRecord = (row: DatabaseContractorProfileRow): Contra
   logoUrl: row.logo_url ?? null,
   publicSlug: row.public_slug ?? null,
   tradeSeeded: row.trade_seeded ?? null,
+  stripeAccountId: row.stripe_account_id ?? null,
+  stripeAccountStatus: row.stripe_account_status ?? null,
   createdAt: row.created_at,
   updatedAt: row.updated_at,
+});
+
+const buildSubscriptionRecord = (row: DatabaseSubscriptionRow): SubscriptionRecord => ({
+  id: row.id,
+  userId: row.user_id,
+  stripeSubscriptionId: row.stripe_subscription_id ?? null,
+  stripeCheckoutSessionId: row.stripe_checkout_session_id ?? null,
+  planTier: normalisePlanTier(row.plan_tier),
+  status: normaliseSubscriptionStatus(row.status),
+  currentPeriodEnd: row.current_period_end ?? null,
+  createdAt: row.created_at,
+  updatedAt: row.updated_at ?? null,
+});
+
+const buildPaymentRecord = (row: DatabasePaymentRow): PaymentRecord => ({
+  id: row.id,
+  contractorId: row.contractor_id,
+  proposalId: row.proposal_id ?? null,
+  stripePaymentIntentId: row.stripe_payment_intent_id ?? null,
+  amount: Number(row.amount ?? 0),
+  type: normalisePaymentType(row.type),
+  status: row.status ?? "pending",
+  createdAt: row.created_at,
+  updatedAt: row.updated_at ?? null,
 });
 
 const buildUserProposalRecord = (row: DatabaseUserProposalRow): UserProposalTemplate => ({
@@ -1530,6 +1634,217 @@ export async function getLatestProposalEvent(
   }
   if (!data) return null;
   return buildProposalEventRecord(data as DatabaseProposalEventRow);
+}
+
+export async function getStripeCustomerId(
+  client: SupabaseClient,
+  userId: string
+): Promise<string | null> {
+  const { data, error } = await client
+    .from("users")
+    .select("stripe_customer_id")
+    .eq("id", userId)
+    .maybeSingle();
+  if (error) throw error;
+  return (data as { stripe_customer_id: string | null } | null)?.stripe_customer_id ?? null;
+}
+
+export async function upsertStripeCustomerId(
+  client: SupabaseClient,
+  userId: string,
+  stripeCustomerId: string
+): Promise<string> {
+  const { data, error } = await client
+    .from("users")
+    .upsert({ id: userId, stripe_customer_id: stripeCustomerId }, { onConflict: "id" })
+    .select("stripe_customer_id")
+    .single();
+  if (error) throw error;
+  return (data as { stripe_customer_id: string | null }).stripe_customer_id ?? stripeCustomerId;
+}
+
+export interface SubscriptionCheckoutInput {
+  userId: string;
+  planTier: string;
+  stripeCheckoutSessionId: string;
+  status?: string;
+  stripeSubscriptionId?: string | null;
+  currentPeriodEnd?: string | null;
+}
+
+export async function upsertSubscriptionCheckout(
+  client: SupabaseClient,
+  input: SubscriptionCheckoutInput
+): Promise<SubscriptionRecord> {
+  const payload: Partial<DatabaseSubscriptionRow> & {
+    user_id: string;
+    stripe_checkout_session_id: string;
+  } = {
+    user_id: input.userId,
+    plan_tier: input.planTier.toLowerCase(),
+    status: (input.status ?? "pending").toLowerCase(),
+    stripe_checkout_session_id: input.stripeCheckoutSessionId,
+    stripe_subscription_id: input.stripeSubscriptionId ?? null,
+    current_period_end: input.currentPeriodEnd ?? null,
+  };
+
+  const { data, error } = await client
+    .from("subscriptions")
+    .upsert(payload, { onConflict: "stripe_checkout_session_id" })
+    .select("*")
+    .single();
+  if (error) throw error;
+  return buildSubscriptionRecord(data as DatabaseSubscriptionRow);
+}
+
+export interface SubscriptionStatusUpdateInput {
+  stripeCheckoutSessionId?: string | null;
+  stripeSubscriptionId?: string | null;
+  status?: string | null;
+  currentPeriodEnd?: string | null;
+  planTier?: string | null;
+}
+
+export async function updateSubscriptionStatusRecord(
+  client: SupabaseClient,
+  input: SubscriptionStatusUpdateInput
+): Promise<SubscriptionRecord | null> {
+  const updatePayload: Partial<DatabaseSubscriptionRow> = {};
+  if (input.status !== undefined && input.status !== null) {
+    updatePayload.status = input.status.toLowerCase();
+  }
+  if (input.currentPeriodEnd !== undefined) {
+    updatePayload.current_period_end = input.currentPeriodEnd;
+  }
+  if (input.planTier) {
+    updatePayload.plan_tier = input.planTier.toLowerCase();
+  }
+  if (input.stripeSubscriptionId) {
+    updatePayload.stripe_subscription_id = input.stripeSubscriptionId;
+  }
+  if (Object.keys(updatePayload).length === 0) {
+    return null;
+  }
+
+  let query = client.from("subscriptions").update(updatePayload);
+  if (input.stripeCheckoutSessionId) {
+    query = query.eq("stripe_checkout_session_id", input.stripeCheckoutSessionId);
+  }
+  if (input.stripeSubscriptionId) {
+    query = query.eq("stripe_subscription_id", input.stripeSubscriptionId);
+  }
+  const { data, error } = await query.select("*").maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  return buildSubscriptionRecord(data as DatabaseSubscriptionRow);
+}
+
+export async function getSubscriptionByCheckoutSessionId(
+  client: SupabaseClient,
+  sessionId: string
+): Promise<SubscriptionRecord | null> {
+  const { data, error } = await client
+    .from("subscriptions")
+    .select("*")
+    .eq("stripe_checkout_session_id", sessionId)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  return buildSubscriptionRecord(data as DatabaseSubscriptionRow);
+}
+
+export async function getSubscriptionByStripeSubscriptionId(
+  client: SupabaseClient,
+  subscriptionId: string
+): Promise<SubscriptionRecord | null> {
+  const { data, error } = await client
+    .from("subscriptions")
+    .select("*")
+    .eq("stripe_subscription_id", subscriptionId)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  return buildSubscriptionRecord(data as DatabaseSubscriptionRow);
+}
+
+export interface PaymentInsertInput {
+  contractorId: string;
+  proposalId: string | null;
+  stripePaymentIntentId: string | null;
+  amount: number;
+  type: PaymentType;
+  status: string;
+}
+
+export async function recordStripePayment(
+  client: SupabaseClient,
+  input: PaymentInsertInput
+): Promise<PaymentRecord> {
+  const payload: Partial<DatabasePaymentRow> & { contractor_id: string } = {
+    contractor_id: input.contractorId,
+    proposal_id: input.proposalId,
+    stripe_payment_intent_id: input.stripePaymentIntentId ?? null,
+    amount: input.amount,
+    type: input.type,
+    status: input.status,
+  };
+
+  const { data, error } = await client
+    .from("payments")
+    .insert(payload)
+    .select("*")
+    .single();
+  if (error) throw error;
+  return buildPaymentRecord(data as DatabasePaymentRow);
+}
+
+export interface ContractorStripeAccountInput {
+  userId: string;
+  accountId: string;
+  status?: string | null;
+}
+
+export async function upsertContractorStripeAccount(
+  client: SupabaseClient,
+  input: ContractorStripeAccountInput
+): Promise<ContractorProfile> {
+  const payload: Partial<DatabaseContractorProfileRow> & { user_id: string } = {
+    user_id: input.userId,
+    stripe_account_id: input.accountId,
+    stripe_account_status: input.status ?? null,
+    updated_at: new Date().toISOString(),
+  };
+
+  const { data, error } = await client
+    .from("contractor_profiles")
+    .upsert(payload, { onConflict: "user_id" })
+    .select("*")
+    .single();
+  if (error) throw error;
+  return buildContractorProfileRecord(data as DatabaseContractorProfileRow);
+}
+
+export interface ContractorStripeStatusUpdateInput {
+  accountId: string;
+  status?: string | null;
+}
+
+export async function updateContractorStripeStatusByAccountId(
+  client: SupabaseClient,
+  input: ContractorStripeStatusUpdateInput
+): Promise<ContractorProfile | null> {
+  const { data, error } = await client
+    .from("contractor_profiles")
+    .update({
+      stripe_account_status: input.status ?? null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("stripe_account_id", input.accountId)
+    .select("*")
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  return buildContractorProfileRecord(data as DatabaseContractorProfileRow);
 }
 
 export const schemaPath = new URL("../schema.sql", import.meta.url).pathname;

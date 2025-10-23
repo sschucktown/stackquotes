@@ -249,7 +249,10 @@ const onAccept = async () => {
       return;
     }
     const updated = response.data.data;
-    const meta = response.data.meta ?? {};
+    const meta = (response.data.meta ?? {}) as {
+      depositAmount?: number | null;
+      paymentLinkUrl?: string | null;
+    };
     const current = proposalData.value;
     const acceptedDepositAmount = meta.depositAmount ?? updated.depositAmount ?? null;
     proposalData.value = {

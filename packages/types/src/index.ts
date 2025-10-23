@@ -164,6 +164,8 @@ export interface ContractorProfile {
   logoUrl?: string | null;
   publicSlug?: string | null;
   tradeSeeded?: boolean | null;
+  stripeAccountId?: string | null;
+  stripeAccountStatus?: string | null;
   createdAt: string;
   updatedAt?: string;
 }
@@ -198,5 +200,44 @@ export interface ProposalSummaryMetrics {
   acceptanceRate: number;
   averageValue: number;
   revenueYtd: number;
+}
+
+export type SubscriptionPlanTier = "starter" | "pro" | "team";
+
+export type SubscriptionStatus =
+  | "trialing"
+  | "active"
+  | "past_due"
+  | "incomplete"
+  | "canceled"
+  | "incomplete_expired"
+  | "unpaid"
+  | "paused"
+  | "pending";
+
+export interface SubscriptionRecord {
+  id: UUID;
+  userId: UUID;
+  stripeSubscriptionId?: string | null;
+  stripeCheckoutSessionId?: string | null;
+  planTier: SubscriptionPlanTier;
+  status: SubscriptionStatus;
+  currentPeriodEnd?: string | null;
+  createdAt: string;
+  updatedAt?: string | null;
+}
+
+export type PaymentType = "deposit" | "upsell" | "installment";
+
+export interface PaymentRecord {
+  id: UUID;
+  contractorId: UUID;
+  proposalId: UUID | null;
+  stripePaymentIntentId?: string | null;
+  amount: number;
+  type: PaymentType;
+  status: string;
+  createdAt: string;
+  updatedAt?: string | null;
 }
 

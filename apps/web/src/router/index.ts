@@ -28,6 +28,12 @@ const router = createRouter({
       meta: { public: true, allowAuthenticated: true },
     },
     {
+      path: "/pricing",
+      name: "pricing",
+      component: () => import("@/pages/pricing.vue"),
+      meta: { public: true, allowAuthenticated: true },
+    },
+    {
       path: "/share/estimate/:token",
       name: "public-estimate-approval",
       component: () => import("@/pages/public/EstimateApprovalPage.vue"),
