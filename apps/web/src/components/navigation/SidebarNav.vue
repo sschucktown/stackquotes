@@ -31,6 +31,12 @@
           variant="desktop"
           @click="navigate(item)"
         />
+        <NavItem
+          label="Logout"
+          :icon="LogOut"
+          variant="desktop"
+          @click="handleLogout"
+        />
       </nav>
 
       <button
@@ -59,16 +65,20 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
 import { useRoute, useRouter, RouterLink } from "vue-router";
-import { Menu, ChevronLeft } from "lucide-vue-next";
+import { Menu, ChevronLeft, LogOut } from "lucide-vue-next";
 import NavItem from "./NavItem.vue";
 import { NAV_ITEMS, type NavItemConfig } from "./navItems";
 import logo from "@/assets/logo/stackquotes-logo.svg";
 import { useSettingsStore } from "@modules/quickquote/stores/settingsStore";
+import { useAuth } from "@/lib/auth";
+import { useDemoStore } from "@/stores/demoStore";
 
 const isOpen = ref(true);
 const router = useRouter();
 const route = useRoute();
 const settingsStore = useSettingsStore();
+const { signOut } = useAuth();
+const demoStore = useDemoStore();
 
 onMounted(() => {
   if (!settingsStore.data && !settingsStore.loading) {
@@ -88,5 +98,11 @@ const navigate = (item: NavItemConfig) => {
   if (!isActive(item)) {
     router.push({ name: item.name });
   }
+};
+
+const handleLogout = async () => {
+  demoStore.deactivate();
+  await signOut();
+  router.push({ name: "login" });
 };
 </script>
