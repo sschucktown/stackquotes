@@ -6,6 +6,7 @@ import { registerCreateOneTimeRoute } from "./create-onetime.js";
 import { registerCreateInstallmentPlanRoute } from "./create-installment-plan.js";
 import { registerStripeWebhookRoute } from "./webhook.js";
 import { registerCheckoutRoute } from "./create-checkout.js";
+import { registerCreateSubscriptionTestRoute } from "./create-subscription-test.js";
 
 export const stripeRouter = new Hono();
 
@@ -16,5 +17,6 @@ registerCreatePaymentLinkRoute(stripeRouter);
 registerCreateOneTimeRoute(stripeRouter);
 registerCreateInstallmentPlanRoute(stripeRouter);
 registerStripeWebhookRoute(stripeRouter);
+registerCreateSubscriptionTestRoute(stripeRouter);
 
 export default stripeRouter;

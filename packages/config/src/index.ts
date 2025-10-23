@@ -13,6 +13,8 @@ const serverSchema = z.object({
   STRIPE_PRODUCT_ID: z.string().optional(),
   STRIPE_PUBLISHABLE_KEY: z.string().optional(),
   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().optional(),
+  PRO_PRICE_ID: z.string().optional(),
+  FORCE_REQUIRE_CC_FOR_TEST: z.string().optional(),
   BASE_APP_URL: z.string().url().optional(),
   BASE_API_URL: z.string().url().optional(),
   EMAIL_TRACKING_BASE_URL: z.string().url().optional(),
@@ -25,6 +27,7 @@ const clientSchema = z.object({
   VITE_API_BASE_URL: z.string().url().optional(),
   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().optional(),
   VITE_STRIPE_PUBLISHABLE_KEY: z.string().optional(),
+  NEXT_PUBLIC_FORCE_REQUIRE_CC_FOR_TEST: z.string().optional(),
 });
 
 export type ServerConfig = z.infer<typeof serverSchema>;

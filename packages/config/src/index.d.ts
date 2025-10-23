@@ -11,6 +11,8 @@ declare const serverSchema: z.ZodObject<{
     STRIPE_PRODUCT_ID: z.ZodOptional<z.ZodString>;
     STRIPE_PUBLISHABLE_KEY: z.ZodOptional<z.ZodString>;
     NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.ZodOptional<z.ZodString>;
+    PRO_PRICE_ID: z.ZodOptional<z.ZodString>;
+    FORCE_REQUIRE_CC_FOR_TEST: z.ZodOptional<z.ZodString>;
     BASE_APP_URL: z.ZodOptional<z.ZodString>;
     BASE_API_URL: z.ZodOptional<z.ZodString>;
     EMAIL_TRACKING_BASE_URL: z.ZodOptional<z.ZodString>;
@@ -25,6 +27,8 @@ declare const serverSchema: z.ZodObject<{
     STRIPE_PRODUCT_ID?: string | undefined;
     STRIPE_PUBLISHABLE_KEY?: string | undefined;
     NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY?: string | undefined;
+    PRO_PRICE_ID?: string | undefined;
+    FORCE_REQUIRE_CC_FOR_TEST?: string | undefined;
     BASE_APP_URL?: string | undefined;
     BASE_API_URL?: string | undefined;
     EMAIL_TRACKING_BASE_URL?: string | undefined;
@@ -39,6 +43,8 @@ declare const serverSchema: z.ZodObject<{
     STRIPE_PRODUCT_ID?: string | undefined;
     STRIPE_PUBLISHABLE_KEY?: string | undefined;
     NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY?: string | undefined;
+    PRO_PRICE_ID?: string | undefined;
+    FORCE_REQUIRE_CC_FOR_TEST?: string | undefined;
     BASE_APP_URL?: string | undefined;
     BASE_API_URL?: string | undefined;
     EMAIL_TRACKING_BASE_URL?: string | undefined;
@@ -50,6 +56,7 @@ declare const clientSchema: z.ZodObject<{
     VITE_API_BASE_URL: z.ZodOptional<z.ZodString>;
     NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.ZodOptional<z.ZodString>;
     VITE_STRIPE_PUBLISHABLE_KEY: z.ZodOptional<z.ZodString>;
+    NEXT_PUBLIC_FORCE_REQUIRE_CC_FOR_TEST: z.ZodOptional<z.ZodString>;
 }, "strip", z.ZodTypeAny, {
     VITE_SUPABASE_URL: string;
     VITE_SUPABASE_ANON_KEY: string;
@@ -57,6 +64,7 @@ declare const clientSchema: z.ZodObject<{
     VITE_API_BASE_URL?: string | undefined;
     NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY?: string | undefined;
     VITE_STRIPE_PUBLISHABLE_KEY?: string | undefined;
+    NEXT_PUBLIC_FORCE_REQUIRE_CC_FOR_TEST?: string | undefined;
 }, {
     VITE_SUPABASE_URL: string;
     VITE_SUPABASE_ANON_KEY: string;
@@ -64,6 +72,7 @@ declare const clientSchema: z.ZodObject<{
     VITE_API_BASE_URL?: string | undefined;
     NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY?: string | undefined;
     VITE_STRIPE_PUBLISHABLE_KEY?: string | undefined;
+    NEXT_PUBLIC_FORCE_REQUIRE_CC_FOR_TEST?: string | undefined;
 }>;
 export type ServerConfig = z.infer<typeof serverSchema>;
 export type ClientConfig = z.infer<typeof clientSchema>;
@@ -85,6 +94,8 @@ export declare const config: {
         STRIPE_PRODUCT_ID?: string | undefined;
         STRIPE_PUBLISHABLE_KEY?: string | undefined;
         NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY?: string | undefined;
+        PRO_PRICE_ID?: string | undefined;
+        FORCE_REQUIRE_CC_FOR_TEST?: string | undefined;
         BASE_APP_URL?: string | undefined;
         BASE_API_URL?: string | undefined;
         EMAIL_TRACKING_BASE_URL?: string | undefined;
@@ -96,6 +107,7 @@ export declare const config: {
         VITE_API_BASE_URL?: string | undefined;
         NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY?: string | undefined;
         VITE_STRIPE_PUBLISHABLE_KEY?: string | undefined;
+        NEXT_PUBLIC_FORCE_REQUIRE_CC_FOR_TEST?: string | undefined;
     };
 };
 export { STRIPE_PRICES, PRICE_ID_TO_PLAN, StripePriceKey } from "./stripePrices.js";

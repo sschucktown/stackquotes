@@ -30,6 +30,52 @@ const planFromPriceId = (priceId: unknown): SubscriptionPlanTier | null => {
   return mapped ? (mapped as SubscriptionPlanTier) : null;
 };
 
+const updateProfile = async (
+  supabase: ReturnType<typeof getServiceClient>,
+  userId: string | null,
+  updates: Record<string, unknown>
+) => {
+  if (!userId) return;
+  const { error } = await supabase.from("profiles").update(updates).eq("id", userId);
+  if (error) {
+    console.error("[stripe] failed to update profile", updates, error);
+  }
+};
+
+const findProfileIdByCustomer = async (
+  supabase: ReturnType<typeof getServiceClient>,
+  customerId: string | null | undefined
+): Promise<string | null> => {
+  if (!customerId) return null;
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("stripe_customer_id", customerId)
+    .maybeSingle();
+  if (error) {
+    console.error("[stripe] failed to find profile by customer id", customerId, error);
+    return null;
+  }
+  return (data as { id: string } | null)?.id ?? null;
+};
+
+const findProfileIdBySubscription = async (
+  supabase: ReturnType<typeof getServiceClient>,
+  subscriptionId: string | null | undefined
+): Promise<string | null> => {
+  if (!subscriptionId) return null;
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("stripe_subscription_id", subscriptionId)
+    .maybeSingle();
+  if (error) {
+    console.error("[stripe] failed to find profile by subscription id", subscriptionId, error);
+    return null;
+  }
+  return (data as { id: string } | null)?.id ?? null;
+};
+
 const toIso = (value: number | null | undefined): string | undefined => {
   if (!value) return undefined;
   return new Date(value * 1000).toISOString();
@@ -72,6 +118,7 @@ export const registerStripeWebhookRoute = (router: Hono) => {
           const subscriptionId = resolveSubscriptionId(session.subscription);
           const record = await getSubscriptionByCheckoutSessionId(supabase, session.id);
           const userId = record?.userId ?? (session.metadata?.userId as string | undefined) ?? null;
+          const customerId = typeof session.customer === "string" ? session.customer : null;
 
           let currentPeriodEnd: string | undefined;
           let status = session.status ?? "active";
@@ -102,12 +149,22 @@ export const registerStripeWebhookRoute = (router: Hono) => {
             parsePlanTier(updatedRecord?.planTier ?? null) ?? parsePlanTier(planTier ?? null);
 
           if (userId) {
-            if (typeof session.customer === "string") {
-              await upsertStripeCustomerId(supabase, userId, session.customer);
+            if (customerId) {
+              await upsertStripeCustomerId(supabase, userId, customerId);
             }
             if (tierToPersist) {
               await setUserSubscriptionTier(supabase, userId, tierToPersist);
             }
+            const profileUpdates: Record<string, unknown> = {
+              stripe_subscription_id: subscriptionId ?? null,
+            };
+            if (customerId) {
+              profileUpdates.stripe_customer_id = customerId;
+            }
+            if (tierToPersist) {
+              profileUpdates.subscription_tier = tierToPersist;
+            }
+            await updateProfile(supabase, userId, profileUpdates);
           }
           break;
         }
@@ -122,11 +179,56 @@ export const registerStripeWebhookRoute = (router: Hono) => {
               currentPeriodEnd: toIso(invoice.lines?.data?.[0]?.period?.end ?? undefined),
               planTier: planFromPriceId(priceId) ?? null,
             });
+            const invoiceCustomerId =
+              typeof invoice.customer === "string" ? invoice.customer : invoice.customer?.id ?? null;
+            let subscriptionUserId = updatedRecord?.userId ?? null;
+            if (!subscriptionUserId) {
+              subscriptionUserId = await findProfileIdByCustomer(supabase, invoiceCustomerId);
+            }
             const tierToPersist =
               parsePlanTier(updatedRecord?.planTier ?? null) ?? planFromPriceId(priceId);
-            if (updatedRecord?.userId && tierToPersist) {
-              await setUserSubscriptionTier(supabase, updatedRecord.userId, tierToPersist);
+            if (subscriptionUserId && tierToPersist) {
+              await setUserSubscriptionTier(supabase, subscriptionUserId, tierToPersist);
             }
+            if (subscriptionUserId) {
+              const profileUpdates: Record<string, unknown> = {
+                stripe_subscription_id:
+                  typeof invoice.subscription === "string"
+                    ? invoice.subscription
+                    : invoice.subscription.id,
+              };
+              if (invoiceCustomerId) {
+                profileUpdates.stripe_customer_id = invoiceCustomerId;
+              }
+              if (tierToPersist) {
+                profileUpdates.subscription_tier = tierToPersist;
+              }
+              await updateProfile(supabase, subscriptionUserId, profileUpdates);
+            }
+          }
+          break;
+        }
+        case "customer.subscription.deleted": {
+          const subscription = event.data.object as Stripe.Subscription;
+          const subscriptionId = subscription.id;
+          const customerId =
+            typeof subscription.customer === "string"
+              ? subscription.customer
+              : subscription.customer?.id ?? null;
+          let subscriptionUserId =
+            (subscription.metadata?.user_id as string | undefined) ?? null;
+          if (!subscriptionUserId) {
+            subscriptionUserId = await findProfileIdBySubscription(supabase, subscriptionId);
+          }
+          if (!subscriptionUserId) {
+            subscriptionUserId = await findProfileIdByCustomer(supabase, customerId);
+          }
+          if (subscriptionUserId) {
+            await setUserSubscriptionTier(supabase, subscriptionUserId, "free");
+            await updateProfile(supabase, subscriptionUserId, {
+              subscription_tier: "free",
+              stripe_subscription_id: null,
+            });
           }
           break;
         }
