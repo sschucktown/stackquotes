@@ -8,8 +8,27 @@ import {
   updateContractorStripeStatusByAccountId,
   updateSubscriptionStatusRecord,
   upsertStripeCustomerId,
+  setUserSubscriptionTier,
 } from "@stackquotes/db";
-import type { PaymentType } from "@stackquotes/types";
+import type { PaymentType, SubscriptionPlanTier } from "@stackquotes/types";
+import { PRICE_ID_TO_PLAN } from "@stackquotes/config";
+
+const PLAN_TIER_VALUES: SubscriptionPlanTier[] = ["free", "starter", "pro", "team"];
+const PLAN_TIER_SET = new Set<SubscriptionPlanTier>(PLAN_TIER_VALUES);
+
+const parsePlanTier = (value: unknown): SubscriptionPlanTier | null => {
+  if (typeof value !== "string") return null;
+  const normalised = value.toLowerCase();
+  return PLAN_TIER_SET.has(normalised as SubscriptionPlanTier)
+    ? (normalised as SubscriptionPlanTier)
+    : null;
+};
+
+const planFromPriceId = (priceId: unknown): SubscriptionPlanTier | null => {
+  if (typeof priceId !== "string") return null;
+  const mapped = PRICE_ID_TO_PLAN[priceId];
+  return mapped ? (mapped as SubscriptionPlanTier) : null;
+};
 
 const toIso = (value: number | null | undefined): string | undefined => {
   if (!value) return undefined;
@@ -56,35 +75,58 @@ export const registerStripeWebhookRoute = (router: Hono) => {
 
           let currentPeriodEnd: string | undefined;
           let status = session.status ?? "active";
+          let planTier =
+            parsePlanTier(session.metadata?.planTier ?? session.metadata?.plan_tier) ??
+            planFromPriceId(session.metadata?.priceId ?? null) ??
+            parsePlanTier(record?.planTier ?? null);
 
           if (subscriptionId) {
             const subscription = await stripe.subscriptions.retrieve(subscriptionId);
             status = subscription.status ?? status;
             currentPeriodEnd = toIso(subscription.current_period_end ?? undefined);
+            if (!planTier) {
+              const subscriptionPrice = subscription.items?.data?.[0]?.price?.id ?? null;
+              planTier = planFromPriceId(subscriptionPrice);
+            }
           }
 
-          await updateSubscriptionStatusRecord(supabase, {
+          const updatedRecord = await updateSubscriptionStatusRecord(supabase, {
             stripeCheckoutSessionId: session.id,
             stripeSubscriptionId: subscriptionId ?? undefined,
             status,
             currentPeriodEnd,
-            planTier: (session.metadata?.planTier ?? session.metadata?.plan_tier ?? record?.planTier) as string | null,
+            planTier: planTier ?? record?.planTier ?? null,
           });
 
-          if (userId && typeof session.customer === "string") {
-            await upsertStripeCustomerId(supabase, userId, session.customer);
+          const tierToPersist =
+            parsePlanTier(updatedRecord?.planTier ?? null) ?? parsePlanTier(planTier ?? null);
+
+          if (userId) {
+            if (typeof session.customer === "string") {
+              await upsertStripeCustomerId(supabase, userId, session.customer);
+            }
+            if (tierToPersist) {
+              await setUserSubscriptionTier(supabase, userId, tierToPersist);
+            }
           }
           break;
         }
         case "invoice.paid": {
           const invoice = event.data.object as Stripe.Invoice;
           if (invoice.subscription) {
-            await updateSubscriptionStatusRecord(supabase, {
+            const priceId = invoice.lines?.data?.[0]?.price?.id ?? null;
+            const updatedRecord = await updateSubscriptionStatusRecord(supabase, {
               stripeSubscriptionId:
                 typeof invoice.subscription === "string" ? invoice.subscription : invoice.subscription.id,
               status: invoice.status ?? "paid",
               currentPeriodEnd: toIso(invoice.lines?.data?.[0]?.period?.end ?? undefined),
+              planTier: planFromPriceId(priceId) ?? null,
             });
+            const tierToPersist =
+              parsePlanTier(updatedRecord?.planTier ?? null) ?? planFromPriceId(priceId);
+            if (updatedRecord?.userId && tierToPersist) {
+              await setUserSubscriptionTier(supabase, updatedRecord.userId, tierToPersist);
+            }
           }
           break;
         }

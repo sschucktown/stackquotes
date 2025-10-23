@@ -8,7 +8,7 @@
         </h1>
         <p class="mt-5 text-base text-white/70 sm:text-lg">
           Every plan includes SmartProposal, PayLink deposits, ProfitPulse reporting previews, and ScopeForge beta milestones.
-          Upgrade or downgrade anytime—billing is handled through secure Stripe Checkout.
+          Upgrade or downgrade anytime — billing is handled through secure Stripe Checkout.
         </p>
       </header>
 
@@ -24,14 +24,20 @@
           <div class="space-y-2">
             <div class="flex items-center justify-between">
               <h2 class="text-2xl font-semibold">{{ plan.name }}</h2>
-              <span v-if="plan.id === featuredPlan" class="rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-semibold uppercase text-emerald-200">
+              <span
+                v-if="plan.id === featuredPlan"
+                class="rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-semibold uppercase text-emerald-200"
+              >
                 Most popular
               </span>
             </div>
             <p class="text-sm text-white/70">{{ plan.tagline }}</p>
             <div class="mt-6 flex items-baseline gap-1">
-              <span class="text-4xl font-bold tracking-tight">${{ plan.price }}</span>
-              <span class="text-sm text-white/60">/month</span>
+              <span class="text-4xl font-bold tracking-tight">
+                <template v-if="plan.price === 0">Free</template>
+                <template v-else>\${{ plan.price }}</template>
+              </span>
+              <span v-if="plan.price" class="text-sm text-white/60">/month</span>
             </div>
           </div>
 
@@ -45,18 +51,25 @@
           <div class="mt-8">
             <button
               type="button"
-              class="w-full rounded-xl bg-emerald-500 px-4 py-3 text-center text-sm font-semibold text-slate-950 transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-60"
-              :disabled="loadingPlan === plan.id"
-              @click="startTrial(plan)"
+              class="w-full rounded-xl px-4 py-3 text-center text-sm font-semibold transition"
+              :class="[
+                plan.id === 'team'
+                  ? 'cursor-not-allowed bg-white/10 text-white/50'
+                  : 'bg-emerald-500 text-slate-950 hover:bg-emerald-400',
+                loadingPlan === plan.id ? 'cursor-wait opacity-70' : '',
+              ]"
+              :disabled="plan.id === 'team' || loadingPlan === plan.id"
+              @click="handlePlanClick(plan)"
             >
-              <span v-if="loadingPlan === plan.id">Redirecting to Stripe…</span>
-              <span v-else>Start Free Trial</span>
+              <span v-if="plan.id === 'team'">Coming soon</span>
+              <span v-else-if="loadingPlan === plan.id">Redirecting to Stripe…</span>
+              <span v-else>{{ plan.ctaLabel }}</span>
             </button>
             <p v-if="activeErrorPlan === plan.id && errorMessage" class="mt-3 text-sm text-red-400">
               {{ errorMessage }}
             </p>
             <p v-else class="mt-3 text-xs text-white/60">
-              14-day trial • Cancel anytime via Stripe Customer Portal.
+              {{ plan.id === "free" ? "No credit card required." : "Cancel anytime via Stripe Customer Portal." }}
             </p>
           </div>
         </article>
@@ -66,7 +79,7 @@
         <p>
           Stripe test mode is active in local development. Use card
           <code class="rounded bg-white/10 px-2 py-0.5 text-xs text-white/85">4242 4242 4242 4242</code>
-          with any future expiration and CVC to simulate payments. Supabase records are updated after the webhook acknowledgement.
+          with any future expiration and CVC to simulate payments. Supabase records update after webhook acknowledgement.
         </p>
         <p class="mt-4">
           Contractor payouts run through Stripe Connect Express accounts. Platform fees are applied automatically (3%) for PayLink deposits.
@@ -80,9 +93,10 @@
 import { ref, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useAuth } from "@/lib/auth";
-import { apiFetch } from "@/lib/http";
+import { startCheckout } from "@/lib/stripeCheckout";
+import { STRIPE_PRICES } from "@/config/stripe";
 
-type PlanTier = "starter" | "pro" | "team";
+type PlanTier = "free" | "pro" | "team";
 
 interface Plan {
   id: PlanTier;
@@ -90,48 +104,51 @@ interface Plan {
   price: number;
   tagline: string;
   features: string[];
+  ctaLabel: string;
 }
 
 const plans: Plan[] = [
   {
-    id: "starter",
-    name: "Starter",
-    price: 49,
-    tagline: "Solo contractors activating SmartProposal workflows.",
+    id: "free",
+    name: "Free",
+    price: 0,
+    tagline: "Try SmartProposal and PayLink core workflows free forever.",
     features: [
       "SmartProposal editor + client approvals",
-      "PayLink deposits with 3% platform fee",
-      "ProfitPulse snapshots (beta)",
+      "PayLink deposits (3% platform fee)",
       "ScopeForge template library preview",
-      "Email analytics & proposal tracking",
+      "Proposal activity tracking dashboard",
     ],
+    ctaLabel: "Start Free",
   },
   {
     id: "pro",
     name: "Pro",
-    price: 99,
-    tagline: "Growing teams automating payments and reporting.",
+    price: 49,
+    tagline: "Unlock premium proposals, profit insights, and faster payouts.",
     features: [
-      "Everything in Starter",
+      "Everything in Free",
       "Unlimited SmartProposal variants & add-ons",
       "PayLink Smart change orders & upsells",
-      "ProfitPulse performance dashboards",
+      "ProfitPulse performance dashboards & export",
       "ScopeForge milestone scheduling (beta)",
       "Stripe Connect payouts with ledger sync",
     ],
+    ctaLabel: "Upgrade to Pro",
   },
   {
     id: "team",
     name: "Team",
-    price: 149,
-    tagline: "Multi-crew operations scaling proposals & payouts.",
+    price: 99,
+    tagline: "Advanced collaboration, accounting sync, and success support.",
     features: [
       "Everything in Pro",
       "Team workspaces & role-based access",
-      "Advanced ScopeForge workflows & templates",
+      "QuickBooks + Gusto integrations",
       "Priority payouts & cash-flow insights",
       "Dedicated success manager & roadmap previews",
     ],
+    ctaLabel: "Coming soon",
   },
 ];
 
@@ -147,14 +164,15 @@ const featuredPlan = ref<PlanTier>("pro");
 watch(
   () => route.query.plan,
   (value) => {
-    if (typeof value === "string" && (value === "starter" || value === "pro" || value === "team")) {
+    if (typeof value === "string" && (value === "free" || value === "pro" || value === "team")) {
       featuredPlan.value = value as PlanTier;
     }
   },
   { immediate: true }
 );
 
-const startTrial = async (plan: Plan) => {
+const handlePlanClick = async (plan: Plan) => {
+  if (plan.id === "team") return;
   errorMessage.value = null;
   activeErrorPlan.value = null;
 
@@ -164,25 +182,31 @@ const startTrial = async (plan: Plan) => {
     return;
   }
 
-  loadingPlan.value = plan.id;
-  const response = await apiFetch<{ url: string; id: string }>("/stripe/create-checkout-session", {
-    method: "POST",
-    body: JSON.stringify({ plan_tier: plan.id }),
-  });
-  loadingPlan.value = null;
-
-  if (response.error || !response.data?.url) {
-    activeErrorPlan.value = plan.id;
-    errorMessage.value = response.error ?? "Unable to start Stripe checkout. Please try again.";
+  if (plan.id === "free") {
+    await router.push({ name: "register", query: { plan: plan.id } });
     return;
   }
 
-  window.location.href = response.data.url;
+  if (plan.id === "pro") {
+    loadingPlan.value = plan.id;
+    try {
+      await startCheckout(STRIPE_PRICES.PRO);
+    } catch (error) {
+      console.error(error);
+      activeErrorPlan.value = plan.id;
+      errorMessage.value =
+        error instanceof Error ? error.message : "Unable to start Stripe checkout. Please try again.";
+    } finally {
+      loadingPlan.value = null;
+    }
+  }
 };
 </script>
 
 <style scoped>
 code {
-  font-family: "Fira Code", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-family: "Fira Code", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+    monospace;
 }
 </style>
+

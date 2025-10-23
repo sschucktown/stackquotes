@@ -17,8 +17,8 @@
             Close more jobs with 3-option quotes your clients can accept instantly.
           </h1>
           <p class="max-w-xl text-base text-slate-200 sm:text-lg">
-            StackQuotes helps contractors send polished Good/Better/Best proposals, capture signatures, and get paid
-            faster. Everything is wired into your workflow ‚Äî from instant deposits to automated follow-up.
+            StackQuotes helps contractors send polished Good/Better/Best proposals, capture signatures, and get paid faster.
+            Everything is wired into your workflow ó from instant deposits to automated follow-up.
           </p>
           <div class="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:gap-5">
             <button
@@ -95,6 +95,40 @@
           </div>
         </div>
       </header>
+
+      <section
+        v-if="pricingPreview?.length"
+        class="mx-auto max-w-5xl px-6 pb-20 md:px-10 lg:pb-24"
+      >
+        <div class="rounded-[2.5rem] border border-white/10 bg-white/[0.05] p-10 shadow-[0_25px_80px_-40px_rgba(6,182,212,0.7)] backdrop-blur">
+          <p class="text-xs font-semibold uppercase tracking-[0.4em] text-cyan-200/70">Pricing preview</p>
+          <div class="mt-6 grid gap-6 md:grid-cols-3">
+            <article
+              v-for="plan in pricingPreview"
+              :key="plan.id"
+              class="flex flex-col gap-4 rounded-2xl border border-white/10 bg-white/5 p-6"
+            >
+              <header>
+                <p class="text-sm font-semibold uppercase tracking-[0.3em] text-cyan-200/70">{{ plan.label }}</p>
+                <p class="mt-2 text-lg font-semibold text-white">{{ plan.title }}</p>
+                <p class="mt-2 text-sm text-slate-200/80">{{ plan.description }}</p>
+              </header>
+              <button
+                type="button"
+                class="rounded-xl px-4 py-2 text-sm font-semibold transition"
+                :class="[
+                  plan.disabled ? 'cursor-not-allowed bg-white/10 text-white/50' : 'bg-cyan-400 text-slate-900 hover:bg-cyan-300',
+                ]"
+                :disabled="plan.disabled"
+                @click="plan.onClick?.()"
+              >
+                {{ plan.ctaLabel }}
+              </button>
+            </article>
+          </div>
+        </div>
+      </section>
+
       <section class="mx-auto max-w-6xl px-6 pb-20 md:px-10 lg:pb-28">
         <div class="grid gap-8 lg:grid-cols-3">
           <article
@@ -108,11 +142,7 @@
             <h3 class="mt-6 text-xl font-semibold text-white">{{ feature.title }}</h3>
             <p class="mt-3 text-sm text-slate-300/90">{{ feature.description }}</p>
             <ul v-if="feature.points?.length" class="mt-4 space-y-2 text-sm text-slate-300/80">
-              <li
-                v-for="point in feature.points"
-                :key="point"
-                class="flex items-start gap-2"
-              >
+              <li v-for="point in feature.points" :key="point" class="flex items-start gap-2">
                 <span class="mt-1 h-1.5 w-1.5 rounded-full bg-cyan-300" />
                 <span>{{ point }}</span>
               </li>
@@ -120,38 +150,38 @@
           </article>
         </div>
       </section>
-      <section class="mx-auto max-w-5xl px-6 pb-24 md:px-10 lg:pb-32">
-        <div class="grid gap-10 rounded-[2.5rem] border border-white/10 bg-white/5 p-10 shadow-2xl backdrop-blur md:grid-cols-[auto,1fr] md:items-center md:gap-12 lg:gap-16">
-          <div class="relative h-32 w-32 overflow-hidden rounded-3xl border border-white/20 bg-white/10 md:h-40 md:w-40">
-            <img
-              :src="founderImage"
-              :alt="founderAlt"
-              class="h-full w-full object-cover"
-            />
-            <div class="absolute inset-0 border border-white/20 mix-blend-overlay" />
+
+      <section class="mx-auto flex max-w-6xl flex-col gap-12 px-6 pb-24 md:px-10 lg:flex-row lg:items-center lg:gap-16">
+        <div class="relative flex-1">
+          <div class="absolute inset-0 rounded-[2.5rem] border border-white/10 bg-gradient-to-br from-white/10 via-white/5 to-transparent" />
+          <img
+            :src="founderImage"
+            :alt="founderAlt"
+            class="relative rounded-[2.5rem] border border-white/10 object-cover"
+          />
+          <div class="absolute inset-0 border border-white/20 mix-blend-overlay" />
+        </div>
+        <div class="space-y-6">
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-[0.4em] text-cyan-200/70">Founder insight</p>
+            <p class="mt-3 text-2xl font-semibold text-white">
+              ìContractors close 3x more jobs when homeowners see clear upgrade paths and can accept on the spot.
+              StackQuotes turns every estimate into a conversion engine.î
+            </p>
           </div>
-          <div class="space-y-6">
+          <div class="flex items-center gap-4 text-sm text-slate-200/90">
             <div>
-              <p class="text-xs font-semibold uppercase tracking-[0.4em] text-cyan-200/70">founder insight</p>
-              <p class="mt-3 text-2xl font-semibold text-white">
-                ‚ÄúContractors close 3x more jobs when homeowners see clear upgrade paths and can accept on the spot.
-                StackQuotes turns every estimate into a conversion engine.‚Äù
-              </p>
+              <p class="font-semibold text-white">Alex Rivers</p>
+              <p class="text-xs uppercase tracking-[0.3em] text-cyan-200/70">Founder, StackQuotes</p>
             </div>
-            <div class="flex items-center gap-4 text-sm text-slate-200/90">
-              <div>
-                <p class="font-semibold text-white">Alex Rivers</p>
-                <p class="text-xs uppercase tracking-[0.3em] text-cyan-200/70">Founder, StackQuotes</p>
-              </div>
-              <div class="hidden h-px flex-1 bg-white/10 sm:block" />
-              <button
-                type="button"
-                class="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-cyan-200/90 transition hover:bg-white/20"
-                @click="founderCta.onClick?.()"
-              >
-                Join the founding cohort
-              </button>
-            </div>
+            <div class="hidden h-px flex-1 bg-white/10 sm:block" />
+            <button
+              type="button"
+              class="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-cyan-200/90 transition hover:bg-white/20"
+              @click="founderCta.onClick?.()"
+            >
+              Join the founding cohort
+            </button>
           </div>
         </div>
       </section>
@@ -203,6 +233,16 @@ interface FeatureConfig {
   icon: FunctionalComponent;
 }
 
+interface PricingPreviewPlan {
+  id: string;
+  label: string;
+  title: string;
+  description: string;
+  ctaLabel: string;
+  disabled?: boolean;
+  onClick?: () => void;
+}
+
 defineProps<{
   primaryCta: CTAConfig;
   founderCta: CTAConfig;
@@ -213,5 +253,6 @@ defineProps<{
   founderAlt: string;
   heroStats: Array<{ label: string; value: string; caption: string }>;
   features: FeatureConfig[];
+  pricingPreview?: PricingPreviewPlan[];
 }>();
 </script>

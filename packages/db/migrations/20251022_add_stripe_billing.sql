@@ -2,6 +2,7 @@
 create table if not exists public.users (
   id uuid primary key references auth.users(id) on delete cascade,
   stripe_customer_id text,
+  subscription_tier text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -50,6 +51,8 @@ create unique index if not exists payments_stripe_payment_intent_id_idx
 alter table public.contractor_profiles
   add column if not exists stripe_account_id text,
   add column if not exists stripe_account_status text;
+alter table public.users
+  add column if not exists subscription_tier text;
 
 create trigger users_set_updated
   before update on public.users

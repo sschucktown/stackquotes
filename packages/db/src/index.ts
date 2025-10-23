@@ -43,13 +43,13 @@ const parseProposalLineItems = (value: Json): ProposalOptionLineItem[] => {
   }));
 };
 
-const KNOWN_PLAN_TIERS = new Set<SubscriptionPlanTier>(["starter", "pro", "team"]);
+const KNOWN_PLAN_TIERS = new Set<SubscriptionPlanTier>(["free", "starter", "pro", "team"]);
 const normalisePlanTier = (value: string | null | undefined): SubscriptionPlanTier => {
-  if (!value) return "starter";
+  if (!value) return "free";
   const normalised = value.toLowerCase();
   return KNOWN_PLAN_TIERS.has(normalised as SubscriptionPlanTier)
     ? (normalised as SubscriptionPlanTier)
-    : "starter";
+    : "free";
 };
 
 const KNOWN_SUBSCRIPTION_STATUSES = new Set<SubscriptionStatus>([
@@ -159,6 +159,7 @@ export interface DatabaseContractorProfileRow {
 export interface DatabaseUserRow {
   id: string;
   stripe_customer_id: string | null;
+  subscription_tier: string | null;
   created_at: string | null;
   updated_at: string | null;
 }
@@ -1661,6 +1662,25 @@ export async function upsertStripeCustomerId(
     .single();
   if (error) throw error;
   return (data as { stripe_customer_id: string | null }).stripe_customer_id ?? stripeCustomerId;
+}
+
+export async function setUserSubscriptionTier(
+  client: SupabaseClient,
+  userId: string,
+  tier: SubscriptionPlanTier | null
+): Promise<SubscriptionPlanTier | null> {
+  const payload: Partial<DatabaseUserRow> & { id: string } = {
+    id: userId,
+    subscription_tier: tier ?? null,
+  };
+  const { data, error } = await client
+    .from("users")
+    .upsert(payload, { onConflict: "id" })
+    .select("subscription_tier")
+    .single();
+  if (error) throw error;
+  const value = (data as { subscription_tier: string | null }).subscription_tier;
+  return value ? normalisePlanTier(value) : null;
 }
 
 export interface SubscriptionCheckoutInput {

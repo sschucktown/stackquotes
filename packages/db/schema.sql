@@ -69,6 +69,7 @@ create table if not exists public.user_settings (
 create table if not exists public.users (
   id uuid primary key references auth.users(id) on delete cascade,
   stripe_customer_id text,
+  subscription_tier text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );

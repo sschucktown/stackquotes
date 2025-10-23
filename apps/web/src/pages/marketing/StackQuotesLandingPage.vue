@@ -9,6 +9,7 @@
     founder-alt="Portrait of the StackQuotes founder"
     :hero-stats="heroStats"
     :features="features"
+    :pricing-preview="pricingPreviewPlans"
   />
 </template>
 
@@ -23,6 +24,8 @@ import { useDemoStore } from "@/stores/demoStore";
 import { trackEvent } from "@/lib/analytics";
 import heroImage from "@/assets/marketing-demo-proposal.png";
 import founderImage from "@/assets/marketing-founder.png";
+import { startCheckout } from "@/lib/stripeCheckout";
+import { STRIPE_PRICES } from "@/config/stripe";
 
 const router = useRouter();
 const { isAuthenticated, user, setStoredRedirect } = useAuth();
@@ -180,6 +183,24 @@ const handlePrimaryClick = async () => {
   await navigateOrReplace({ path: "/signup", query: { plan: "founder" } });
 };
 
+const handleUpgradeClick = async () => {
+  const { authenticated } = authState.value;
+  trackEvent("cta_upgrade_click", {
+    ...baseTrackProps.value,
+    intent: authenticated ? "upgrade-pro" : "signup-upgrade",
+  });
+  if (!authenticated) {
+    setStoredRedirect("/pricing?plan=pro");
+    await navigateOrReplace({ path: "/register", query: { plan: "pro" } });
+    return;
+  }
+  try {
+    await startCheckout(STRIPE_PRICES.PRO);
+  } catch (error) {
+    console.error("[landing] stripe checkout failed", error);
+  }
+};
+
 const demoCta = computed(() => ({
   label: "See a Demo",
   onClick: handleDemoClick,
@@ -192,7 +213,37 @@ const founderCta = computed(() => ({
 }));
 
 const primaryCta = computed(() => ({
-  label: authState.value.authenticated ? "Create Proposal" : "Start Free for 30 Days",
+  label: authState.value.authenticated ? "Create Proposal" : "Try Free — No Credit Card Needed",
   onClick: handlePrimaryClick,
 }));
+
+const pricingPreviewPlans = computed(() => [
+  {
+    id: "free",
+    label: "Free",
+    title: "Free — Try the core tools free forever",
+    description:
+      "Spin up SmartProposals with demo data, send approvals, and collect PayLink deposits with a 3% platform fee.",
+    ctaLabel: "Start Free",
+    onClick: handlePrimaryClick,
+  },
+  {
+    id: "pro",
+    label: "Pro",
+    title: "Pro — $49/mo → Unlock Good/Better/Best & QuickBooks sync",
+    description:
+      "Upgrade for premium proposal templates, ProfitPulse analytics, smart upsells, and Stripe Connect payouts.",
+    ctaLabel: "Upgrade to Pro",
+    onClick: handleUpgradeClick,
+  },
+  {
+    id: "team",
+    label: "Team",
+    title: "Team — Coming soon",
+    description:
+      "Multi-crew workspaces, accounting integrations, and dedicated success coaching are on the 2025 roadmap.",
+    ctaLabel: "Coming soon",
+    disabled: true,
+  },
+]);
 </script>

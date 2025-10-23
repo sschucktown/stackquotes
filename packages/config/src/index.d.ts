@@ -9,6 +9,7 @@ declare const serverSchema: z.ZodObject<{
     STRIPE_WEBHOOK_SECRET: z.ZodOptional<z.ZodString>;
     STRIPE_CONNECT_CLIENT_ID: z.ZodOptional<z.ZodString>;
     STRIPE_PRODUCT_ID: z.ZodOptional<z.ZodString>;
+    STRIPE_PUBLISHABLE_KEY: z.ZodOptional<z.ZodString>;
     NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.ZodOptional<z.ZodString>;
     BASE_APP_URL: z.ZodOptional<z.ZodString>;
     BASE_API_URL: z.ZodOptional<z.ZodString>;
@@ -22,6 +23,7 @@ declare const serverSchema: z.ZodObject<{
     STRIPE_WEBHOOK_SECRET?: string | undefined;
     STRIPE_CONNECT_CLIENT_ID?: string | undefined;
     STRIPE_PRODUCT_ID?: string | undefined;
+    STRIPE_PUBLISHABLE_KEY?: string | undefined;
     NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY?: string | undefined;
     BASE_APP_URL?: string | undefined;
     BASE_API_URL?: string | undefined;
@@ -35,6 +37,7 @@ declare const serverSchema: z.ZodObject<{
     STRIPE_WEBHOOK_SECRET?: string | undefined;
     STRIPE_CONNECT_CLIENT_ID?: string | undefined;
     STRIPE_PRODUCT_ID?: string | undefined;
+    STRIPE_PUBLISHABLE_KEY?: string | undefined;
     NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY?: string | undefined;
     BASE_APP_URL?: string | undefined;
     BASE_API_URL?: string | undefined;
@@ -80,6 +83,7 @@ export declare const config: {
         STRIPE_WEBHOOK_SECRET?: string | undefined;
         STRIPE_CONNECT_CLIENT_ID?: string | undefined;
         STRIPE_PRODUCT_ID?: string | undefined;
+        STRIPE_PUBLISHABLE_KEY?: string | undefined;
         NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY?: string | undefined;
         BASE_APP_URL?: string | undefined;
         BASE_API_URL?: string | undefined;
@@ -94,5 +98,5 @@ export declare const config: {
         VITE_STRIPE_PUBLISHABLE_KEY?: string | undefined;
     };
 };
-export {};
+export { STRIPE_PRICES, PRICE_ID_TO_PLAN, StripePriceKey } from "./stripePrices.js";
 //# sourceMappingURL=index.d.ts.map

@@ -8,6 +8,7 @@ const serverSchema = z.object({
     STRIPE_WEBHOOK_SECRET: z.string().optional(),
     STRIPE_CONNECT_CLIENT_ID: z.string().optional(),
     STRIPE_PRODUCT_ID: z.string().optional(),
+    STRIPE_PUBLISHABLE_KEY: z.string().optional(),
     NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().optional(),
     BASE_APP_URL: z.string().url().optional(),
     BASE_API_URL: z.string().url().optional(),
@@ -49,3 +50,4 @@ export const config = {
     server: (env) => loadServerConfig(env),
     client: (env) => loadClientConfig(env),
 };
+export { STRIPE_PRICES, PRICE_ID_TO_PLAN } from "./stripePrices.js";
