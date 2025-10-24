@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" role="img" aria-labelledby="title">
+  <title id="title">StackQuotes favicon</title>
+  <defs>
+    <linearGradient id="sqIconGradient" x1="20%" y1="15%" x2="80%" y2="85%">
+      <stop offset="0%" stop-color="#1eb4ff" />
+      <stop offset="100%" stop-color="#0284ff" />
+    </linearGradient>
+    <pattern id="sqGrid" width="6" height="6" patternUnits="userSpaceOnUse">
+      <rect width="6" height="6" fill="#ffffff" />
+      <path d="M0 0h6M0 0v6" stroke="#c8e9ff" stroke-width=".4" />
+    </pattern>
+  </defs>
+  <g transform="translate(12 10)">
+    <polygon points="52 0 96 26 96 78 52 104 8 78 8 26" fill="url(#sqIconGradient)" />
+    <polygon points="52 9 87 29 87 75 52 95 17 75 17 29" fill="url(#sqGrid)" opacity="0.55" />
+    <path
+      d="M68 22H36.3l-14.8 15v12h29l5.3 5.4v5l-5.3 5.3H21.5V81L36.6 94h32l15.3-15.2V66.6h-29l-5.3-5.3v-5l5.3-5.3h29V37L68 22Z"
+      fill="#ffffff"
+      opacity="0.96"
+    />
+    <polygon
+      points="52 0 96 26 96 78 52 104 8 78 8 26"
+      fill="none"
+      stroke="#0b7dd6"
+      stroke-width="3"
+      stroke-linejoin="round"
+    />
+  </g>
+</svg>
