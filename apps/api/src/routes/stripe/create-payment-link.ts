@@ -47,7 +47,11 @@ export const registerCreatePaymentLinkRoute = (router: Hono) => {
       .eq("id", contractor_id)
       .maybeSingle();
 
-    const tier = (userRecord?.subscription_tier as "free" | "pro" | null) ?? "free";
+    const tierRaw =
+      typeof userRecord?.subscription_tier === "string"
+        ? userRecord.subscription_tier.toLowerCase()
+        : "free";
+    const tier: "free" | "pro" = tierRaw === "pro" ? "pro" : "free";
     const addons = (userRecord?.addons as Record<string, unknown> | null) ?? {};
     const feePercent = computePlatformFeePercent({
       tier,

@@ -12,6 +12,8 @@ import { shareRouter } from "./routes/share.js";
 import { proposalsRouter } from "./routes/proposals.js";
 import { contractorRouter } from "./routes/contractor.js";
 import { stripeRouter } from "./routes/stripe/index.js";
+import { wisetackRouter } from "./routes/wisetack/index.js";
+import { addonsRouter } from "./routes/addons.js";
 
 import * as dotenv from "dotenv";
 import { fileURLToPath } from "url";
@@ -95,6 +97,8 @@ export const createApp = () => {
   app.route("/api/proposals", proposalsRouter);
   app.route("/api/contractor", contractorRouter);
   app.route("/api/stripe", stripeRouter);
+  app.route("/api/addons", addonsRouter);
+  app.route("/api/wisetack", wisetackRouter);
 
   return app;
 };

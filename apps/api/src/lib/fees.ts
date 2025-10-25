@@ -11,18 +11,23 @@ const toRecord = (value: unknown): Record<string, unknown> => {
   return {};
 };
 
+const hasFinancingBoostFlag = (addons: Record<string, unknown>): boolean => {
+  const value = addons.financing_boost;
+  if (typeof value === "boolean") return value;
+  if (typeof value === "string") return value.toLowerCase() === "true";
+  if (typeof value === "number") return value === 1;
+  return false;
+};
+
 export const computePlatformFeePercent = (ctx: FeeContext): number => {
   const base = ctx.tier === "pro" ? 1 : 3;
   const addons = toRecord(ctx.addons);
-  const hasFinancingBoost = Boolean(addons.financing_boost);
   const financed = Boolean(ctx.isFinanced);
+  const hasFinancingBoost = hasFinancingBoostFlag(addons);
 
-  if (financed && hasFinancingBoost) {
-    return 0;
+  if (hasFinancingBoost) {
+    return financed ? 0 : 0.5;
   }
-  if (hasFinancingBoost && ctx.tier === "pro") {
-    return 0.5;
-  }
+
   return base;
 };
-

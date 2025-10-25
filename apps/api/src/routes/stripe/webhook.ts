@@ -153,6 +153,40 @@ const recordCapitalEvent = async (
   }
 };
 
+const upsertAddonFlag = async (
+  supabase: ReturnType<typeof getServiceClient>,
+  userId: string | null,
+  addonKey: string | null | undefined
+) => {
+  if (!userId || !addonKey) return;
+  const { data, error } = await supabase
+    .from("users")
+    .select("addons")
+    .eq("id", userId)
+    .maybeSingle();
+  if (error) {
+    console.error("[stripe] failed to load addons for merge", error);
+    return;
+  }
+  const currentAddons = ((data?.addons as Record<string, unknown>) ?? {}) as Record<string, unknown>;
+  if (currentAddons[addonKey] === true) {
+    return;
+  }
+  const nextAddons = { ...currentAddons, [addonKey]: true };
+  const { error: updateError } = await supabase
+    .from("users")
+    .upsert(
+      {
+        id: userId,
+        addons: nextAddons,
+      },
+      { onConflict: "id" }
+    );
+  if (updateError) {
+    console.error("[stripe] failed to persist addon flag", userId, addonKey, updateError);
+  }
+};
+
 export const registerStripeWebhookRoute = (router: Hono) => {
   router.post("/webhook", async (c) => {
     const signature = c.req.header("stripe-signature");
@@ -170,6 +204,22 @@ export const registerStripeWebhookRoute = (router: Hono) => {
       switch (event.type) {
         case "checkout.session.completed": {
           const session = event.data.object as Stripe.Checkout.Session;
+          const addonKey = (session.metadata?.addonKey ?? session.metadata?.addon_key) as
+            | string
+            | undefined;
+          const sessionCustomerId =
+            typeof session.customer === "string"
+              ? session.customer
+              : session.customer?.id ?? null;
+          if (addonKey) {
+            let addonUserId =
+              (session.metadata?.userId as string | undefined) ?? null;
+            if (!addonUserId) {
+              addonUserId = await findProfileIdByCustomer(supabase, sessionCustomerId);
+            }
+            await upsertAddonFlag(supabase, addonUserId, addonKey);
+            break;
+          }
           if (session.mode !== "subscription") {
             break;
           }
@@ -327,6 +377,23 @@ export const registerStripeWebhookRoute = (router: Hono) => {
           }
           const proposalId = (metadata.proposalId ?? metadata.proposal_id) as string | undefined;
           const amount = intent.amount_received ?? intent.amount ?? 0;
+          const feePercentRaw = metadata.feePercent ?? metadata.fee_percent;
+          const isMilestoneRaw = metadata.isMilestone ?? metadata.is_milestone;
+          const isFinancedRaw = metadata.isFinanced ?? metadata.is_financed;
+          const toBool = (value: unknown): boolean => {
+            if (typeof value === "boolean") return value;
+            if (typeof value === "string") return value.toLowerCase() === "true";
+            if (typeof value === "number") return value === 1;
+            return false;
+          };
+          const toNumber = (value: unknown): number | null => {
+            if (typeof value === "number") return value;
+            if (typeof value === "string") {
+              const parsed = Number(value);
+              return Number.isFinite(parsed) ? parsed : null;
+            }
+            return null;
+          };
           await recordStripePayment(supabase, {
             contractorId,
             proposalId: proposalId ?? null,
@@ -334,6 +401,10 @@ export const registerStripeWebhookRoute = (router: Hono) => {
             amount: amount / 100,
             type: resolvePaymentType(metadata.type),
             status: intent.status ?? "succeeded",
+            feePercent: toNumber(feePercentRaw),
+            isMilestone: toBool(isMilestoneRaw),
+            isFinanced: toBool(isFinancedRaw),
+            paymentStatus: intent.status ?? "succeeded",
           });
           break;
         }

@@ -114,8 +114,8 @@
         <section class="flex flex-col gap-4 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
           <h2 class="text-lg font-semibold text-slate-900">Ready to move forward?</h2>
           <p class="text-sm text-slate-600">
-            Click the button below to secure your spot. You'll be redirected to a secure Stripe
-            checkout page once you confirm your package. Questions? Contact
+            Choose how you'd like to move forward. Pay the deposit today or explore flexible
+            financing with Wisetack (soft credit check, no impact to your score). Questions? Contact
             <a
               v-if="contractor?.email"
               class="font-medium text-[#3A7D99]"
@@ -125,19 +125,30 @@
             </a>
             <span v-else class="font-medium text-slate-700">your contractor</span>.
           </p>
-          <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <button
-              type="button"
-              class="inline-flex items-center justify-center rounded-lg bg-[#3A7D99] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#2f6d87] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#3A7D99] disabled:cursor-not-allowed disabled:bg-slate-400"
-              :disabled="!selectedOption || accepting"
-              @click="onAccept"
-            >
-              <span v-if="accepting">Processing...</span>
-              <span v-else-if="selectedDepositAmount !== null && selectedDepositAmount > 0">
-                Accept &amp; Pay Deposit
-              </span>
-              <span v-else>Accept Proposal</span>
-            </button>
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <button
+                type="button"
+                class="inline-flex items-center justify-center rounded-lg bg-[#3A7D99] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#2f6d87] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#3A7D99] disabled:cursor-not-allowed disabled:bg-slate-400"
+                :disabled="!selectedOption || accepting"
+                @click="onAccept"
+              >
+                <span v-if="accepting">Processing...</span>
+                <span v-else-if="selectedDepositAmount !== null && selectedDepositAmount > 0">
+                  Accept &amp; Pay Deposit
+                </span>
+                <span v-else>Accept Proposal</span>
+              </button>
+              <button
+                type="button"
+                class="inline-flex items-center justify-center rounded-lg border border-[#0EA5E9]/50 bg-white px-5 py-3 text-sm font-semibold text-[#0EA5E9] shadow-sm transition hover:border-[#0EA5E9] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0EA5E9] disabled:cursor-not-allowed disabled:opacity-60"
+                :disabled="!selectedOption || financing"
+                @click="onFinanceWithWisetack"
+              >
+                <span v-if="financing">Launching…</span>
+                <span v-else>Finance with Wisetack</span>
+              </button>
+            </div>
             <a
               v-if="paymentLinkUrl && !accepting"
               :href="paymentLinkUrl"
@@ -148,10 +159,16 @@
               Already have a payment link? Open it here.
             </a>
           </div>
-          <p v-if="acceptError" class="text-sm text-rose-600">{{ acceptError }}</p>
-          <span v-if="!selectedOption" class="text-xs text-slate-500">
-            Choose a package to enable the acceptance button.
-          </span>
+          <div class="space-y-1 pt-1">
+            <p v-if="acceptError" class="text-sm text-rose-600">{{ acceptError }}</p>
+            <p v-if="financingError" class="text-sm text-rose-600">{{ financingError }}</p>
+            <p v-else-if="financingMessage" class="text-sm text-emerald-600">
+              {{ financingMessage }}
+            </p>
+            <span v-if="!selectedOption" class="block text-xs text-slate-500">
+              Choose a package to enable acceptance and financing actions.
+            </span>
+          </div>
         </section>
       </div>
     </div>
@@ -163,6 +180,8 @@ import { computed, onMounted, ref } from "vue";
 import { useRoute } from "vue-router";
 import type { PublicProposalPayload } from "@modules/public/api/proposal";
 import { acceptPublicProposal, fetchPublicProposal } from "@modules/public/api/proposal";
+import { apiFetch } from "@/lib/http";
+import { launchWisetackFinancing } from "@/lib/wisetack";
 
 const route = useRoute();
 const loading = ref(true);
@@ -171,11 +190,15 @@ const proposalData = ref<PublicProposalPayload | null>(null);
 
 const accepting = ref(false);
 const acceptError = ref<string | null>(null);
+const financing = ref(false);
+const financingError = ref<string | null>(null);
+const financingMessage = ref<string | null>(null);
 const selectedOptionName = ref<string | null>(null);
 
 const proposal = computed(() => proposalData.value?.proposal ?? null);
 const contractor = computed(() => proposalData.value?.contractor ?? null);
-const clientName = computed(() => proposalData.value?.client?.name ?? "Client");
+const client = computed(() => proposalData.value?.client ?? null);
+const clientName = computed(() => client.value?.name ?? "Client");
 const paymentLinkUrl = computed(() => proposalData.value?.paymentLinkUrl ?? null);
 const depositConfig = computed(() => proposalData.value?.deposit?.config ?? null);
 
@@ -278,6 +301,47 @@ const onAccept = async () => {
     acceptError.value = "Unable to accept this proposal. Please try again.";
   } finally {
     accepting.value = false;
+  }
+};
+
+const onFinanceWithWisetack = async () => {
+  if (!selectedOption.value || !proposal.value) {
+    financingError.value = "Select a package to explore financing options.";
+    return;
+  }
+  const amountCents = Math.max(Math.round((selectedOption.value.subtotal ?? 0) * 100), 0);
+  if (!amountCents) {
+    financingError.value = "Financing is unavailable for packages without pricing.";
+    return;
+  }
+  financing.value = true;
+  financingError.value = null;
+  financingMessage.value = null;
+  try {
+    await launchWisetackFinancing({
+      contractorId: proposal.value.userId,
+      proposalId: proposal.value.id,
+      amountCents,
+      customerName: clientName.value ?? undefined,
+      customerEmail: client.value?.email ?? undefined,
+    });
+    financingMessage.value =
+      "A Wisetack financing window has opened in a new tab. Complete the quick application to continue.";
+    await apiFetch("/wisetack/telemetry", {
+      method: "POST",
+      body: JSON.stringify({
+        contractor_id: proposal.value.userId,
+        proposal_id: proposal.value.id,
+        kind: "application_completed",
+        amount_cents: amountCents,
+        metadata: { trigger: "public_proposal" },
+      }),
+    });
+  } catch (error) {
+    console.error(error);
+    financingError.value = "Unable to launch Wisetack at the moment. Please try again.";
+  } finally {
+    financing.value = false;
   }
 };
 
