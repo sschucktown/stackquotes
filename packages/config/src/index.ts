@@ -14,10 +14,18 @@ const serverSchema = z.object({
   STRIPE_PUBLISHABLE_KEY: z.string().optional(),
   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().optional(),
   PRO_PRICE_ID: z.string().optional(),
+  STRIPE_PRICE_PRO: z.string().optional(),
+  STRIPE_ADDON_PERMITSYNC: z.string().optional(),
+  STRIPE_ADDON_SUPPLYLINK: z.string().optional(),
+  STRIPE_ADDON_QUOTEIQ_PLUS: z.string().optional(),
+  STRIPE_ADDON_FINANCING_BOOST: z.string().optional(),
   FORCE_REQUIRE_CC_FOR_TEST: z.string().optional(),
   BASE_APP_URL: z.string().url().optional(),
   BASE_API_URL: z.string().url().optional(),
   EMAIL_TRACKING_BASE_URL: z.string().url().optional(),
+  WISESTACK_PARTNER_ID: z.string().optional(),
+  WISESTACK_API_KEY: z.string().optional(),
+  WISESTACK_ENV: z.enum(["sandbox", "production"]).default("sandbox"),
 });
 
 const clientSchema = z.object({

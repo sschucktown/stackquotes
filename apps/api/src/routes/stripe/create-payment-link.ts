@@ -6,6 +6,7 @@ import { requireUser } from "../../lib/auth.js";
 import { getServiceClient } from "../../lib/supabase.js";
 import { getContractorProfile } from "@stackquotes/db";
 import { getBaseAppUrl, readJsonBody } from "./utils.js";
+import { computePlatformFeePercent } from "../../lib/fees.js";
 
 const paymentLinkSchema = z.object({
   proposal_id: z.string().uuid(),
@@ -13,6 +14,7 @@ const paymentLinkSchema = z.object({
   amount: z.coerce.number().positive("amount must be greater than zero"),
   currency: z.string().optional(),
   description: z.string().optional(),
+  is_financed: z.boolean().optional(),
 });
 
 export const registerCreatePaymentLinkRoute = (router: Hono) => {
@@ -25,7 +27,7 @@ export const registerCreatePaymentLinkRoute = (router: Hono) => {
       return c.json({ error: parsed.error.flatten().fieldErrors });
     }
 
-    const { proposal_id, contractor_id, amount, currency, description } = parsed.data;
+    const { proposal_id, contractor_id, amount, currency, description, is_financed } = parsed.data;
     const supabase = getServiceClient();
     const contractor = await getContractorProfile(supabase, contractor_id);
 
@@ -39,9 +41,23 @@ export const registerCreatePaymentLinkRoute = (router: Hono) => {
       });
     }
 
+    const { data: userRecord } = await supabase
+      .from("users")
+      .select("subscription_tier, addons")
+      .eq("id", contractor_id)
+      .maybeSingle();
+
+    const tier = (userRecord?.subscription_tier as "free" | "pro" | null) ?? "free";
+    const addons = (userRecord?.addons as Record<string, unknown> | null) ?? {};
+    const feePercent = computePlatformFeePercent({
+      tier,
+      addons,
+      isFinanced: is_financed ?? false,
+    });
+
     const stripe = initStripe();
     const amountInCents = Math.round(amount * 100);
-    const applicationFee = Math.max(Math.round(amountInCents * 0.03), 1);
+    const applicationFee = Math.max(Math.round((amountInCents * feePercent) / 100), feePercent === 0 ? 0 : 1);
     const baseUrl = getBaseAppUrl();
 
     const session = await stripe.checkout.sessions.create({
@@ -69,12 +85,16 @@ export const registerCreatePaymentLinkRoute = (router: Hono) => {
           proposalId: proposal_id,
           type: "deposit",
           module: "paylink",
+          feePercent,
+          isFinanced: is_financed ?? false,
         },
       },
       metadata: {
         contractorId: contractor_id,
         proposalId: proposal_id,
         type: "deposit",
+        feePercent,
+        isFinanced: is_financed ?? false,
       },
       success_url: `${baseUrl}/proposal/${proposal_id}?payment=success`,
       cancel_url: `${baseUrl}/proposal/${proposal_id}?payment=cancelled`,

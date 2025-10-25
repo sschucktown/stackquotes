@@ -12,10 +12,18 @@ declare const serverSchema: z.ZodObject<{
     STRIPE_PUBLISHABLE_KEY: z.ZodOptional<z.ZodString>;
     NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.ZodOptional<z.ZodString>;
     PRO_PRICE_ID: z.ZodOptional<z.ZodString>;
+    STRIPE_PRICE_PRO: z.ZodOptional<z.ZodString>;
+    STRIPE_ADDON_PERMITSYNC: z.ZodOptional<z.ZodString>;
+    STRIPE_ADDON_SUPPLYLINK: z.ZodOptional<z.ZodString>;
+    STRIPE_ADDON_QUOTEIQ_PLUS: z.ZodOptional<z.ZodString>;
+    STRIPE_ADDON_FINANCING_BOOST: z.ZodOptional<z.ZodString>;
     FORCE_REQUIRE_CC_FOR_TEST: z.ZodOptional<z.ZodString>;
     BASE_APP_URL: z.ZodOptional<z.ZodString>;
     BASE_API_URL: z.ZodOptional<z.ZodString>;
     EMAIL_TRACKING_BASE_URL: z.ZodOptional<z.ZodString>;
+    WISESTACK_PARTNER_ID: z.ZodOptional<z.ZodString>;
+    WISESTACK_API_KEY: z.ZodOptional<z.ZodString>;
+    WISESTACK_ENV: z.ZodDefault<z.ZodEnum<["sandbox", "production"]>>;
 }, "strip", z.ZodTypeAny, {
     SUPABASE_URL: string;
     SUPABASE_ANON_KEY: string;
@@ -28,10 +36,18 @@ declare const serverSchema: z.ZodObject<{
     STRIPE_PUBLISHABLE_KEY?: string | undefined;
     NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY?: string | undefined;
     PRO_PRICE_ID?: string | undefined;
+    STRIPE_PRICE_PRO?: string | undefined;
+    STRIPE_ADDON_PERMITSYNC?: string | undefined;
+    STRIPE_ADDON_SUPPLYLINK?: string | undefined;
+    STRIPE_ADDON_QUOTEIQ_PLUS?: string | undefined;
+    STRIPE_ADDON_FINANCING_BOOST?: string | undefined;
     FORCE_REQUIRE_CC_FOR_TEST?: string | undefined;
     BASE_APP_URL?: string | undefined;
     BASE_API_URL?: string | undefined;
     EMAIL_TRACKING_BASE_URL?: string | undefined;
+    WISESTACK_PARTNER_ID?: string | undefined;
+    WISESTACK_API_KEY?: string | undefined;
+    WISESTACK_ENV: "sandbox" | "production";
 }, {
     SUPABASE_URL: string;
     SUPABASE_ANON_KEY: string;
@@ -44,10 +60,18 @@ declare const serverSchema: z.ZodObject<{
     STRIPE_PUBLISHABLE_KEY?: string | undefined;
     NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY?: string | undefined;
     PRO_PRICE_ID?: string | undefined;
+    STRIPE_PRICE_PRO?: string | undefined;
+    STRIPE_ADDON_PERMITSYNC?: string | undefined;
+    STRIPE_ADDON_SUPPLYLINK?: string | undefined;
+    STRIPE_ADDON_QUOTEIQ_PLUS?: string | undefined;
+    STRIPE_ADDON_FINANCING_BOOST?: string | undefined;
     FORCE_REQUIRE_CC_FOR_TEST?: string | undefined;
     BASE_APP_URL?: string | undefined;
     BASE_API_URL?: string | undefined;
     EMAIL_TRACKING_BASE_URL?: string | undefined;
+    WISESTACK_PARTNER_ID?: string | undefined;
+    WISESTACK_API_KEY?: string | undefined;
+    WISESTACK_ENV: "sandbox" | "production";
 }>;
 declare const clientSchema: z.ZodObject<{
     VITE_SUPABASE_URL: z.ZodString;
@@ -95,10 +119,18 @@ export declare const config: {
         STRIPE_PUBLISHABLE_KEY?: string | undefined;
         NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY?: string | undefined;
         PRO_PRICE_ID?: string | undefined;
+        STRIPE_PRICE_PRO?: string | undefined;
+        STRIPE_ADDON_PERMITSYNC?: string | undefined;
+        STRIPE_ADDON_SUPPLYLINK?: string | undefined;
+        STRIPE_ADDON_QUOTEIQ_PLUS?: string | undefined;
+        STRIPE_ADDON_FINANCING_BOOST?: string | undefined;
         FORCE_REQUIRE_CC_FOR_TEST?: string | undefined;
         BASE_APP_URL?: string | undefined;
         BASE_API_URL?: string | undefined;
         EMAIL_TRACKING_BASE_URL?: string | undefined;
+        WISESTACK_PARTNER_ID?: string | undefined;
+        WISESTACK_API_KEY?: string | undefined;
+        WISESTACK_ENV: "sandbox" | "production";
     };
     client: (env: EnvSource) => {
         VITE_SUPABASE_URL: string;

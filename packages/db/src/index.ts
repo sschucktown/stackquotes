@@ -160,6 +160,10 @@ export interface DatabaseUserRow {
   id: string;
   stripe_customer_id: string | null;
   subscription_tier: string | null;
+  trial_end: string | null;
+  is_active: boolean | null;
+  stripe_connect_account_id: string | null;
+  addons: Json | null;
   created_at: string | null;
   updated_at: string | null;
 }
@@ -184,8 +188,22 @@ export interface DatabasePaymentRow {
   amount: number;
   type: string;
   status: string;
+  fee_percent: number | null;
+  is_milestone: boolean | null;
+  is_financed: boolean | null;
+  payment_status: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface DatabaseFinancingEventRow {
+  id: string;
+  user_id: string | null;
+  provider: string;
+  kind: string;
+  amount_cents: number | null;
+  metadata: Json | null;
+  created_at: string;
 }
 
 export interface DatabaseUserProjectRow {
@@ -699,6 +717,10 @@ const buildPaymentRecord = (row: DatabasePaymentRow): PaymentRecord => ({
   amount: Number(row.amount ?? 0),
   type: normalisePaymentType(row.type),
   status: row.status ?? "pending",
+  feePercent: row.fee_percent !== null && row.fee_percent !== undefined ? Number(row.fee_percent) : null,
+  isMilestone: Boolean(row.is_milestone),
+  isFinanced: Boolean(row.is_financed),
+  paymentStatus: row.payment_status ?? null,
   createdAt: row.created_at,
   updatedAt: row.updated_at ?? null,
 });
@@ -1794,6 +1816,10 @@ export interface PaymentInsertInput {
   amount: number;
   type: PaymentType;
   status: string;
+  feePercent?: number | null;
+  isMilestone?: boolean;
+  isFinanced?: boolean;
+  paymentStatus?: string | null;
 }
 
 export async function recordStripePayment(
@@ -1807,6 +1833,10 @@ export async function recordStripePayment(
     amount: input.amount,
     type: input.type,
     status: input.status,
+    fee_percent: input.feePercent ?? null,
+    is_milestone: input.isMilestone ?? false,
+    is_financed: input.isFinanced ?? false,
+    payment_status: input.paymentStatus ?? null,
   };
 
   const { data, error } = await client

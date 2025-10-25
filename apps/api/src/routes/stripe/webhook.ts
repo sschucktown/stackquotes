@@ -76,6 +76,36 @@ const findProfileIdBySubscription = async (
   return (data as { id: string } | null)?.id ?? null;
 };
 
+const findUserIdByAccount = async (
+  supabase: ReturnType<typeof getServiceClient>,
+  accountId: string | null | undefined
+): Promise<string | null> => {
+  if (!accountId) return null;
+  const { data, error } = await supabase
+    .from("contractor_profiles")
+    .select("user_id")
+    .eq("stripe_account_id", accountId)
+    .maybeSingle();
+  if (error) {
+    console.error("[stripe] failed to find user by account id", accountId, error);
+    return null;
+  }
+  return (data as { user_id: string } | null)?.user_id ?? null;
+};
+
+const upsertUserMetadata = async (
+  supabase: ReturnType<typeof getServiceClient>,
+  userId: string | null,
+  updates: Record<string, unknown>
+) => {
+  if (!userId) return;
+  const payload = { id: userId, ...updates };
+  const { error } = await supabase.from("users").upsert(payload, { onConflict: "id" });
+  if (error) {
+    console.error("[stripe] failed to upsert user metadata", updates, error);
+  }
+};
+
 const toIso = (value: number | null | undefined): string | undefined => {
   if (!value) return undefined;
   return new Date(value * 1000).toISOString();
@@ -93,6 +123,34 @@ const resolvePaymentType = (value: unknown): PaymentType => {
     return key;
   }
   return "deposit";
+};
+
+const recordCapitalEvent = async (
+  supabase: ReturnType<typeof getServiceClient>,
+  accountId: string | null | undefined,
+  kind: "offer" | "loan_funded",
+  payload: Record<string, unknown>
+) => {
+  const userId = await findUserIdByAccount(supabase, accountId ?? null);
+  const amountCents = (() => {
+    const amount = payload.financing_amount ?? payload.amount ?? payload.eligible_amount ?? payload.amount_cents;
+    return typeof amount === "number" ? amount : null;
+  })();
+  const metadata = {
+    id: payload.id,
+    currency: payload.currency,
+    status: payload.status,
+  };
+  const { error } = await supabase.from("financing_events").insert({
+    user_id: userId,
+    provider: "stripe_capital",
+    kind,
+    amount_cents: amountCents,
+    metadata,
+  });
+  if (error) {
+    console.error("[stripe] failed to insert financing event", kind, error);
+  }
 };
 
 export const registerStripeWebhookRoute = (router: Hono) => {
@@ -232,6 +290,34 @@ export const registerStripeWebhookRoute = (router: Hono) => {
           }
           break;
         }
+        case "customer.subscription.trial_will_end": {
+          const subscription = event.data.object as Stripe.Subscription;
+          const subscriptionId = subscription.id;
+          const customerId =
+            typeof subscription.customer === "string"
+              ? subscription.customer
+              : subscription.customer?.id ?? null;
+          let subscriptionUserId =
+            (subscription.metadata?.user_id as string | undefined) ?? null;
+          if (!subscriptionUserId) {
+            subscriptionUserId = await findProfileIdBySubscription(supabase, subscriptionId);
+          }
+          if (!subscriptionUserId) {
+            subscriptionUserId = await findProfileIdByCustomer(supabase, customerId);
+          }
+          if (subscriptionUserId) {
+            const trialEnd = toIso(subscription.trial_end ?? undefined);
+            await upsertUserMetadata(supabase, subscriptionUserId, {
+              trial_end: trialEnd ?? null,
+              subscription_tier: "pro",
+              is_active: true,
+            });
+            await updateProfile(supabase, subscriptionUserId, {
+              subscription_tier: "pro",
+            });
+          }
+          break;
+        }
         case "payment_intent.succeeded": {
           const intent = event.data.object as Stripe.PaymentIntent;
           const metadata = intent.metadata ?? {};
@@ -262,6 +348,34 @@ export const registerStripeWebhookRoute = (router: Hono) => {
           await updateContractorStripeStatusByAccountId(supabase, {
             accountId: account.id,
             status,
+          });
+          break;
+        }
+        case "capital.offer.created": {
+          const offer = event.data.object as Stripe.Event.Data.Object & Record<string, unknown>;
+          const accountId =
+            typeof (offer as { account?: string }).account === "string"
+              ? (offer as { account: string }).account
+              : null;
+          await recordCapitalEvent(supabase, accountId, "offer", {
+            id: offer.id as string | undefined,
+            currency: offer.currency ?? null,
+            status: offer.status ?? null,
+            eligible_amount: (offer as { eligible_amount?: number }).eligible_amount ?? null,
+          });
+          break;
+        }
+        case "capital.financing.created": {
+          const financing = event.data.object as Stripe.Event.Data.Object & Record<string, unknown>;
+          const accountId =
+            typeof (financing as { account?: string }).account === "string"
+              ? (financing as { account: string }).account
+              : null;
+          await recordCapitalEvent(supabase, accountId, "loan_funded", {
+            id: financing.id as string | undefined,
+            currency: financing.currency ?? null,
+            status: financing.status ?? null,
+            financing_amount: (financing as { financing_amount?: number }).financing_amount ?? null,
           });
           break;
         }

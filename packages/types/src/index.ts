@@ -237,6 +237,10 @@ export interface PaymentRecord {
   amount: number;
   type: PaymentType;
   status: string;
+  feePercent?: number | null;
+  isMilestone?: boolean;
+  isFinanced?: boolean;
+  paymentStatus?: string | null;
   createdAt: string;
   updatedAt?: string | null;
 }
