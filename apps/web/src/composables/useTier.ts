@@ -1,4 +1,4 @@
-import { apiFetch } from "@/lib/http";
+﻿import { apiFetch } from "@/lib/http";
 import { computed, ref } from "vue";
 
 type Tier = "free" | "pro";
@@ -83,8 +83,8 @@ export const useTier = () => {
   const trialEnd = computed<string | null>(() => state.value?.trialEnd ?? null);
   const addons = computed<Record<string, unknown>>(() => state.value?.addons ?? {});
   const isActive = computed<boolean>(() => state.value?.isActive ?? true);
-  const isPro = computed<boolean>(() => tier.value === "pro");
-  const isFree = computed<boolean>(() => !isPro.value && !inTrial.value);
+  const isPro = computed<boolean>(() => tier.value === "pro" || inTrial.value);
+  const isFree = computed<boolean>(() => !isPro.value);
   const trialDaysRemaining = computed<number | null>(() => calculateDaysLeft(trialEnd.value));
 
   const refresh = async () => {

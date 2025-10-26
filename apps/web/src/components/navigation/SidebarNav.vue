@@ -37,7 +37,7 @@ const isActive = (item: NavItemConfig) => item.matches(activeName.value);
 const canAccessPro = computed(() => isPro.value || inTrial.value);
 
 const navigate = (item: NavItemConfig) => {
-  if (item.requiresPro && !canAccessPro.value) {
+  if (item.requiresPro && item.name !== "smart-proposals" && !canAccessPro.value) {
     upgradeFeature.value = item.label;
     upgradeModalOpen.value = true;
     return;

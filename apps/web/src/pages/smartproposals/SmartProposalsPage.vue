@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="min-h-screen bg-slate-50">
     <div class="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-8 sm:px-6 lg:px-8">
       <header class="flex flex-col gap-3 rounded-3xl bg-white/90 p-6 shadow-sm ring-1 ring-slate-100 sm:flex-row sm:items-center sm:justify-between">
@@ -13,8 +13,14 @@
         </div>
       </header>
 
+      <UpgradeBanner
+        v-if="showUpgradeBanner"
+        message="Upgrade to StackQuotes Pro to add Better & Best packages, milestones, analytics, and remove the StackQuotes watermark from proposals."
+        @upgrade="openUpgrade('SmartProposals')"
+      />
+
       <div v-if="showLoading" class="flex items-center justify-center rounded-3xl bg-white p-8 shadow-sm ring-1 ring-slate-100">
-        <span class="text-sm text-slate-500">Loading SmartProposals�</span>
+        <span class="text-sm text-slate-500">Loading SmartProposals…</span>
       </div>
 
       <div v-else-if="!form">
@@ -111,7 +117,7 @@
               />
               <div class="flex flex-col text-sm text-slate-600">
                 <span class="font-semibold text-slate-800">Client pays {{ formatCurrency(depositAmount) }} at acceptance</span>
-                <span class="text-xs text-slate-500">Based on the Better package subtotal.</span>
+                <span class="text-xs text-slate-500">{{ depositReferenceLabel }}</span>
               </div>
             </div>
           </section>
@@ -200,6 +206,24 @@
             </div>
           </section>
 
+          <div
+            v-if="isFree"
+            class="flex flex-col gap-3 rounded-2xl border border-blue-200 bg-blue-50/80 p-4 text-sm text-blue-800"
+          >
+            <p class="font-semibold">Upgrade to add Better &amp; Best packages</p>
+            <p>
+              Free plans support a single proposal package. Upgrade to StackQuotes Pro to add Good/Better/Best options,
+              build milestones, and remove the StackQuotes watermark.
+            </p>
+            <button
+              type="button"
+              class="self-start rounded-lg bg-[#2563eb] px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-[#1d4ed8]"
+              @click="openUpgrade('Multi-option proposals')"
+            >
+              Unlock multi-option proposals
+            </button>
+          </div>
+
           <section class="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
             <label class="text-sm font-semibold text-slate-800">Client email subject</label>
             <SQInput v-model="form.subject" placeholder="Proposal email subject" />
@@ -250,6 +274,8 @@
           </div>
         </transition-group>
       </div>
+
+      <UpgradeModal :open="upgradeModalOpen" :feature="upgradeFeature" @close="upgradeModalOpen = false" />
     </div>
   </div>
 </template>
@@ -263,6 +289,9 @@ import { useProposalStore } from "@modules/proposals/stores/proposalStore";
 import { useEstimateStore } from "@modules/quickquote/stores/estimateStore";
 import { useClientStore } from "@modules/quickquote/stores/clientStore";
 import { useDemoStore } from "@/stores/demoStore";
+import { useTier } from "@/composables/useTier";
+import UpgradeBanner from "@/components/billing/UpgradeBanner.vue";
+import UpgradeModal from "@/components/billing/UpgradeModal.vue";
 import type { Proposal, ProposalDepositConfig, ProposalOption } from "@stackquotes/types";
 import type { ProposalSavePayload, ProposalSendPayload } from "@modules/proposals/api/proposals";
 
@@ -306,6 +335,15 @@ const proposalStore = useProposalStore();
 const estimateStore = useEstimateStore();
 const clientStore = useClientStore();
 const demoStore = useDemoStore();
+const { isPro } = useTier();
+const isFree = computed(() => !isPro.value);
+const showUpgradeBanner = computed(() => isFree.value);
+const upgradeModalOpen = ref(false);
+const upgradeFeature = ref<string | undefined>(undefined);
+const openUpgrade = (feature?: string) => {
+  upgradeFeature.value = feature;
+  upgradeModalOpen.value = true;
+};
 
 const form = ref<ProposalForm | null>(null);
 const toasts = ref<ToastMessage[]>([]);
@@ -321,6 +359,10 @@ const depositAmount = computed(() => {
   if (!form.value) return 0;
   return calculateDepositAmount(form.value.options, form.value.deposit);
 });
+
+const depositReferenceLabel = computed(() =>
+  isFree.value ? "Based on this package subtotal." : "Based on the Better package subtotal."
+);
 
 const clientName = computed(() => {
   if (!form.value) return "";
@@ -412,13 +454,41 @@ const initialiseForm = (proposal: Proposal) => {
     value: proposal.depositValue ?? 30,
   };
 
+  let optionForms = proposal.options.map(mapOption);
+  if (!optionForms.length) {
+    optionForms = [
+      {
+        id: crypto.randomUUID(),
+        name: "Proposal",
+        summary: "",
+        multiplier: null,
+        lineItems: [
+          {
+            id: crypto.randomUUID(),
+            description: "",
+            quantity: 1,
+            unitCost: 0,
+            total: 0,
+          },
+        ],
+        subtotal: 0,
+      },
+    ];
+  }
+
+  if (isFree.value) {
+    const primary = optionForms[0];
+    primary.name = primary.name || "Proposal";
+    optionForms = [primary];
+  }
+
   form.value = {
     id: proposal.id,
     clientId: proposal.clientId,
     quickquoteId: proposal.quickquoteId ?? null,
     title: proposal.title || fallbackTitle(proposal),
     description: proposal.description ?? "",
-    options: proposal.options.map(mapOption),
+    options: optionForms,
     deposit: depositConfig,
     subject: `Proposal: ${proposal.title || fallbackTitle(proposal)}`,
     message: "",
@@ -602,6 +672,7 @@ onMounted(async () => {
   transform: translateY(-6px);
 }
 </style>
+
 
 
 
