@@ -18,14 +18,16 @@
     "lint": "turbo run lint",
     "test": "turbo run test",
     "typecheck": "turbo run typecheck",
-    "vercel-build": "turbo run build"
+    "vercel-build": "turbo run build",
+    "seed:test": "tsx scripts/seed_test_data.ts"
   },
   "devDependencies": {
     "tsup": "^8.5.0",
     "turbo": "^2.5.8",
     "concurrently": "^8.2.0",
     "typescript": "^5.5.4",
-    "@types/node": "^20.14.9"
+    "@types/node": "^20.14.9",
+    "tsx": "^4.19.2"
   },
   "dependencies": {
     "dotenv": "^17.2.3",

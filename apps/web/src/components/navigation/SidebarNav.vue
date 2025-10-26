@@ -1,3 +1,59 @@
+<script setup lang="ts">
+import { ref, computed, onMounted } from "vue";
+import { useRoute, useRouter, RouterLink } from "vue-router";
+import { Menu, ChevronLeft, LogOut } from "lucide-vue-next";
+import NavItem from "./NavItem.vue";
+import { NAV_ITEMS, type NavItemConfig } from "./navItems";
+import logo from "@/assets/logo/stackquotes-logo.svg";
+import { useSettingsStore } from "@modules/quickquote/stores/settingsStore";
+import { useAuth } from "@/lib/auth";
+import { useDemoStore } from "@/stores/demoStore";
+import { useTier } from "@/composables/useTier";
+import UpgradeModal from "@/components/billing/UpgradeModal.vue";
+
+const isOpen = ref(true);
+const router = useRouter();
+const route = useRoute();
+const settingsStore = useSettingsStore();
+const { signOut } = useAuth();
+const demoStore = useDemoStore();
+const { isPro, inTrial } = useTier();
+const upgradeModalOpen = ref(false);
+const upgradeFeature = ref<string | undefined>(undefined);
+
+onMounted(() => {
+  if (!settingsStore.data && !settingsStore.loading) {
+    void settingsStore.load();
+  }
+});
+
+const companyName = computed(
+  () => settingsStore.data?.companyName?.trim() || "Contractor Sales OS"
+);
+
+const items = NAV_ITEMS;
+const activeName = computed(() => (typeof route.name === "string" ? route.name : null));
+const isActive = (item: NavItemConfig) => item.matches(activeName.value);
+const canAccessPro = computed(() => isPro.value || inTrial.value);
+
+const navigate = (item: NavItemConfig) => {
+  if (item.requiresPro && !canAccessPro.value) {
+    upgradeFeature.value = item.label;
+    upgradeModalOpen.value = true;
+    return;
+  }
+  if (!isActive(item)) {
+    router.push({ name: item.name });
+  }
+};
+
+const handleLogout = async () => {
+  demoStore.deactivate();
+  await signOut();
+  router.push({ name: "login" });
+};
+</script>
+
 <template>
   <div class="relative hidden lg:flex">
     <aside
@@ -59,50 +115,7 @@
     >
       <Menu class="h-5 w-5" />
     </button>
+
+    <UpgradeModal :open="upgradeModalOpen" :feature="upgradeFeature" @close="upgradeModalOpen = false" />
   </div>
 </template>
-
-<script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
-import { useRoute, useRouter, RouterLink } from "vue-router";
-import { Menu, ChevronLeft, LogOut } from "lucide-vue-next";
-import NavItem from "./NavItem.vue";
-import { NAV_ITEMS, type NavItemConfig } from "./navItems";
-import logo from "@/assets/logo/stackquotes-logo.svg";
-import { useSettingsStore } from "@modules/quickquote/stores/settingsStore";
-import { useAuth } from "@/lib/auth";
-import { useDemoStore } from "@/stores/demoStore";
-
-const isOpen = ref(true);
-const router = useRouter();
-const route = useRoute();
-const settingsStore = useSettingsStore();
-const { signOut } = useAuth();
-const demoStore = useDemoStore();
-
-onMounted(() => {
-  if (!settingsStore.data && !settingsStore.loading) {
-    void settingsStore.load();
-  }
-});
-
-const companyName = computed(
-  () => settingsStore.data?.companyName?.trim() || "Contractor Sales OS"
-);
-
-const items = NAV_ITEMS;
-const activeName = computed(() => (typeof route.name === "string" ? route.name : null));
-const isActive = (item: NavItemConfig) => item.matches(activeName.value);
-
-const navigate = (item: NavItemConfig) => {
-  if (!isActive(item)) {
-    router.push({ name: item.name });
-  }
-};
-
-const handleLogout = async () => {
-  demoStore.deactivate();
-  await signOut();
-  router.push({ name: "login" });
-};
-</script>

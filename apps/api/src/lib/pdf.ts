@@ -6,6 +6,7 @@ import type { BrandTheme } from "./brand.js";
 interface PdfRenderOptions {
   settings?: UserSettings | null;
   template?: EstimateTemplateKey;
+  watermarkText?: string | null;
 }
 
 interface PdfTemplateContext {
@@ -32,7 +33,7 @@ interface PdfTemplateContext {
 }
 
 const LETTER_SIZE: [number, number] = [612, 792];
-const DEFAULT_WATERMARK_TEXT = "Powered by StackQuotes";
+const DEFAULT_WATERMARK_TEXT = "";
 
 const hexToRgb = (hex: string): { r: number; g: number; b: number } => {
   const normalized = normalizeHex(hex).slice(1);
@@ -98,7 +99,7 @@ const wrapText = (text: string, font: PDFFont, size: number, maxWidth: number): 
 
 const drawWatermark = (ctx: PdfTemplateContext) => {
   const { watermarkText } = ctx;
-  if (!watermarkText) return;
+  if (!watermarkText || !watermarkText.trim()) return;
 
   const { page, fonts } = ctx;
   const { width } = page.getSize();
@@ -673,7 +674,7 @@ export async function generateEstimatePdf(
     accentColor,
     options,
     footerText: settings?.footerText ?? undefined,
-    watermarkText: DEFAULT_WATERMARK_TEXT,
+    watermarkText: options.watermarkText ?? DEFAULT_WATERMARK_TEXT,
     logo,
   };
 

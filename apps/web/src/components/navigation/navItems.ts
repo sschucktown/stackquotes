@@ -12,6 +12,7 @@ export interface NavItemConfig {
   name: string;
   icon: Component;
   matches: (routeName: string | null) => boolean;
+  requiresPro?: boolean;
 }
 
 export const NAV_ITEMS: NavItemConfig[] = [
@@ -32,12 +33,14 @@ export const NAV_ITEMS: NavItemConfig[] = [
     name: "smart-proposals",
     icon: ClipboardDocumentCheckIcon,
     matches: (name) => name === "smart-proposals",
+    requiresPro: true,
   },
   {
     label: "Analytics",
     name: "analytics",
     icon: ChartBarIcon,
     matches: (name) => name === "analytics",
+    requiresPro: true,
   },
   {
     label: "Settings",

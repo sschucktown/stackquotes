@@ -7,6 +7,8 @@
         <p class="text-sm text-slate-600">Your daily pulse - quotes, wins, and insights at a glance.</p>
       </header>
 
+      <TrialCountdown />
+
       <transition name="fade">
         <div
           v-if="showSeedingBanner"
@@ -321,6 +323,7 @@ import { useEstimateStore } from "@modules/quickquote/stores/estimateStore";
 import { useClientStore } from "@modules/quickquote/stores/clientStore";
 import { useContractorProfileStore } from "@modules/contractor/stores/profileStore";
 import { useStarterProjectsStore } from "@modules/contractor/stores/starterProjectsStore";
+import TrialCountdown from "@/components/billing/TrialCountdown.vue";
 
 const router = useRouter();
 const estimateStore = useEstimateStore();

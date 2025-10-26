@@ -30,9 +30,29 @@ pdfRouter.post("/generate", async (c) => {
   }
 
   const settings = await getUserSettings(supabase, user.id);
+  const { data: billing } = await supabase
+    .from("users")
+    .select("subscription_tier, trial_end")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  const tier = typeof billing?.subscription_tier === "string" ? billing.subscription_tier.toLowerCase() : "free";
+  const trialEndRaw = billing?.trial_end ?? null;
+  let inTrial = false;
+  if (typeof trialEndRaw === "string") {
+    const trialDate = new Date(trialEndRaw);
+    if (!Number.isNaN(trialDate.getTime()) && trialDate.getTime() > Date.now()) {
+      inTrial = tier === "pro";
+    }
+  }
+
+  const watermarkText =
+    tier === "pro" || inTrial ? null : "StackQuotes Free Plan";
+
   const pdfBytes = await generateEstimatePdf(estimate, client, {
     settings,
     template: settings?.estimateTemplate ?? undefined,
+    watermarkText,
   });
   const storagePath = `${user.id}/${estimate.id}.pdf`;
   const downloadUrl = await uploadPdf(storagePath, pdfBytes);
