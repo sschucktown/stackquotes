@@ -47,7 +47,7 @@
               Not now
             </button>
             <RouterLink
-              to="/settings?tab=billing"
+              :to="{ name: 'pricing', query: { plan: 'pro' } }"
               class="inline-flex items-center justify-center rounded-lg bg-[#2563eb] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#1d4ed8]"
               @click="$emit('close')"
             >
