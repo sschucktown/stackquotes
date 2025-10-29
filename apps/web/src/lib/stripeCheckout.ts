@@ -1,9 +1,17 @@
 import { loadStripe } from "@stripe/stripe-js";
+import { supabase, apiBaseUrl } from "./supabase";
 
 export async function startCheckout(priceId: string): Promise<void> {
-  const publishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
+  const publishableKey =
+    import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY ?? import.meta.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
   if (!publishableKey) {
     throw new Error("Stripe publishable key is not configured.");
+  }
+
+  const { data } = await supabase.auth.getSession();
+  const accessToken = data.session?.access_token;
+  if (!accessToken) {
+    throw new Error("You must be signed in to upgrade.");
   }
 
   const stripe = await loadStripe(publishableKey);
@@ -11,10 +19,11 @@ export async function startCheckout(priceId: string): Promise<void> {
     throw new Error("Unable to initialize Stripe.");
   }
 
-  const response = await fetch("/api/stripe/checkout", {
+  const response = await fetch(`${apiBaseUrl}/stripe/checkout`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
     },
     body: JSON.stringify({ priceId }),
   });
@@ -34,4 +43,3 @@ export async function startCheckout(priceId: string): Promise<void> {
     throw new Error(error.message);
   }
 }
-
