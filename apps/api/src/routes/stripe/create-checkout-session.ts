@@ -83,7 +83,7 @@ export const registerCreateCheckoutSessionRoute = (router: Hono) => {
           planTier,
         },
       },
-      success_url: `${baseUrl}/thankyou?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${baseUrl}/dashboard?upgraded=1&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/pricing?plan=${planTier}`,
     });
 
