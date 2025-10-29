@@ -36,7 +36,7 @@ const updateProfile = async (
   updates: Record<string, unknown>
 ) => {
   if (!userId) return;
-  const { error } = await supabase.from("profiles").update(updates).eq("id", userId);
+  const { error } = await supabase.from("users").update(updates).eq("id", userId);
   if (error) {
     console.error("[stripe] failed to update profile", updates, error);
   }
@@ -48,7 +48,7 @@ const findProfileIdByCustomer = async (
 ): Promise<string | null> => {
   if (!customerId) return null;
   const { data, error } = await supabase
-    .from("profiles")
+    .from("users")
     .select("id")
     .eq("stripe_customer_id", customerId)
     .maybeSingle();
@@ -65,45 +65,15 @@ const findProfileIdBySubscription = async (
 ): Promise<string | null> => {
   if (!subscriptionId) return null;
   const { data, error } = await supabase
-    .from("profiles")
-    .select("id")
+    .from("subscriptions")
+    .select("user_id")
     .eq("stripe_subscription_id", subscriptionId)
     .maybeSingle();
   if (error) {
-    console.error("[stripe] failed to find profile by subscription id", subscriptionId, error);
-    return null;
-  }
-  return (data as { id: string } | null)?.id ?? null;
-};
-
-const findUserIdByAccount = async (
-  supabase: ReturnType<typeof getServiceClient>,
-  accountId: string | null | undefined
-): Promise<string | null> => {
-  if (!accountId) return null;
-  const { data, error } = await supabase
-    .from("contractor_profiles")
-    .select("user_id")
-    .eq("stripe_account_id", accountId)
-    .maybeSingle();
-  if (error) {
-    console.error("[stripe] failed to find user by account id", accountId, error);
+    console.error("[stripe] failed to find user by subscription id", subscriptionId, error);
     return null;
   }
   return (data as { user_id: string } | null)?.user_id ?? null;
-};
-
-const upsertUserMetadata = async (
-  supabase: ReturnType<typeof getServiceClient>,
-  userId: string | null,
-  updates: Record<string, unknown>
-) => {
-  if (!userId) return;
-  const payload = { id: userId, ...updates };
-  const { error } = await supabase.from("users").upsert(payload, { onConflict: "id" });
-  if (error) {
-    console.error("[stripe] failed to upsert user metadata", updates, error);
-  }
 };
 
 const toIso = (value: number | null | undefined): string | undefined => {
@@ -263,9 +233,7 @@ export const registerStripeWebhookRoute = (router: Hono) => {
             if (tierToPersist) {
               await setUserSubscriptionTier(supabase, userId, tierToPersist);
             }
-            const profileUpdates: Record<string, unknown> = {
-              stripe_subscription_id: subscriptionId ?? null,
-            };
+            const profileUpdates: Record<string, unknown> = { };
             if (customerId) {
               profileUpdates.stripe_customer_id = customerId;
             }
@@ -299,12 +267,7 @@ export const registerStripeWebhookRoute = (router: Hono) => {
               await setUserSubscriptionTier(supabase, subscriptionUserId, tierToPersist);
             }
             if (subscriptionUserId) {
-              const profileUpdates: Record<string, unknown> = {
-                stripe_subscription_id:
-                  typeof invoice.subscription === "string"
-                    ? invoice.subscription
-                    : invoice.subscription.id,
-              };
+              const profileUpdates: Record<string, unknown> = { };
               if (invoiceCustomerId) {
                 profileUpdates.stripe_customer_id = invoiceCustomerId;
               }
@@ -335,8 +298,7 @@ export const registerStripeWebhookRoute = (router: Hono) => {
             await setUserSubscriptionTier(supabase, subscriptionUserId, "free");
             await updateProfile(supabase, subscriptionUserId, {
               subscription_tier: "free",
-              stripe_subscription_id: null,
-            });
+              });
           }
           break;
         }
@@ -474,3 +436,6 @@ export const registerStripeWebhookRoute = (router: Hono) => {
     }
   });
 };
+
+
+

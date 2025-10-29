@@ -40,35 +40,35 @@ export const registerCreateSubscriptionTestRoute = (router: Hono) => {
 
     const supabase = getServiceClient();
 
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("id, email, stripe_customer_id, stripe_subscription_id, subscription_tier")
+    const { data: user, error: userError } = await supabase
+      .from("users")
+      .select("id, stripe_customer_id")
       .eq("id", payload.user_id)
       .maybeSingle();
 
-    if (profileError) {
-      console.error("[stripe] failed to load profile", profileError);
+    if (userError) {
+      console.error("[stripe] Failed to load user", userError);
       c.status(500);
-      return c.json({ error: "Failed to load profile." });
+      return c.json({ error: "Failed to load user." });
     }
 
-    if (!profile) {
+    if (!user) {
       c.status(404);
-      return c.json({ error: "Profile not found." });
+      return c.json({ error: "User not found." });
     }
 
     const stripe = initStripe();
 
     try {
-      let customerId = profile.stripe_customer_id ?? null;
+      let customerId = user.stripe_customer_id ?? null;
       if (!customerId) {
         const customer = await stripe.customers.create({
-          email: profile.email ?? authUser.email ?? undefined,
+          email: authUser.email ?? undefined,
           metadata: { user_id: payload.user_id },
         });
         customerId = customer.id;
         const { error } = await supabase
-          .from("profiles")
+          .from("users")
           .update({ stripe_customer_id: customerId })
           .eq("id", payload.user_id);
         if (error) {
@@ -95,17 +95,20 @@ export const registerCreateSubscriptionTestRoute = (router: Hono) => {
       const latestInvoice = subscription.latest_invoice as Stripe.Invoice | null;
       const paymentIntent = latestInvoice?.payment_intent as Stripe.PaymentIntent | null;
 
-      const { error: updateError } = await supabase
-        .from("profiles")
-        .update({
-          stripe_subscription_id: subscription.id,
-          stripe_customer_id: customerId,
-        })
-        .eq("id", payload.user_id);
-      if (updateError) {
-        console.error("[stripe] failed to update profile with subscription id", updateError);
+            const { error: upsertError } = await supabase
+        .from("subscriptions")
+        .upsert(
+          {
+            user_id: payload.user_id,
+            stripe_subscription_id: subscription.id,
+            plan_tier: "pro",
+            status: "incomplete",
+          },
+          { onConflict: "stripe_subscription_id" }
+        );
+      if (upsertError) {
+        console.error("[stripe] failed to upsert subscription record", upsertError);
       }
-
       return c.json({
         client_secret: paymentIntent?.client_secret ?? null,
         subscriptionId: subscription.id,
@@ -118,4 +121,8 @@ export const registerCreateSubscriptionTestRoute = (router: Hono) => {
     }
   });
 };
+
+
+
+
 

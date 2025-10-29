@@ -218,7 +218,7 @@ const handleSubmit = async () => {
     }
 
     const { error: supabaseError } = await supabase
-      .from("profiles")
+      .from("users")
       .update({ subscription_tier: "pro" })
       .eq("id", authUser.id);
     if (supabaseError) {
@@ -235,3 +235,4 @@ const handleSubmit = async () => {
   }
 };
 </script>
+

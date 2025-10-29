@@ -61,14 +61,6 @@ export const downgradeExpiredTrials = async (): Promise<void> => {
       await setUserSubscriptionTier(supabase, userId, "free");
     } catch (setTierError) {
       console.error("[stripe] failed to sync subscription tier helper", userId, setTierError);
-    }
-
-    const { error: profileUpdateError } = await supabase
-      .from("profiles")
-      .update({ subscription_tier: "free" })
-      .eq("id", userId);
-    if (profileUpdateError) {
-      console.error("[stripe] failed to update profile cache", userId, profileUpdateError);
-    }
-  }
+    }}
 };
+
