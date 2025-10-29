@@ -182,6 +182,41 @@ const handlePrimaryClick = async () => {
   setStoredRedirect("/dashboard");
   await navigateOrReplace({ path: "/signup", query: { plan: "founder" } });
 };
+const handleUpgradeBuildClick = async () => {
+  const { authenticated } = authState.value;
+  trackEvent("cta_upgrade_click", {
+    ...baseTrackProps.value,
+    intent: authenticated ? "upgrade-build" : "signup-upgrade-build",
+  });
+  if (!authenticated) {
+    setStoredRedirect("/pricing?plan=pro");
+    await navigateOrReplace({ path: "/register", query: { plan: "pro" } });
+    return;
+  }
+  try {
+    await startCheckout(STRIPE_PRICES.PRO);
+  } catch (error) {
+    console.error("[landing] stripe checkout failed", error);
+  }
+};
+
+const handleUpgradeProClick = async () => {
+  const { authenticated } = authState.value;
+  trackEvent("cta_upgrade_click", {
+    ...baseTrackProps.value,
+    intent: authenticated ? "upgrade-pro" : "signup-upgrade-pro",
+  });
+  if (!authenticated) {
+    setStoredRedirect("/pricing?plan=team");
+    await navigateOrReplace({ path: "/register", query: { plan: "team" } });
+    return;
+  }
+  try {
+    await startCheckout(STRIPE_PRICES.TEAM);
+  } catch (error) {
+    console.error("[landing] stripe checkout failed", error);
+  }
+};
 
 const handleUpgradeClick = async () => {
   const { authenticated } = authState.value;
@@ -219,31 +254,41 @@ const primaryCta = computed(() => ({
 
 const pricingPreviewPlans = computed(() => [
   {
-    id: "free",
-    label: "Free",
-    title: "Free â€” Try the core tools free forever",
+    id: "launch",
+    label: "Launch",
+    title: "Launch — Free forever",
     description:
       "Spin up SmartProposals with demo data, send approvals, and collect PayLink deposits with a 3% platform fee.",
-    ctaLabel: "Start Free",
+    ctaLabel: "Start Launch",
     onClick: handlePrimaryClick,
+  },
+  {
+    id: "build",
+    label: "Build",
+    title: "Build — $47.99/mo — Unlock Good/Better/Best & automation",
+    description:
+      "Upgrade for premium proposal templates, ProfitPulse snapshots, smart upsells, and Stripe Connect payouts.",
+    ctaLabel: "Upgrade to Build",
+    onClick: handleUpgradeBuildClick,
   },
   {
     id: "pro",
     label: "Pro",
-    title: "Pro â€” $49/mo â†’ Unlock Good/Better/Best & QuickBooks sync",
+    title: "Pro — $97.99/mo — Advanced analytics and faster payouts",
     description:
-      "Upgrade for premium proposal templates, ProfitPulse analytics, smart upsells, and Stripe Connect payouts.",
+      "Full ProfitPulse analytics, accelerated payouts, role-based workspaces, and white-labeled exports.",
     ctaLabel: "Upgrade to Pro",
-    onClick: handleUpgradeClick,
+    onClick: handleUpgradeProClick,
   },
   {
-    id: "team",
-    label: "Team",
-    title: "Team â€” Coming soon",
+    id: "crew",
+    label: "Crew",
+    title: "Crew — $147.99/mo — Coming soon",
     description:
-      "Multi-crew workspaces, accounting integrations, and dedicated success coaching are on the 2025 roadmap.",
+      "Multi-crew operations, accounting integrations, and dedicated success coaching are on the roadmap.",
     ctaLabel: "Coming soon",
     disabled: true,
   },
 ]);
 </script>
+
