@@ -8,7 +8,7 @@
         </h1>
         <p class="mt-5 text-base text-white/70 sm:text-lg">
           Every plan includes SmartProposal, PayLink deposits, ProfitPulse reporting previews, and ScopeForge beta milestones.
-          Upgrade or downgrade anytime — billing is handled through secure Stripe Checkout.
+          Upgrade or downgrade anytime -- billing is handled through secure Stripe Checkout.
         </p>
       </header>
 
@@ -53,16 +53,15 @@
               type="button"
               class="w-full rounded-xl px-4 py-3 text-center text-sm font-semibold transition"
               :class="[
-                plan.id === 'team'
+                !plan.available
                   ? 'cursor-not-allowed bg-white/10 text-white/50'
                   : 'bg-emerald-500 text-slate-950 hover:bg-emerald-400',
                 loadingPlan === plan.id ? 'cursor-wait opacity-70' : '',
               ]"
-              :disabled="plan.id === 'team' || loadingPlan === plan.id"
+              :disabled="!plan.available || loadingPlan === plan.id"
               @click="handlePlanClick(plan)"
             >
-              <span v-if="plan.id === 'team'">Coming soon</span>
-              <span v-else-if="loadingPlan === plan.id">Redirecting to Stripe…</span>
+              <span v-if="loadingPlan === plan.id">Redirecting to Stripe...</span>
               <span v-else>{{ plan.ctaLabel }}</span>
             </button>
             <p v-if="activeErrorPlan === plan.id && errorMessage" class="mt-3 text-sm text-red-400">
@@ -83,6 +82,9 @@
         </p>
         <p class="mt-4">
           Contractor payouts run through Stripe Connect Express accounts. Platform fees are applied automatically (3%) for PayLink deposits.
+        </p>
+        <p class="mt-4">
+          Crew tier ($147.99/mo) is on the roadmap for multi-team operations -- join the waitlist to get launch updates.
         </p>
       </footer>
     </div>
@@ -105,50 +107,55 @@ interface Plan {
   tagline: string;
   features: string[];
   ctaLabel: string;
+  available: boolean;
 }
 
 const plans: Plan[] = [
   {
     id: "free",
-    name: "Free",
+    name: "Launch",
     price: 0,
-    tagline: "Try SmartProposal and PayLink core workflows free forever.",
+    tagline: "Kick off proposals, deposits, and client tracking without a credit card.",
     features: [
       "SmartProposal editor + client approvals",
       "PayLink deposits (3% platform fee)",
       "ScopeForge template library preview",
       "Proposal activity tracking dashboard",
     ],
-    ctaLabel: "Start Free",
+    ctaLabel: "Start Launch",
+    available: true,
   },
   {
     id: "pro",
-    name: "Pro",
-    price: 49,
-    tagline: "Unlock premium proposals, profit insights, and faster payouts.",
+    name: "Build",
+    price: 47.99,
+    tagline: "Upgrade quoting and payments with automation, insights, and upsells.",
     features: [
-      "Everything in Free",
+      "Everything in Launch",
       "Unlimited SmartProposal variants & add-ons",
-      "PayLink Smart change orders & upsells",
-      "ProfitPulse performance dashboards & export",
+      "PayLink smart change orders & upsells",
+      "ProfitPulse performance snapshots & CSV export",
       "ScopeForge milestone scheduling (beta)",
       "Stripe Connect payouts with ledger sync",
     ],
-    ctaLabel: "Upgrade to Pro",
+    ctaLabel: "Upgrade to Build",
+    available: true,
   },
   {
     id: "team",
-    name: "Team",
-    price: 99,
-    tagline: "Advanced collaboration, accounting sync, and success support.",
+    name: "Pro",
+    price: 97.99,
+    tagline: "Scale your crews with revenue intelligence, faster payouts, and premium support.",
     features: [
-      "Everything in Pro",
-      "Team workspaces & role-based access",
-      "QuickBooks + Gusto integrations",
-      "Priority payouts & cash-flow insights",
-      "Dedicated success manager & roadmap previews",
+      "Everything in Build",
+      "Advanced ProfitPulse analytics & trends",
+      "Accelerated Stripe payouts & collection flags",
+      "Role-based workspaces & crew assignment tools",
+      "White-labeled proposals and analytics exports",
+      "Priority success coaching & quarterly playbooks",
     ],
-    ctaLabel: "Coming soon",
+    ctaLabel: "Upgrade to Pro",
+    available: true,
   },
 ];
 
@@ -172,7 +179,7 @@ watch(
 );
 
 const handlePlanClick = async (plan: Plan) => {
-  if (plan.id === "team") return;
+  if (!plan.available) return;
   errorMessage.value = null;
   activeErrorPlan.value = null;
 
@@ -187,10 +194,11 @@ const handlePlanClick = async (plan: Plan) => {
     return;
   }
 
-  if (plan.id === "pro") {
+  if (plan.id === "pro" || plan.id === "team") {
+    const priceId = plan.id === "pro" ? STRIPE_PRICES.PRO : STRIPE_PRICES.TEAM;
     loadingPlan.value = plan.id;
     try {
-      await startCheckout(STRIPE_PRICES.PRO);
+      await startCheckout(priceId);
     } catch (error) {
       console.error(error);
       activeErrorPlan.value = plan.id;
@@ -199,7 +207,10 @@ const handlePlanClick = async (plan: Plan) => {
     } finally {
       loadingPlan.value = null;
     }
+    return;
   }
+
+  errorMessage.value = "Unsupported plan selected.";
 };
 </script>
 
@@ -209,4 +220,3 @@ code {
     monospace;
 }
 </style>
-
