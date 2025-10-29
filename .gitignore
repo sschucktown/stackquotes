@@ -12,3 +12,4 @@ supabase/.branches
 .vercel
 # Turbo build cache
 **/.turbo/
+.env*.local
