@@ -1,12 +1,12 @@
 export const STRIPE_PRICES = {
-  FREE: "price_123free",
-  PRO: "price_456pro",
-  TEAM: "price_789team",
+  LAUNCH: "price_123free",
+  BUILD: "price_1SNON3AEYYFvhjkfUxCqMXkE",
+  PRO: "price_1SNONvAEYYFvhjkfO2Mw4cTH",
 };
 
 export const PRICE_ID_TO_PLAN = {
-  [STRIPE_PRICES.FREE]: "free",
+  [STRIPE_PRICES.LAUNCH]: "launch",
+  [STRIPE_PRICES.BUILD]: "build",
   [STRIPE_PRICES.PRO]: "pro",
-  [STRIPE_PRICES.TEAM]: "team",
 };
 
