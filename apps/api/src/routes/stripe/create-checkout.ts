@@ -112,3 +112,4 @@ export const registerCheckoutRoute = (router: Hono) => {
     }
   });
 };
+
