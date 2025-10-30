@@ -24,11 +24,15 @@ export const registerCheckoutRoute = (router: Hono) => {
     const body = await readJsonBody(c);
     const parsed = requestSchema.parse(body);
 
+    const log = (...args: unknown[]) => console.log("[stripe][checkout]", ...args);
+    log("request", { userId: user.id, hasPriceId: Boolean(parsed.priceId), planTier: parsed.planTier ?? null });
+
     const config = loadServerConfig();
     const envPrices: Record<string, string | undefined> = {
       pro: process.env.STRIPE_PRICE_PRO || config.PRO_PRICE_ID,
       team: process.env.STRIPE_PRICE_TEAM,
     };
+    log("env price presence", { pro: Boolean(envPrices.pro), team: Boolean(envPrices.team) });
 
     // Figure out requested plan tier (default to pro)
     let planTier: "free" | "pro" | "team" = "pro";
@@ -42,51 +46,69 @@ export const registerCheckoutRoute = (router: Hono) => {
     // Always use server-configured price IDs; do not trust client
     const priceToUse = planTier === "team" ? envPrices.team : envPrices.pro;
     if (!priceToUse) {
+      log("missing price configuration", { planTier, havePro: Boolean(envPrices.pro), haveTeam: Boolean(envPrices.team) });
       c.status(500);
       return c.json({ error: `Stripe price id for plan '${planTier}' is not configured on the server.` });
     }
+    log("resolved plan", { planTier, priceId: priceToUse });
+
     let customerId = await getStripeCustomerId(supabase, user.id);
-    if (!customerId) {
+    if (customerId) {
+      log("using existing customer", { customerId });
+    } else {
       const customer = await stripe.customers.create({
         email: user.email ?? undefined,
         metadata: { userId: user.id },
       });
       customerId = customer.id;
+      log("created customer", { customerId });
       await upsertStripeCustomerId(supabase, user.id, customerId);
     }
 
     const baseUrl = getBaseAppUrl();
-    const session = await stripe.checkout.sessions.create({
-      mode: "subscription",
-      customer: customerId,
-      line_items: [{ price: priceToUse, quantity: 1 }],
-      success_url: `${baseUrl}/dashboard?upgraded=1&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${baseUrl}/pricing?plan=${planTier}`,
-      metadata: {
-        userId: user.id,
-        planTier,
-        priceId: priceToUse,
-      },
-      subscription_data: {
+    try {
+      const session = await stripe.checkout.sessions.create({
+        mode: "subscription",
+        customer: customerId,
+        line_items: [{ price: priceToUse, quantity: 1 }],
+        success_url: `${baseUrl}/dashboard?upgraded=1&session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${baseUrl}/pricing?plan=${planTier}`,
         metadata: {
           userId: user.id,
           planTier,
           priceId: priceToUse,
         },
-      },
-    });
+        subscription_data: {
+          metadata: {
+            userId: user.id,
+            planTier,
+            priceId: priceToUse,
+          },
+        },
+      });
+      log("created checkout session", { sessionId: session.id, status: session.status });
 
-    await upsertSubscriptionCheckout(supabase, {
-      userId: user.id,
-      planTier,
-      stripeCheckoutSessionId: session.id,
-      status: session.status ?? "open",
-      stripeSubscriptionId:
-        typeof session.subscription === "string"
-          ? session.subscription
-          : session.subscription?.id ?? null,
-    });
+      await upsertSubscriptionCheckout(supabase, {
+        userId: user.id,
+        planTier,
+        stripeCheckoutSessionId: session.id,
+        status: session.status ?? "open",
+        stripeSubscriptionId:
+          typeof session.subscription === "string"
+            ? session.subscription
+            : session.subscription?.id ?? null,
+      });
 
-    return c.json({ id: session.id });
+      return c.json({ id: session.id });
+    } catch (error) {
+      console.error("[stripe][checkout] failed to create session", {
+        userId: user.id,
+        planTier,
+        priceId: priceToUse,
+        error: (error as Error)?.message,
+      });
+      c.status(500);
+      return c.json({ error: "Unable to create Stripe Checkout session." });
+    }
   });
 };

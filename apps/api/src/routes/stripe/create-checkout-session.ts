@@ -37,6 +37,8 @@ export const registerCreateCheckoutSessionRoute = (router: Hono) => {
     const user = await requireUser(c);
     const planTier = await resolvePlanTier(c);
     const plan = PLAN_DETAILS[planTier];
+    const log = (...args: unknown[]) => console.log("[stripe][checkout-session]", ...args);
+    log("request", { userId: user.id, planTier, amount: plan?.amount });
     if (!plan) {
       c.status(400);
       return c.json({ error: "Unsupported plan tier requested." });
@@ -54,6 +56,7 @@ export const registerCreateCheckoutSessionRoute = (router: Hono) => {
       customerId = customer.id;
       await upsertStripeCustomerId(supabase, user.id, customerId);
     }
+    log("using customer", { customerId });
 
     const baseUrl = getBaseAppUrl();
     const session = await stripe.checkout.sessions.create({
@@ -88,6 +91,7 @@ export const registerCreateCheckoutSessionRoute = (router: Hono) => {
     });
 
     if (!session.url) {
+      log("missing session url", { sessionId: session.id });
       c.status(500);
       return c.json({ error: "Stripe did not return a redirect URL." });
     }
@@ -102,6 +106,7 @@ export const registerCreateCheckoutSessionRoute = (router: Hono) => {
           ? session.subscription
           : session.subscription?.id ?? null,
     });
+    log("created checkout session", { sessionId: session.id, status: session.status, url: session.url });
 
     return c.json({
       data: {
