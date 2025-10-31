@@ -42,6 +42,9 @@
         <slot />
       </div>
     </main>
+
+    <!-- Keep FAB above overlays (z-50) -->
+    <UniversalFab />
   </div>
 </template>
 
@@ -49,6 +52,7 @@
 import { ref, watch, onBeforeUnmount } from "vue";
 import { Menu } from "lucide-vue-next";
 import SidebarMenu from "@/components/navigation/SidebarMenu.vue";
+import UniversalFab from "@/components/navigation/UniversalFab.vue";
 
 const showSidebar = ref(false);
 
@@ -79,4 +83,3 @@ onBeforeUnmount(() => setBodyScroll(false));
 .fade-enter-from,
 .fade-leave-to { opacity: 0; }
 </style>
-

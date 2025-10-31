@@ -86,7 +86,7 @@ const router = createRouter({
     },
     {
       path: "/app",
-      component: () => import("@/layouts/AppLayout.vue"),
+      component: () => import("@/layouts/Layout.vue"),
       children: [
         {
           path: "",
