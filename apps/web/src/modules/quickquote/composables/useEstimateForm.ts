@@ -73,6 +73,11 @@ export const useEstimateForm = (initial?: Partial<EstimateFormPayload>) => {
       })) ?? [createLineItem()];
   };
 
+  const roundTo = (num: number, places = 2): number => {
+    const factor = Math.pow(10, places);
+    return Math.round((num + Number.EPSILON) * factor) / factor;
+  };
+
   const toPayload = (): EstimateFormPayload => ({
     projectTitle: state.projectTitle,
     clientId: state.clientId,
@@ -80,7 +85,7 @@ export const useEstimateForm = (initial?: Partial<EstimateFormPayload>) => {
     taxRate: state.taxRate,
     lineItems: state.lineItems.map((item) => ({
       ...item,
-      total: item.quantity * item.unitPrice,
+      total: roundTo(item.quantity * item.unitPrice, 2),
     })),
   });
 

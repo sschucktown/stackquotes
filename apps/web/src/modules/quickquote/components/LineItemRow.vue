@@ -71,13 +71,21 @@ const handleDescriptionChange = (value: string | number | null | undefined) => {
   onUpdate({ description: typeof value === "string" ? value : `${value ?? ""}` });
 };
 
+const roundTo = (num: number, places = 2): number => {
+  const factor = Math.pow(10, places);
+  // EPSILON guards against binary float imprecision nudging values down
+  return Math.round((num + Number.EPSILON) * factor) / factor;
+};
+
 const handleQuantityChange = (value: string | number | null | undefined) => {
-  const quantity = Number(value ?? 0);
-  onUpdate({ quantity: Number.isFinite(quantity) ? quantity : 0 });
+  const quantityRaw = typeof value === "string" ? parseFloat(value) : Number(value ?? 0);
+  const quantity = Number.isFinite(quantityRaw) ? roundTo(quantityRaw, 2) : 0;
+  onUpdate({ quantity });
 };
 
 const handleUnitPriceChange = (value: string | number | null | undefined) => {
-  const unitPrice = Number(value ?? 0);
-  onUpdate({ unitPrice: Number.isFinite(unitPrice) ? unitPrice : 0 });
+  const raw = typeof value === "string" ? parseFloat(value) : Number(value ?? 0);
+  const unitPrice = Number.isFinite(raw) ? roundTo(Math.max(0, raw), 2) : 0;
+  onUpdate({ unitPrice });
 };
 </script>
