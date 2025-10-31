@@ -102,7 +102,7 @@
               <li
                 v-for="item in option.lineItems"
                 :key="item.description"
-                class="flex items-center justify-between"
+                class="flex items-center justify-between break-inside-avoid"
               >
                 <span>{{ item.description }}</span>
                 <span class="text-slate-500">{{ formatCurrency(item.total) }}</span>
@@ -249,7 +249,7 @@ const selectOption = (name: string) => {
 
 const optionCardClass = (name: string) =>
   [
-    "rounded-xl border border-slate-200 bg-white p-6 shadow-sm transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#3A7D99]",
+    "rounded-xl border border-slate-200 bg-white p-6 shadow-sm break-inside-avoid transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#3A7D99]",
     selectedOptionName.value === name ? "border-[#3A7D99] ring-2 ring-[#3A7D99]" : "hover:border-[#3A7D99]",
   ].join(" ");
 
@@ -294,9 +294,9 @@ const onAccept = async () => {
       acceptError.value =
         "Deposit link is unavailable. Please contact your contractor to continue.";
     } else if (redirectUrl) {
-      window.location.href = redirectUrl;
-    }
-  } catch (err) {
+              window.open(redirectUrl, "_self");
+            }
+          } catch (err) {
     console.error(err);
     acceptError.value = "Unable to accept this proposal. Please try again.";
   } finally {
@@ -378,5 +378,8 @@ const load = async () => {
 
 onMounted(() => {
   void load();
+  if (route.query.payment === 'success') {
+    void load();
+  }
 });
 </script>

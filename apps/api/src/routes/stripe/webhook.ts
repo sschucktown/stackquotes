@@ -370,6 +370,25 @@ export const registerStripeWebhookRoute = (router: Hono) => {
           });
           break;
         }
+        case "checkout.session.completed": {
+          const session = event.data.object as Stripe.Checkout.Session;
+          const metadata = session.metadata ?? {};
+          const contractorId = (metadata.contractorId ?? metadata.contractor_id) as string | undefined;
+          const proposalId = (metadata.proposalId ?? metadata.proposal_id) as string | undefined;
+          if (contractorId && proposalId) {
+            const paymentLinkId = (session.payment_link as string | null) ?? session.id;
+            await supabase
+              .from("smart_proposals")
+              .update({
+                status: "paid",
+                paid_at: new Date().toISOString(),
+                payment_link_id: paymentLinkId,
+              })
+              .eq("contractor_id", contractorId)
+              .eq("id", proposalId);
+          }
+          break;
+        }
         case "account.updated": {
           const account = event.data.object as Stripe.Account;
           const status =
