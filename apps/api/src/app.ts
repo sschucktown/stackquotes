@@ -15,6 +15,7 @@ import { stripeRouter } from "./routes/stripe/index.js";
 import { wisetackRouter } from "./routes/wisetack/index.js";
 import { addonsRouter } from "./routes/addons.js";
 import { billingRouter } from "./routes/billing.js";
+import { onboardingRouter } from "./routes/onboarding/index.js";
 
 import * as dotenv from "dotenv";
 import { fileURLToPath } from "url";
@@ -101,6 +102,7 @@ export const createApp = () => {
   app.route("/api/addons", addonsRouter);
   app.route("/api/wisetack", wisetackRouter);
   app.route("/api/billing", billingRouter);
+  app.route("/api/onboarding", onboardingRouter);
 
   return app;
 };

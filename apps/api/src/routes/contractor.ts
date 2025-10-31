@@ -21,6 +21,7 @@ const profileSchema = z.object({
     .enum(["< $5K", "$5-15K", "$15-50K", "$50K+"])
     .optional()
     .nullable(),
+  postalCode: z.string().max(20).optional().nullable(),
   city: z.string().max(120).optional().nullable(),
   state: z.string().max(60).optional().nullable(),
   phone: z.string().max(60).optional().nullable(),
@@ -63,6 +64,7 @@ contractorRouter.post("/profile", async (c) => {
       tradeType: payload.tradeType ?? null,
       trade: payload.trade ?? payload.tradeType ?? null,
       averageProjectSize: payload.averageProjectSize ?? null,
+      postalCode: payload.postalCode ?? null,
       city: payload.city ?? null,
       state: payload.state ?? null,
       phone: payload.phone ?? null,

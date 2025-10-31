@@ -144,6 +144,7 @@ export interface DatabaseContractorProfileRow {
   trade: string | null;
   avg_project_size: string | null;
   trade_seeded: boolean | null;
+  postal_code: string | null;
   city: string | null;
   state: string | null;
   phone: string | null;
@@ -684,6 +685,7 @@ const buildContractorProfileRecord = (row: DatabaseContractorProfileRow): Contra
   tradeType: row.trade_type ?? null,
   trade: row.trade ?? row.trade_type ?? null,
   averageProjectSize: row.avg_project_size ?? null,
+  postalCode: row.postal_code ?? null,
   city: row.city ?? null,
   state: row.state ?? null,
   phone: row.phone ?? null,
@@ -1520,6 +1522,7 @@ export async function upsertContractorProfile(
       updatePayload.trade = tradeValue;
     }
     if (input.averageProjectSize !== undefined) updatePayload.avg_project_size = input.averageProjectSize ?? null;
+    if (input.postalCode !== undefined) updatePayload.postal_code = input.postalCode ?? null;
     if (input.city !== undefined) updatePayload.city = input.city ?? null;
     if (input.state !== undefined) updatePayload.state = input.state ?? null;
     if (input.phone !== undefined) updatePayload.phone = input.phone ?? null;
@@ -1545,6 +1548,7 @@ export async function upsertContractorProfile(
     trade_type: input.tradeType ?? null,
     trade: input.trade ?? input.tradeType ?? null,
     avg_project_size: input.averageProjectSize ?? null,
+    postal_code: input.postalCode ?? null,
     city: input.city ?? null,
     state: input.state ?? null,
     phone: input.phone ?? null,

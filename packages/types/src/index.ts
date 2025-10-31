@@ -157,6 +157,7 @@ export interface ContractorProfile {
   tradeType?: string | null;
   trade?: string | null;
   averageProjectSize?: string | null;
+  postalCode?: string | null;
   city?: string | null;
   state?: string | null;
   phone?: string | null;

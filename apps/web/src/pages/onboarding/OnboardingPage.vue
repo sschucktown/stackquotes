@@ -71,6 +71,26 @@
             </div>
           </div>
 
+          <div>
+            <p class="text-sm font-semibold uppercase tracking-wide text-slate-500">Step 3</p>
+            <h2 class="mt-2 text-xl font-semibold text-slate-900">
+              Where do most of your projects take place?
+            </h2>
+            <p class="mt-1 text-sm text-slate-500">
+              Enter your ZIP code to localize material pricing and permit data.
+            </p>
+            <div class="mt-4">
+              <input
+                v-model="postalCode"
+                type="text"
+                maxlength="10"
+                class="w-full rounded-lg border border-slate-300 px-4 py-2 text-slate-900 shadow-sm focus:border-[#3A7D99] focus:ring-[#3A7D99]"
+                placeholder="ZIP code"
+                required
+              />
+            </div>
+          </div>
+
           <transition name="fade">
             <p v-if="error" class="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-600">
               {{ error }}
@@ -120,6 +140,7 @@ import SQSelect from "@stackquotes/ui/components/SQSelect.vue";
 import SQButton from "@stackquotes/ui/components/SQButton.vue";
 import { useContractorProfileStore } from "@modules/contractor/stores/profileStore";
 import { useAuth } from "@/lib/auth";
+import { apiFetch } from "@/lib/http";
 
 const router = useRouter();
 const profileStore = useContractorProfileStore();
@@ -149,18 +170,22 @@ const projectSizeOptions = [
 
 const selectedTrade = ref<string>("");
 const selectedProjectSize = ref<string>("");
+const postalCode = ref<string>("");
 const submitting = ref(false);
 const seeding = ref(false);
 const error = ref("");
 let redirectTimer: ReturnType<typeof setTimeout> | null = null;
 
-const canContinue = computed(() => Boolean(selectedTrade.value) && Boolean(selectedProjectSize.value));
+const canContinue = computed(
+  () => Boolean(selectedTrade.value) && Boolean(selectedProjectSize.value) && Boolean(postalCode.value)
+);
 
 const hydrateFromProfile = () => {
   const profile = profileStore.profile;
   if (!profile) return;
   selectedTrade.value = profile.trade ?? profile.tradeType ?? selectedTrade.value;
   selectedProjectSize.value = profile.averageProjectSize ?? selectedProjectSize.value;
+  postalCode.value = profile.postalCode ?? postalCode.value;
 };
 
 onMounted(async () => {
@@ -201,10 +226,18 @@ const handleContinue = async () => {
       trade: selectedTrade.value,
       tradeType: selectedTrade.value,
       averageProjectSize: selectedProjectSize.value,
+      postalCode: postalCode.value,
     });
     await profileStore.load(true);
     clearStoredRedirect();
     seeding.value = true;
+    await apiFetch("/onboarding/seed-trade-templates", {
+      method: "POST",
+      body: JSON.stringify({
+        user_id: profileStore.profile?.userId,
+        trade: selectedTrade.value,
+      }),
+    });
     submitting.value = false;
     redirectTimer = setTimeout(async () => {
       await router.push({ name: "dashboard-home" });
