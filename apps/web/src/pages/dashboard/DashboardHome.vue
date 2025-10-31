@@ -1,11 +1,12 @@
 <template>
-  <div class="min-h-screen bg-slate-50">
-    <div class="mx-auto flex w-full max-w-7xl flex-col gap-10 px-4 py-10 sm:px-6 lg:px-8">
-      <header class="space-y-2">
-        <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Welcome back</p>
-        <h1 class="text-3xl font-semibold text-slate-900">StackQuotes Dashboard</h1>
-        <p class="text-sm text-slate-600">Your daily pulse - quotes, wins, and insights at a glance.</p>
+  <div class="min-h-screen">
+    <div class="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-6 sm:px-6 lg:px-8">
+      <header class="space-y-1">
+        <h1 class="text-2xl font-semibold text-slate-900">Good {{ greetingTime }}, {{ displayName }}</h1>
+        <p class="text-sm text-slate-600">Balance your ambition with patience; trust the process.</p>
       </header>
+
+      <HomeSnapshotGallery />
 
       <TrialCountdown />
 
@@ -289,12 +290,7 @@
       </section>
     </div>
 
-    <SQButton
-      class="fixed bottom-6 right-6 z-30 flex h-14 w-14 items-center justify-center rounded-full !bg-[#3A7D99] !text-white shadow-lg transition-all duration-200 hover:-translate-y-1 hover:!bg-[#4f8faa] focus-visible:ring-[#3A7D99]/60 md:hidden"
-      @click="createEstimate"
-    >
-      +
-    </SQButton>
+    <!-- Global FAB is provided by layout now -->
   </div>
 </template>
 
@@ -324,6 +320,7 @@ import { useClientStore } from "@modules/quickquote/stores/clientStore";
 import { useContractorProfileStore } from "@modules/contractor/stores/profileStore";
 import { useStarterProjectsStore } from "@modules/contractor/stores/starterProjectsStore";
 import TrialCountdown from "@/components/billing/TrialCountdown.vue";
+import HomeSnapshotGallery from "./components/HomeSnapshotGallery.vue";
 
 const router = useRouter();
 const estimateStore = useEstimateStore();
@@ -380,6 +377,19 @@ const showSeedingBanner = computed(() => {
 });
 
 const onboardingTradeLabel = computed(() => profileStore.profile?.trade ?? "your trade");
+
+const displayName = computed(() => {
+  const name = profileStore.profile?.businessName || profileStore.profile?.ownerName || "Contractor";
+  const first = (name || "").split(" ")[0];
+  return first || "Contractor";
+});
+
+const greetingTime = computed(() => {
+  const h = new Date().getHours();
+  if (h < 12) return "Morning";
+  if (h < 17) return "Afternoon";
+  return "Evening";
+});
 
 const summary = computed(() => {
   const sent = estimateStore.items.filter((estimate) => ["sent", "seen"].includes(estimate.status));

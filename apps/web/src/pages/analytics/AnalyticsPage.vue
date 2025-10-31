@@ -2,10 +2,10 @@
   <div class="min-h-screen bg-slate-50">
     <div class="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-8 sm:px-6 lg:px-8">
       <header class="rounded-3xl bg-white/80 p-6 shadow-sm ring-1 ring-slate-100 transition-all duration-200">
-        <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">QuoteIQ</p>
-        <h1 class="text-2xl font-semibold text-slate-900">Analytics Dashboard</h1>
+        <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">ProfitPulse</p>
+        <h1 class="text-2xl font-semibold text-slate-900">Performance Overview</h1>
         <p class="mt-1 text-sm text-slate-600">
-          Track how SmartProposals perform after every QuickQuote acceptance. Metrics update as soon as proposals are generated or accepted.
+          Your field-first snapshot of revenue, acceptance rate, and margins. Tap a card for more detail.
         </p>
       </header>
 
@@ -27,6 +27,14 @@
                 <span v-else>{{ card.value }}</span>
               </p>
               <p class="mt-1 text-xs text-slate-500">{{ card.subtitle }}</p>
+              <svg viewBox="0 0 100 28" class="mt-3 h-10 w-full text-brand-600/70">
+                <polyline
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  :points="sparkline(card.title).join(' ')"
+                />
+              </svg>
             </article>
           </TransitionGroup>
         </template>
@@ -278,6 +286,22 @@ const profileLocation = computed(() => {
 });
 
 const formatCurrency = (value: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value || 0);
+
+function sparkline(kind: string): string[] {
+  // Tiny illustrative data per card type; maps to polyline points (x,y)
+  const base: number[] = kind === "Revenue (YTD)"
+    ? [6, 8, 7, 10, 12, 11, 14, 13]
+    : kind === "Acceptance Rate"
+    ? [3, 4, 4, 5, 6, 6, 7, 8]
+    : kind === "Average Proposal Value"
+    ? [5, 6, 5, 7, 9, 8, 9, 10]
+    : [2, 3, 4, 5, 6, 7, 8, 9];
+  const stepX = 100 / (base.length - 1);
+  const maxY = Math.max(...base) || 10;
+  const minY = Math.min(...base) || 0;
+  const scaleY = (v: number) => 26 - ((v - minY) / Math.max(1, maxY - minY)) * 26;
+  return base.map((v, i) => `${i * stepX},${scaleY(v)}`);
+}
 
 function formatDate(iso: string): string {
   try {

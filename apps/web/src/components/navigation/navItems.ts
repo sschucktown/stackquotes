@@ -3,8 +3,10 @@ import {
   HomeIcon,
   DocumentDuplicateIcon,
   ClipboardDocumentCheckIcon,
+  BanknotesIcon,
   ChartBarIcon,
   Cog6ToothIcon,
+  ChatBubbleLeftRightIcon,
 } from "@heroicons/vue/24/outline";
 
 export interface NavItemConfig {
@@ -17,7 +19,7 @@ export interface NavItemConfig {
 
 export const NAV_ITEMS: NavItemConfig[] = [
   {
-    label: "Dashboard",
+    label: "Home",
     name: "dashboard-home",
     icon: HomeIcon,
     matches: (name) => name === "dashboard-home",
@@ -36,7 +38,13 @@ export const NAV_ITEMS: NavItemConfig[] = [
     requiresPro: true,
   },
   {
-    label: "Analytics",
+    label: "Payments",
+    name: "payments",
+    icon: BanknotesIcon,
+    matches: (name) => name === "payments",
+  },
+  {
+    label: "ProfitPulse",
     name: "analytics",
     icon: ChartBarIcon,
     matches: (name) => name === "analytics",
@@ -47,5 +55,11 @@ export const NAV_ITEMS: NavItemConfig[] = [
     name: "settings",
     icon: Cog6ToothIcon,
     matches: (name) => name === "settings",
+  },
+  {
+    label: "Chat / Help",
+    name: "help",
+    icon: ChatBubbleLeftRightIcon,
+    matches: (name) => name === "help",
   },
 ];

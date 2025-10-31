@@ -1,5 +1,5 @@
 ﻿<template>
-  <div class="min-h-screen bg-slate-50 text-slate-900">
+  <div class="min-h-screen bg-[#F8F9FA] text-[#1A1A1A]">
     <div v-if="loading" class="flex min-h-screen items-center justify-center">
       <div class="text-sm text-slate-500">Loading your workspace…</div>
     </div>

@@ -131,6 +131,18 @@ const router = createRouter({
           component: () => import("@/pages/analytics/AnalyticsPage.vue"),
         },
         {
+          path: "payments",
+          alias: "/payments",
+          name: "payments",
+          component: () => import("@/pages/payments/PaymentsPage.vue"),
+        },
+        {
+          path: "help",
+          alias: "/help",
+          name: "help",
+          component: () => import("@/pages/help/HelpPage.vue"),
+        },
+        {
           path: "settings",
           alias: "/settings",
           name: "settings",
