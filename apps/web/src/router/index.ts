@@ -112,6 +112,12 @@ const router = createRouter({
           props: () => ({ id: "new" }),
         },
         {
+          path: "quickquotes/builder",
+          alias: "/quickquotes/builder",
+          name: "quickquote-builder",
+          component: () => import("@/pages/quickquote/QuickQuotePage.vue"),
+        },
+        {
           path: "quickquotes/:id",
           alias: "/quickquotes/:id",
           name: "quickquote-estimate",
