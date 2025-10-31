@@ -25,21 +25,12 @@ const go = (name: string) => router.push({ name });
 </script>
 
 <template>
-  <section class="relative">
-    <div class="pointer-events-none absolute inset-y-0 left-0 w-6 bg-gradient-to-r from-[#F8F9FA] to-transparent md:hidden" />
-    <div class="pointer-events-none absolute inset-y-0 right-0 w-6 bg-gradient-to-l from-[#F8F9FA] to-transparent md:hidden" />
-
+  <section>
     <div
-      class="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 md:grid md:grid-cols-2 md:gap-4 lg:grid-cols-3"
-      style="scrollbar-width: none; -ms-overflow-style: none;"
+      class="flex snap-x snap-mandatory snap-center gap-4 overflow-x-auto px-4 pb-2 scroll-smooth md:grid md:grid-cols-2 md:gap-4 md:px-0"
     >
-      <style scoped>
-      ::-webkit-scrollbar { display: none; }
-      </style>
-
       <article
-        class="snap-start shrink-0 rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200 md:shrink md:w-auto"
-        style="width: 90vw; max-width: 420px;"
+        class="min-w-[85%] snap-center shrink-0 rounded-xl bg-white p-4 shadow-md md:min-w-0 md:snap-none"
       >
         <div class="flex items-center justify-between">
           <div>
@@ -57,7 +48,7 @@ const go = (name: string) => router.push({ name });
         </button>
       </article>
 
-      <article class="snap-start shrink-0 rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200 md:shrink md:w-auto" style="width: 90vw; max-width: 420px;">
+      <article class="min-w-[85%] snap-center shrink-0 rounded-xl bg-white p-4 shadow-md md:min-w-0 md:snap-none">
         <div class="flex items-center justify-between">
           <div>
             <h3 class="text-base font-semibold text-slate-900">SmartProposals</h3>
@@ -68,7 +59,7 @@ const go = (name: string) => router.push({ name });
         <button type="button" class="mt-4 w-full rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-500" @click="go('smart-proposals')">View All</button>
       </article>
 
-      <article class="snap-start shrink-0 rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200 md:shrink md:w-auto" style="width: 90vw; max-width: 420px;">
+      <article class="min-w-[85%] snap-center shrink-0 rounded-xl bg-white p-4 shadow-md md:min-w-0 md:snap-none">
         <div class="flex items-center justify-between">
           <div>
             <h3 class="text-base font-semibold text-slate-900">Payments</h3>
@@ -82,7 +73,7 @@ const go = (name: string) => router.push({ name });
         <button type="button" class="mt-4 w-full rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-500" @click="go('payments')">Go to Payments</button>
       </article>
 
-      <article class="snap-start shrink-0 rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200 md:shrink md:w-auto" style="width: 90vw; max-width: 420px;">
+      <article class="min-w-[85%] snap-center shrink-0 rounded-xl bg-white p-4 shadow-md md:min-w-0 md:snap-none">
         <div class="flex items-center justify-between">
           <div>
             <h3 class="text-base font-semibold text-slate-900">ProfitPulse</h3>
@@ -93,7 +84,7 @@ const go = (name: string) => router.push({ name });
         <button type="button" class="mt-4 w-full rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-500" @click="go('analytics')">View Analytics</button>
       </article>
 
-      <article class="snap-start shrink-0 rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200 md:shrink md:w-auto" style="width: 90vw; max-width: 320px;">
+      <article class="min-w-[85%] snap-center shrink-0 rounded-xl bg-white p-4 shadow-md md:min-w-0 md:snap-none">
         <div class="flex items-center justify-between">
           <div>
             <h3 class="text-base font-semibold text-slate-900">Profile</h3>
@@ -106,4 +97,3 @@ const go = (name: string) => router.push({ name });
     </div>
   </section>
 </template>
-
