@@ -1500,24 +1500,62 @@ export async function upsertContractorProfile(
   client: SupabaseClient,
   input: ContractorProfileInput
 ): Promise<ContractorProfile> {
-    const payload: Partial<DatabaseContractorProfileRow> & { user_id: string } = {
-      user_id: input.userId,
-      business_name: input.businessName ?? null,
-      owner_name: input.ownerName ?? null,
-      trade_type: input.tradeType ?? null,
-      trade: input.trade ?? input.tradeType ?? null,
-      avg_project_size: input.averageProjectSize ?? null,
-      city: input.city ?? null,
-      state: input.state ?? null,
-      phone: input.phone ?? null,
-      email: input.email ?? null,
-      public_slug: input.publicSlug ? input.publicSlug.toLowerCase() : null,
+  // If a profile already exists, only update the provided fields to avoid clearing data.
+  const existing = await client
+    .from("contractor_profiles")
+    .select("id")
+    .eq("user_id", input.userId)
+    .maybeSingle();
+
+  const now = new Date().toISOString();
+
+  if (existing.data) {
+    // Build a minimal update payload with only defined fields.
+    const updatePayload: Partial<DatabaseContractorProfileRow> = { updated_at: now };
+    if (input.businessName !== undefined) updatePayload.business_name = input.businessName ?? null;
+    if (input.ownerName !== undefined) updatePayload.owner_name = input.ownerName ?? null;
+    if (input.tradeType !== undefined) updatePayload.trade_type = input.tradeType ?? null;
+    if (input.trade !== undefined || input.tradeType !== undefined) {
+      const tradeValue = input.trade ?? input.tradeType ?? null;
+      updatePayload.trade = tradeValue;
+    }
+    if (input.averageProjectSize !== undefined) updatePayload.avg_project_size = input.averageProjectSize ?? null;
+    if (input.city !== undefined) updatePayload.city = input.city ?? null;
+    if (input.state !== undefined) updatePayload.state = input.state ?? null;
+    if (input.phone !== undefined) updatePayload.phone = input.phone ?? null;
+    if (input.email !== undefined) updatePayload.email = input.email ?? null;
+    if (input.publicSlug !== undefined) updatePayload.public_slug = input.publicSlug ? input.publicSlug.toLowerCase() : null;
+    if (input.logoUrl !== undefined) updatePayload.logo_url = input.logoUrl ?? null;
+
+    const { data, error } = await client
+      .from("contractor_profiles")
+      .update(updatePayload)
+      .eq("user_id", input.userId)
+      .select("*")
+      .single();
+    if (error) throw error;
+    return buildContractorProfileRecord(data as DatabaseContractorProfileRow);
+  }
+
+  // No existing record: insert with full payload (nulls for missing fields acceptable on first write)
+  const insertPayload: Partial<DatabaseContractorProfileRow> & { user_id: string } = {
+    user_id: input.userId,
+    business_name: input.businessName ?? null,
+    owner_name: input.ownerName ?? null,
+    trade_type: input.tradeType ?? null,
+    trade: input.trade ?? input.tradeType ?? null,
+    avg_project_size: input.averageProjectSize ?? null,
+    city: input.city ?? null,
+    state: input.state ?? null,
+    phone: input.phone ?? null,
+    email: input.email ?? null,
+    public_slug: input.publicSlug ? input.publicSlug.toLowerCase() : null,
     logo_url: input.logoUrl ?? null,
-    updated_at: new Date().toISOString(),
+    updated_at: now,
   };
   const { data, error } = await client
     .from("contractor_profiles")
-    .upsert(payload, { onConflict: "user_id" })
+    .upsert(insertPayload, { onConflict: "user_id" })
     .select("*")
     .single();
   if (error) throw error;
