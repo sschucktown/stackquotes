@@ -39,7 +39,7 @@
     <!-- Main content area -->
     <main class="min-h-screen lg:pl-64">
       <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-        <slot />
+        <RouterView />
       </div>
     </main>
 
@@ -50,6 +50,7 @@
 
 <script setup lang="ts">
 import { ref, watch, onBeforeUnmount } from "vue";
+import { RouterView } from "vue-router";
 import { Menu } from "lucide-vue-next";
 import SidebarMenu from "@/components/navigation/SidebarMenu.vue";
 import UniversalFab from "@/components/navigation/UniversalFab.vue";
