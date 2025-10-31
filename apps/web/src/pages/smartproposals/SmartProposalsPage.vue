@@ -122,7 +122,12 @@
             </div>
           </section>
 
-          <section v-for="(option, optionIndex) in form.options" :key="option.id" class="space-y-4 rounded-2xl border border-slate-200 p-4">
+          <section
+            v-for="(option, optionIndex) in form.options"
+            :key="option.id"
+            v-if="isPro || option.name.toLowerCase() === allowedSingleOptionName.toLowerCase()"
+            class="space-y-4 rounded-2xl border border-slate-200 p-4"
+          >
             <div class="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <h3 class="text-base font-semibold text-slate-800">{{ option.name }}</h3>
@@ -335,7 +340,7 @@ const proposalStore = useProposalStore();
 const estimateStore = useEstimateStore();
 const clientStore = useClientStore();
 const demoStore = useDemoStore();
-const { isPro } = useTier();
+  const { isPro } = useTier();
 const isFree = computed(() => !isPro.value);
 const showUpgradeBanner = computed(() => isFree.value);
 const upgradeModalOpen = ref(false);
@@ -372,6 +377,11 @@ const clientName = computed(() => {
 
 const currentProposal = computed<Proposal | null>(() => proposalStore.current);
 const showLoading = computed(() => initializing.value || proposalStore.loading);
+const allowedSingleOptionName = computed(() => {
+  const opts = form.value?.options ?? [];
+  const better = opts.find((o) => o.name?.toLowerCase?.() === "better");
+  return (better?.name ?? opts[0]?.name ?? "");
+});
 const statusChipClass = computed(() => {
   const status = form.value?.status ?? "draft";
   const base = "inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold";
@@ -581,7 +591,10 @@ const handleSave = async () => {
       quickquoteId: form.value.quickquoteId ?? undefined,
       title: form.value.title.trim(),
       description: form.value.description.trim() || null,
-      options: form.value.options.map((option) => ({
+      options: (isPro.value
+        ? form.value.options
+        : form.value.options.filter((o) => o.name.toLowerCase() === allowedSingleOptionName.value.toLowerCase())
+      ).map((option) => ({
         name: option.name,
         summary: option.summary,
         multiplier: option.multiplier ?? null,

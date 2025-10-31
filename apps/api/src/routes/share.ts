@@ -125,19 +125,35 @@ shareRouter.get("/proposal/:token", async (c) => {
     return c.json({ error: "This proposal link is invalid or has expired." });
   }
 
-  const [settings, contractorProfile, client] = await Promise.all([
+  const [settings, contractorProfile, client, plan] = await Promise.all([
     getUserSettings(supabase, proposal.userId),
     getContractorProfile(supabase, proposal.userId),
     getClient(supabase, proposal.userId, proposal.clientId).catch(() => null),
+    supabase.from("users").select("subscription_tier, trial_end").eq("id", proposal.userId).maybeSingle(),
   ]);
   const selectedOption = proposal.acceptedOption ?? null;
+  // Free (non-trial) contractors: show only one baseline option to clients
+  const tier = (plan?.data?.subscription_tier as string | undefined)?.toLowerCase?.() ?? "free";
+  const allowMultiOptions = tier === "pro";
+  const visibleOptions = (() => {
+    if (allowMultiOptions) return proposal.options;
+    const better = proposal.options.find((o) => o.name?.toLowerCase?.() === "better");
+    return [better ?? proposal.options[0]].filter(Boolean);
+  })();
+  const proposalForClient = allowMultiOptions
+    ? proposal
+    : {
+        ...proposal,
+        options: visibleOptions,
+        totals: visibleOptions.map((o) => ({ name: o.name, total: o.subtotal })),
+      };
   const depositMeta = selectedOption
-    ? computeDepositAmount(proposal, { optionName: selectedOption })
-    : computeDepositAmount(proposal);
+    ? computeDepositAmount(proposalForClient, { optionName: selectedOption })
+    : computeDepositAmount(proposalForClient);
 
   return c.json({
     data: {
-      proposal,
+      proposal: proposalForClient,
       contractor: settings || contractorProfile
         ? {
             businessName: contractorProfile?.businessName ?? settings?.companyName ?? null,
@@ -172,10 +188,20 @@ shareRouter.post("/proposal/:token/accept", async (c) => {
     return c.json({ error: "This proposal link is invalid or has expired." });
   }
 
-  const client = await getClient(supabase, proposal.userId, proposal.clientId).catch(() => null);
+  const [client, plan] = await Promise.all([
+    getClient(supabase, proposal.userId, proposal.clientId).catch(() => null),
+    supabase.from("users").select("subscription_tier, trial_end").eq("id", proposal.userId).maybeSingle(),
+  ]);
 
+  const tier = (plan?.data?.subscription_tier as string | undefined)?.toLowerCase?.() ?? "free";
+  const allowMultiOptions = tier === "pro";
+  const allowedOptions = allowMultiOptions
+    ? proposal.options
+    : [
+        proposal.options.find((o) => o.name?.toLowerCase?.() === "better") ?? proposal.options[0],
+      ].filter(Boolean);
   const selected =
-    proposal.options.find(
+    allowedOptions.find(
       (option) => option.name?.toLowerCase?.() === parsed.optionName.toLowerCase()
     ) ?? null;
   if (!selected) {

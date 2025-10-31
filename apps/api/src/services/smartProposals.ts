@@ -53,9 +53,10 @@ export const generateSmartProposalFromQuote = async ({
     throw new Error("Estimate not found");
   }
 
-  const [previous, profile] = await Promise.all([
+  const [previous, profile, plan] = await Promise.all([
     getPreviousProposalLineItems(supabase, contractorId, estimate.clientId),
     getContractorProfile(supabase, contractorId),
+    supabase.from("users").select("subscription_tier, trial_end").eq("id", contractorId).maybeSingle(),
   ]);
 
   const branding = { businessName: profile?.businessName ?? null };
@@ -76,6 +77,14 @@ export const generateSmartProposalFromQuote = async ({
 
   if (!depositConfig) {
     depositConfig = DEFAULT_DEPOSIT;
+  }
+
+  // Gating: free (non-trial) plans only get a single option (baseline from QuickQuote)
+  const tier = (plan?.data?.subscription_tier as string | undefined)?.toLowerCase?.() ?? "free";
+  const allowMultiOptions = tier === "pro"; // 'pro' also represents active trial in our system
+  if (!allowMultiOptions && options.length > 1) {
+    const better = options.find((o) => o.name?.toLowerCase?.() === "better");
+    options = [better ?? options[0]];
   }
 
   const proposal = await createProposalRecord(supabase, {
