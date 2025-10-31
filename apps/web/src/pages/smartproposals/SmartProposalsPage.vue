@@ -123,9 +123,8 @@
           </section>
 
           <section
-            v-for="(option, optionIndex) in form.options"
+            v-for="(option, optionIndex) in visibleOptions"
             :key="option.id"
-            v-if="isPro || option.name.toLowerCase() === allowedSingleOptionName.toLowerCase()"
             class="space-y-4 rounded-2xl border border-slate-200 p-4"
           >
             <div class="flex flex-wrap items-start justify-between gap-3">
@@ -138,7 +137,7 @@
                   placeholder="Describe what's included in this package"
                 />
               </div>
-              <SQButton size="sm" variant="ghost" @click="addLineItem(optionIndex)">
+              <SQButton size="sm" variant="ghost" @click="addLineItemById(option.id)">
                 Add line item
               </SQButton>
             </div>
@@ -168,7 +167,7 @@
                         min="0"
                         step="0.1"
                         class="text-right"
-                        @update:model-value="onLineItemChange(optionIndex, itemIndex)"
+                        @update:model-value="onLineItemChangeById(option.id, itemIndex)"
                       />
                     </td>
                     <td class="px-3 py-3">
@@ -178,7 +177,7 @@
                         min="0"
                         step="0.01"
                         class="text-right"
-                        @update:model-value="onLineItemChange(optionIndex, itemIndex)"
+                        @update:model-value="onLineItemChangeById(option.id, itemIndex)"
                       />
                     </td>
                     <td class="px-3 py-3 text-right font-semibold text-slate-800">
@@ -188,7 +187,7 @@
                       <button
                         type="button"
                         class="text-xs font-medium text-rose-500 hover:text-rose-600"
-                        @click="removeLineItem(optionIndex, itemIndex)"
+                        @click="removeLineItemById(option.id, itemIndex)"
                         :disabled="option.lineItems.length === 1"
                       >
                         Remove
@@ -378,9 +377,16 @@ const clientName = computed(() => {
 const currentProposal = computed<Proposal | null>(() => proposalStore.current);
 const showLoading = computed(() => initializing.value || proposalStore.loading);
 const allowedSingleOptionName = computed(() => {
-  const opts = form.value?.options ?? [];
-  const better = opts.find((o) => o.name?.toLowerCase?.() === "better");
+  const opts = (form.value?.options ?? []).filter(Boolean);
+  const better = opts.find((o) => (o?.name ?? "").toLowerCase() === "better");
   return (better?.name ?? opts[0]?.name ?? "");
+});
+
+const visibleOptions = computed(() => {
+  const opts = (form.value?.options ?? []).filter(Boolean);
+  if (isPro.value) return opts;
+  const allowed = (allowedSingleOptionName.value || "").toLowerCase();
+  return opts.filter((o) => ((o?.name ?? "").toLowerCase() === allowed));
 });
 const statusChipClass = computed(() => {
   const status = form.value?.status ?? "draft";
@@ -520,20 +526,21 @@ const selectProposal = (id: string) => {
   proposalStore.setSelected(id);
 };
 
-const onLineItemChange = (optionIndex: number, itemIndex: number) => {
-  const current = form.value;
-  if (!current) return;
-  const option = current.options[optionIndex];
+const findOptionById = (id: string) => form.value?.options.find((o) => o.id === id);
+
+const onLineItemChangeById = (optionId: string, itemIndex: number) => {
+  const option = findOptionById(optionId);
+  if (!option) return;
   const item = option.lineItems[itemIndex];
+  if (!item) return;
   if (!Number.isFinite(item.quantity)) item.quantity = 0;
   if (!Number.isFinite(item.unitCost)) item.unitCost = 0;
   recomputeOptionTotals(option);
 };
 
-const addLineItem = (optionIndex: number) => {
-  const current = form.value;
-  if (!current) return;
-  const option = current.options[optionIndex];
+const addLineItemById = (optionId: string) => {
+  const option = findOptionById(optionId);
+  if (!option) return;
   option.lineItems.push({
     id: crypto.randomUUID(),
     description: "",
@@ -544,10 +551,9 @@ const addLineItem = (optionIndex: number) => {
   recomputeOptionTotals(option);
 };
 
-const removeLineItem = (optionIndex: number, itemIndex: number) => {
-  const current = form.value;
-  if (!current) return;
-  const option = current.options[optionIndex];
+const removeLineItemById = (optionId: string, itemIndex: number) => {
+  const option = findOptionById(optionId);
+  if (!option) return;
   if (option.lineItems.length === 1) return;
   option.lineItems.splice(itemIndex, 1);
   recomputeOptionTotals(option);
@@ -591,10 +597,7 @@ const handleSave = async () => {
       quickquoteId: form.value.quickquoteId ?? undefined,
       title: form.value.title.trim(),
       description: form.value.description.trim() || null,
-      options: (isPro.value
-        ? form.value.options
-        : form.value.options.filter((o) => o.name.toLowerCase() === allowedSingleOptionName.value.toLowerCase())
-      ).map((option) => ({
+      options: visibleOptions.value.map((option) => ({
         name: option.name,
         summary: option.summary,
         multiplier: option.multiplier ?? null,
