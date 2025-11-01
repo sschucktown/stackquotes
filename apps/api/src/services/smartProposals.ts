@@ -81,7 +81,13 @@ export const generateSmartProposalFromQuote = async ({
 
   // Gating: Launch (non-trial) plans only get a single option (baseline from QuickQuote)
   const tier = (plan?.data?.subscription_tier as string | undefined)?.toLowerCase?.() ?? "launch";
-  const allowMultiOptions = tier === "pro" || tier === "crew"; // paid tiers (and active trial) allow multi-options
+  const trialEndRaw = plan?.data?.trial_end as string | null | undefined;
+  const inTrial = (() => {
+    if (typeof trialEndRaw !== "string") return false;
+    const d = new Date(trialEndRaw);
+    return !Number.isNaN(d.getTime()) && d.getTime() > Date.now();
+  })();
+  const allowMultiOptions = tier === "pro" || tier === "crew" || inTrial; // paid tiers and active trial allow multi-options
   if (!allowMultiOptions && options.length > 1) {
     const better = options.find((o) => o.name?.toLowerCase?.() === "better");
     options = [better ?? options[0]];

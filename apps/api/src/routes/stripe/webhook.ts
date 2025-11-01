@@ -337,13 +337,8 @@ export const registerStripeWebhookRoute = (router: Hono) => {
           }
           if (subscriptionUserId) {
             const trialEnd = toIso(subscription.trial_end ?? undefined);
-            await upsertUserMetadata(supabase, subscriptionUserId, {
-              trial_end: trialEnd ?? null,
-              subscription_tier: "pro",
-              is_active: true,
-            });
             await updateProfile(supabase, subscriptionUserId, {
-              subscription_tier: "pro",
+              trial_end: trialEnd ?? null,
             });
           }
           break;

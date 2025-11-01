@@ -35,7 +35,13 @@ import { useTier } from "@/composables/useTier";
 const dismissed = ref(false);
 const { inTrial, trialDaysRemaining } = useTier();
 
-const showBanner = computed(() => inTrial.value && !dismissed.value);
+const showBanner = computed(() => {
+  if (dismissed.value) return false;
+  if (!inTrial.value) return false;
+  const days = trialDaysRemaining.value ?? 0;
+  // Show in last 4 days of a 14-day trial (days 1-4 remaining)
+  return days > 0 && days <= 4;
+});
 
 const daysLabel = computed(() => {
   const days = trialDaysRemaining.value ?? 0;

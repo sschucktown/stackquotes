@@ -63,9 +63,7 @@ billingRouter.get("/status", async (c) => {
     const parsed = new Date(trialEndRaw);
     if (!Number.isNaN(parsed.getTime())) {
       trialEndIso = parsed.toISOString();
-      if (tier === "pro" && parsed.getTime() > Date.now()) {
-        inTrial = true;
-      }
+      inTrial = parsed.getTime() > Date.now();
     }
   }
 

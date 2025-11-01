@@ -18,6 +18,7 @@ import type { LineItem } from "@stackquotes/types";
 import { requireUser } from "../lib/auth.js";
 import { getServiceClient } from "../lib/supabase.js";
 import { generateSmartProposalFromQuote } from "../services/smartProposals.js";
+import { assertCreateEditAllowed } from "../lib/plan.js";
 
 const lineItemSchema = z.object({
   id: z.string().min(1),
@@ -67,6 +68,13 @@ estimatesRouter.get("/list", async (c) => {
 
 estimatesRouter.post("/create", async (c) => {
   const user = await requireUser(c);
+  try {
+    await assertCreateEditAllowed(user.id);
+  } catch (e) {
+    const status = (e as any)?.status ?? 403;
+    c.status(status);
+    return c.json({ error: (e as Error).message });
+  }
   const payload = createSchema.parse(await c.req.json());
   const supabase = getServiceClient();
   const settings =
@@ -97,6 +105,13 @@ estimatesRouter.post("/create", async (c) => {
 
 estimatesRouter.patch("/update", async (c) => {
   const user = await requireUser(c);
+  try {
+    await assertCreateEditAllowed(user.id);
+  } catch (e) {
+    const status = (e as any)?.status ?? 403;
+    c.status(status);
+    return c.json({ error: (e as Error).message });
+  }
   const payload = updateSchema.parse(await c.req.json());
   const supabase = getServiceClient();
   const { id, lineItems, ...rest } = payload;
@@ -121,6 +136,13 @@ estimatesRouter.patch("/update", async (c) => {
 
 estimatesRouter.post("/duplicate", async (c) => {
   const user = await requireUser(c);
+  try {
+    await assertCreateEditAllowed(user.id);
+  } catch (e) {
+    const status = (e as any)?.status ?? 403;
+    c.status(status);
+    return c.json({ error: (e as Error).message });
+  }
   const payload = duplicateSchema.parse(await c.req.json());
   const supabase = getServiceClient();
   const duplicateInput: EstimateDuplicateInput = {

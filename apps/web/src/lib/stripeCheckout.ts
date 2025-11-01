@@ -1,7 +1,12 @@
 import { loadStripe } from "@stripe/stripe-js";
 import { supabase, apiBaseUrl } from "./supabase";
 
-export async function startCheckout(priceId: string): Promise<void> {
+export interface CheckoutOptions {
+  planTier?: "pro" | "crew";
+  billingInterval?: "monthly" | "yearly";
+}
+
+export async function startCheckout(priceIdOrOptions: string | CheckoutOptions): Promise<void> {
   const publishableKey =
     import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY ?? import.meta.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
   if (!publishableKey) {
@@ -19,13 +24,21 @@ export async function startCheckout(priceId: string): Promise<void> {
     throw new Error("Unable to initialize Stripe.");
   }
 
+  const body: Record<string, unknown> =
+    typeof priceIdOrOptions === "string"
+      ? { priceId: priceIdOrOptions }
+      : {
+          planTier: priceIdOrOptions.planTier ?? "pro",
+          billingInterval: priceIdOrOptions.billingInterval ?? "monthly",
+        };
+
   const response = await fetch(`${apiBaseUrl}/stripe/checkout`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${accessToken}`,
     },
-    body: JSON.stringify({ priceId }),
+    body: JSON.stringify(body),
   });
 
   if (!response.ok) {

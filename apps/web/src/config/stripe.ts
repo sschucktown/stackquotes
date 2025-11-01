@@ -9,6 +9,14 @@ const resolvedPrices = {
     import.meta.env.VITE_STRIPE_PRICE_PRO ??
     import.meta.env.NEXT_PUBLIC_STRIPE_PRICE_PRO ??
     BASE_PRICES.PRO,
+  PRO_MONTHLY:
+    import.meta.env.VITE_STRIPE_PRICE_PRO_MONTHLY ??
+    import.meta.env.NEXT_PUBLIC_STRIPE_PRICE_PRO_MONTHLY ??
+    (BASE_PRICES as any).PRO_MONTHLY,
+  PRO_YEARLY:
+    import.meta.env.VITE_STRIPE_PRICE_PRO_YEARLY ??
+    import.meta.env.NEXT_PUBLIC_STRIPE_PRICE_PRO_YEARLY ??
+    (BASE_PRICES as any).PRO_YEARLY,
   CREW:
     import.meta.env.VITE_STRIPE_PRICE_CREW ??
     import.meta.env.NEXT_PUBLIC_STRIPE_PRICE_CREW ??

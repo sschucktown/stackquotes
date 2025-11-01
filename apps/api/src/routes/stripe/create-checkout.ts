@@ -14,6 +14,7 @@ import {
 const requestSchema = z.object({
   priceId: z.string().min(1, "priceId is required").optional(),
   planTier: z.enum(["launch", "pro", "crew"]).optional(),
+  billingInterval: z.enum(["monthly", "yearly"]).optional(),
 });
 
 export const registerCheckoutRoute = (router: Hono) => {
@@ -30,6 +31,8 @@ export const registerCheckoutRoute = (router: Hono) => {
     const config = loadServerConfig();
     const envPrices: Record<string, string | undefined> = {
       pro: process.env.STRIPE_PRICE_PRO || config.STRIPE_PRICE_PRO || config.PRO_PRICE_ID,
+      pro_monthly: process.env.STRIPE_PRICE_PRO_MONTHLY || (config as any).STRIPE_PRICE_PRO_MONTHLY,
+      pro_yearly: process.env.STRIPE_PRICE_PRO_YEARLY || (config as any).STRIPE_PRICE_PRO_YEARLY,
       crew: process.env.STRIPE_PRICE_CREW || config.STRIPE_PRICE_CREW,
     };
     log("env price presence", { pro: Boolean(envPrices.pro), crew: Boolean(envPrices.crew) });
@@ -44,7 +47,11 @@ export const registerCheckoutRoute = (router: Hono) => {
     }
 
     // Always use server-configured price IDs; do not trust client
-    const priceToUse = planTier === "crew" ? envPrices.crew : envPrices.pro;
+    let priceToUse = planTier === "crew" ? envPrices.crew : envPrices.pro;
+    if (planTier === "pro") {
+      if (parsed.billingInterval === "yearly" && envPrices.pro_yearly) priceToUse = envPrices.pro_yearly;
+      if (parsed.billingInterval === "monthly" && envPrices.pro_monthly) priceToUse = envPrices.pro_monthly;
+    }
     if (!priceToUse) {
       log("missing price configuration", { planTier, havePro: Boolean(envPrices.pro), haveCrew: Boolean(envPrices.crew) });
       c.status(500);

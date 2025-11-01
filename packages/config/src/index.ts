@@ -16,6 +16,8 @@ const serverSchema = z.object({
   // Primary plan prices
   STRIPE_PRICE_LAUNCH: z.string().optional(),
   STRIPE_PRICE_PRO: z.string().optional(),
+  STRIPE_PRICE_PRO_MONTHLY: z.string().optional(),
+  STRIPE_PRICE_PRO_YEARLY: z.string().optional(),
   STRIPE_PRICE_CREW: z.string().optional(),
   // Add-on prices
   STRIPE_PRICE_ADDON_PROPOSALS: z.string().optional(),
@@ -42,6 +44,8 @@ const clientSchema = z.object({
   VITE_API_BASE_URL: z.string().url().optional(),
   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().optional(),
   VITE_STRIPE_PUBLISHABLE_KEY: z.string().optional(),
+  VITE_STRIPE_PRICE_PRO_MONTHLY: z.string().optional(),
+  VITE_STRIPE_PRICE_PRO_YEARLY: z.string().optional(),
   NEXT_PUBLIC_FORCE_REQUIRE_CC_FOR_TEST: z.string().optional(),
 });
 

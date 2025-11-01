@@ -10,6 +10,8 @@
 
       <TrialCountdown />
 
+      <UpgradeModal :open="upgradeOpen" feature="creating proposals" @close="upgradeOpen = false" />
+
       <transition name="fade">
         <div
           v-if="showSeedingBanner"
@@ -295,7 +297,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, watch } from "vue";
+import { computed, onMounted, watch, ref } from "vue";
 import { useRouter } from "vue-router";
 import { format, formatDistanceToNowStrict, isValid, parseISO } from "date-fns";
 import { useTransition, TransitionPresets } from "@vueuse/core";
@@ -321,6 +323,8 @@ import { useContractorProfileStore } from "@modules/contractor/stores/profileSto
 import { useStarterProjectsStore } from "@modules/contractor/stores/starterProjectsStore";
 import TrialCountdown from "@/components/billing/TrialCountdown.vue";
 import HomeSnapshotGallery from "./components/HomeSnapshotGallery.vue";
+import UpgradeModal from "@/components/billing/UpgradeModal.vue";
+import { useTier } from "@/composables/useTier";
 
 const router = useRouter();
 const estimateStore = useEstimateStore();
@@ -356,6 +360,16 @@ const ensureStarterProjectsLoaded = async (force = false) => {
 onMounted(() => {
   void ensureDataLoaded();
   void ensureStarterProjectsLoaded();
+});
+
+// Trial expiry CTA modal
+const { isPaid, inTrial, trialEnd } = useTier();
+const upgradeOpen = ref(false);
+onMounted(() => {
+  // Open once if trial ended and user is not on a paid tier
+  if (!isPaid.value && !inTrial.value && trialEnd.value) {
+    upgradeOpen.value = true;
+  }
 });
 
 watch(

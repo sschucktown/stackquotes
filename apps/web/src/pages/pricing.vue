@@ -127,8 +127,8 @@ const plans: Plan[] = [
   {
     id: "pro",
     name: "Pro",
-    price: 99,
-    tagline: "Unlock G/B/B proposals, AI templates, and ProfitPulse.",
+    price: 79.99,
+    tagline: "$79.99/mo — includes 14-day full-feature trial.",
     features: [
       "Everything in Launch",
       "Good/Better/Best proposals + add-ons",
@@ -190,10 +190,13 @@ const handlePlanClick = async (plan: Plan) => {
   }
 
   if (plan.id === "pro" || plan.id === "crew") {
-    const priceId = plan.id === "pro" ? STRIPE_PRICES.PRO : STRIPE_PRICES.CREW;
     loadingPlan.value = plan.id;
     try {
-      await startCheckout(priceId);
+      if (plan.id === "pro") {
+        await startCheckout({ planTier: "pro", billingInterval: "monthly" });
+      } else {
+        await startCheckout({ planTier: "crew", billingInterval: "monthly" });
+      }
     } catch (error) {
       console.error(error);
       activeErrorPlan.value = plan.id;

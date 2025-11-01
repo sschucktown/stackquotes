@@ -21,6 +21,7 @@ import {
 } from "../services/smartProposals.js";
 import { sendEstimateEmail } from "../lib/email.js";
 import { createDepositPaymentLink } from "../lib/stripe.js";
+import { assertCreateEditAllowed } from "../lib/plan.js";
 
 const ACTIVE_STATUSES = ["draft", "sent"] as const;
 
@@ -250,6 +251,13 @@ proposalsRouter.get("/:id", async (c) => {
 
 proposalsRouter.post("/generate", async (c) => {
   const user = await requireUser(c);
+  try {
+    await assertCreateEditAllowed(user.id);
+  } catch (e) {
+    const status = (e as any)?.status ?? 403;
+    c.status(status);
+    return c.json({ error: (e as Error).message });
+  }
   const payload = generateSchema.parse(await c.req.json());
   const supabase = getServiceClient();
   await enforceActiveProposalLimit(supabase, user.id).catch((e) => {
@@ -270,6 +278,13 @@ proposalsRouter.post("/generate", async (c) => {
 
 proposalsRouter.post("/save", async (c) => {
   const user = await requireUser(c);
+  try {
+    await assertCreateEditAllowed(user.id);
+  } catch (e) {
+    const status = (e as any)?.status ?? 403;
+    c.status(status);
+    return c.json({ error: (e as Error).message });
+  }
   const payload = saveSchema.parse(await c.req.json());
   const supabase = getServiceClient();
   const options = sanitizeOptions(payload.options);
@@ -316,6 +331,13 @@ proposalsRouter.post("/save", async (c) => {
 
 proposalsRouter.post("/send", async (c) => {
   const user = await requireUser(c);
+  try {
+    await assertCreateEditAllowed(user.id);
+  } catch (e) {
+    const status = (e as any)?.status ?? 403;
+    c.status(status);
+    return c.json({ error: (e as Error).message });
+  }
   const payload = sendSchema.parse(await c.req.json());
   const supabase = getServiceClient();
 
