@@ -35,7 +35,7 @@
 ## 3. Business Model
 - Tiers
   - Launch (free): SmartProposal + PayLink (3% platform fee), previews, basic features.
-  - Pro ($99/mo): G/B/B proposals, AI templates, ProfitPulse, insights.
+  - Pro ($79.99/mo): G/B/B proposals, AI templates, ProfitPulse, insights.
   - Crew ($99 + $20/seat): Pro + seats, shared clients, org analytics.
   - References: `apps/web/src/pages/pricing.vue:1`.
 - Add-ons
@@ -122,4 +122,3 @@
   - Add unit/integration tests (API, proposal math, Stripe fee logic); add e2e for Stripe webhook flows; introduce ESLint/Prettier repo-wide.
 - Docs/Onboarding
   - Fill `docs/architecture.md` and `docs/roadmap.md`; add developer setup and sequence diagrams; expand onboarding flows in UI.
-

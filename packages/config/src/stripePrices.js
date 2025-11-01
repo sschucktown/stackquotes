@@ -1,7 +1,8 @@
 export const STRIPE_PRICES = {
   LAUNCH: "price_123free",
   BUILD: "price_1SNON3AEYYFvhjkfUxCqMXkE",
-  PRO: "price_1SNONvAEYYFvhjkfO2Mw4cTH",
+  // Pro $79.99 (new)
+  PRO: "price_1SOlB3AEYYFvhjkfzV5WWADi",
 };
 
 export const PRICE_ID_TO_PLAN = {
@@ -9,4 +10,3 @@ export const PRICE_ID_TO_PLAN = {
   [STRIPE_PRICES.BUILD]: "build",
   [STRIPE_PRICES.PRO]: "pro",
 };
-
