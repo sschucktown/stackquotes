@@ -32,22 +32,30 @@ pdfRouter.post("/generate", async (c) => {
   const settings = await getUserSettings(supabase, user.id);
   const { data: billing } = await supabase
     .from("users")
-    .select("subscription_tier, trial_end")
+    .select("subscription_tier, trial_end, addons")
     .eq("id", user.id)
     .maybeSingle();
 
-  const tier = typeof billing?.subscription_tier === "string" ? billing.subscription_tier.toLowerCase() : "free";
+  const tier = typeof billing?.subscription_tier === "string" ? billing.subscription_tier.toLowerCase() : "launch";
   const trialEndRaw = billing?.trial_end ?? null;
   let inTrial = false;
   if (typeof trialEndRaw === "string") {
     const trialDate = new Date(trialEndRaw);
     if (!Number.isNaN(trialDate.getTime()) && trialDate.getTime() > Date.now()) {
-      inTrial = tier === "pro";
+      inTrial = tier === "pro" || tier === "crew";
     }
   }
 
-  const watermarkText =
-    tier === "pro" || inTrial ? null : "StackQuotes Free Plan";
+  const addons = ((billing?.addons ?? {}) as Record<string, unknown>) ?? {};
+  const hasWhiteLabel = (() => {
+    const v = addons.branding ?? addons.white_label;
+    if (typeof v === "boolean") return v;
+    if (typeof v === "string") return v.toLowerCase() === "true";
+    if (typeof v === "number") return v === 1;
+    return false;
+  })();
+
+  const watermarkText = tier === "pro" || tier === "crew" || inTrial || hasWhiteLabel ? null : "StackQuotes Free Plan";
 
   const pdfBytes = await generateEstimatePdf(estimate, client, {
     settings,

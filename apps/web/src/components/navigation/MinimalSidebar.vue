@@ -26,8 +26,8 @@ type Item = {
 const router = useRouter();
 const route = useRoute();
 const settingsStore = useSettingsStore();
-const { isPro, inTrial } = useTier();
-const canAccessPro = computed(() => isPro.value || inTrial.value);
+const { isPaid, inTrial } = useTier();
+const canAccessPro = computed(() => isPaid.value || inTrial.value);
 const upgradeModalOpen = ref(false);
 const upgradeFeature = ref<string | undefined>(undefined);
 

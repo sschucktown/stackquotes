@@ -13,7 +13,7 @@ import {
 
 const requestSchema = z.object({
   priceId: z.string().min(1, "priceId is required").optional(),
-  planTier: z.enum(["free", "pro", "team"]).optional(),
+  planTier: z.enum(["launch", "pro", "crew"]).optional(),
 });
 
 export const registerCheckoutRoute = (router: Hono) => {
@@ -29,24 +29,24 @@ export const registerCheckoutRoute = (router: Hono) => {
 
     const config = loadServerConfig();
     const envPrices: Record<string, string | undefined> = {
-      pro: process.env.STRIPE_PRICE_PRO || config.PRO_PRICE_ID,
-      team: process.env.STRIPE_PRICE_TEAM,
+      pro: process.env.STRIPE_PRICE_PRO || config.STRIPE_PRICE_PRO || config.PRO_PRICE_ID,
+      crew: process.env.STRIPE_PRICE_CREW || config.STRIPE_PRICE_CREW,
     };
-    log("env price presence", { pro: Boolean(envPrices.pro), team: Boolean(envPrices.team) });
+    log("env price presence", { pro: Boolean(envPrices.pro), crew: Boolean(envPrices.crew) });
 
     // Figure out requested plan tier (default to pro)
-    let planTier: "free" | "pro" | "team" = "pro";
-    if (parsed.planTier && ["free", "pro", "team"].includes(parsed.planTier)) {
+    let planTier: "launch" | "pro" | "crew" = "pro";
+    if (parsed.planTier && ["launch", "pro", "crew"].includes(parsed.planTier)) {
       planTier = parsed.planTier as typeof planTier;
     } else if (parsed.priceId) {
       if (parsed.priceId === envPrices.pro) planTier = "pro";
-      else if (parsed.priceId === envPrices.team) planTier = "team";
+      else if (parsed.priceId === envPrices.crew) planTier = "crew";
     }
 
     // Always use server-configured price IDs; do not trust client
-    const priceToUse = planTier === "team" ? envPrices.team : envPrices.pro;
+    const priceToUse = planTier === "crew" ? envPrices.crew : envPrices.pro;
     if (!priceToUse) {
-      log("missing price configuration", { planTier, havePro: Boolean(envPrices.pro), haveTeam: Boolean(envPrices.team) });
+      log("missing price configuration", { planTier, havePro: Boolean(envPrices.pro), haveCrew: Boolean(envPrices.crew) });
       c.status(500);
       return c.json({ error: `Stripe price id for plan '${planTier}' is not configured on the server.` });
     }

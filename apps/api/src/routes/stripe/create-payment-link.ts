@@ -50,8 +50,8 @@ export const registerCreatePaymentLinkRoute = (router: Hono) => {
     const tierRaw =
       typeof userRecord?.subscription_tier === "string"
         ? userRecord.subscription_tier.toLowerCase()
-        : "free";
-    const tier: "free" | "pro" = tierRaw === "pro" ? "pro" : "free";
+        : "launch";
+    const tier: "launch" | "pro" | "crew" = tierRaw === "pro" ? "pro" : tierRaw === "crew" ? "crew" : "launch";
     const addons = (userRecord?.addons as Record<string, unknown> | null) ?? {};
     const feePercent = computePlatformFeePercent({
       tier,

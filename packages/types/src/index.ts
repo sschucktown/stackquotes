@@ -203,7 +203,7 @@ export interface ProposalSummaryMetrics {
   revenueYtd: number;
 }
 
-export type SubscriptionPlanTier = "free" | "starter" | "pro" | "team";
+export type SubscriptionPlanTier = "launch" | "pro" | "crew";
 
 export type SubscriptionStatus =
   | "trialing"

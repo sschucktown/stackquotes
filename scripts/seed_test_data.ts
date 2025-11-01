@@ -33,7 +33,7 @@ type SeedUser = {
   email: string;
   password: string;
   company: string;
-  tier: "free" | "pro";
+  tier: "launch" | "pro" | "crew";
   trialDays?: number;
   addons?: Record<string, unknown>;
   requireConnect?: boolean;
@@ -43,8 +43,8 @@ const seedUsers: SeedUser[] = [
   {
     email: "free_user@example.com",
     password: "Passw0rd!",
-    company: "Charleston Deck Pros (Free)",
-    tier: "free",
+    company: "Charleston Deck Pros (Launch)",
+    tier: "launch",
     addons: {},
     requireConnect: true,
   },

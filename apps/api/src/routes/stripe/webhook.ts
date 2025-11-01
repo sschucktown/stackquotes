@@ -13,7 +13,7 @@ import {
 import type { PaymentType, SubscriptionPlanTier } from "@stackquotes/types";
 import { PRICE_ID_TO_PLAN } from "@stackquotes/config";
 
-const PLAN_TIER_VALUES: SubscriptionPlanTier[] = ["free", "starter", "pro", "team"];
+const PLAN_TIER_VALUES: SubscriptionPlanTier[] = ["launch", "pro", "crew"];
 const PLAN_TIER_SET = new Set<SubscriptionPlanTier>(PLAN_TIER_VALUES);
 
 const parsePlanTier = (value: unknown): SubscriptionPlanTier | null => {
@@ -139,6 +139,24 @@ const upsertAddonFlag = async (
     return;
   }
   const currentAddons = ((data?.addons as Record<string, unknown>) ?? {}) as Record<string, unknown>;
+  // For proposal_slots, persist a numeric slot count (3). Otherwise, a boolean flag.
+  if (addonKey === "proposal_slots") {
+    if (typeof currentAddons["proposal_slots"] === "number") return;
+    const nextAddons = { ...currentAddons, proposal_slots: 3 };
+    const { error: updateError } = await supabase
+      .from("users")
+      .upsert(
+        {
+          id: userId,
+          addons: nextAddons,
+        },
+        { onConflict: "id" }
+      );
+    if (updateError) {
+      console.error("[stripe] failed to persist addon flag", userId, addonKey, updateError);
+    }
+    return;
+  }
   if (currentAddons[addonKey] === true) {
     return;
   }
@@ -295,9 +313,9 @@ export const registerStripeWebhookRoute = (router: Hono) => {
             subscriptionUserId = await findProfileIdByCustomer(supabase, customerId);
           }
           if (subscriptionUserId) {
-            await setUserSubscriptionTier(supabase, subscriptionUserId, "free");
+            await setUserSubscriptionTier(supabase, subscriptionUserId, "launch");
             await updateProfile(supabase, subscriptionUserId, {
-              subscription_tier: "free",
+              subscription_tier: "launch",
               });
           }
           break;

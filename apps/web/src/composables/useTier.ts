@@ -1,7 +1,7 @@
 ﻿import { apiFetch } from "@/lib/http";
 import { computed, ref } from "vue";
 
-type Tier = "free" | "pro";
+type Tier = "launch" | "pro" | "crew";
 
 interface TierState {
   tier: Tier;
@@ -17,10 +17,12 @@ const error = ref<string | null>(null);
 let initialised = false;
 
 const normaliseTier = (value: unknown): Tier => {
-  if (typeof value === "string" && value.toLowerCase() === "pro") {
-    return "pro";
+  if (typeof value === "string") {
+    const v = value.toLowerCase();
+    if (v === "pro") return "pro";
+    if (v === "crew") return "crew";
   }
-  return "free";
+  return "launch";
 };
 
 const calculateDaysLeft = (trialEnd: string | null): number | null => {
@@ -61,7 +63,7 @@ const fetchTier = async () => {
     console.error("[tier] failed to load billing status", err);
     error.value = err instanceof Error ? err.message : "Unable to load plan information.";
     state.value = {
-      tier: "free",
+      tier: "launch",
       trialEnd: null,
       inTrial: false,
       addons: {},
@@ -78,13 +80,15 @@ export const useTier = () => {
     void fetchTier();
   }
 
-  const tier = computed<Tier>(() => state.value?.tier ?? "free");
+  const tier = computed<Tier>(() => state.value?.tier ?? "launch");
   const inTrial = computed<boolean>(() => state.value?.inTrial ?? false);
   const trialEnd = computed<string | null>(() => state.value?.trialEnd ?? null);
   const addons = computed<Record<string, unknown>>(() => state.value?.addons ?? {});
   const isActive = computed<boolean>(() => state.value?.isActive ?? true);
   const isPro = computed<boolean>(() => tier.value === "pro" || inTrial.value);
-  const isFree = computed<boolean>(() => !isPro.value);
+  const isCrew = computed<boolean>(() => tier.value === "crew");
+  const isPaid = computed<boolean>(() => isPro.value || isCrew.value);
+  const isLaunch = computed<boolean>(() => !isPaid.value);
   const trialDaysRemaining = computed<number | null>(() => calculateDaysLeft(trialEnd.value));
 
   const refresh = async () => {
@@ -94,8 +98,10 @@ export const useTier = () => {
   return {
     tier,
     isPro,
+    isCrew,
+    isPaid,
+    isLaunch,
     inTrial,
-    isFree,
     trialEnd,
     trialDaysRemaining,
     addons,

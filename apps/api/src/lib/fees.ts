@@ -1,5 +1,5 @@
 export type FeeContext = {
-  tier: "free" | "pro";
+  tier: "launch" | "pro" | "crew";
   addons?: Record<string, unknown> | null;
   isFinanced?: boolean;
 };
@@ -20,7 +20,7 @@ const hasFinancingBoostFlag = (addons: Record<string, unknown>): boolean => {
 };
 
 export const computePlatformFeePercent = (ctx: FeeContext): number => {
-  const base = ctx.tier === "pro" ? 1 : 3;
+  const base = ctx.tier === "launch" ? 3 : 1;
   const addons = toRecord(ctx.addons);
   const financed = Boolean(ctx.isFinanced);
   const hasFinancingBoost = hasFinancingBoostFlag(addons);

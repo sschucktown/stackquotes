@@ -47,7 +47,7 @@ export const downgradeExpiredTrials = async (): Promise<void> => {
     const { error: userUpdateError } = await supabase
       .from("users")
       .update({
-        subscription_tier: "free",
+        subscription_tier: "launch",
         trial_end: null,
         is_active: true,
       })
@@ -58,7 +58,7 @@ export const downgradeExpiredTrials = async (): Promise<void> => {
     }
 
     try {
-      await setUserSubscriptionTier(supabase, userId, "free");
+      await setUserSubscriptionTier(supabase, userId, "launch");
     } catch (setTierError) {
       console.error("[stripe] failed to sync subscription tier helper", userId, setTierError);
     }}

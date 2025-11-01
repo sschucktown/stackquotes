@@ -47,7 +47,10 @@
         </div>
 
         <div class="flex justify-between">
-          <SQButton variant="ghost" @click="store.addCustom">+ Add Custom Item</SQButton>
+          <SQButton
+            variant="ghost"
+            @click="onAddCustom"
+          >+ Add Custom Item</SQButton>
           <div class="text-right">
             <div class="text-xs text-slate-500">Subtotal</div>
             <div class="text-base font-semibold text-slate-900">{{ currency(store.subtotal) }}</div>
@@ -77,6 +80,7 @@
         </div>
         <p v-if="error" class="text-sm text-red-500">{{ error }}</p>
       </section>
+      <UpgradeModal :open="upgradeModalOpen" feature="ScopeForge template editing" @close="upgradeModalOpen = false" />
     </div>
   </div>
 </template>
@@ -88,13 +92,14 @@ import { useQuoteStore } from "@modules/quickquote/stores/quoteStore";
 import TradeAutocomplete from "@modules/quickquote/components/TradeAutocomplete.vue";
 import LineItemCard from "@modules/quickquote/components/LineItemCard.vue";
 import { useTier } from "@/composables/useTier";
+import UpgradeModal from "@/components/billing/UpgradeModal.vue";
 import { useEstimateStore } from "@modules/quickquote/stores/estimateStore";
 import { generateSmartProposal } from "@modules/proposals/api/proposals";
 
 const store = useQuoteStore();
 const estimateStore = useEstimateStore();
 const router = useRouter();
-const { isPro } = useTier();
+const { isPaid } = useTier();
 
 const itemModels = reactive<Record<string, any>>({});
 const saving = ref(false);
@@ -121,7 +126,16 @@ watch(
 const currencyFmt = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 const currency = (n: number) => currencyFmt.format(n || 0);
 
-const canAiAssist = computed(() => isPro.value && store.items.length >= 3);
+const canAiAssist = computed(() => isPaid.value && store.items.length >= 3);
+
+const upgradeModalOpen = ref(false);
+const onAddCustom = () => {
+  if (!isPaid.value) {
+    upgradeModalOpen.value = true;
+    return;
+  }
+  store.addCustom();
+};
 
 const onSelect = (tpl: any) => {
   store.addFromTemplate(tpl);
@@ -215,4 +229,3 @@ const generateGbb = async () => {
   transform: translateY(6px);
 }
 </style>
-

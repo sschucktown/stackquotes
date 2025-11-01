@@ -132,9 +132,9 @@ shareRouter.get("/proposal/:token", async (c) => {
     supabase.from("users").select("subscription_tier, trial_end").eq("id", proposal.userId).maybeSingle(),
   ]);
   const selectedOption = proposal.acceptedOption ?? null;
-  // Free (non-trial) contractors: show only one baseline option to clients
-  const tier = (plan?.data?.subscription_tier as string | undefined)?.toLowerCase?.() ?? "free";
-  const allowMultiOptions = tier === "pro";
+  // Launch (non-trial) contractors: show only one baseline option to clients
+  const tier = (plan?.data?.subscription_tier as string | undefined)?.toLowerCase?.() ?? "launch";
+  const allowMultiOptions = tier === "pro" || tier === "crew";
   const visibleOptions = (() => {
     if (allowMultiOptions) return proposal.options;
     const better = proposal.options.find((o) => o.name?.toLowerCase?.() === "better");
@@ -193,8 +193,8 @@ shareRouter.post("/proposal/:token/accept", async (c) => {
     supabase.from("users").select("subscription_tier, trial_end").eq("id", proposal.userId).maybeSingle(),
   ]);
 
-  const tier = (plan?.data?.subscription_tier as string | undefined)?.toLowerCase?.() ?? "free";
-  const allowMultiOptions = tier === "pro";
+  const tier = (plan?.data?.subscription_tier as string | undefined)?.toLowerCase?.() ?? "launch";
+  const allowMultiOptions = tier === "pro" || tier === "crew";
   const allowedOptions = allowMultiOptions
     ? proposal.options
     : [

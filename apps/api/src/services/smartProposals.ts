@@ -79,9 +79,9 @@ export const generateSmartProposalFromQuote = async ({
     depositConfig = DEFAULT_DEPOSIT;
   }
 
-  // Gating: free (non-trial) plans only get a single option (baseline from QuickQuote)
-  const tier = (plan?.data?.subscription_tier as string | undefined)?.toLowerCase?.() ?? "free";
-  const allowMultiOptions = tier === "pro"; // 'pro' also represents active trial in our system
+  // Gating: Launch (non-trial) plans only get a single option (baseline from QuickQuote)
+  const tier = (plan?.data?.subscription_tier as string | undefined)?.toLowerCase?.() ?? "launch";
+  const allowMultiOptions = tier === "pro" || tier === "crew"; // paid tiers (and active trial) allow multi-options
   if (!allowMultiOptions && options.length > 1) {
     const better = options.find((o) => o.name?.toLowerCase?.() === "better");
     options = [better ?? options[0]];

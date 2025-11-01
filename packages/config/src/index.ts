@@ -13,8 +13,15 @@ const serverSchema = z.object({
   STRIPE_PRODUCT_ID: z.string().optional(),
   STRIPE_PUBLISHABLE_KEY: z.string().optional(),
   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().optional(),
-  PRO_PRICE_ID: z.string().optional(),
+  // Primary plan prices
+  STRIPE_PRICE_LAUNCH: z.string().optional(),
   STRIPE_PRICE_PRO: z.string().optional(),
+  STRIPE_PRICE_CREW: z.string().optional(),
+  // Add-on prices
+  STRIPE_PRICE_ADDON_PROPOSALS: z.string().optional(),
+  STRIPE_PRICE_ADDON_BRANDING: z.string().optional(),
+  // Legacy/compat
+  PRO_PRICE_ID: z.string().optional(),
   STRIPE_ADDON_PERMITSYNC: z.string().optional(),
   STRIPE_ADDON_SUPPLYLINK: z.string().optional(),
   STRIPE_ADDON_QUOTEIQ_PLUS: z.string().optional(),

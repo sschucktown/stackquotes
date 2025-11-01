@@ -13,12 +13,15 @@ const ADDON_PRICE_MAP: Record<string, string | null> = {
   supplylink: serverConfig.STRIPE_ADDON_SUPPLYLINK ?? null,
   quoteiq_plus: serverConfig.STRIPE_ADDON_QUOTEIQ_PLUS ?? null,
   financing_boost: serverConfig.STRIPE_ADDON_FINANCING_BOOST ?? null,
+  // New pricing model addons
+  branding: serverConfig.STRIPE_PRICE_ADDON_BRANDING ?? null,
+  proposal_slots: serverConfig.STRIPE_PRICE_ADDON_PROPOSALS ?? null,
 };
 
 const addonsSchema = z.record(z.union([z.boolean(), z.string(), z.number()])).default({});
 
 const checkoutSchema = z.object({
-  addonKey: z.enum(["permitsync", "supplylink", "quoteiq_plus", "financing_boost"]),
+  addonKey: z.enum(["permitsync", "supplylink", "quoteiq_plus", "financing_boost", "branding", "proposal_slots"]),
 });
 
 export const addonsRouter = new Hono();
@@ -127,8 +130,9 @@ addonsRouter.post("/checkout", async (c) => {
   }
 
   const baseUrl = getBaseAppUrl();
+  const mode = parsed.data.addonKey === "proposal_slots" ? "payment" : "subscription";
   const session = await stripe.checkout.sessions.create({
-    mode: "subscription",
+    mode,
     customer: customerId ?? undefined,
     line_items: [{ price: priceId, quantity: 1 }],
     success_url: `${baseUrl}/settings/billing?addon=${parsed.data.addonKey}&status=success`,
@@ -151,4 +155,3 @@ addonsRouter.post("/checkout", async (c) => {
     },
   });
 });
-

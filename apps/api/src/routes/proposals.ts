@@ -22,6 +22,46 @@ import {
 import { sendEstimateEmail } from "../lib/email.js";
 import { createDepositPaymentLink } from "../lib/stripe.js";
 
+const ACTIVE_STATUSES = ["draft", "sent"] as const;
+
+const getAllowedActiveProposals = (tier: string, addons: Record<string, unknown>): number => {
+  const base = tier === "launch" ? 3 : 1000; // effectively unlimited for paid tiers
+  const extra = (() => {
+    const v = addons.proposal_slots ?? addons.extra_proposal_slots;
+    if (typeof v === "number") return v;
+    const parsed = typeof v === "string" ? Number(v) : NaN;
+    return Number.isFinite(parsed) ? parsed : 0;
+  })();
+  return base + extra;
+};
+
+const enforceActiveProposalLimit = async (
+  supabase: ReturnType<typeof getServiceClient>,
+  userId: string
+) => {
+  const { data: user } = await supabase
+    .from("users")
+    .select("subscription_tier, addons")
+    .eq("id", userId)
+    .maybeSingle();
+  const tier = (user?.subscription_tier as string | null)?.toLowerCase?.() ?? "launch";
+  const addons = ((user?.addons ?? {}) as Record<string, unknown>) ?? {};
+  const allowed = getAllowedActiveProposals(tier, addons);
+  if (tier !== "launch") return; // no limit for paid tiers
+  const { count } = await supabase
+    .from("smart_proposals")
+    .select("id", { count: "exact", head: true })
+    .eq("contractor_id", userId)
+    .in("status", [...ACTIVE_STATUSES]);
+  const active = count ?? 0;
+  if (active >= allowed) {
+    const message = "Active proposal limit reached for Launch. Add 3 slots ($9) or upgrade to Pro.";
+    const err: any = new Error(message);
+    err.status = 403;
+    throw err;
+  }
+};
+
 const listSchema = z.object({
   limit: z.coerce.number().int().min(1).max(50).optional(),
 });
@@ -212,6 +252,11 @@ proposalsRouter.post("/generate", async (c) => {
   const user = await requireUser(c);
   const payload = generateSchema.parse(await c.req.json());
   const supabase = getServiceClient();
+  await enforceActiveProposalLimit(supabase, user.id).catch((e) => {
+    const status = (e as { status?: number }).status ?? 400;
+    c.status(status);
+    throw e;
+  });
   const result = await generateSmartProposalFromQuote({
     supabase,
     contractorId: user.id,
@@ -251,6 +296,11 @@ proposalsRouter.post("/save", async (c) => {
   }
 
   const depositConfig = resolveDepositConfig(payload.deposit, null);
+  await enforceActiveProposalLimit(supabase, user.id).catch((e) => {
+    const status = (e as { status?: number }).status ?? 400;
+    c.status(status);
+    throw e;
+  });
   const data = await createProposalRecord(supabase, {
     userId: user.id,
     clientId: payload.clientId,

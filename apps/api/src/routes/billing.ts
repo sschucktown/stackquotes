@@ -2,11 +2,13 @@ import { Hono } from "hono";
 import { requireUser } from "../lib/auth.js";
 import { getServiceClient } from "../lib/supabase.js";
 
-const NORMALISE_TIER = (value: unknown): "free" | "pro" => {
-  if (typeof value === "string" && value.toLowerCase() === "pro") {
-    return "pro";
+const NORMALISE_TIER = (value: unknown): "launch" | "pro" | "crew" => {
+  if (typeof value === "string") {
+    const v = value.toLowerCase();
+    if (v === "pro") return "pro";
+    if (v === "crew") return "crew";
   }
-  return "free";
+  return "launch";
 };
 
 export const billingRouter = new Hono();
@@ -34,7 +36,7 @@ billingRouter.get("/status", async (c) => {
       .upsert(
         {
           id: user.id,
-          subscription_tier: "free",
+          subscription_tier: "launch",
           is_active: true,
         },
         { onConflict: "id" }
@@ -50,7 +52,7 @@ billingRouter.get("/status", async (c) => {
     data = upsertResult.data;
   }
 
-  const tier = NORMALISE_TIER(data?.subscription_tier ?? "free");
+  const tier = NORMALISE_TIER(data?.subscription_tier ?? "launch");
   const trialEndRaw = data?.trial_end ?? null;
   const addons = ((data?.addons ?? {}) as Record<string, unknown>) ?? {};
   const isActive = data?.is_active ?? true;
@@ -77,4 +79,3 @@ billingRouter.get("/status", async (c) => {
     },
   });
 });
-

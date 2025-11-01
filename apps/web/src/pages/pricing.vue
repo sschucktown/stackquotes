@@ -7,7 +7,7 @@
           Stripe-powered plans for growing contractor teams
         </h1>
         <p class="mt-5 text-base text-white/70 sm:text-lg">
-          Every plan includes SmartProposal, PayLink deposits, ProfitPulse reporting previews, and ScopeForge beta milestones.
+          Every plan includes SmartProposal, PayLink deposits, ProfitPulse previews, and ScopeForge beta milestones.
           Upgrade or downgrade anytime -- billing is handled through secure Stripe Checkout.
         </p>
       </header>
@@ -32,13 +32,13 @@
               </span>
             </div>
             <p class="text-sm text-white/70">{{ plan.tagline }}</p>
-            <div class="mt-6 flex items-baseline gap-1">
-              <span class="text-4xl font-bold tracking-tight">
-                <template v-if="plan.price === 0">Free</template>
-                <template v-else>\${{ plan.price }}</template>
-              </span>
-              <span v-if="plan.price" class="text-sm text-white/60">/month</span>
-            </div>
+          <div class="mt-6 flex items-baseline gap-1">
+            <span class="text-4xl font-bold tracking-tight">
+              <template v-if="plan.priceLabel">{{ plan.priceLabel }}</template>
+              <template v-else>\${{ plan.price }}</template>
+            </span>
+            <span v-if="plan.price && !plan.priceLabel" class="text-sm text-white/60">/month</span>
+          </div>
           </div>
 
           <ul class="mt-6 flex-1 space-y-3 text-sm text-white/80">
@@ -68,7 +68,7 @@
               {{ errorMessage }}
             </p>
             <p v-else class="mt-3 text-xs text-white/60">
-              {{ plan.id === "free" ? "No credit card required." : "Cancel anytime via Stripe Customer Portal." }}
+              {{ plan.id === "launch" ? "No credit card required." : "Cancel anytime via Stripe Customer Portal." }}
             </p>
           </div>
         </article>
@@ -83,9 +83,7 @@
         <p class="mt-4">
           Contractor payouts run through Stripe Connect Express accounts. Platform fees are applied automatically (3%) for PayLink deposits.
         </p>
-        <p class="mt-4">
-          Crew tier ($147.99/mo) is on the roadmap for multi-team operations -- join the waitlist to get launch updates.
-        </p>
+        <p class="mt-4">Crew adds seats, shared clients, and org-level analytics.</p>
       </footer>
     </div>
   </div>
@@ -98,12 +96,13 @@ import { useAuth } from "@/lib/auth";
 import { startCheckout } from "@/lib/stripeCheckout";
 import { STRIPE_PRICES } from "@/config/stripe";
 
-type PlanTier = "free" | "pro" | "team";
+type PlanTier = "launch" | "pro" | "crew";
 
 interface Plan {
   id: PlanTier;
   name: string;
-  price: number;
+  price?: number;
+  priceLabel?: string;
   tagline: string;
   features: string[];
   ctaLabel: string;
@@ -112,14 +111,14 @@ interface Plan {
 
 const plans: Plan[] = [
   {
-    id: "free",
+    id: "launch",
     name: "Launch",
-    price: 0,
-    tagline: "Kick off proposals, deposits, and client tracking without a credit card.",
+    priceLabel: "Free",
+    tagline: "Kick off proposals and deposits — no credit card required.",
     features: [
       "SmartProposal editor + client approvals",
       "PayLink deposits (3% platform fee)",
-      "ScopeForge template library preview",
+      "ScopeForge template library preview (read-only)",
       "Proposal activity tracking dashboard",
     ],
     ctaLabel: "Start Launch",
@@ -127,34 +126,30 @@ const plans: Plan[] = [
   },
   {
     id: "pro",
-    name: "Build",
-    price: 47.99,
-    tagline: "Upgrade quoting and payments with automation, insights, and upsells.",
+    name: "Pro",
+    price: 99,
+    tagline: "Unlock G/B/B proposals, AI templates, and ProfitPulse.",
     features: [
       "Everything in Launch",
-      "Unlimited SmartProposal variants & add-ons",
-      "PayLink smart change orders & upsells",
-      "ProfitPulse performance snapshots & CSV export",
-      "ScopeForge milestone scheduling (beta)",
-      "Stripe Connect payouts with ledger sync",
+      "Good/Better/Best proposals + add-ons",
+      "ScopeForge AI template editing",
+      "ProfitPulse dashboard + CSV export",
+      "QuickSync + QuoteIQ insights",
     ],
-    ctaLabel: "Upgrade to Build",
+    ctaLabel: "Upgrade to Pro",
     available: true,
   },
   {
-    id: "team",
-    name: "Pro",
-    price: 97.99,
-    tagline: "Scale your crews with revenue intelligence, faster payouts, and premium support.",
+    id: "crew",
+    name: "Crew",
+    priceLabel: "$99 + $20/seat",
+    tagline: "Pro features with seat management and org analytics.",
     features: [
-      "Everything in Build",
-      "Advanced ProfitPulse analytics & trends",
-      "Accelerated Stripe payouts & collection flags",
-      "Role-based workspaces & crew assignment tools",
-      "White-labeled proposals and analytics exports",
-      "Priority success coaching & quarterly playbooks",
+      "Everything in Pro",
+      "Seat management & shared clients",
+      "Org-level analytics + team reporting",
     ],
-    ctaLabel: "Upgrade to Pro",
+    ctaLabel: "Upgrade to Crew",
     available: true,
   },
 ];
@@ -171,7 +166,7 @@ const featuredPlan = ref<PlanTier>("pro");
 watch(
   () => route.query.plan,
   (value) => {
-    if (typeof value === "string" && (value === "free" || value === "pro" || value === "team")) {
+    if (typeof value === "string" && (value === "launch" || value === "pro" || value === "crew")) {
       featuredPlan.value = value as PlanTier;
     }
   },
@@ -189,13 +184,13 @@ const handlePlanClick = async (plan: Plan) => {
     return;
   }
 
-  if (plan.id === "free") {
+  if (plan.id === "launch") {
     await router.push({ name: "register", query: { plan: plan.id } });
     return;
   }
 
-  if (plan.id === "pro" || plan.id === "team") {
-    const priceId = plan.id === "pro" ? STRIPE_PRICES.PRO : STRIPE_PRICES.TEAM;
+  if (plan.id === "pro" || plan.id === "crew") {
+    const priceId = plan.id === "pro" ? STRIPE_PRICES.PRO : STRIPE_PRICES.CREW;
     loadingPlan.value = plan.id;
     try {
       await startCheckout(priceId);

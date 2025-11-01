@@ -15,7 +15,7 @@
 
       <UpgradeBanner
         v-if="showUpgradeBanner"
-        message="Upgrade to StackQuotes Pro to add Better & Best packages, milestones, analytics, and remove the StackQuotes watermark from proposals."
+        message="Upgrade to StackQuotes Pro or Crew to add Better & Best packages, milestones, analytics, and remove the StackQuotes watermark from proposals."
         @upgrade="openUpgrade('SmartProposals')"
       />
 
@@ -339,8 +339,8 @@ const proposalStore = useProposalStore();
 const estimateStore = useEstimateStore();
 const clientStore = useClientStore();
 const demoStore = useDemoStore();
-  const { isPro } = useTier();
-const isFree = computed(() => !isPro.value);
+  const { isPaid } = useTier();
+const isFree = computed(() => !isPaid.value);
 const showUpgradeBanner = computed(() => isFree.value);
 const upgradeModalOpen = ref(false);
 const upgradeFeature = ref<string | undefined>(undefined);
@@ -384,7 +384,7 @@ const allowedSingleOptionName = computed(() => {
 
 const visibleOptions = computed(() => {
   const opts = (form.value?.options ?? []).filter(Boolean);
-  if (isPro.value) return opts;
+  if (isPaid.value) return opts;
   const allowed = (allowedSingleOptionName.value || "").toLowerCase();
   return opts.filter((o) => ((o?.name ?? "").toLowerCase() === allowed));
 });

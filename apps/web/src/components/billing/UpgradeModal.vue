@@ -51,7 +51,7 @@
               class="inline-flex items-center justify-center rounded-lg bg-[#2563eb] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#1d4ed8]"
               @click="$emit('close')"
             >
-              View Pro plans
+              View plans
             </RouterLink>
           </div>
         </div>
@@ -71,8 +71,8 @@ const props = defineProps<{
 
 const featureMessage = computed(() =>
   props.feature
-    ? `${props.feature} is available for StackQuotes Pro teams.`
-    : "Upgrade to StackQuotes Pro to access advanced workflows."
+    ? `${props.feature} is available on Pro and Crew tiers.`
+    : "Upgrade to Pro or Crew to access advanced workflows."
 );
 
 defineEmits<{

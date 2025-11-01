@@ -43,13 +43,13 @@ const parseProposalLineItems = (value: Json): ProposalOptionLineItem[] => {
   }));
 };
 
-const KNOWN_PLAN_TIERS = new Set<SubscriptionPlanTier>(["free", "starter", "pro", "team"]);
+const KNOWN_PLAN_TIERS = new Set<SubscriptionPlanTier>(["launch", "pro", "crew"]);
 const normalisePlanTier = (value: string | null | undefined): SubscriptionPlanTier => {
-  if (!value) return "free";
+  if (!value) return "launch";
   const normalised = value.toLowerCase();
   return KNOWN_PLAN_TIERS.has(normalised as SubscriptionPlanTier)
     ? (normalised as SubscriptionPlanTier)
-    : "free";
+    : "launch";
 };
 
 const KNOWN_SUBSCRIPTION_STATUSES = new Set<SubscriptionStatus>([
