@@ -132,19 +132,24 @@ const handleLogout = async () => {
         <span class="hidden text-sm font-medium lg:inline">{{ item.label }}</span>
         <span v-if="expanded" class="text-sm font-medium lg:hidden">{{ item.label }}</span>
       </button>
+
+      <!-- Sign out directly under Chat/Help -->
+      <button
+        type="button"
+        class="group relative flex w-full items-center rounded-md px-3 py-2 text-slate-600 transition hover:bg-slate-50 hover:text-slate-800"
+        :class="expanded ? 'gap-3' : 'justify-center lg:justify-start lg:gap-3'"
+        @click="handleLogout"
+      >
+        <span class="absolute left-0 top-0 h-full w-1 rounded-r bg-transparent" />
+        <ArrowLeftOnRectangleIcon class="h-6 w-6 text-slate-400 group-hover:text-slate-600" />
+        <span class="hidden text-sm font-medium lg:inline">Sign out</span>
+        <span v-if="expanded" class="text-sm font-medium lg:hidden">Sign out</span>
+      </button>
     </nav>
 
     <div class="mt-auto p-3">
-      <button
-        type="button"
-        class="group flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-800"
-        :class="expanded ? '' : 'justify-center lg:justify-start'"
-        @click="handleLogout"
-      >
-        <ArrowLeftOnRectangleIcon class="h-5 w-5 text-slate-400 group-hover:text-slate-600" />
-        <span class="hidden lg:inline">Sign out</span>
-        <span v-if="expanded" class="lg:hidden">Sign out</span>
-      </button>
+      <p class="hidden text-xs text-slate-400 lg:block">Balance ambition with patience.</p>
+      <p v-if="expanded" class="text-xs text-slate-400 lg:hidden">Balance ambition with patience.</p>
     </div>
 
     <UpgradeModal :open="upgradeModalOpen" :feature="upgradeFeature" @close="upgradeModalOpen = false" />
