@@ -24,7 +24,7 @@ const router = createRouter({
     {
       path: "/",
       name: "landing",
-      component: () => import("@/pages/marketing/StackQuotesLandingPage.vue"),
+      component: () => import("@/pages/marketing/StackQuotesProLandingPage.vue"),
       meta: { public: true, allowAuthenticated: true },
     },
     {

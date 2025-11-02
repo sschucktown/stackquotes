@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="relative overflow-hidden bg-slate-950 text-white">
     <div class="absolute inset-0">
       <div class="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 opacity-90" />
@@ -18,7 +18,7 @@
           </h1>
           <p class="max-w-xl text-base text-slate-200 sm:text-lg">
             StackQuotes helps contractors send polished Good/Better/Best proposals, capture signatures, and get paid faster.
-            Everything is wired into your workflow � from instant deposits to automated follow-up.
+            Everything is wired into your workflow — from instant deposits to automated follow-up.
           </p>
           <div class="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:gap-5">
             <button
@@ -96,35 +96,72 @@
         </div>
       </header>
 
-      <section
-        v-if="pricingPreview?.length"
-        class="mx-auto max-w-5xl px-6 pb-20 md:px-10 lg:pb-24"
-      >
-        <div class="rounded-[2.5rem] border border-white/10 bg-white/[0.05] p-10 shadow-[0_25px_80px_-40px_rgba(6,182,212,0.7)] backdrop-blur">
-          <p class="text-xs font-semibold uppercase tracking-[0.4em] text-cyan-200/70">Pricing preview</p>
-          <div class="mt-6 grid gap-6 md:grid-cols-3">
-            <article
-              v-for="plan in pricingPreview"
-              :key="plan.id"
-              class="flex flex-col gap-4 rounded-2xl border border-white/10 bg-white/5 p-6"
+      <!-- Single Pro Plan (replaces old pricing preview) -->
+      <section id="pricing" class="mx-auto max-w-5xl px-6 pb-20 md:px-10 lg:pb-24">
+        <div class="rounded-[2.5rem] border border-white/10 bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 p-10 text-center shadow-[0_25px_80px_-40px_rgba(6,182,212,0.6)] backdrop-blur">
+          <h2 class="text-3xl font-semibold text-white sm:text-4xl">
+            StackQuotes Pro — $79/mo
+          </h2>
+          <p class="mt-3 text-base text-slate-200/90 sm:text-lg max-w-2xl mx-auto">
+            If you want to run your contracting business on StackQuotes, this is the plan for you.
+            Includes every feature we offer — instant proposals, instant payments, and real-time analytics —
+            with unlimited projects and unlimited clients.
+          </p>
+
+          <div class="mt-8">
+            <button
+              type="button"
+              class="inline-flex items-center justify-center gap-2 rounded-full bg-cyan-400 px-8 py-4 text-base font-semibold text-slate-900 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-cyan-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-200"
+              @click="primaryCta.onClick?.()"
             >
-              <header>
-                <p class="text-sm font-semibold uppercase tracking-[0.3em] text-cyan-200/70">{{ plan.label }}</p>
-                <p class="mt-2 text-lg font-semibold text-white">{{ plan.title }}</p>
-                <p class="mt-2 text-sm text-slate-200/80">{{ plan.description }}</p>
-              </header>
-              <button
-                type="button"
-                class="rounded-xl px-4 py-2 text-sm font-semibold transition"
-                :class="[
-                  plan.disabled ? 'cursor-not-allowed bg-white/10 text-white/50' : 'bg-cyan-400 text-slate-900 hover:bg-cyan-300',
-                ]"
-                :disabled="plan.disabled"
-                @click="plan.onClick?.()"
-              >
-                {{ plan.ctaLabel }}
-              </button>
-            </article>
+              Start a Free 30-Day Trial
+            </button>
+            <p class="mt-2 text-sm text-slate-400">No credit card required · Cancel anytime</p>
+          </div>
+
+          <div class="mt-10 grid gap-6 sm:grid-cols-2 md:grid-cols-3 text-left text-slate-200/90">
+            <div class="flex items-start gap-3">
+              <span class="mt-1 h-3 w-3 flex-shrink-0 rounded-full bg-cyan-300"></span>
+              <div>
+                <p class="font-semibold text-white">Unlimited Proposals</p>
+                <p class="text-sm text-slate-400">Create and send as many proposals as you need.</p>
+              </div>
+            </div>
+            <div class="flex items-start gap-3">
+              <span class="mt-1 h-3 w-3 flex-shrink-0 rounded-full bg-cyan-300"></span>
+              <div>
+                <p class="font-semibold text-white">Instant Payments</p>
+                <p class="text-sm text-slate-400">Clients approve, sign, and pay on the spot.</p>
+              </div>
+            </div>
+            <div class="flex items-start gap-3">
+              <span class="mt-1 h-3 w-3 flex-shrink-0 rounded-full bg-cyan-300"></span>
+              <div>
+                <p class="font-semibold text-white">Good / Better / Best Templates</p>
+                <p class="text-sm text-slate-400">Tiered upgrade paths built into every quote.</p>
+              </div>
+            </div>
+            <div class="flex items-start gap-3">
+              <span class="mt-1 h-3 w-3 flex-shrink-0 rounded-full bg-cyan-300"></span>
+              <div>
+                <p class="font-semibold text-white">Analytics Dashboard</p>
+                <p class="text-sm text-slate-400">Track acceptance rates, deposits, and ROI in ProfitPulse.</p>
+              </div>
+            </div>
+            <div class="flex items-start gap-3">
+              <span class="mt-1 h-3 w-3 flex-shrink-0 rounded-full bg-cyan-300"></span>
+              <div>
+                <p class="font-semibold text-white">QuickBooks Sync</p>
+                <p class="text-sm text-slate-400">Automatically sync invoices, clients, and payments.</p>
+              </div>
+            </div>
+            <div class="flex items-start gap-3">
+              <span class="mt-1 h-3 w-3 flex-shrink-0 rounded-full bg-cyan-300"></span>
+              <div>
+                <p class="font-semibold text-white">Full Team Access</p>
+                <p class="text-sm text-slate-400">Collaborate with your crew — up to 5 users included.</p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -165,8 +202,8 @@
           <div>
             <p class="text-xs font-semibold uppercase tracking-[0.4em] text-cyan-200/70">Founder insight</p>
             <p class="mt-3 text-2xl font-semibold text-white">
-              �Contractors close 3x more jobs when homeowners see clear upgrade paths and can accept on the spot.
-              StackQuotes turns every estimate into a conversion engine.�
+              “Contractors close 3x more jobs when homeowners see clear upgrade paths and can accept on the spot.
+              StackQuotes turns every estimate into a conversion engine.”
             </p>
           </div>
           <div class="flex items-center gap-4 text-sm text-slate-200/90">
@@ -256,3 +293,4 @@ defineProps<{
   pricingPreview?: PricingPreviewPlan[];
 }>();
 </script>
+
