@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <StackQuotesLanding
     :primary-cta="primaryCta"
     :founder-cta="founderCta"
@@ -176,11 +176,11 @@ const handlePrimaryClick = async () => {
   });
   if (authenticated) {
     demoStore.deactivate();
-    await navigateOrReplace({ name: "quickquote-new" });
+    await navigateOrReplace({ name: "onboarding" });
     return;
   }
-  setStoredRedirect("/dashboard");
-  await navigateOrReplace({ path: "/signup", query: { plan: "founder" } });
+  setStoredRedirect("/onboarding");
+  await navigateOrReplace({ path: "/register", query: { plan: "pro", intent: "trial" } });
 };
 const handleUpgradeBuildClick = async () => {
   const { authenticated } = authState.value;
@@ -248,48 +248,12 @@ const founderCta = computed(() => ({
 }));
 
 const primaryCta = computed(() => ({
-  label: authState.value.authenticated ? "Create Proposal" : "Try Free � No Credit Card Needed",
+  label: authState.value.authenticated ? "Create Proposal" : "Try Free — No Credit Card Needed",
   onClick: handlePrimaryClick,
 }));
 
-const pricingPreviewPlans = computed(() => [
-  {
-    id: "launch",
-    label: "Launch",
-    title: "Launch ? Free forever",
-    description:
-      "Spin up SmartProposals with demo data, send approvals, and collect PayLink deposits with a 3% platform fee.",
-    ctaLabel: "Start Launch",
-    onClick: handlePrimaryClick,
-  },
-  {
-    id: "build",
-    label: "Build",
-    title: "Build ? $47.99/mo ? Unlock Good/Better/Best & automation",
-    description:
-      "Upgrade for premium proposal templates, ProfitPulse snapshots, smart upsells, and Stripe Connect payouts.",
-    ctaLabel: "Upgrade to Build",
-    onClick: handleUpgradeBuildClick,
-  },
-  {
-    id: "pro",
-    label: "Pro",
-    title: "Pro ? $97.99/mo ? Advanced analytics and faster payouts",
-    description:
-      "Full ProfitPulse analytics, accelerated payouts, role-based workspaces, and white-labeled exports.",
-    ctaLabel: "Upgrade to Pro",
-    onClick: handleUpgradeProClick,
-  },
-  {
-    id: "crew",
-    label: "Crew",
-    title: "Crew ? $147.99/mo ? Coming soon",
-    description:
-      "Multi-crew operations, accounting integrations, and dedicated success coaching are on the roadmap.",
-    ctaLabel: "Coming soon",
-    disabled: true,
-  },
-]);
+const pricingPreviewPlans = computed(() => []);
 </script>
+
 
 
