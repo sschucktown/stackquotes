@@ -155,7 +155,7 @@
         </ul>
         <p class="text-gray-400 text-sm mt-5">30 days free. No card required. Cancel anytime.</p>
         <div class="text-center mt-6">
-          <a href="/auth" class="inline-flex items-center justify-center rounded-full px-6 py-3 text-base font-medium bg-[#00D1FF] text-gray-900 shadow-[0_0_0_0_rgba(0,209,255,0.6)] hover:shadow-[0_0_25px_6px_rgba(0,209,255,0.45)] transition-all duration-200 hover:scale-[1.02]">
+          <a href="/pricing" class="inline-flex items-center justify-center rounded-full px-6 py-3 text-base font-medium bg-[#00D1FF] text-gray-900 shadow-[0_0_0_0_rgba(0,209,255,0.6)] hover:shadow-[0_0_25px_6px_rgba(0,209,255,0.45)] transition-all duration-200 hover:scale-[1.02]">
             Start Free for 30 Days
           </a>
         </div>
@@ -313,4 +313,3 @@ const CheckIcon = (props: { class?: string }) => (
   50% { transform: scale(1.05); }
 }
 </style>
-
