@@ -112,7 +112,7 @@
             <button
               type="button"
               class="inline-flex items-center justify-center gap-2 rounded-full bg-cyan-400 px-8 py-4 text-base font-semibold text-slate-900 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-cyan-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-200"
-              @click="primaryCta.onClick?.()"
+              @click="startTrial"
             >
               Start a Free 30-Day Trial
             </button>
@@ -256,6 +256,8 @@
 
 <script setup lang="ts">
 import type { FunctionalComponent } from "vue";
+import { useRouter } from "vue-router";
+import { useAuth } from "@/lib/auth";
 
 interface CTAConfig {
   label: string;
@@ -292,5 +294,17 @@ defineProps<{
   features: FeatureConfig[];
   pricingPreview?: PricingPreviewPlan[];
 }>();
+
+const router = useRouter();
+const { isAuthenticated, setStoredRedirect } = useAuth();
+
+const startTrial = async () => {
+  if (isAuthenticated.value) {
+    await router.push({ name: "onboarding" });
+    return;
+  }
+  setStoredRedirect("/onboarding");
+  await router.push({ name: "register", query: { plan: "pro", intent: "trial" } });
+};
 </script>
 
