@@ -12,3 +12,5 @@ export const supabase = createClient(config.VITE_SUPABASE_URL, config.VITE_SUPAB
 
 export const apiBaseUrl = config.VITE_API_BASE_URL ?? "/api";
 
+export const supabaseAnonKey = config.VITE_SUPABASE_ANON_KEY;
+

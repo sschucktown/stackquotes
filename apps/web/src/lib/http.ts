@@ -1,5 +1,5 @@
 ﻿import type { ApiResponse } from "@stackquotes/types";
-import { supabase, apiBaseUrl } from "./supabase";
+import { supabase, apiBaseUrl, supabaseAnonKey } from "./supabase";
 
 export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<ApiResponse<T>> {
   const session = await supabase.auth.getSession();
@@ -7,6 +7,10 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
   const headers = new Headers(init.headers ?? {});
   headers.set("Content-Type", "application/json");
   headers.set("Accept", "application/json");
+  // For Supabase endpoints that require apikey, include anon key as well
+  if (supabaseAnonKey) {
+    headers.set("apikey", supabaseAnonKey);
+  }
   if (accessToken) {
     headers.set("Authorization", `Bearer ${accessToken}`);
   }
