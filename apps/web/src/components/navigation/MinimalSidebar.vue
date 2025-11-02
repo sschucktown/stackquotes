@@ -10,11 +10,14 @@ import {
   UserCircleIcon,
   ChatBubbleLeftRightIcon,
   Bars3Icon,
+  ArrowLeftOnRectangleIcon,
 } from "@heroicons/vue/24/outline";
 import logo from "@/assets/logo/stackquotes-logo.svg";
 import { useSettingsStore } from "@modules/quickquote/stores/settingsStore";
 import { useTier } from "@/composables/useTier";
 import UpgradeModal from "@/components/billing/UpgradeModal.vue";
+import { useAuth } from "@/lib/auth";
+import { useDemoStore } from "@/stores/demoStore";
 
 type Item = {
   label: string;
@@ -30,6 +33,8 @@ const { isPaid, inTrial } = useTier();
 const canAccessPro = computed(() => isPaid.value || inTrial.value);
 const upgradeModalOpen = ref(false);
 const upgradeFeature = ref<string | undefined>(undefined);
+const { signOut } = useAuth();
+const demoStore = useDemoStore();
 
 onMounted(() => {
   if (!settingsStore.data && !settingsStore.loading) {
@@ -68,6 +73,12 @@ const expanded = ref(false); // mobile expand state
 
 const toggle = () => {
   expanded.value = !expanded.value;
+};
+
+const handleLogout = async () => {
+  demoStore.deactivate();
+  await signOut();
+  router.push({ name: "login" });
 };
 </script>
 
@@ -124,8 +135,16 @@ const toggle = () => {
     </nav>
 
     <div class="mt-auto p-3">
-      <p class="hidden text-xs text-slate-400 lg:block">Balance ambition with patience.</p>
-      <p v-if="expanded" class="text-xs text-slate-400 lg:hidden">Balance ambition with patience.</p>
+      <button
+        type="button"
+        class="group flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-800"
+        :class="expanded ? '' : 'justify-center lg:justify-start'"
+        @click="handleLogout"
+      >
+        <ArrowLeftOnRectangleIcon class="h-5 w-5 text-slate-400 group-hover:text-slate-600" />
+        <span class="hidden lg:inline">Sign out</span>
+        <span v-if="expanded" class="lg:hidden">Sign out</span>
+      </button>
     </div>
 
     <UpgradeModal :open="upgradeModalOpen" :feature="upgradeFeature" @close="upgradeModalOpen = false" />
