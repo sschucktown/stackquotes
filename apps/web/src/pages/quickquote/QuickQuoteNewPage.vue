@@ -19,6 +19,13 @@
           <option disabled :value="null">Select a project template</option>
           <option v-for="p in projectTemplates" :key="p.id" :value="p">{{ p.project_name }}</option>
         </select>
+        <div v-if="projectTemplates.length === 0" class="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+          <p>No templates found yet. Complete onboarding to seed common <span class="font-medium">{{ emptyStateTradeLabel }}</span> jobs, or try again.</p>
+          <div class="mt-3 flex flex-wrap gap-2">
+            <button type="button" class="rounded-full bg-cyan-400 px-4 py-2 text-xs font-semibold text-slate-900 hover:bg-cyan-300" @click="goOnboarding">Go to Onboarding</button>
+            <button type="button" class="rounded-full border border-slate-300 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50" @click="reloadTemplates">Reload</button>
+          </div>
+        </div>
         <div v-if="selectedProject" class="mt-3 p-4 rounded-lg bg-slate-50 border border-slate-200 text-sm text-slate-700">
           <p><strong>Description:</strong> {{ selectedProject.description }}</p>
           <p><strong>Base Price:</strong> ${{ Number(selectedProject.base_price ?? 0).toFixed(2) }}</p>
@@ -187,8 +194,17 @@ const loadClients = async () => {
 }
 
 onMounted(() => {
-  loadProfileAndTemplates()
-  loadClients()
+  if (user.value?.id) {
+    loadProfileAndTemplates()
+    loadClients()
+  }
+})
+
+watch(() => user.value?.id, (id, prev) => {
+  if (id && id !== prev) {
+    loadProfileAndTemplates()
+    loadClients()
+  }
 })
 
 const handleProjectSelect = () => {
@@ -203,6 +219,19 @@ const handleProjectSelect = () => {
     const input = document.querySelector<HTMLInputElement>('input[type="number"]')
     input?.focus()
   })
+}
+
+const reloadTemplates = async () => {
+  await loadProfileAndTemplates()
+}
+
+const emptyStateTradeLabel = computed(() => {
+  // best-effort hint; requires separate profile fetch for exact trade which we do in loader
+  return 'trade'
+})
+
+const goOnboarding = async () => {
+  await router.push({ name: 'onboarding' })
 }
 
 const createProposal = async () => {
