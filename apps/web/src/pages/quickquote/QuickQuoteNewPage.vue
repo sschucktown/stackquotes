@@ -133,30 +133,38 @@ const loadProfileAndTemplates = async () => {
   const uid = user.value?.id
   if (!uid) return
 
-  // Get contractor trade
-  const { data: profile, error: profileErr } = await supabase
-    .from('contractor_profiles')
-    .select('trade')
-    .eq('user_id', uid)
-    .maybeSingle()
-
-  if (profileErr) {
-    console.error(profileErr)
-  }
-
-  const contractorTrade = profile?.trade ?? null
-
-  // Load common jobs for this trade from trade_projects
-  const { data: templates, error: tErr } = await supabase
-    .from('trade_projects')
+  // 1) Prefer user-specific seeded projects
+  const { data: userProjects, error: upErr } = await supabase
+    .from('user_projects')
     .select('id, project_name, description, base_price, trade')
-    .eq('trade', contractorTrade)
+    .eq('user_id', uid)
     .order('created_at', { ascending: true })
 
-  if (tErr) {
-    console.error(tErr)
+  if (upErr) console.error(upErr)
+
+  let templates: ProjectTemplate[] = (userProjects as ProjectTemplate[]) || []
+
+  // 2) If none, fall back to common trade projects
+  if (!templates.length) {
+    const { data: profile, error: profileErr } = await supabase
+      .from('contractor_profiles')
+      .select('trade')
+      .eq('user_id', uid)
+      .maybeSingle()
+    if (profileErr) console.error(profileErr)
+    const contractorTrade = profile?.trade ?? null
+    if (contractorTrade) {
+      const { data: tradeProjects, error: tErr } = await supabase
+        .from('trade_projects')
+        .select('id, project_name, description, base_price, trade')
+        .eq('trade', contractorTrade)
+        .order('created_at', { ascending: true })
+      if (tErr) console.error(tErr)
+      templates = (tradeProjects as ProjectTemplate[]) || []
+    }
   }
-  projectTemplates.value = (templates as ProjectTemplate[]) || []
+
+  projectTemplates.value = templates
 
   const { data: settings } = await supabase
     .from('user_settings')
