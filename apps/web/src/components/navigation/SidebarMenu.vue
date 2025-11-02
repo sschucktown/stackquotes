@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import { useAuth } from "@/lib/auth";
+import { useDemoStore } from "@/stores/demoStore";
 import {
   Home,
   Zap,
@@ -27,6 +29,8 @@ const items: Item[] = [
 
 const route = useRoute();
 const router = useRouter();
+const { signOut } = useAuth();
+const demo = useDemoStore();
 const isActive = (name: string) => route.name === name || (name.startsWith('quickquote') && String(route.name).startsWith('quickquote'));
 
 const go = (name: string) => {
@@ -40,6 +44,14 @@ const containerClass = computed(() => [
 ]);
 
 const itemBase = 'group relative flex items-center gap-3 rounded-md px-3 py-2 text-slate-700 hover:bg-gray-100 transition';
+
+const handleLogout = async () => {
+  try {
+    demo.deactivate();
+  } catch {}
+  await signOut();
+  router.push({ name: 'login' });
+};
 </script>
 
 <template>
@@ -60,8 +72,17 @@ const itemBase = 'group relative flex items-center gap-3 rounded-md px-3 py-2 te
         <component :is="item.icon" class="h-5 w-5" :class="isActive(item.name) ? 'text-[#3A7D99]' : 'text-slate-400 group-hover:text-slate-600'" />
         <span class="text-sm font-medium" :class="isActive(item.name) ? 'text-slate-900' : 'text-slate-700'">{{ item.label }}</span>
       </button>
+      <div class="h-px bg-slate-200 my-2"></div>
+      <button
+        type="button"
+        :class="itemBase"
+        @click="handleLogout"
+      >
+        <!-- Simple logout icon replacement using MessageCircle styling for consistency -->
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5 text-slate-400 group-hover:text-slate-600"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        <span class="text-sm font-medium text-slate-700">Sign out</span>
+      </button>
     </nav>
   </div>
   
 </template>
-
