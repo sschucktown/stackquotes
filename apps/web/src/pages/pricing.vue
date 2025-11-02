@@ -1,49 +1,34 @@
 <template>
   <div class="min-h-screen bg-slate-950 text-white">
-    <div class="mx-auto flex max-w-6xl flex-col gap-12 px-6 py-16 lg:py-24">
+    <div class="mx-auto flex max-w-4xl flex-col gap-12 px-6 py-16 lg:py-24">
       <header class="text-center">
-        <p class="text-sm uppercase tracking-[0.3em] text-emerald-300/80">StackQuotes Billing</p>
-        <h1 class="mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">
-          Stripe-powered plans for growing contractor teams
-        </h1>
-        <p class="mt-5 text-base text-white/70 sm:text-lg">
-          Every plan includes SmartProposal, PayLink deposits, ProfitPulse previews, and ScopeForge beta milestones.
-          Upgrade or downgrade anytime -- billing is handled through secure Stripe Checkout.
-        </p>
+        <p class="text-sm uppercase tracking-[0.3em] text-cyan-300/80">StackQuotes Pricing</p>
+        <h1 class="mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">StackQuotes Pro – $79/mo</h1>
+        <p class="mt-5 text-base text-white/70 sm:text-lg">Everything you need to quote, close, and get paid.</p>
+        <p class="mt-2 text-sm text-white/60">30-day free trial. No card required. Cancel anytime.</p>
       </header>
 
-      <div class="grid gap-8 md:grid-cols-3">
+      <div class="grid gap-8 md:grid-cols-1">
         <article
-          v-for="plan in plans"
-          :key="plan.id"
-          :class="[
-            'flex flex-col rounded-2xl border border-white/10 bg-white/5 p-6 shadow-xl shadow-emerald-500/0 transition',
-            plan.id === featuredPlan ? 'border-emerald-400/70 bg-emerald-500/5 shadow-emerald-500/30' : 'hover:border-emerald-400/40',
-          ]"
+          class="flex flex-col rounded-2xl border border-white/10 bg-white/5 p-6 shadow-xl border-cyan-400/70 bg-cyan-500/5 shadow-cyan-500/30"
         >
           <div class="space-y-2">
             <div class="flex items-center justify-between">
-              <h2 class="text-2xl font-semibold">{{ plan.name }}</h2>
-              <span
-                v-if="plan.id === featuredPlan"
-                class="rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-semibold uppercase text-emerald-200"
-              >
-                Most popular
+              <h2 class="text-2xl font-semibold">Pro</h2>
+              <span class="rounded-full bg-cyan-500/20 px-3 py-1 text-xs font-semibold uppercase text-cyan-200">
+                Best value
               </span>
             </div>
-            <p class="text-sm text-white/70">{{ plan.tagline }}</p>
-          <div class="mt-6 flex items-baseline gap-1">
-            <span class="text-4xl font-bold tracking-tight">
-              <template v-if="plan.priceLabel">{{ plan.priceLabel }}</template>
-              <template v-else>\${{ plan.price }}</template>
-            </span>
-            <span v-if="plan.price && !plan.priceLabel" class="text-sm text-white/60">/month</span>
-          </div>
+            <p class="text-sm text-white/70">Good/Better/Best proposals, instant approvals and payments, analytics.</p>
+            <div class="mt-6 flex items-baseline gap-1">
+              <span class="text-4xl font-bold tracking-tight">$79</span>
+              <span class="text-sm text-white/60">/month</span>
+            </div>
           </div>
 
           <ul class="mt-6 flex-1 space-y-3 text-sm text-white/80">
-            <li v-for="feature in plan.features" :key="feature" class="flex items-start gap-3">
-              <span class="mt-1 h-2 w-2 rounded-full bg-emerald-400"></span>
+            <li v-for="feature in proFeatures" :key="feature" class="flex items-start gap-3">
+              <span class="mt-1 h-2 w-2 rounded-full bg-cyan-400"></span>
               <span>{{ feature }}</span>
             </li>
           </ul>
@@ -51,25 +36,16 @@
           <div class="mt-8">
             <button
               type="button"
-              class="w-full rounded-xl px-4 py-3 text-center text-sm font-semibold transition"
-              :class="[
-                !plan.available
-                  ? 'cursor-not-allowed bg-white/10 text-white/50'
-                  : 'bg-emerald-500 text-slate-950 hover:bg-emerald-400',
-                loadingPlan === plan.id ? 'cursor-wait opacity-70' : '',
-              ]"
-              :disabled="!plan.available || loadingPlan === plan.id"
-              @click="handlePlanClick(plan)"
+              class="w-full rounded-xl px-4 py-3 text-center text-sm font-semibold transition bg-cyan-500 text-slate-950 hover:bg-cyan-400"
+              :class="[loading ? 'cursor-wait opacity-70' : '']"
+              :disabled="loading"
+              @click="handleProClick()"
             >
-              <span v-if="loadingPlan === plan.id">Redirecting to Stripe...</span>
-              <span v-else>{{ plan.ctaLabel }}</span>
+              <span v-if="loading">Redirecting to Stripe...</span>
+              <span v-else>Start Free for 30 Days</span>
             </button>
-            <p v-if="activeErrorPlan === plan.id && errorMessage" class="mt-3 text-sm text-red-400">
-              {{ errorMessage }}
-            </p>
-            <p v-else class="mt-3 text-xs text-white/60">
-              {{ plan.id === "launch" ? "No credit card required." : "Cancel anytime via Stripe Customer Portal." }}
-            </p>
+            <p v-if="errorMessage" class="mt-3 text-sm text-red-400">{{ errorMessage }}</p>
+            <p v-else class="mt-3 text-xs text-white/60">Trial auto-converts to paid. Manage billing in Stripe.</p>
           </div>
         </article>
       </div>
@@ -81,134 +57,53 @@
           with any future expiration and CVC to simulate payments. Supabase records update after webhook acknowledgement.
         </p>
         <p class="mt-4">
-          Contractor payouts run through Stripe Connect Express accounts. Platform fees are applied automatically (3%) for PayLink deposits.
+          Contractor payouts run through Stripe Connect Express accounts. Platform fee for deposits is 1% on paid plans.
         </p>
-        <p class="mt-4">Crew adds seats, shared clients, and org-level analytics.</p>
       </footer>
     </div>
   </div>
-</template>
+  </template>
 
 <script setup lang="ts">
-import { ref, watch } from "vue";
-import { useRouter, useRoute } from "vue-router";
+import { ref } from "vue";
+import { useRouter } from "vue-router";
 import { useAuth } from "@/lib/auth";
 import { startCheckout } from "@/lib/stripeCheckout";
-import { STRIPE_PRICES } from "@/config/stripe";
-
-type PlanTier = "launch" | "pro" | "crew";
-
-interface Plan {
-  id: PlanTier;
-  name: string;
-  price?: number;
-  priceLabel?: string;
-  tagline: string;
-  features: string[];
-  ctaLabel: string;
-  available: boolean;
-}
-
-const plans: Plan[] = [
-  {
-    id: "launch",
-    name: "Launch",
-    priceLabel: "Free",
-    tagline: "Kick off proposals and deposits — no credit card required.",
-    features: [
-      "SmartProposal editor + client approvals",
-      "PayLink deposits (3% platform fee)",
-      "ScopeForge template library preview (read-only)",
-      "Proposal activity tracking dashboard",
-    ],
-    ctaLabel: "Start Launch",
-    available: true,
-  },
-  {
-    id: "pro",
-    name: "Pro",
-    price: 79.99,
-    tagline: "$79.99/mo — includes 14-day full-feature trial.",
-    features: [
-      "Everything in Launch",
-      "Good/Better/Best proposals + add-ons",
-      "ScopeForge AI template editing",
-      "ProfitPulse dashboard + CSV export",
-      "QuickSync + QuoteIQ insights",
-    ],
-    ctaLabel: "Upgrade to Pro",
-    available: true,
-  },
-  {
-    id: "crew",
-    name: "Crew",
-    priceLabel: "$99 + $20/seat",
-    tagline: "Pro features with seat management and org analytics.",
-    features: [
-      "Everything in Pro",
-      "Seat management & shared clients",
-      "Org-level analytics + team reporting",
-    ],
-    ctaLabel: "Upgrade to Crew",
-    available: true,
-  },
-];
 
 const auth = useAuth();
 const router = useRouter();
-const route = useRoute();
 
-const loadingPlan = ref<PlanTier | null>(null);
-const activeErrorPlan = ref<PlanTier | null>(null);
+const loading = ref(false);
 const errorMessage = ref<string | null>(null);
-const featuredPlan = ref<PlanTier>("pro");
 
-watch(
-  () => route.query.plan,
-  (value) => {
-    if (typeof value === "string" && (value === "launch" || value === "pro" || value === "crew")) {
-      featuredPlan.value = value as PlanTier;
-    }
-  },
-  { immediate: true }
-);
+const proFeatures = [
+  "Unlimited Proposals",
+  "Good/Better/Best templates + smart upsells",
+  "Instant approvals + deposits (1% fee)",
+  "ProfitPulse analytics dashboard",
+  "QuickBooks Sync",
+  "Full team access (up to 5 users)",
+];
 
-const handlePlanClick = async (plan: Plan) => {
-  if (!plan.available) return;
+const handleProClick = async () => {
   errorMessage.value = null;
-  activeErrorPlan.value = null;
 
   if (!auth.isAuthenticated.value) {
-    auth.setStoredRedirect(`/pricing?plan=${plan.id}`);
-    await router.push({ name: "register", query: { plan: plan.id } });
+    auth.setStoredRedirect(`/pricing`);
+    await router.push({ name: "register", query: { plan: "pro" } });
     return;
   }
 
-  if (plan.id === "launch") {
-    await router.push({ name: "register", query: { plan: plan.id } });
-    return;
+  loading.value = true;
+  try {
+    await startCheckout({ planTier: "pro", billingInterval: "monthly" });
+  } catch (error) {
+    console.error(error);
+    errorMessage.value =
+      error instanceof Error ? error.message : "Unable to start Stripe checkout. Please try again.";
+  } finally {
+    loading.value = false;
   }
-
-  if (plan.id === "pro" || plan.id === "crew") {
-    loadingPlan.value = plan.id;
-    try {
-      if (plan.id === "pro") {
-        await startCheckout({ planTier: "pro", billingInterval: "monthly" });
-      } else {
-        await startCheckout({ planTier: "crew", billingInterval: "monthly" });
-      }
-    } catch (error) {
-      console.error(error);
-      activeErrorPlan.value = plan.id;
-      errorMessage.value =
-        error instanceof Error ? error.message : "Unable to start Stripe checkout. Please try again.";
-    } finally {
-      loadingPlan.value = null;
-    }
-    return;
-  }
-
-  errorMessage.value = "Unsupported plan selected.";
 };
 </script>
 
@@ -218,3 +113,4 @@ code {
     monospace;
 }
 </style>
+
