@@ -17,7 +17,7 @@
           class="rounded-lg border border-slate-300 px-3 py-2 text-sm w-full bg-white text-slate-900"
         >
           <option disabled :value="null">Select a project template</option>
-          <option v-for="p in projectTemplates" :key="p.id" :value="p">{{ p.name }}</option>
+          <option v-for="p in projectTemplates" :key="p.id" :value="p">{{ p.project_name }}</option>
         </select>
         <div v-if="selectedProject" class="mt-3 p-4 rounded-lg bg-slate-50 border border-slate-200 text-sm text-slate-700">
           <p><strong>Description:</strong> {{ selectedProject.description }}</p>
@@ -95,7 +95,7 @@ import { useAuth } from '@/lib/auth'
 
 type ProjectTemplate = {
   id: string
-  name: string
+  project_name: string
   description: string
   base_price: number
   default_notes: string | null
@@ -134,23 +134,11 @@ const loadProfileAndTemplates = async () => {
   const uid = user.value?.id
   if (!uid) return
 
-  const { data: profile, error: profileErr } = await supabase
-    .from('contractor_profiles')
-    .select('trade')
-    .eq('user_id', uid)
-    .maybeSingle()
-
-  if (profileErr) {
-    console.error(profileErr)
-  }
-
-  const trade = profile?.trade ?? null
-
   const { data: templates, error: tErr } = await supabase
-    .from('project_templates')
-    .select('id, name, description, base_price, default_notes, trade')
-    .maybeSingle(false)
-    .eq(trade ? 'trade' : 'id', trade ? trade : '00000000-0000-0000-0000-000000000000') // harmless no-op when no trade
+    .from('user_projects')
+    .select('id, project_name, description, base_price, trade')
+    .eq('user_id', uid)
+    .order('created_at', { ascending: true })
 
   if (tErr) {
     console.error(tErr)
@@ -188,7 +176,7 @@ const handleProjectSelect = () => {
   description.value = p.description || ''
   unitPrice.value = Number(p.base_price || 0)
   notes.value = p.default_notes || ''
-  if (!projectTitle.value) projectTitle.value = p.name
+  if (!projectTitle.value) projectTitle.value = p.project_name
   // focus price next tick
   requestAnimationFrame(() => {
     const input = document.querySelector<HTMLInputElement>('input[type="number"]')
@@ -218,7 +206,7 @@ const createProposal = async () => {
     const insertPayload = {
       user_id: uid,
       client_id: clientId.value,
-      project_title: projectTitle.value || selectedProject.value.name,
+      project_title: projectTitle.value || selectedProject.value.project_name,
       line_items: lineItems,
       subtotal: subtotal.value,
       tax: tax.value,
@@ -247,4 +235,3 @@ const createProposal = async () => {
 
 <style scoped>
 </style>
-
