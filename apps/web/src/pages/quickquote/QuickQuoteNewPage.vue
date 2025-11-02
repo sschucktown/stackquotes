@@ -98,7 +98,6 @@ type ProjectTemplate = {
   project_name: string
   description: string
   base_price: number
-  default_notes: string | null
   trade?: string | null
 }
 
@@ -134,10 +133,24 @@ const loadProfileAndTemplates = async () => {
   const uid = user.value?.id
   if (!uid) return
 
-  const { data: templates, error: tErr } = await supabase
-    .from('user_projects')
-    .select('id, project_name, description, base_price, trade')
+  // Get contractor trade
+  const { data: profile, error: profileErr } = await supabase
+    .from('contractor_profiles')
+    .select('trade')
     .eq('user_id', uid)
+    .maybeSingle()
+
+  if (profileErr) {
+    console.error(profileErr)
+  }
+
+  const contractorTrade = profile?.trade ?? null
+
+  // Load common jobs for this trade from trade_projects
+  const { data: templates, error: tErr } = await supabase
+    .from('trade_projects')
+    .select('id, project_name, description, base_price, trade')
+    .eq('trade', contractorTrade)
     .order('created_at', { ascending: true })
 
   if (tErr) {
@@ -175,7 +188,7 @@ const handleProjectSelect = () => {
   const p = selectedProject.value
   description.value = p.description || ''
   unitPrice.value = Number(p.base_price || 0)
-  notes.value = p.default_notes || ''
+  notes.value = ''
   if (!projectTitle.value) projectTitle.value = p.project_name
   // focus price next tick
   requestAnimationFrame(() => {
