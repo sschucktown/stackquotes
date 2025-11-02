@@ -99,6 +99,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/auth'
+import { apiFetch } from '@/lib/http'
 
 type ProjectTemplate = {
   id: string
@@ -134,6 +135,8 @@ const tax = computed(() => subtotal.value * taxRate.value)
 const total = computed(() => subtotal.value + tax.value)
 
 const error = ref<string | null>(null)
+const loadingSeed = ref(false)
+const profileTrade = ref<string | null>(null)
 
 const loadProfileAndTemplates = async () => {
   error.value = null
@@ -160,6 +163,7 @@ const loadProfileAndTemplates = async () => {
       .maybeSingle()
     if (profileErr) console.error(profileErr)
     const contractorTrade = profile?.trade ?? null
+    profileTrade.value = contractorTrade
     if (contractorTrade) {
       const { data: tradeProjects, error: tErr } = await supabase
         .from('trade_projects')
@@ -225,13 +229,41 @@ const reloadTemplates = async () => {
   await loadProfileAndTemplates()
 }
 
-const emptyStateTradeLabel = computed(() => {
-  // best-effort hint; requires separate profile fetch for exact trade which we do in loader
-  return 'trade'
-})
+const emptyStateTradeLabel = computed(() => profileTrade.value || 'your')
 
 const goOnboarding = async () => {
   await router.push({ name: 'onboarding' })
+}
+
+const seedTemplatesNow = async () => {
+  try {
+    loadingSeed.value = true
+    const uid = user.value?.id
+    if (!uid) return
+    // Ensure trade is available
+    if (!profileTrade.value) {
+      const { data: profile } = await supabase
+        .from('contractor_profiles')
+        .select('trade')
+        .eq('user_id', uid)
+        .maybeSingle()
+      profileTrade.value = profile?.trade ?? null
+    }
+    if (!profileTrade.value) {
+      error.value = 'Set your trade in onboarding to seed templates.'
+      return
+    }
+    await apiFetch('/onboarding/seed-trade-templates', {
+      method: 'POST',
+      body: JSON.stringify({ user_id: uid, trade: profileTrade.value }),
+    })
+    await loadProfileAndTemplates()
+  } catch (e: any) {
+    console.error(e)
+    error.value = e?.message ?? 'Unable to seed templates'
+  } finally {
+    loadingSeed.value = false
+  }
 }
 
 const createProposal = async () => {
