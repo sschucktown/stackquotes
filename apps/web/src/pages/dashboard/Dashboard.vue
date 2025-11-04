@@ -1,20 +1,20 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-b from-[#0f172a] to-[#1e293b]">
+  <div class="min-h-screen bg-slate-50">
     <div class="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6 lg:px-8">
-      <header class="space-y-1 text-white">
+      <header class="space-y-1 text-slate-900">
         <h1 class="text-2xl font-semibold">Command Center</h1>
         <p class="text-sm opacity-80">Here’s what needs your action next.</p>
       </header>
 
-      <nav class="mt-4 grid grid-cols-4 gap-2 text-[11px] font-medium text-white/80">
-        <div class="rounded-full bg-white/10 p-2 text-center">Quotes</div>
-        <div class="rounded-full bg-white/10 p-2 text-center">Proposals</div>
-        <div class="rounded-full bg-white/10 p-2 text-center">Payments</div>
-        <div class="rounded-full bg-white/10 p-2 text-center">Closed</div>
+      <nav class="mt-4 grid grid-cols-4 gap-2 text-[11px] font-medium text-slate-700">
+        <div class="rounded-full bg-slate-100 p-2 text-center">Quotes</div>
+        <div class="rounded-full bg-slate-100 p-2 text-center">Proposals</div>
+        <div class="rounded-full bg-slate-100 p-2 text-center">Payments</div>
+        <div class="rounded-full bg-slate-100 p-2 text-center">Closed</div>
       </nav>
 
       <section class="mt-6">
-        <h2 class="mb-3 text-xs font-semibold uppercase tracking-wide text-white/70">Your Action Needed</h2>
+        <h2 class="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-700">Your Action Needed</h2>
         <TransitionGroup name="fade-up" tag="div" class="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2">
           <article
             v-for="card in actionCards"
@@ -32,7 +32,7 @@
               {{ card.cta }}
             </button>
           </article>
-          <article v-if="!loading && actionCards.length === 0" class="min-w-full rounded-2xl bg-white/10 p-4 text-white/80">
+          <article v-if="!loading && actionCards.length === 0" class="min-w-full rounded-2xl bg-slate-100 p-4 text-slate-700">
             All clear. No action items right now.
           </article>
         </TransitionGroup>
