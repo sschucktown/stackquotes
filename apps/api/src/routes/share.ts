@@ -7,6 +7,7 @@ import {
   approveEstimateByToken,
   updateEstimateStatus,
   createProposalEvent,
+  findProposalEventByToken,
   findContractorProfileBySlug,
   getContractorProfile,
   getProposalSummaryForUser,
@@ -150,6 +151,27 @@ shareRouter.get("/proposal/:token", async (c) => {
   const depositMeta = selectedOption
     ? computeDepositAmount(proposalForClient, { optionName: selectedOption })
     : computeDepositAmount(proposalForClient);
+
+  // Record a proposal view event linked to the originating QuickQuote when available.
+  try {
+    if (proposal.sentAt && proposal.quickquoteId) {
+      const existing = await findProposalEventByToken(supabase, token, {
+        event: "proposal_view",
+        estimateId: proposal.quickquoteId,
+      });
+      if (!existing) {
+        await createProposalEvent(supabase, {
+          userId: proposal.userId,
+          estimateId: proposal.quickquoteId,
+          event: "proposal_view",
+          token,
+          metadata: { source: "public_proposal" },
+        });
+      }
+    }
+  } catch (e) {
+    console.error("[api/share] failed to record proposal view", e);
+  }
 
   return c.json({
     data: {

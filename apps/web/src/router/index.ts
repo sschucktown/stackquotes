@@ -96,7 +96,7 @@ const router = createRouter({
           path: "dashboard",
           alias: "/dashboard",
           name: "dashboard-home",
-          component: () => import("@/pages/dashboard/DashboardHome.vue"),
+          component: () => import("@/pages/dashboard/Dashboard.vue"),
         },
         {
           path: "quickquotes",
