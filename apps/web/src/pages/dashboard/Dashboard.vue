@@ -1,17 +1,9 @@
 ﻿<template>
   <div class="min-h-screen bg-slate-950">
     <div class="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
-      <header class="flex items-center justify-between text-slate-100">
-        <div>
-          <h1 class="text-2xl font-semibold">Command Center</h1>
-          <p class="text-sm opacity-80">Show exactly what needs attention.</p>
-        </div>
-        <div class="flex items-center gap-2">
-          <label class="flex cursor-pointer select-none items-center gap-2 text-xs text-slate-300">
-            <input type="checkbox" v-model="focusMode" class="h-4 w-4 rounded border-slate-600 bg-slate-800 text-emerald-500" />
-            Focus Mode
-          </label>
-        </div>
+      <header class="text-slate-100">
+        <h1 class="text-2xl font-semibold">Command Center</h1>
+        <p class="text-sm opacity-80">Show exactly what needs attention.</p>
       </header>
 
       <div class="mt-4">
@@ -26,21 +18,21 @@
       <div class="my-6 h-px bg-gradient-to-r from-slate-800/0 via-slate-800/40 to-slate-800/0" />
 
       <section class="space-y-6">
-        <!-- QuickQuotes -->
+        <!-- Payments (first) -->
         <CarouselModule
-          v-if="quickQuoteItems.length"
-          title="QuickQuotes"
-          :items="quickQuoteItems"
-          :stages="['draft','ready_to_convert','converted']"
-          :color-map="{ draft: 'slate-500', ready_to_convert: 'indigo-500', converted: 'emerald-500' }"
+          v-if="paymentItems.length"
+          title="Payments"
+          :items="paymentItems"
+          :stages="['deposit_pending','deposit_received','final_due','paid']"
+          :color-map="{ deposit_pending: 'amber-500', deposit_received: 'sky-400', final_due: 'rose-500', paid: 'emerald-500' }"
           :focus-only="focusMode"
-          :focus-stages="['ready_to_convert']"
+          :focus-stages="['deposit_pending','final_due']"
           @card-click="openItem"
         />
 
         <div class="h-px bg-gradient-to-r from-slate-800/0 via-slate-800/40 to-slate-800/0" />
 
-        <!-- Proposals -->
+        <!-- Proposals (second) -->
         <CarouselModule
           v-if="proposalItems.length"
           title="Proposals"
@@ -55,15 +47,15 @@
 
         <div class="h-px bg-gradient-to-r from-slate-800/0 via-slate-800/40 to-slate-800/0" />
 
-        <!-- Payments -->
+        <!-- QuickQuotes (third) -->
         <CarouselModule
-          v-if="paymentItems.length"
-          title="Payments"
-          :items="paymentItems"
-          :stages="['deposit_pending','deposit_received','final_due','paid']"
-          :color-map="{ deposit_pending: 'amber-500', deposit_received: 'sky-400', final_due: 'rose-500', paid: 'emerald-500' }"
+          v-if="quickQuoteItems.length"
+          title="QuickQuotes"
+          :items="quickQuoteItems"
+          :stages="['draft','ready_to_convert','converted']"
+          :color-map="{ draft: 'slate-500', ready_to_convert: 'indigo-500', converted: 'emerald-500' }"
           :focus-only="focusMode"
-          :focus-stages="['deposit_pending','final_due']"
+          :focus-stages="['ready_to_convert']"
           @card-click="openItem"
         />
 
@@ -308,8 +300,8 @@ onMounted(async () => {
   loading.value = false
 })
 
-// Focus mode toggle
-const focusMode = ref(false)
+// Focus mode default ON (toggle lives in Settings)
+const focusMode = ref(true)
 
 // KPI computations
 const kpiOpenProposals = computed(() => {
