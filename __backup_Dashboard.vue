@@ -1,83 +1,125 @@
 ﻿<template>
-  <div class="min-h-screen bg-slate-950">
-    <div class="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
-      <header class="flex items-center justify-between text-slate-100">
-        <div>
-          <h1 class="text-2xl font-semibold">Command Center</h1>
-          <p class="text-sm opacity-80">Show exactly what needs attention.</p>
-        </div>
-        <div class="flex items-center gap-2">
-          <label class="flex cursor-pointer select-none items-center gap-2 text-xs text-slate-300">
-            <input type="checkbox" v-model="focusMode" class="h-4 w-4 rounded border-slate-600 bg-slate-800 text-emerald-500" />
-            Focus Mode
-          </label>
-        </div>
+  <div class="min-h-screen bg-slate-50">
+    <div class="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6 lg:px-8">
+      <header class="space-y-1 text-slate-900">
+        <h1 class="text-2xl font-semibold">Command Center</h1>
+        <p class="text-sm opacity-80">Here’s what needs your action next.</p>
       </header>
 
-      <div class="mt-4">
-        <SummaryBand
-          :open-proposals="kpiOpenProposals"
-          :pending-deposits="kpiPendingDeposits"
-          :close-rate="kpiCloseRate"
-          @filter="onKpiFilter"
-        />
-      </div>
+      <nav class="mt-4 grid grid-cols-4 gap-2 text-[11px] font-medium text-slate-700">
+        <div class="rounded-full bg-slate-100 p-2 text-center">Quotes</div>
+        <div class="rounded-full bg-slate-100 p-2 text-center">Proposals</div>
+        <div class="rounded-full bg-slate-100 p-2 text-center">Payments</div>
+        <div class="rounded-full bg-slate-100 p-2 text-center">Closed</div>
+      </nav>
 
-      <div class="my-6 h-px bg-gradient-to-r from-slate-800/0 via-slate-800/40 to-slate-800/0" />
+      <section class="mt-6">
+        <h2 class="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-700">Your Action Needed</h2>
+        <TransitionGroup name="fade-up" tag="div" class="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2">
+          <article
+            v-for="card in actionCards"
+            :key="card.key"
+            class="min-w-[260px] snap-start rounded-2xl p-4 text-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
+            :class="card.bg"
+          >
+            <p class="text-sm opacity-90">{{ card.title }}</p>
+            <p class="mt-1 text-xl font-semibold">{{ card.subtitle }}</p>
+            <button
+              type="button"
+              class="mt-4 w-full rounded-lg bg-white/90 px-4 py-2 text-sm font-semibold text-slate-900 shadow-sm transition hover:bg-white"
+              @click="go(card.route)"
+            >
+              {{ card.cta }}
+            </button>
+          </article>
+          <article v-if="!loading && actionCards.length === 0" class="min-w-full rounded-2xl bg-slate-100 p-4 text-slate-700">
+            All clear. No action items right now.
+          </article>
+        </TransitionGroup>
+      </section>
 
-      <section class="space-y-6">
-        <!-- QuickQuotes -->
-        <CarouselModule
-          v-if="quickQuoteItems.length"
-          title="QuickQuotes"
-          :items="quickQuoteItems"
-          :stages="['draft','ready_to_convert','converted']"
-          :color-map="{ draft: 'slate-500', ready_to_convert: 'indigo-500', converted: 'emerald-500' }"
-          :focus-only="focusMode"
-          :focus-stages="['ready_to_convert']"
-          @card-click="openItem"
-        />
+      <section class="mt-6 space-y-6">
+        <!-- Payments Carousel -->
+        <div v-if="hasAny(payments)" class="rounded-3xl bg-white p-4 shadow-sm">
+          <header class="mb-3 flex items-center justify-between">
+            <h3 class="text-sm font-semibold text-slate-900">Payments</h3>
+          </header>
+          <div class="flex gap-3 overflow-x-auto pb-2 snap-x">
+            <template v-for="stage in paymentStages" :key="stage.key">
+              <div v-if="payments[stage.key]?.length" class="min-w-[180px] snap-start rounded-xl border border-slate-200 bg-white p-3">
+                <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <SQBadge :tone="toneForPaymentStage(stage.key)">{{ stage.label }}</SQBadge>
+                </p>
+                <TransitionGroup name="fade-up" tag="ul" class="mt-2 space-y-2">
+                  <li v-for="item in payments[stage.key]" :key="item.id" class="rounded-lg bg-slate-50 p-2 text-sm text-slate-700">
+                    <p class="truncate font-medium">{{ item.title || 'Untitled' }}</p>
+                    <p v-if="item.amount !== undefined" class="text-xs text-slate-500">{{ currency(item.amount) }}</p>
+                    <button type="button" class="mt-2 w-full rounded-md bg-[#0EA5E9] px-2 py-1 text-xs font-semibold text-white" @click="go(item.route)">{{ stage.cta }}</button>
+                  </li>
+                </TransitionGroup>
+              </div>
+            </template>
+          </div>
+        </div>
 
-        <div class="h-px bg-gradient-to-r from-slate-800/0 via-slate-800/40 to-slate-800/0" />
+        <!-- SmartProposals Carousel -->
+        <div v-if="hasAny(smartProposals)" class="rounded-3xl bg-white p-4 shadow-sm">
+          <header class="mb-3 flex items-center justify-between">
+            <h3 class="text-sm font-semibold text-slate-900">SmartProposals</h3>
+          </header>
+          <div class="flex gap-3 overflow-x-auto pb-2 snap-x">
+            <template v-for="stage in visibleProposalStages" :key="stage.key">
+              <div v-if="smartProposals[stage.key]?.length" class="min-w-[180px] snap-start rounded-xl border border-slate-200 bg-white p-3">
+                <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">{{ stage.label }}</p>
+                <TransitionGroup name="fade-up" tag="ul" class="mt-2 space-y-2">
+                  <li v-for="item in smartProposals[stage.key]" :key="item.id" class="rounded-lg bg-slate-50 p-2 text-sm text-slate-700">
+                    <p class="truncate font-medium">{{ item.title || 'Untitled' }}</p>
+                    <div class="mt-1 flex flex-wrap items-center gap-1.5">
+                      <SQBadge :tone="toneForProposalStage(stage.key)">{{ stageLabel(stage.key) }}</SQBadge>
+                      <span v-if="stage.key === 'viewed' && (item as any).viewed_at" class="text-[11px] text-slate-500">• {{ timeAgo(String((item as any).viewed_at)) }}</span>
+                    </div>
+                    <button type="button" class="mt-2 w-full rounded-md bg-[#0EA5E9] px-2 py-1 text-xs font-semibold text-white" @click="go(item.route)">{{ stage.cta }}</button>
+                  </li>
+                </TransitionGroup>
+              </div>
+            </template>
+          </div>
+        </div>
 
-        <!-- Proposals -->
-        <CarouselModule
-          v-if="proposalItems.length"
-          title="Proposals"
-          :items="proposalItems"
-          :stages="['unsent','sent','viewed','accepted']"
-          :color-map="{ unsent: 'slate-500', sent: 'indigo-500', viewed: 'indigo-400', accepted: 'emerald-500' }"
-          :focus-only="focusMode"
-          :focus-stages="['sent','viewed']"
-          @card-click="openItem"
-          @nudge="nudgeItem"
-        />
+        <!-- QuickQuotes Carousel -->
+        <div v-if="hasAny(quickQuotes)" class="rounded-3xl bg-white p-4 shadow-sm">
+          <header class="mb-3 flex items-center justify-between">
+            <h3 class="text-sm font-semibold text-slate-900">QuickQuotes</h3>
+          </header>
+          <div class="flex gap-3 overflow-x-auto pb-2 snap-x">
+            <template v-for="stage in quoteStages" :key="stage.key">
+              <div v-if="quickQuotes[stage.key]?.length" class="min-w-[180px] snap-start rounded-xl border border-slate-200 bg-white p-3">
+                <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">{{ stage.label }}</p>
+                <TransitionGroup name="fade-up" tag="ul" class="mt-2 space-y-2">
+                  <li v-for="item in quickQuotes[stage.key]" :key="item.id" class="rounded-lg bg-slate-50 p-2 text-sm text-slate-700">
+                    <p class="truncate font-medium">{{ item.title || 'Untitled' }}</p>
+                    <div class="mt-1 flex flex-wrap items-center gap-1.5">
+                      <SQBadge :tone="toneForQuoteStage(stage.key)">{{ quoteStageLabel(stage.key) }}</SQBadge>
+                    </div>
+                    <button type="button" class="mt-2 w-full rounded-md bg-[#0EA5E9] px-2 py-1 text-xs font-semibold text-white" @click="go(item.route)">{{ stage.cta }}</button>
+                  </li>
+                </TransitionGroup>
+              </div>
+            </template>
+          </div>
+        </div>
+      </section>
 
-        <div class="h-px bg-gradient-to-r from-slate-800/0 via-slate-800/40 to-slate-800/0" />
-
-        <!-- Payments -->
-        <CarouselModule
-          v-if="paymentItems.length"
-          title="Payments"
-          :items="paymentItems"
-          :stages="['deposit_pending','deposit_received','final_due','paid']"
-          :color-map="{ deposit_pending: 'amber-500', deposit_received: 'sky-400', final_due: 'rose-500', paid: 'emerald-500' }"
-          :focus-only="focusMode"
-          :focus-stages="['deposit_pending','final_due']"
-          @card-click="openItem"
-        />
-
-        <div class="h-px bg-gradient-to-r from-slate-800/0 via-slate-800/40 to-slate-800/0" />
-
-        <!-- ProfitPulse snapshot (summary) -->
-        <article class="rounded-3xl bg-white/95 p-4 shadow-sm ring-1 ring-black/5">
+      <!-- ProfitPulse snapshot: last 5 payments + gross margin -->
+      <section class="mt-6">
+        <article class="rounded-3xl bg-white p-4 shadow-sm">
           <h3 class="text-sm font-semibold text-slate-900">ProfitPulse</h3>
           <div class="mt-2 grid gap-4 md:grid-cols-2">
             <div class="rounded-xl bg-slate-50 p-4">
               <p class="text-xs uppercase tracking-wide text-slate-500">Gross Profit Margin</p>
               <p class="mt-1 text-3xl font-semibold text-slate-900">{{ snapshot.gross_margin }}%</p>
               <p v-if="generatedAt" class="mt-1 text-xs text-slate-500">Updated {{ timeAgo(generatedAt) }}</p>
-              <p class="mt-2 text-xs text-slate-500">Revenue: <span class="font-medium text-slate-700">{{ currency(snapshot.total_revenue) }}</span>  Cost: <span class="font-medium text-slate-700">{{ currency(snapshot.total_cost) }}</span></p>
+              <p class="mt-2 text-xs text-slate-500">Revenue: <span class="font-medium text-slate-700">{{ currency(snapshot.total_revenue) }}</span> • Cost: <span class="font-medium text-slate-700">{{ currency(snapshot.total_cost) }}</span></p>
             </div>
             <div>
               <p class="text-xs uppercase tracking-wide text-slate-500">Last 5 Payments</p>
@@ -88,7 +130,7 @@
                     <div class="mt-1 flex flex-wrap items-center gap-1.5">
                       <SQBadge :tone="toneForPaymentType(p.type)">{{ displayType(p.type) }}</SQBadge>
                       <SQBadge :tone="toneForPaymentStatus(p.status)">{{ displayStatus(p.status) }}</SQBadge>
-                      <span class="text-[11px] text-slate-500">{{ timeAgo(p.created_at) }}</span>
+                      <span class="text-[11px] text-slate-500">• {{ timeAgo(p.created_at) }}</span>
                     </div>
                     <p v-if="p.proposal_title" class="mt-0.5 truncate text-xs text-slate-400">{{ p.proposal_title }}</p>
                   </div>
@@ -98,9 +140,6 @@
             </div>
           </div>
         </article>
-
-        <div class="h-px bg-gradient-to-r from-slate-800/0 via-slate-800/40 to-slate-800/0" />
-        <AiInsightsWidget :seen-not-accepted="insightsSeenNotAccepted" @cta="router.push({ name: 'smart-proposals' })" />
       </section>
     </div>\n    <!-- Global FAB provided by layout -->
   </div>
@@ -112,9 +151,6 @@ import { useRouter } from 'vue-router'
 import { apiFetch } from '@/lib/http'
 import { useTier } from '@/composables/useTier'
 import SQBadge from '@stackquotes/ui/components/SQBadge.vue'
-import CarouselModule, { type CarouselItem } from '@/components/dashboard/CarouselModule.vue'
-import SummaryBand from '@/components/dashboard/SummaryBand.vue'
-import AiInsightsWidget from '@/components/dashboard/AiInsightsWidget.vue'
 
 const router = useRouter()
 const go = (name: string) => router.push({ name })
@@ -307,95 +343,6 @@ onMounted(async () => {
   }
   loading.value = false
 })
-
-// Focus mode toggle
-const focusMode = ref(false)
-
-// KPI computations
-const kpiOpenProposals = computed(() => {
-  const unsent = smartProposals.value?.unsent?.length || 0
-  const sent = smartProposals.value?.sent?.length || 0
-  const viewed = smartProposals.value?.viewed?.length || 0
-  return unsent + sent + viewed
-})
-const kpiPendingDeposits = computed(() => (payments.value?.deposit_pending?.length || 0))
-const kpiCloseRate = computed(() => {
-  const acc = smartProposals.value?.accepted?.length || 0
-  const lost = smartProposals.value?.declined_expired?.length || 0
-  const denom = acc + lost
-  return denom === 0 ? 0 : acc / denom
-})
-
-// Items mapping for carousels
-const mapItems = (records: Record<string, Array<{ id: string; title?: string; amount?: number; route: string }>>, stageKey: string): CarouselItem[] => {
-  const arr = records?.[stageKey] || []
-  return arr.map((i) => ({
-    id: i.id,
-    title: i.title || 'Untitled',
-    amount: (i as any).amount,
-    stage: stageKey,
-    route: i.route,
-  }))
-}
-
-const quickQuoteItems = computed<CarouselItem[]>(() => {
-  const stages = ['draft','ready_to_convert','converted']
-  return stages.flatMap(s => mapItems(quickQuotes.value || {}, s))
-})
-
-const proposalItems = computed<CarouselItem[]>(() => {
-  const stages = canAccessPro.value ? ['unsent','sent','viewed','accepted'] : ['unsent','sent']
-  const records = smartProposals.value || {}
-  const items: CarouselItem[] = []
-  for (const s of stages) {
-    const arr = (records?.[s] || []) as any[]
-    for (const i of arr) {
-      items.push({
-        id: i.id,
-        title: i.title || 'Untitled',
-        stage: s,
-        route: i.route,
-        updatedAt: s === 'viewed' && i.viewed_at ? timeAgo(String(i.viewed_at)) : undefined,
-      })
-    }
-  }
-  return items
-})
-
-const paymentItems = computed<CarouselItem[]>(() => {
-  const stages = ['deposit_pending','deposit_received','final_due','paid']
-  return stages.flatMap(s => mapItems(payments.value || {}, s))
-})
-
-const openItem = (item: CarouselItem) => {
-  if (item.route) go(item.route)
-}
-
-// KPI filters (currently toggles focus mode)
-const onKpiFilter = (key: 'proposals'|'deposits'|'close') => {
-  focusMode.value = true
-}
-
-// AI insights: viewed but not accepted (approx)
-const insightsSeenNotAccepted = computed(() => {
-  const viewed = smartProposals.value?.viewed?.length || 0
-  return Math.max(0, viewed)
-})
-
-// Nudge client via API
-const nudgeItem = async (item: CarouselItem) => {
-  try {
-    const res = await apiFetch<{ ok: boolean }>(`/proposals/nudge`, {
-      method: 'POST',
-      body: JSON.stringify({ id: item.id }),
-    })
-    if (res.error) throw new Error(res.error)
-    // basic feedback; replace with toast if available
-    console.info('Nudge sent for', item.id)
-  } catch (e: any) {
-    console.error('Nudge failed', e?.message || e)
-  }
-}
 </script>
 
 <style scoped>

@@ -109,6 +109,12 @@ const sendSchema = z.object({
   deposit: depositSchema.optional(),
 });
 
+const nudgeSchema = z.object({
+  id: z.string().uuid(),
+  subject: z.string().optional(),
+  message: z.string().optional(),
+});
+
 const previousSchema = z.object({
   clientId: z.string().uuid(),
 });
@@ -434,6 +440,67 @@ proposalsRouter.post("/send", async (c) => {
       depositAmount,
     },
   });
+});
+
+// Send a gentle reminder email without altering proposal status
+proposalsRouter.post("/nudge", async (c) => {
+  const user = await requireUser(c);
+  const payload = nudgeSchema.parse(await c.req.json());
+  const supabase = getServiceClient();
+
+  const proposal = await getProposalById(supabase, user.id, payload.id);
+  if (!proposal) {
+    c.status(404);
+    return c.json({ error: "Proposal not found" });
+  }
+
+  const client = await getClient(supabase, user.id, proposal.clientId);
+  if (!client) {
+    c.status(404);
+    return c.json({ error: "Client not found" });
+  }
+
+  const token = ensureProposalToken(proposal);
+  const baseUrl = getBaseAppUrl();
+  const proposalUrl = `${baseUrl}/proposal/${token}`;
+
+  const selectedOption = proposal.acceptedOption ?? null;
+  const depositMeta = selectedOption
+    ? computeDepositAmount(proposal, { optionName: selectedOption })
+    : { amount: 0, config: proposal.depositConfig ?? null };
+  const depositAmount = selectedOption ? depositMeta.amount : 0;
+
+  const profile = await getContractorProfile(supabase, user.id);
+  const contractorName = profile?.businessName ?? "Your Contractor";
+  const contractorEmail = profile?.email ?? undefined;
+
+  const messageHtml = payload.message
+    ? escapeHtml(payload.message).replace(/\r?\n/g, "<br />")
+    : "<p style=\"margin:16px 0 24px;\">Just checking in — happy to answer any questions about your proposal.</p>";
+  const depositDisplay = depositAmount > 0 ? formatCurrency(depositAmount) : null;
+
+  const html = buildProposalEmailHtml({
+    contractorName,
+    messageHtml,
+    proposalUrl,
+    paymentLinkUrl: depositAmount > 0 ? proposal.paymentLinkUrl ?? null : null,
+    proposalTitle: proposal.title,
+    depositDisplay,
+  });
+
+  const subject = payload.subject?.trim()?.length
+    ? payload.subject.trim()
+    : `Quick reminder: ${contractorName} proposal`;
+
+  await sendEstimateEmail({
+    to: client.email,
+    subject,
+    html,
+    contractorName,
+    contractorEmail,
+  });
+
+  return c.json({ data: { ok: true } });
 });
 
 proposalsRouter.post("/accept", async (c) => {
