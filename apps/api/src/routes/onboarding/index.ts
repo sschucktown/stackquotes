@@ -7,14 +7,26 @@ onboardingRouter.post("/seed-trade-templates", async (c) => {
   const supabase = getServiceClient();
   const body = await c.req.json().catch(() => null) as { user_id?: string; trade?: string } | null;
   const userId = body?.user_id?.trim();
-  const trade = body?.trade?.trim();
+
+  // Normalize incoming trade to match canonical seed values
+  const normalizeTrade = (t: string | undefined | null): string | undefined => {
+    if (!t) return undefined;
+    const map: Record<string, string> = {
+      Plumber: "Plumbing",
+      Roofer: "Roofing",
+      "Deck Builder": "Deck Building",
+      Electrician: "Electrical",
+    };
+    return map[t] || t;
+  };
+  const trade = normalizeTrade(body?.trade?.trim());
 
   if (!userId || !trade) {
     c.status(400);
     return c.json({ error: "user_id and trade are required" });
   }
 
-  // If already seeded, no-op
+  // If already seeded, ensure the user actually has projects; if not, allow reseed
   const { data: profile, error: profileError } = await supabase
     .from("contractor_profiles")
     .select("trade_seeded")
@@ -22,7 +34,15 @@ onboardingRouter.post("/seed-trade-templates", async (c) => {
     .maybeSingle();
   if (profileError) throw profileError;
   if (profile?.trade_seeded) {
-    return c.json({ ok: true, message: "Already seeded" });
+    const { count, error: countError } = await supabase
+      .from("user_projects")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId);
+    if (countError) throw countError;
+    if ((count ?? 0) > 0) {
+      return c.json({ ok: true, message: "Already seeded" });
+    }
+    // else continue to seed
   }
 
   // Load up to 10 templates for the trade
@@ -117,4 +137,3 @@ onboardingRouter.post("/seed-trade-templates", async (c) => {
 
   return c.json({ ok: true, count: projectTemplates.length });
 });
-

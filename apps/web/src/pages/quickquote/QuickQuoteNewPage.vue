@@ -138,6 +138,18 @@ const error = ref<string | null>(null)
 const loadingSeed = ref(false)
 const profileTrade = ref<string | null>(null)
 
+// Map user-friendly trade labels to canonical seed values
+const normalizeTrade = (t: string | null | undefined): string | null => {
+  const map: Record<string, string> = {
+    'Plumber': 'Plumbing',
+    'Roofer': 'Roofing',
+    'Deck Builder': 'Deck Building',
+    'Electrician': 'Electrical',
+  }
+  if (!t) return null
+  return map[t] || t
+}
+
 const loadProfileAndTemplates = async () => {
   error.value = null
   const uid = user.value?.id
@@ -164,11 +176,12 @@ const loadProfileAndTemplates = async () => {
     if (profileErr) console.error(profileErr)
     const contractorTrade = profile?.trade ?? null
     profileTrade.value = contractorTrade
-    if (contractorTrade) {
+    const canonicalTrade = normalizeTrade(contractorTrade)
+    if (canonicalTrade) {
       const { data: tradeProjects, error: tErr } = await supabase
         .from('trade_projects')
         .select('id, project_name, description, base_price, trade')
-        .eq('trade', contractorTrade)
+        .eq('trade', canonicalTrade)
         .order('created_at', { ascending: true })
       if (tErr) console.error(tErr)
       templates = (tradeProjects as ProjectTemplate[]) || []
