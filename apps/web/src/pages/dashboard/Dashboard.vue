@@ -198,7 +198,7 @@ const actionCards = computed(() =>
     key: a.key,
     bg: toneBg[a.tone] || 'bg-sky-600',
     title: a.label,
-    subtitle: a.amount !== undefined ? currency(a.amount) : ${a.count ?? ''},
+    subtitle: a.amount !== undefined ? currency(a.amount) : String(a.count ?? ''),
     cta: a.cta,
     route: a.route,
   }))
