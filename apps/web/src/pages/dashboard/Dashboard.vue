@@ -1,9 +1,9 @@
-<template>
+ï»¿<template>
   <div class="min-h-screen bg-slate-50">
     <div class="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6 lg:px-8">
       <header class="space-y-1 text-slate-900">
         <h1 class="text-2xl font-semibold">Command Center</h1>
-        <p class="text-sm opacity-80">Here’s what needs your action next.</p>
+        <p class="text-sm opacity-80">Hereâ€™s what needs your action next.</p>
       </header>
 
       <nav class="mt-4 grid grid-cols-4 gap-2 text-[11px] font-medium text-slate-700">
@@ -76,7 +76,7 @@
                     <p class="truncate font-medium">{{ item.title || 'Untitled' }}</p>
                     <div class="mt-1 flex flex-wrap items-center gap-1.5">
                       <SQBadge :tone="toneForProposalStage(stage.key)">{{ stageLabel(stage.key) }}</SQBadge>
-                      <span v-if="stage.key === 'viewed' && (item as any).viewed_at" class="text-[11px] text-slate-500">• {{ timeAgo(String((item as any).viewed_at)) }}</span>
+                      <span v-if="stage.key === 'viewed' && (item as any).viewed_at" class="text-[11px] text-slate-500">â€¢ {{ timeAgo(String((item as any).viewed_at)) }}</span>
                     </div>
                     <button type="button" class="mt-2 w-full rounded-md bg-[#0EA5E9] px-2 py-1 text-xs font-semibold text-white" @click="go(item.route)">{{ stage.cta }}</button>
                   </li>
@@ -119,7 +119,7 @@
               <p class="text-xs uppercase tracking-wide text-slate-500">Gross Profit Margin</p>
               <p class="mt-1 text-3xl font-semibold text-slate-900">{{ snapshot.gross_margin }}%</p>
               <p v-if="generatedAt" class="mt-1 text-xs text-slate-500">Updated {{ timeAgo(generatedAt) }}</p>
-              <p class="mt-2 text-xs text-slate-500">Revenue: <span class="font-medium text-slate-700">{{ currency(snapshot.total_revenue) }}</span> • Cost: <span class="font-medium text-slate-700">{{ currency(snapshot.total_cost) }}</span></p>
+              <p class="mt-2 text-xs text-slate-500">Revenue: <span class="font-medium text-slate-700">{{ currency(snapshot.total_revenue) }}</span> â€¢ Cost: <span class="font-medium text-slate-700">{{ currency(snapshot.total_cost) }}</span></p>
             </div>
             <div>
               <p class="text-xs uppercase tracking-wide text-slate-500">Last 5 Payments</p>
@@ -130,7 +130,7 @@
                     <div class="mt-1 flex flex-wrap items-center gap-1.5">
                       <SQBadge :tone="toneForPaymentType(p.type)">{{ displayType(p.type) }}</SQBadge>
                       <SQBadge :tone="toneForPaymentStatus(p.status)">{{ displayStatus(p.status) }}</SQBadge>
-                      <span class="text-[11px] text-slate-500">• {{ timeAgo(p.created_at) }}</span>
+                      <span class="text-[11px] text-slate-500">â€¢ {{ timeAgo(p.created_at) }}</span>
                     </div>
                     <p v-if="p.proposal_title" class="mt-0.5 truncate text-xs text-slate-400">{{ p.proposal_title }}</p>
                   </div>
@@ -141,14 +141,7 @@
           </div>
         </article>
       </section>
-    </div>
-
-    <!-- FAB -->
-    <button type="button" class="fixed bottom-5 right-5 inline-flex items-center justify-center rounded-full bg-[#0EA5E9] p-4 text-white shadow-lg ring-1 ring-white/20 hover:bg-[#10b3f0]" aria-label="New QuickQuote" @click="go('quickquote-new')">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-      </svg>
-    </button>
+    </div>\n    <!-- Global FAB provided by layout -->
   </div>
 </template>
 
