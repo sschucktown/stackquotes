@@ -41,7 +41,7 @@ const filteredItems = computed(() => {
   return props.items.filter(i => props.focusStages!.includes(i.stage))
 })
 
-const stageLabel = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
+const stageLabel = (s: string) => s.replaceAll('_', ' ').toUpperCase()
 
 const onClick = (item: CarouselItem) => emit('card-click', item)
 </script>
