@@ -1,7 +1,7 @@
 ﻿<template>
-  <div class="min-h-screen bg-slate-950">
+  <div class="min-h-screen bg-white">
     <div class="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
-      <header class="text-slate-100">
+      <header class="text-slate-900">
         <h1 class="text-2xl font-semibold">Command Center</h1>
         <p class="text-sm opacity-80">Show exactly what needs attention.</p>
       </header>
