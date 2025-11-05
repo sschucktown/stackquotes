@@ -8,6 +8,7 @@ import {
   fetchEstimates,
   updateEstimate,
 } from "@modules/quickquote/api/estimates";
+import { deleteEstimate as apiDeleteEstimate } from "@modules/quickquote/api/estimates";
 import type { EstimatePayload } from "@modules/quickquote/api/estimates";
 import { generatePdf } from "@modules/quickquote/api/pdf";
 import { sendEstimateEmail } from "@modules/quickquote/api/email";
@@ -372,6 +373,30 @@ export const useEstimateStore = defineStore("estimates", {
       }
       await this.reload();
       return data;
+    },
+    async remove(id: string) {
+      this.error = null;
+      const demo = useDemoStore();
+      if (demo.active) {
+        if (!this.demoItems) {
+          this.demoItems = demoEstimates.map((estimate) => cloneEstimate(estimate));
+        }
+        const idx = this.demoItems.findIndex((e) => e.id === id);
+        if (idx === -1) throw new Error("Estimate not found");
+        if (derivePipelineStatus(this.demoItems[idx]) !== "draft") {
+          throw new Error("Only draft estimates can be deleted");
+        }
+        this.demoItems.splice(idx, 1);
+        this.items = applyFilters(this.demoItems, this.filters);
+        return { ok: true } as any;
+      }
+      const { data, error } = await apiDeleteEstimate(id);
+      if ((error as any)) {
+        this.error = error as any;
+        throw new Error(error as any);
+      }
+      await this.reload();
+      return data ?? ({ ok: true } as any);
     },
     async reload() {
       const filters = { ...this.filters };

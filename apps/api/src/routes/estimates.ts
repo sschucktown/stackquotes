@@ -56,6 +56,10 @@ const statusActionSchema = z.object({
   id: z.string().uuid(),
 });
 
+const deleteSchema = z.object({
+  id: z.string().uuid(),
+});
+
 export const estimatesRouter = new Hono();
 
 estimatesRouter.get("/list", async (c) => {
@@ -214,5 +218,41 @@ estimatesRouter.post("/decline", async (c) => {
     }
     throw error;
   }
+});
+
+// Delete estimate (draft only)
+estimatesRouter.post("/delete", async (c) => {
+  const user = await requireUser(c);
+  try {
+    await assertCreateEditAllowed(user.id);
+  } catch (e) {
+    const status = (e as any)?.status ?? 403;
+    c.status(status);
+    return c.json({ error: (e as Error).message });
+  }
+  const payload = deleteSchema.parse(await c.req.json());
+  const supabase = getServiceClient();
+  // Ensure record belongs to user and is draft
+  const { data: existing, error: fetchError } = await supabase
+    .from("estimates")
+    .select("id, user_id, status")
+    .eq("id", payload.id)
+    .maybeSingle();
+  if (fetchError) throw fetchError;
+  if (!existing || (existing as any).user_id !== user.id) {
+    c.status(404);
+    return c.json({ error: "Estimate not found" });
+  }
+  if ((existing as any).status !== "draft") {
+    c.status(400);
+    return c.json({ error: "Only draft estimates can be deleted" });
+  }
+  const { error: delError } = await supabase
+    .from("estimates")
+    .delete()
+    .eq("id", payload.id)
+    .eq("user_id", user.id);
+  if (delError) throw delError;
+  return c.json({ data: { ok: true } });
 });
 

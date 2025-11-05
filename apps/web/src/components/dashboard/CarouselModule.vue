@@ -24,6 +24,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'card-click', item: CarouselItem): void
   (e: 'nudge', item: CarouselItem): void
+  (e: 'delete', item: CarouselItem): void
 }>()
 
 const currency = (value?: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value || 0)
@@ -83,6 +84,15 @@ const onClick = (item: CarouselItem) => emit('card-click', item)
             @click.stop="$emit('nudge', item)"
           >
             Nudge Client
+          </button>
+          <button
+            v-if="item.stage === 'draft'"
+            type="button"
+            class="ml-2 shrink-0 rounded-md bg-rose-600 px-2 py-1 text-[11px] font-semibold text-white hover:bg-rose-500"
+            title="Delete draft"
+            @click.stop="$emit('delete', item)"
+          >
+            Delete
           </button>
         </div>
       </article>

@@ -57,6 +57,7 @@
           :focus-only="focusMode"
           :focus-stages="['ready_to_convert']"
           @card-click="openItem"
+          @delete="onDeleteQuickQuote"
         />
 
         <div class="h-px bg-gradient-to-r from-slate-800/0 via-slate-800/40 to-slate-800/0" />
@@ -284,20 +285,7 @@ const toneForProposalStage = (key: string): BadgeTone => {
 }
 
 onMounted(async () => {
-  loading.value = true
-  error.value = null
-  const res = await apiFetch<DashboardResponse['data']>('/dashboard')
-  if (res.error) {
-    error.value = res.error
-  } else if (res.data) {
-    actions.value = (res.data.actions ?? []) as any
-    payments.value = res.data.carousels?.payments ?? {}
-    smartProposals.value = res.data.carousels?.smartProposals ?? {}
-    quickQuotes.value = res.data.carousels?.quickQuotes ?? {}
-    snapshot.value = res.data.snapshot ?? snapshot.value
-    generatedAt.value = res.data.generated_at ?? null
-  }
-  loading.value = false
+  await reloadDashboard()
 })
 
 // Focus mode default ON (toggle lives in Settings)
@@ -387,6 +375,38 @@ const nudgeItem = async (item: CarouselItem) => {
   } catch (e: any) {
     console.error('Nudge failed', e?.message || e)
   }
+}
+
+const reloadDashboard = async () => {
+  loading.value = true
+  error.value = null
+  const res = await apiFetch<DashboardResponse['data']>('/dashboard')
+  if (res.error) {
+    error.value = res.error
+  } else if (res.data) {
+    actions.value = (res.data.actions ?? []) as any
+    payments.value = res.data.carousels?.payments ?? {}
+    smartProposals.value = res.data.carousels?.smartProposals ?? {}
+    quickQuotes.value = res.data.carousels?.quickQuotes ?? {}
+    snapshot.value = res.data.snapshot ?? snapshot.value
+    generatedAt.value = res.data.generated_at ?? null
+  }
+  loading.value = false
+}
+
+const onDeleteQuickQuote = async (item: CarouselItem) => {
+  if (item.stage !== 'draft') return
+  const ok = window.confirm('Delete this draft? This cannot be undone.')
+  if (!ok) return
+  const res = await apiFetch<{ ok: boolean }>("/estimates/delete", {
+    method: 'POST',
+    body: JSON.stringify({ id: item.id }),
+  })
+  if (res.error) {
+    console.error('Delete failed', res.error)
+    return
+  }
+  await reloadDashboard()
 }
 </script>
 

@@ -52,3 +52,9 @@ export const declineEstimate = (id: string) =>
     body: JSON.stringify({ id }),
   });
 
+export const deleteEstimate = (id: string) =>
+  apiFetch<{ ok: boolean }>("/estimates/delete", {
+    method: "POST",
+    body: JSON.stringify({ id }),
+  });
+
