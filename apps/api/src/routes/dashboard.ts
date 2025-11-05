@@ -38,7 +38,7 @@ dashboardRouter.get("/", async (c) => {
       .order("created_at", { ascending: false }),
     supabase
       .from("payments")
-      .select("id, proposal_id, amount, type, status, created_at")
+      .select("id, proposal_id, amount, type, status, is_milestone, payment_status, created_at")
       .eq("contractor_id", user.id)
       .order("created_at", { ascending: false }),
   ]);
@@ -232,6 +232,56 @@ dashboardRouter.get("/", async (c) => {
     total_cost: Math.round(totalCost * 100) / 100,
   };
 
+  // Summary metrics (for Command Center KPIs)
+  const openProposalsCount = (
+    (smartProposalsCarousel.unsent?.length ?? 0) +
+    (smartProposalsCarousel.sent?.length ?? 0) +
+    (smartProposalsCarousel.viewed?.length ?? 0)
+  );
+  const pendingDepositsCount = depositPending.length;
+
+  // Close rate: accepted / (accepted + declined/expired)
+  const acceptedCount = (smartProposalsCarousel.accepted?.length ?? 0);
+  const declinedExpiredCount = (smartProposalsCarousel.declined_expired?.length ?? 0);
+  const denom = acceptedCount + declinedExpiredCount;
+  let closeRate = denom === 0 ? 0 : acceptedCount / denom;
+
+  // Prefer Supabase function if available (best-effort)
+  try {
+    const rpc = await supabase.rpc('fn_close_rate', { contractor_id: user.id });
+    if (!rpc.error && typeof rpc.data === 'number' && isFinite(rpc.data)) {
+      closeRate = Math.max(0, Math.min(1, rpc.data));
+    }
+  } catch {
+    // ignore
+  }
+
+  // Gross payments this month (succeeded/paid)
+  const now = new Date();
+  const month = now.getUTCMonth();
+  const year = now.getUTCFullYear();
+  const grossPaymentsMonth = payments
+    .filter((p) => {
+      const s = (p.status ?? '').toString().toLowerCase();
+      if (!(s === 'succeeded' || s === 'paid')) return false;
+      const d = new Date(p.created_at as string);
+      return d.getUTCFullYear() === year && d.getUTCMonth() === month;
+    })
+    .reduce((sum, p) => sum + Number(p.amount ?? 0), 0);
+
+  // Overdue milestones: milestones not paid beyond grace period
+  const OVERDUE_DAYS = 14;
+  const cutoff = new Date(Date.now() - OVERDUE_DAYS * 24 * 60 * 60 * 1000).toISOString();
+  const overdueMilestones = payments.filter((p) => {
+    const isMilestone = Boolean((p as any).is_milestone);
+    if (!isMilestone) return false;
+    const status = ((p as any).status ?? '').toString().toLowerCase();
+    const paid = status === 'succeeded' || status === 'paid';
+    if (paid) return false;
+    const createdAt = new Date((p as any).created_at ?? 0).toISOString();
+    return createdAt < cutoff;
+  }).length;
+
   return c.json({
     data: {
       actions,
@@ -241,6 +291,13 @@ dashboardRouter.get("/", async (c) => {
         quickQuotes: quickQuotesCarousel,
       },
       snapshot,
+      summary: {
+        open_proposals: openProposalsCount,
+        pending_deposits: pendingDepositsCount,
+        close_rate: closeRate,
+        gross_payments_month: Math.round(grossPaymentsMonth * 100) / 100,
+        overdue_milestones: overdueMilestones,
+      },
       generated_at: new Date().toISOString(),
     },
   });

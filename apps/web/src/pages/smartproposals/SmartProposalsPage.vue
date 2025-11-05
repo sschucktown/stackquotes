@@ -40,11 +40,11 @@
         <aside class="flex flex-col gap-4 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-100">
           <div class="flex items-center justify-between">
             <h2 class="text-sm font-semibold text-slate-800">Your Proposals</h2>
-            <span class="text-xs text-slate-500">{{ proposalStore.items.length }}</span>
+            <span class="text-xs text-slate-500">{{ filteredItems.length }}</span>
           </div>
           <div class="flex flex-col gap-2">
             <button
-              v-for="proposal in proposalStore.items"
+              v-for="proposal in filteredItems"
               :key="proposal.id"
               type="button"
               class="flex flex-col rounded-xl border px-4 py-3 text-left transition"
@@ -289,6 +289,7 @@ import { computed, onMounted, reactive, ref, watch } from "vue";
 import SQButton from "@stackquotes/ui/components/SQButton.vue";
 import SQInput from "@stackquotes/ui/components/SQInput.vue";
 import SQTextarea from "@stackquotes/ui/components/SQTextarea.vue";
+import { useRoute, useRouter } from "vue-router";
 import { useProposalStore } from "@modules/proposals/stores/proposalStore";
 import { useEstimateStore } from "@modules/quickquote/stores/estimateStore";
 import { useClientStore } from "@modules/quickquote/stores/clientStore";
@@ -336,6 +337,26 @@ interface ToastMessage {
 }
 
 const proposalStore = useProposalStore();
+const route = useRoute();
+const router = useRouter();
+
+// Route-aware filtering for sidebar list
+const statusFilter = computed(() => {
+  const raw = route.query.status;
+  const val = Array.isArray(raw) ? raw[0] : raw;
+  return typeof val === 'string' ? val.toLowerCase() : undefined;
+});
+
+const filteredItems = computed(() => {
+  const items = proposalStore.items;
+  const f = statusFilter.value;
+  if (!f || f === 'all') return items;
+  if (f === 'open') {
+    const openSet = new Set(['draft','sent','viewed']);
+    return items.filter(p => openSet.has(String(p.status || '').toLowerCase()))
+  }
+  return items.filter(p => String(p.status || '').toLowerCase() === f);
+});
 const estimateStore = useEstimateStore();
 const clientStore = useClientStore();
 const demoStore = useDemoStore();
