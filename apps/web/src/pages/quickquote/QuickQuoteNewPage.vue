@@ -371,7 +371,9 @@ const createProposal = async () => {
     const id = data?.id
     if (!id) throw new Error('Failed to create draft')
 
-    await router.push({ path: '/smartproposals/new', query: { quoteId: id } })
+    // Route to existing SmartProposals page (name: 'smart-proposals').
+    // The previous path '/smartproposals/new' did not exist, causing a blank screen.
+    await router.push({ name: 'smart-proposals', query: { quoteId: id } })
   } catch (e: any) {
     console.error(e)
     error.value = e?.message ?? 'Unable to create proposal'
