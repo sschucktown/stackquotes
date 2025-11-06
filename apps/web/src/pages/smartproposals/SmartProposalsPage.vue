@@ -687,14 +687,27 @@ watch(
 );
 
 onMounted(async () => {
-  await Promise.all([proposalStore.load(), clientStore.load()]);
-  if (!proposalStore.current) {
-    await ensureLatestGenerated();
+  try {
+    await Promise.all([proposalStore.load(), clientStore.load()]);
+  } catch (e) {
+    console.error('[SmartProposals] Failed to load initial data', e);
   }
-  if (proposalStore.current) {
-    initialiseForm(proposalStore.current);
+  try {
+    if (!proposalStore.current) {
+      await ensureLatestGenerated();
+    }
+  } catch (e) {
+    console.error('[SmartProposals] Failed to ensure latest generated', e);
   }
-  initializing.value = false;
+  try {
+    if (proposalStore.current) {
+      initialiseForm(proposalStore.current);
+    }
+  } catch (e) {
+    console.error('[SmartProposals] Failed to initialise form', e);
+  } finally {
+    initializing.value = false;
+  }
 });
 </script>
 

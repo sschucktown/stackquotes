@@ -84,7 +84,7 @@
         </div>
       </div>
       <div class="text-center mt-10" data-animate>
-        <a href="/smartproposals" class="inline-flex items-center justify-center rounded-full px-6 py-3 text-base font-medium bg-[#00D1FF] text-gray-900 shadow-[0_0_0_0_rgba(0,209,255,0.6)] hover:shadow-[0_0_25px_6px_rgba(0,209,255,0.45)] transition-all duration-200 hover:scale-[1.02]">
+        <a href="/app/smart-proposals" class="inline-flex items-center justify-center rounded-full px-6 py-3 text-base font-medium bg-[#00D1FF] text-gray-900 shadow-[0_0_0_0_rgba(0,209,255,0.6)] hover:shadow-[0_0_25px_6px_rgba(0,209,255,0.45)] transition-all duration-200 hover:scale-[1.02]">
           Start Building Your First Proposal
         </a>
       </div>
