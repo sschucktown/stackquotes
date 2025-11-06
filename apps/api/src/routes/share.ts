@@ -296,6 +296,25 @@ shareRouter.get("/profile/:slug", async (c) => {
     createdAt: proposal.createdAt,
   }));
 
+  const toNullableString = (value: string | null | undefined) => {
+    if (typeof value !== "string") return null;
+    const trimmed = value.trim();
+    return trimmed.length ? trimmed : null;
+  };
+
+  const branding = {
+    accentColor: toNullableString(settings?.accentColor),
+    companyName: toNullableString(settings?.companyName) ?? toNullableString(profile.businessName),
+    logoUrl: toNullableString(profile.logoUrl) ?? toNullableString(settings?.logoUrl),
+    footerText: toNullableString(settings?.footerText),
+  };
+
+  const hasBrandingContent =
+    branding.accentColor !== null ||
+    branding.companyName !== null ||
+    branding.logoUrl !== null ||
+    branding.footerText !== null;
+
   return c.json({
     data: {
       profile,
@@ -307,14 +326,7 @@ shareRouter.get("/profile/:slug", async (c) => {
         averageValue: summary.averageValue,
       },
       proposals: highlightedProposals,
-      branding: settings
-        ? {
-            accentColor: settings.accentColor ?? null,
-            companyName: settings.companyName ?? null,
-            logoUrl: profile.logoUrl ?? settings.logoUrl ?? null,
-            footerText: settings.footerText ?? null,
-          }
-        : null,
+      branding: hasBrandingContent ? branding : null,
     },
   });
 });
