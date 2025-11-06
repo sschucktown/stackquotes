@@ -3,7 +3,6 @@ import { computed } from 'vue'
 import CarouselModule, { type CarouselItem } from '@/components/dashboard/CarouselModule.vue'
 import SummaryBand from '@/components/dashboard/SummaryBand.vue'
 import ActionCenterModule from '@/components/dashboard/ActionCenterModule.vue'
-import SQBadge from '@stackquotes/ui/components/SQBadge.vue'
 import AiInsightsWidget from '@/components/dashboard/AiInsightsWidget.vue'
 
 const props = defineProps<{
@@ -79,19 +78,6 @@ const colorMapQuotes: Record<string, string> = {
   converted: 'emerald-500',
 }
 
-type BadgeTone = 'default' | 'success' | 'warning' | 'danger'
-const toneForPaymentType = (t?: string | null): BadgeTone => {
-  const v = (t || '').toString().toLowerCase()
-  if (v === 'installment') return 'warning'
-  return 'default'
-}
-const toneForPaymentStatus = (s?: string | null): BadgeTone => {
-  const v = (s || '').toString().toLowerCase()
-  if (v === 'succeeded' || v === 'paid') return 'success'
-  if (v === 'pending' || v === 'processing') return 'warning'
-  if (v === 'failed' || v === 'canceled' || v === 'cancelled') return 'danger'
-  return 'default'
-}
 const displayType = (t?: string | null) => {
   const v = (t || '').toString().toLowerCase()
   if (v === 'deposit') return 'Deposit'
@@ -199,8 +185,8 @@ const displayStatus = (s?: string | null) => {
                   <div class="min-w-0">
                     <p class="font-medium text-slate-800">{{ currency(p.amount) }}</p>
                     <div class="mt-1 flex flex-wrap items-center gap-1.5">
-                      <SQBadge :tone="toneForPaymentType(p.type)">{{ displayType(p.type) }}</SQBadge>
-                      <SQBadge :tone="toneForPaymentStatus(p.status)">{{ displayStatus(p.status) }}</SQBadge>
+                      <span class="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700">{{ displayType(p.type) }}</span>
+                      <span class="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700">{{ displayStatus(p.status) }}</span>
                       <span class="text-[11px] text-slate-500">{{ timeAgo(p.created_at) }}</span>
                     </div>
                     <p v-if="p.proposal_title" class="mt-0.5 truncate text-xs text-slate-400">{{ p.proposal_title }}</p>

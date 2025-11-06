@@ -99,6 +99,13 @@ const router = createRouter({
           component: () => import("@/pages/dashboard/Dashboard.vue"),
         },
         {
+          path: "command-center-demo",
+          alias: "/command-center-demo",
+          name: "command-center-demo",
+          component: () => import("@/pages/dashboard/CommandCenterDemo.vue"),
+          meta: { public: false },
+        },
+        {
           path: "quickquotes",
           alias: "/quickquotes",
           name: "quickquote-dashboard",

@@ -23,6 +23,6 @@ onMounted(async () => {
   const query = {
     ...(templateParam ? { template: templateParam } : { template: "deck" }),
   };
-  await router.replace({ name: "quickquote-dashboard", query });
+  await router.replace({ name: "command-center-demo", query });
 });
 </script>
