@@ -68,21 +68,32 @@ const loadUrgencyFeed = async () => {
 
 onMounted(loadUrgencyFeed)
 
-const handleCta = (item: ActionItem) => {
-  if (demo.active) {
-    // Simulate resolving the action in demo mode to showcase progress
-    const idx = actionItems.value.findIndex(i => i.id === item.id)
-    if (idx !== -1) {
-      const current = actionItems.value[idx]
-      const nextStatus = current.type === 'payment' ? 'paid' : 'accepted'
-      actionItems.value[idx] = { ...current, status: nextStatus }
-      recomputeCompletion()
-    }
+// --- Demo behavior setup ---
+const isDemo = demo.active || (import.meta as any).env?.VITE_DEMO_MODE === 'true'
+
+// simple toast fallback
+const toast = {
+  success: (msg: string) => (typeof window !== 'undefined' ? window.alert(msg) : void 0),
+  error: (msg: string) => (typeof window !== 'undefined' ? window.alert(`Error: ${msg}`) : void 0),
+}
+
+const handleDemoAction = async (item: ActionItem) => {
+  if (!isDemo) {
+    // In real mode, bubble to parent to navigate or act
+    emit('card-click', item)
     return
   }
-  // In real mode, bubble to parent to navigate or act
-  emit('card-click', item)
+  ;(item as any).loading = true
+  await new Promise(r => setTimeout(r, 1200))
+  ;(item as any).loading = false
+  // remove the card
+  actionItems.value = actionItems.value.filter(i => i.id !== item.id)
+  // increment progress (assume ~5 items typical)
+  completion.value = Math.min(100, completion.value + Math.round(100 / 5))
+  toast.success(`${item.title} — ${item.type === 'payment' ? 'Reminder sent' : 'Follow-up sent'}`)
 }
+
+const resetDemo = () => loadUrgencyFeed()
 </script>
 
 <template>
@@ -107,6 +118,7 @@ const handleCta = (item: ActionItem) => {
 
     <div v-if="loading" class="mb-3 h-10 animate-pulse rounded-xl bg-slate-200/70" />
 
+    <transition-group name="fade" tag="div">
     <div v-for="item in actionItems" :key="item.id" class="mb-3">
       <div
         class="flex items-center justify-between rounded-2xl border-l-4 bg-white/80 px-4 py-3 shadow-sm transition hover:shadow-md"
@@ -131,17 +143,35 @@ const handleCta = (item: ActionItem) => {
         </div>
         <button
           class="rounded-full bg-blue-600 px-4 py-1.5 text-sm font-semibold text-white shadow hover:bg-blue-700"
-          @click="handleCta(item)"
+          @click="handleDemoAction(item)"
         >
           {{ item.type === 'payment' ? 'Send Reminder' : 'Follow Up' }}
         </button>
       </div>
     </div>
+    </transition-group>
 
     <div class="mt-4">
       <div class="h-3 w-full rounded-full bg-slate-200">
         <div class="h-3 rounded-full bg-blue-600 transition-all" :style="{ width: `${completion}%` }" />
       </div>
     </div>
+    
+    <button
+      class="absolute right-6 top-6 rounded-md bg-slate-200 text-slate-700 px-3 py-1 text-xs font-semibold hover:bg-slate-300"
+      @click="resetDemo"
+    >
+      Reset Demo
+    </button>
   </section>
 </template>
+
+<style scoped>
+.fade-enter-active, .fade-leave-active {
+  transition: all 0.3s ease;
+}
+.fade-enter-from, .fade-leave-to {
+  opacity: 0;
+  transform: translateY(8px);
+}
+</style>
