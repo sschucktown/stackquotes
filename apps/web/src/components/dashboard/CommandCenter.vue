@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import CarouselModule, { type CarouselItem } from '@/components/dashboard/CarouselModule.vue'
 import SummaryBand from '@/components/dashboard/SummaryBand.vue'
+import ActionCenterModule from '@/components/dashboard/ActionCenterModule.vue'
 import SQBadge from '@stackquotes/ui/components/SQBadge.vue'
 import AiInsightsWidget from '@/components/dashboard/AiInsightsWidget.vue'
 
@@ -120,6 +121,8 @@ const displayStatus = (s?: string | null) => {
           {{ attentionMessage }}
         </div>
       </transition>
+
+      <ActionCenterModule @card-click="$emit('card-click', $event)" />
 
       <div class="mt-4">
         <SummaryBand
