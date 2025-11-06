@@ -97,7 +97,8 @@ const resetDemo = () => loadUrgencyFeed()
 </script>
 
 <template>
-  <section class="sticky top-0 z-20 rounded-b-3xl border-b border-slate-200 bg-gradient-to-b from-slate-100/90 to-white/80 p-6 shadow-sm backdrop-blur-lg">
+  <section class="sticky top-0 z-20 rounded-b-3xl border-b border-slate-200 bg-gradient-to-b from-slate-100/90 to-white/80 p-6 shadow-[0_2px_10px_rgba(0,0,0,0.04)] backdrop-blur-lg">
+    <div class="mx-auto w-full max-w-3xl">
     <div class="mb-3 flex items-end justify-between gap-3">
       <div>
         <h2 class="mb-1 text-2xl font-semibold text-slate-800">🔥 Action Center</h2>
@@ -105,7 +106,7 @@ const resetDemo = () => loadUrgencyFeed()
       </div>
       <button
         type="button"
-        class="rounded-md bg-slate-800 px-3 py-1.5 text-sm font-semibold text-white hover:bg-slate-700"
+        class="rounded-md bg-slate-800 px-3 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-slate-700 active:scale-95"
         @click="loadUrgencyFeed(); $emit('refresh')"
       >
         Refresh
@@ -121,48 +122,68 @@ const resetDemo = () => loadUrgencyFeed()
     <transition-group name="fade" tag="div">
     <div v-for="item in actionItems" :key="item.id" class="mb-3">
       <div
-        class="flex items-center justify-between rounded-2xl border-l-4 bg-white/80 px-4 py-3 shadow-sm transition hover:shadow-md"
+        class="flex items-center justify-between rounded-2xl border-l-4 bg-white/80 px-4 py-3 shadow-sm backdrop-blur-sm transition-all duration-200 ease-in-out hover:-translate-y-0.5 hover:shadow-md"
         :class="{
           'border-blue-500': item.type === 'proposal' && item.status === 'sent',
-          'border-yellow-500': item.type === 'proposal' && item.status === 'accepted',
+          'border-amber-500': item.type === 'proposal' && item.status === 'accepted',
           'border-red-500': item.type === 'payment' && (item.status === 'pending' || item.status === 'processing'),
           'border-green-500': item.status === 'paid'
         }"
       >
         <div class="min-w-0">
-          <p class="truncate font-medium text-slate-800">{{ item.title }}</p>
-          <div class="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-slate-500">
+          <p class="truncate text-base font-semibold text-slate-800">{{ item.title }}</p>
+          <div class="mt-1 flex flex-wrap items-center gap-1.5 text-sm text-slate-500">
             <span class="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 font-medium text-slate-700">
               {{ item.type === 'payment' ? 'Payment' : 'Proposal' }}
             </span>
             <span class="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 font-medium text-slate-700">
               {{ item.status }}
             </span>
-            <span class="opacity-80">Score: {{ Math.round(item.urgency_score * 100) }}</span>
+            
           </div>
         </div>
+        <div class="flex items-center gap-3">
+          <span class="hidden text-xs text-slate-400 sm:inline">Score: {{ Math.round(item.urgency_score * 100) }}</span>
         <button
-          class="rounded-full bg-blue-600 px-4 py-1.5 text-sm font-semibold text-white shadow hover:bg-blue-700"
+          class="rounded-full bg-blue-600 px-4 py-1.5 text-sm font-semibold text-white shadow transition-transform hover:bg-blue-700 active:scale-95"
           @click="handleDemoAction(item)"
         >
-          {{ item.type === 'payment' ? 'Send Reminder' : 'Follow Up' }}
+          <span v-if="!(item as any).loading">{{ item.type === 'payment' ? 'Send Reminder' : 'Follow Up' }}</span>
+          <span v-else class="inline-flex items-center gap-1">Sending<span class="animate-pulse">…</span></span>
         </button>
+        </div>
       </div>
     </div>
     </transition-group>
 
     <div class="mt-4">
-      <div class="h-3 w-full rounded-full bg-slate-200">
-        <div class="h-3 rounded-full bg-blue-600 transition-all" :style="{ width: `${completion}%` }" />
+      <div class="h-3 w-full rounded-full bg-slate-200 overflow-hidden">
+        <div
+          class="h-3 rounded-full transition-all progress-fill"
+          :class="{ 'progress-complete': completion === 100 }"
+          :style="{ width: `${completion}%` }"
+        />
+      </div>
+    </div>
+
+    <div v-if="!actionItems.length || completion === 100" class="mt-4">
+      <div class="rounded-2xl border border-emerald-200 bg-emerald-50/90 p-6 text-center shadow-sm">
+        <h3 class="text-lg font-semibold text-emerald-700">🎉 All caught up</h3>
+        <p class="mt-1 text-sm text-emerald-600">Nothing urgent right now — check ongoing jobs below.</p>
+      </div>
+      <!-- Optional subtle confetti -->
+      <div class="relative mx-auto mt-2 h-6 w-full max-w-xs overflow-hidden">
+        <div class="absolute inset-0 -skew-x-12 bg-gradient-to-r from-emerald-300 via-emerald-200 to-emerald-300 bg-[length:200%_100%] animate-[shimmer_1.2s_linear_infinite] opacity-30 rounded-full" />
       </div>
     </div>
     
     <button
-      class="absolute right-6 top-6 rounded-md bg-slate-200 text-slate-700 px-3 py-1 text-xs font-semibold hover:bg-slate-300"
+      class="absolute right-6 top-6 rounded-md bg-slate-200 px-3 py-1 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-300 active:scale-95"
       @click="resetDemo"
     >
       Reset Demo
     </button>
+    </div>
   </section>
 </template>
 
@@ -173,5 +194,24 @@ const resetDemo = () => loadUrgencyFeed()
 .fade-enter-from, .fade-leave-to {
   opacity: 0;
   transform: translateY(8px);
+}
+
+.progress-fill {
+  background: linear-gradient(90deg, #3b82f6, #60a5fa, #93c5fd);
+  background-size: 200% 100%;
+  animation: progressPulse 3s linear infinite;
+}
+.progress-complete {
+  background: linear-gradient(90deg, #10b981, #34d399, #6ee7b7);
+  background-size: 200% 100%;
+  animation: shimmer 1.6s linear infinite;
+}
+@keyframes progressPulse {
+  0% { background-position: 0% 0%; }
+  100% { background-position: 200% 0%; }
+}
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }
 </style>
