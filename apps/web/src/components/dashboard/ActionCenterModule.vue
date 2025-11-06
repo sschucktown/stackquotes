@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import SQBadge from '@stackquotes/ui/components/SQBadge.vue'
-import SQProgress from '@stackquotes/ui/components/SQProgress.vue'
+// Using local styles instead of UI kit components to avoid build deps
 import { supabase } from '@/lib/supabase'
 
 type ActionItem = {
@@ -88,8 +87,12 @@ onMounted(loadUrgencyFeed)
         <div class="min-w-0">
           <p class="truncate font-medium text-slate-800">{{ item.title }}</p>
           <div class="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-slate-500">
-            <SQBadge tone="default">{{ item.type === 'payment' ? 'Payment' : 'Proposal' }}</SQBadge>
-            <SQBadge tone="default">{{ item.status }}</SQBadge>
+            <span class="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 font-medium text-slate-700">
+              {{ item.type === 'payment' ? 'Payment' : 'Proposal' }}
+            </span>
+            <span class="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 font-medium text-slate-700">
+              {{ item.status }}
+            </span>
             <span class="opacity-80">Score: {{ Math.round(item.urgency_score * 100) }}</span>
           </div>
         </div>
@@ -103,8 +106,9 @@ onMounted(loadUrgencyFeed)
     </div>
 
     <div class="mt-4">
-      <SQProgress :value="completion" class="h-3 rounded-full bg-slate-200" />
+      <div class="h-3 w-full rounded-full bg-slate-200">
+        <div class="h-3 rounded-full bg-blue-600 transition-all" :style="{ width: `${completion}%` }" />
+      </div>
     </div>
   </section>
 </template>
-
