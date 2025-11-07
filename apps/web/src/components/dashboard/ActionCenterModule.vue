@@ -193,7 +193,7 @@ watch(() => actionItems.value.length, (len, prev) => {
 </script>
 
 <template>
-  <section class="sticky top-0 z-20 rounded-b-3xl border-b border-slate-200 bg-gradient-to-b from-slate-100/90 to-white/80 p-6 shadow-[0_2px_10px_rgba(0,0,0,0.04)] backdrop-blur-lg">
+  <section class="z-20 rounded-b-3xl border-b border-slate-200 bg-gradient-to-b from-slate-100/90 to-white/80 p-6 shadow-[0_2px_10px_rgba(0,0,0,0.04)] backdrop-blur-lg">
     <div class="mx-auto w-full max-w-3xl">
     <div class="mb-3 flex items-end justify-between gap-3">
       <div>
