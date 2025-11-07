@@ -63,10 +63,10 @@ const TRADE_OPTIONS = [
 ];
 
 const SIZE_OPTIONS = [
-  { label: "Under $5K", value: "Under $5K" },
-  { label: "$5–15K", value: "$5–15K" },
-  { label: "$15–30K", value: "$15–30K" },
-  { label: "$30K+", value: "$30K+" },
+  { label: "< $5K", value: "< $5K" },
+  { label: "$5-15K", value: "$5-15K" },
+  { label: "$15-50K", value: "$15-50K" },
+  { label: "$50K+", value: "$50K+" },
 ];
 
 const fullName = ref("");
@@ -129,4 +129,3 @@ const handleContinue = async () => {
   opacity: 0;
 }
 </style>
-
