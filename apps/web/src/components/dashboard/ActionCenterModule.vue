@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useDemoStore } from '@/stores/demoStore'
 // Using local styles instead of UI kit components to avoid build deps
 import { supabase } from '@/lib/supabase'
@@ -21,17 +21,17 @@ const emit = defineEmits<{
 }>()
 
 const actionItems = ref<ActionItem[]>([])
-const completion = ref(0)
+const completion = computed(() => {
+  const items = actionItems.value
+  const total = items.length
+  if (!total) return 0
+  const done = items.filter(i => ['paid', 'accepted'].includes(String(i.status).toLowerCase())).length
+  return Math.round((done / total) * 100)
+})
 const loading = ref(false)
 const error = ref<string | null>(null)
 const demo = useDemoStore()
 
-const recomputeCompletion = () => {
-  const items = actionItems.value
-  const total = items.length
-  const done = items.filter(i => ['paid', 'accepted'].includes(i.status)).length
-  completion.value = total ? Math.round((done / total) * 100) : 0
-}
 
 const loadUrgencyFeed = async () => {
   loading.value = true
@@ -57,7 +57,7 @@ const loadUrgencyFeed = async () => {
       if (rpcError) throw rpcError
       actionItems.value = (data as ActionItem[]) || []
     }
-    recomputeCompletion()
+    // completion is derived; no manual recompute needed
   } catch (e: any) {
     console.error('Urgency feed error:', e)
     error.value = e?.message ?? 'Failed to load action items'
@@ -88,8 +88,7 @@ const handleDemoAction = async (item: ActionItem) => {
   ;(item as any).loading = false
   // remove the card
   actionItems.value = actionItems.value.filter(i => i.id !== item.id)
-  // increment progress (assume ~5 items typical)
-  completion.value = Math.min(100, completion.value + Math.round(100 / 5))
+  // completion is derived from items; no manual increment
   toast.success(`${item.title} — ${item.type === 'payment' ? 'Reminder sent' : 'Follow-up sent'}`)
 }
 
@@ -166,7 +165,7 @@ const resetDemo = () => loadUrgencyFeed()
       </div>
     </div>
 
-    <div v-if="!actionItems.length || completion === 100" class="mt-4">
+    <div v-if="!actionItems.length" class="mt-4">
       <div class="rounded-2xl border border-emerald-200 bg-emerald-50/90 p-6 text-center shadow-sm">
         <h3 class="text-lg font-semibold text-emerald-700">🎉 All caught up</h3>
         <p class="mt-1 text-sm text-emerald-600">Nothing urgent right now — check ongoing jobs below.</p>
