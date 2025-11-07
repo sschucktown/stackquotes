@@ -169,7 +169,7 @@ const go = (route: string) => router.push(route)
 </script>
 
 <template>
-  <section class="rounded-3xl bg-white/90 p-5 shadow-sm ring-1 ring-slate-100">
+  <section class="relative z-30 rounded-3xl bg-white/90 p-5 shadow-sm ring-1 ring-slate-100">
     <header class="mb-3">
       <h2 class="text-base font-semibold text-slate-900">Action Center</h2>
       <p class="text-sm text-slate-600">Finish these steps to unlock fast quoting.</p>

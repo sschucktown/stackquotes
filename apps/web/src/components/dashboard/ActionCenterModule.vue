@@ -25,7 +25,7 @@ const actionItems = ref<ActionItem[]>([])
 const completion = computed(() => {
   const items = actionItems.value
   const total = items.length
-  if (!total) return 0
+  if (!total) return 100
   const done = items.filter(i => ['paid', 'accepted'].includes(String(i.status).toLowerCase())).length
   return Math.round((done / total) * 100)
 })
@@ -82,6 +82,17 @@ const handleDemoAction = async (item: ActionItem) => {
   if (!isDemo) {
     // In real mode, bubble to parent to navigate or act
     emit('card-click', item)
+    // Optimistic UI: mark as completed and remove from list so progress updates
+    const statusDone = item.type === 'payment' ? 'paid' : 'accepted'
+    const idx = actionItems.value.findIndex(i => i.id === item.id)
+    if (idx >= 0) {
+      const copy = { ...actionItems.value[idx], status: statusDone }
+      actionItems.value.splice(idx, 1, copy)
+      // Optionally collapse completed items
+      setTimeout(() => {
+        actionItems.value = actionItems.value.filter(i => i.id !== item.id)
+      }, 300)
+    }
     return
   }
   ;(item as any).loading = true
@@ -262,7 +273,7 @@ watch(() => actionItems.value.length, (len, prev) => {
       </div>
     </div>
 
-    <div v-if="!actionItems.length" class="mt-4">
+    <div v-if="!loading && !error && !actionItems.length" class="mt-4">
       <div class="rounded-2xl border border-emerald-200 bg-emerald-50/90 p-6 text-center shadow-sm">
         <h3 class="text-lg font-semibold text-emerald-700">🎉 All caught up</h3>
         <p class="mt-1 text-sm text-emerald-600">Nothing urgent right now — check ongoing jobs below.</p>
