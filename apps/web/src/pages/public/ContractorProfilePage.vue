@@ -33,8 +33,8 @@
                   <h1 class="mt-2 text-3xl font-semibold md:text-4xl">
                     {{ profileData.profile.businessName ?? "Trusted Contractor" }}
                   </h1>
-                  <p v-if="profileData.profile.tradeType" class="mt-3 text-base text-white/80 md:text-lg">
-                    {{ profileData.profile.tradeType }}
+                  <p v-if="profileData.profile.trade || profileData.profile.tradeType" class="mt-3 text-base text-white/80 md:text-lg">
+                    {{ profileData.profile.trade ?? profileData.profile.tradeType }}
                   </p>
                   <p v-if="locationLabel" class="mt-1 text-sm text-white/60">
                     Serving {{ locationLabel }}
@@ -81,9 +81,9 @@
                 </p>
               </div>
               <div class="rounded-2xl border border-slate-200 bg-slate-50/80 p-5 shadow-sm">
-                <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Specialty</p>
+                <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Trade</p>
                 <p class="mt-2 text-lg font-semibold text-slate-900">
-                  {{ profileData.profile.tradeType ?? "General Contracting" }}
+                  {{ profileData.profile.trade ?? profileData.profile.tradeType ?? "General Contracting" }}
                 </p>
                 <p class="mt-2 text-sm text-slate-600">Custom scopes designed for every project stage.</p>
               </div>
