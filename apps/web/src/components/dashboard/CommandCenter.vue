@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import CarouselModule, { type CarouselItem } from '@/components/dashboard/CarouselModule.vue'
 import SummaryBand from '@/components/dashboard/SummaryBand.vue'
 import ActionCenterModule from '@/components/dashboard/ActionCenterModule.vue'
+import ActionCenter from '@/components/dashboard/ActionCenter.vue'
 import AiInsightsWidget from '@/components/dashboard/AiInsightsWidget.vue'
 
 const props = defineProps<{
@@ -107,6 +108,8 @@ const displayStatus = (s?: string | null) => {
           {{ attentionMessage }}
         </div>
       </transition>
+
+      <ActionCenter class="mt-4" />
 
       <ActionCenterModule @card-click="$emit('card-click', $event)" />
 
