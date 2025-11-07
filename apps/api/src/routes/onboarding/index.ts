@@ -11,13 +11,18 @@ onboardingRouter.post("/seed-trade-templates", async (c) => {
   // Normalize incoming trade to match canonical seed values
   const normalizeTrade = (t: string | undefined | null): string | undefined => {
     if (!t) return undefined;
+    const lower = String(t).trim().toLowerCase();
     const map: Record<string, string> = {
-      Plumber: "Plumbing",
-      Roofer: "Roofing",
-      "Deck Builder": "Deck Building",
-      Electrician: "Electrical",
+      plumber: "Plumbing", plumbing: "Plumbing",
+      roofer: "Roofing", roofing: "Roofing",
+      "deck builder": "Deck Building", decking: "Deck Building", "deck building": "Deck Building", carpenter: "Deck Building", carpentry: "Deck Building",
+      electrician: "Electrical", electrical: "Electrical",
+      hvac: "HVAC", "hvac technician": "HVAC", "hvac contractor": "HVAC",
+      landscaper: "Landscaping", landscape: "Landscaping",
+      "kitchen remodeler": "Kitchen Remodeling", "bathroom remodeler": "Bathroom Remodeling", "general remodeler": "General Remodeling",
+      "pool contractor": "Pool Contractor", "solar installer": "Solar Installer", "garage builder": "Garage Builder",
     };
-    return map[t] || t;
+    return map[lower] || String(t).trim();
   };
   const trade = normalizeTrade(body?.trade?.trim());
 
@@ -45,16 +50,29 @@ onboardingRouter.post("/seed-trade-templates", async (c) => {
     // else continue to seed
   }
 
-  // Load up to 10 templates for the trade
-  const { data: projects, error: projectsError } = await supabase
-    .from("trade_projects")
-    .select("*")
-    .eq("trade", trade)
-    .order("created_at", { ascending: true })
-    .limit(10);
-  if (projectsError) throw projectsError;
-
-  const projectTemplates = projects ?? [];
+  // Load up to 10 templates for the trade; if none, try graceful fallbacks
+  const tryTrades = Array.from(new Set([trade, "Deck Building", "Roofing", "Electrical", "Plumbing"])) as string[];
+  let seedTradeUsed: string | undefined = undefined;
+  let projectTemplates: any[] = [];
+  {
+    const { data, error } = await supabase
+      .from("trade_projects")
+      .select("*")
+      .in("trade", tryTrades)
+      .order("created_at", { ascending: true })
+      .limit(50);
+    if (error) throw error;
+    const list = data ?? [];
+    // Group by trade and pick the first trade in tryTrades that has results
+    for (const candidate of tryTrades) {
+      const items = list.filter((p: any) => p.trade === candidate);
+      if (items.length) {
+        projectTemplates = items.slice(0, 10);
+        seedTradeUsed = candidate;
+        break;
+      }
+    }
+  }
 
   if (!projectTemplates.length) {
     await supabase
@@ -67,7 +85,7 @@ onboardingRouter.post("/seed-trade-templates", async (c) => {
   // Insert user projects based on templates
   const userProjectPayload = projectTemplates.map((p) => ({
     user_id: userId,
-    trade,
+    trade: seedTradeUsed ?? trade,
     trade_project_id: p.id,
     project_name: p.project_name,
     description: p.description,
@@ -111,7 +129,7 @@ onboardingRouter.post("/seed-trade-templates", async (c) => {
       return {
         user_id: userId,
         user_project_id: proj.id,
-        trade,
+        trade: seedTradeUsed ?? trade,
         project_name: proj.project_name,
         tier: tpl.tier,
         line_items: tpl.line_items ?? [],

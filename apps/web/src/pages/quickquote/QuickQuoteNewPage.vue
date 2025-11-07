@@ -158,15 +158,36 @@ const loadingSeed = ref(false)
 const profileTrade = ref<string | null>(null)
 
 // Map user-friendly trade labels to canonical seed values
+// Normalize common labels to canonical seed values and build fallback candidates
 const normalizeTrade = (t: string | null | undefined): string | null => {
-  const map: Record<string, string> = {
-    'Plumber': 'Plumbing',
-    'Roofer': 'Roofing',
-    'Deck Builder': 'Deck Building',
-    'Electrician': 'Electrical',
-  }
   if (!t) return null
-  return map[t] || t
+  const val = String(t).trim()
+  if (!val) return null
+  const lower = val.toLowerCase()
+  const canonicalMap: Record<string, string> = {
+    plumber: 'Plumbing', plumbing: 'Plumbing',
+    roofer: 'Roofing', roofing: 'Roofing',
+    'deck builder': 'Deck Building', 'decking': 'Deck Building', 'deck building': 'Deck Building', carpenter: 'Deck Building', carpentry: 'Deck Building',
+    electrician: 'Electrical', electrical: 'Electrical',
+    hvac: 'HVAC', 'hvac technician': 'HVAC', 'hvac contractor': 'HVAC',
+    landscaper: 'Landscaping', 'landscape': 'Landscaping',
+    'kitchen remodeler': 'Kitchen Remodeling', 'bathroom remodeler': 'Bathroom Remodeling', 'general remodeler': 'General Remodeling',
+    'pool contractor': 'Pool Contractor', 'solar installer': 'Solar Installer', 'garage builder': 'Garage Builder',
+  }
+  return canonicalMap[lower] || val
+}
+
+const buildTradeCandidates = (trade: string | null): string[] => {
+  const candidates: string[] = []
+  const canonical = normalizeTrade(trade)
+  if (canonical) candidates.push(canonical)
+  // Add original value if different
+  if (trade && trade !== canonical) candidates.push(trade)
+  // Safe fallbacks with known seed coverage
+  for (const fallback of ['Deck Building', 'Roofing', 'Electrical', 'Plumbing']) {
+    if (!candidates.includes(fallback)) candidates.push(fallback)
+  }
+  return candidates
 }
 
 const loadProfileAndTemplates = async () => {
@@ -185,7 +206,7 @@ const loadProfileAndTemplates = async () => {
 
   let templates: ProjectTemplate[] = (userProjects as ProjectTemplate[]) || []
 
-  // 2) If none, fall back to common trade projects
+  // 2) If none, fall back to common trade projects (with graceful fallbacks)
   if (!templates.length) {
     const { data: profile, error: profileErr } = await supabase
       .from('contractor_profiles')
@@ -195,15 +216,30 @@ const loadProfileAndTemplates = async () => {
     if (profileErr) console.error(profileErr)
     const contractorTrade = profile?.trade ?? null
     profileTrade.value = contractorTrade
-    const canonicalTrade = normalizeTrade(contractorTrade)
-    if (canonicalTrade) {
+    const candidates = buildTradeCandidates(contractorTrade)
+    if (candidates.length) {
       const { data: tradeProjects, error: tErr } = await supabase
         .from('trade_projects')
         .select('id, project_name, description, base_price, trade')
-        .eq('trade', canonicalTrade)
+        .in('trade', candidates)
         .order('created_at', { ascending: true })
       if (tErr) console.error(tErr)
-      templates = (tradeProjects as ProjectTemplate[]) || []
+      const list = (tradeProjects as ProjectTemplate[]) || []
+      // Prefer the first candidate that has results
+      const byTrade = new Map<string, ProjectTemplate[]>()
+      for (const p of list) {
+        const arr = byTrade.get(p.trade || '') || []
+        arr.push(p)
+        byTrade.set(p.trade || '', arr)
+      }
+      for (const key of candidates) {
+        const items = byTrade.get(key)
+        if (items && items.length) {
+          templates = items
+          break
+        }
+      }
+      // If still none, leave empty to show helpful empty state
     }
   }
 
