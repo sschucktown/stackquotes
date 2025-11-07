@@ -177,6 +177,7 @@ const resetDemo = () => loadUrgencyFeed()
     </div>
     
     <button
+      v-if="isDemo"
       class="absolute right-6 top-6 rounded-md bg-slate-200 px-3 py-1 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-300 active:scale-95"
       @click="resetDemo"
     >
