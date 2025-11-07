@@ -248,10 +248,12 @@ import { format } from "date-fns";
 import SQInput from "@stackquotes/ui/components/SQInput.vue";
 import SQButton from "@stackquotes/ui/components/SQButton.vue";
 import SQSelect from "@stackquotes/ui/components/SQSelect.vue";
-import { useContractorProfileStore } from "@modules/contractor/stores/profileStore";
+  import { useContractorProfileStore } from "@modules/contractor/stores/profileStore";
+  import { useAuth } from "@/lib/auth";
 import { Moon, Sun } from "lucide-vue-next";
 
-const profileStore = useContractorProfileStore();
+  const profileStore = useContractorProfileStore();
+  const auth = useAuth();
 const logoInput = ref<HTMLInputElement | null>(null);
 const form = reactive({
   businessName: "",
@@ -337,18 +339,18 @@ onBeforeUnmount(() => {
 
 watch(
   () => profileStore.profile,
-  (profile) => {
-    form.businessName = profile?.businessName ?? "";
-    form.ownerName = profile?.ownerName ?? "";
-    form.trade = profile?.trade ?? profile?.tradeType ?? "";
-    form.averageProjectSize = profile?.averageProjectSize ?? "";
-    form.city = profile?.city ?? "";
-    form.state = profile?.state ?? "";
-    form.phone = profile?.phone ?? "";
-    form.email = profile?.email ?? "";
-    form.logoUrl = profile?.logoUrl ?? "";
-    form.publicSlug = profile?.publicSlug ?? "";
-  },
+    (profile) => {
+      form.businessName = profile?.businessName ?? "";
+      form.ownerName = profile?.ownerName ?? "";
+      form.trade = profile?.trade ?? profile?.tradeType ?? "";
+      form.averageProjectSize = profile?.averageProjectSize ?? "";
+      form.city = profile?.city ?? "";
+      form.state = profile?.state ?? "";
+      form.phone = profile?.phone ?? "";
+      form.email = profile?.email ?? (auth.user.value?.email ?? "");
+      form.logoUrl = profile?.logoUrl ?? "";
+      form.publicSlug = profile?.publicSlug ?? "";
+    },
   { immediate: true }
 );
 
