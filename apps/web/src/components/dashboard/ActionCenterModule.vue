@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, onBeforeUnmount, watch, computed } from 'vue'
 import { useDemoStore } from '@/stores/demoStore'
 // Using local styles instead of UI kit components to avoid build deps
 import { supabase } from '@/lib/supabase'
@@ -18,6 +18,7 @@ type ActionItem = {
 const emit = defineEmits<{
   (e: 'card-click', item: ActionItem): void
   (e: 'refresh'): void
+  (e: 'openNewQuoteModal'): void
 }>()
 
 const actionItems = ref<ActionItem[]>([])
@@ -93,6 +94,102 @@ const handleDemoAction = async (item: ActionItem) => {
 }
 
 const resetDemo = () => loadUrgencyFeed()
+
+// --- "All Caught Up" confetti burst ---
+const confettiCanvas = ref<HTMLCanvasElement | null>(null)
+const confettiRunning = ref(false)
+const showSuggestion = ref(false)
+let confettiRAF: number | null = null
+let confettiTimer: ReturnType<typeof setTimeout> | null = null
+
+type ConfettiPiece = { x: number; y: number; vx: number; vy: number; size: number; color: string; rotation: number; vr: number }
+let confetti: ConfettiPiece[] = []
+
+const COLORS = ['#22c55e', '#10b981', '#34d399', '#a7f3d0', '#fde68a', '#60a5fa']
+
+const startConfetti = () => {
+  if (confettiRunning.value) return
+  const canvas = confettiCanvas.value
+  if (!canvas) return
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return
+  // Size canvas to container
+  const parent = canvas.parentElement as HTMLElement | null
+  const width = parent?.clientWidth ?? 320
+  const height = 120
+  canvas.width = width
+  canvas.height = height
+
+  // Seed pieces
+  confetti = Array.from({ length: 80 }, () => {
+    const size = 6 + Math.random() * 6
+    return {
+      x: Math.random() * width,
+      y: -10 - Math.random() * 40,
+      vx: -1 + Math.random() * 2,
+      vy: 2 + Math.random() * 3,
+      size,
+      color: COLORS[(Math.random() * COLORS.length) | 0],
+      rotation: Math.random() * Math.PI,
+      vr: (-0.2 + Math.random() * 0.4),
+    }
+  })
+
+  confettiRunning.value = true
+  showSuggestion.value = false
+
+  const step = () => {
+    if (!confettiRunning.value) return
+    ctx.clearRect(0, 0, width, height)
+    for (const p of confetti) {
+      p.x += p.vx
+      p.y += p.vy
+      p.vy += 0.03
+      p.rotation += p.vr
+      if (p.y > height + 20) {
+        // recycle a few to keep light for <2s
+        if (Math.random() < 0.2) {
+          p.y = -10
+          p.x = Math.random() * width
+          p.vy = 2 + Math.random() * 2
+        }
+      }
+      ctx.save()
+      ctx.translate(p.x, p.y)
+      ctx.rotate(p.rotation)
+      ctx.fillStyle = p.color
+      ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6)
+      ctx.restore()
+    }
+    confettiRAF = requestAnimationFrame(step)
+  }
+  step()
+  // Stop after ~2s and reveal suggestion
+  confettiTimer = setTimeout(() => {
+    stopConfetti(true)
+  }, 2000)
+}
+
+const stopConfetti = (revealSuggestion = false) => {
+  confettiRunning.value = false
+  if (confettiRAF) cancelAnimationFrame(confettiRAF)
+  confettiRAF = null
+  if (confettiTimer) clearTimeout(confettiTimer)
+  confettiTimer = null
+  if (revealSuggestion) showSuggestion.value = true
+}
+
+onBeforeUnmount(() => stopConfetti())
+
+// Watch for transition to empty state to trigger burst
+watch(() => actionItems.value.length, (len, prev) => {
+  if (len === 0 && (prev ?? 1) > 0) {
+    startConfetti()
+  } else if (len > 0) {
+    stopConfetti(false)
+    showSuggestion.value = false
+  }
+})
 </script>
 
 <template>
@@ -119,7 +216,7 @@ const resetDemo = () => loadUrgencyFeed()
     <div v-if="loading" class="mb-3 h-10 animate-pulse rounded-xl bg-slate-200/70" />
 
     <transition-group name="fade" tag="div">
-    <div v-for="item in actionItems" :key="item.id" class="mb-3">
+    <div v-for="item in actionItems" v-show="actionItems.length" :key="item.id" class="mb-3">
       <div
         class="flex items-center justify-between rounded-2xl border-l-4 bg-white/80 px-4 py-3 shadow-sm backdrop-blur-sm transition-all duration-200 ease-in-out hover:-translate-y-0.5 hover:shadow-md"
         :class="{
@@ -215,3 +312,5 @@ const resetDemo = () => loadUrgencyFeed()
   100% { background-position: 200% 0; }
 }
 </style>
+
+
