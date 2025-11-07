@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import CarouselModule, { type CarouselItem } from '@/components/dashboard/CarouselModule.vue'
 import SummaryBand from '@/components/dashboard/SummaryBand.vue'
 import ActionCenterModule from '@/components/dashboard/ActionCenterModule.vue'
@@ -93,6 +93,10 @@ const displayStatus = (s?: string | null) => {
   if (v === 'failed' || v === 'canceled' || v === 'cancelled') return 'Failed'
   return v ? v.charAt(0).toUpperCase() + v.slice(1) : 'Status'
 }
+
+// Track starter (setup) cards from ActionCenter to coordinate with ActionCenterModule
+const starterVisible = ref(0)
+const starterTotal = ref(0)
 </script>
 
 <template>
@@ -109,9 +113,9 @@ const displayStatus = (s?: string | null) => {
         </div>
       </transition>
 
-      <ActionCenter class="mt-4" />
+      <ActionCenter class="mt-4" @visible-count="(p) => { starterVisible.value = p.visible; starterTotal.value = p.total }" />
 
-      <ActionCenterModule @card-click="$emit('card-click', $event)" />
+      <ActionCenterModule :starter-total="starterTotal" :starter-visible="starterVisible" @card-click="$emit('card-click', $event)" />
 
       <div class="mt-4">
         <SummaryBand

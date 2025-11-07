@@ -66,6 +66,10 @@ const allCards = computed<StarterCard[]>(() => [
 
 const visibleCards = computed(() => allCards.value.filter(c => c.visible))
 
+const emit = defineEmits<{
+  (e: 'visible-count', payload: { visible: number; total: number }): void
+}>()
+
 // Confetti + banner when all done
 const showBanner = ref(false)
 const confettiCanvas = ref<HTMLCanvasElement | null>(null)
@@ -149,12 +153,14 @@ onMounted(async () => {
   if (!visibleCards.value.length) {
     showBanner.value = true
   }
+  emit('visible-count', { visible: visibleCards.value.length, total: allCards.value.length })
 })
 
 // Watch for completion and fire confetti once when transitioning to zero
 let prevCount = visibleCards.value.length
 watchEffect(() => {
   const current = visibleCards.value.length
+  emit('visible-count', { visible: current, total: allCards.value.length })
   if (current === 0 && prevCount > 0) {
     startConfetti()
   }

@@ -22,11 +22,30 @@ const emit = defineEmits<{
 }>()
 
 const actionItems = ref<ActionItem[]>([])
-const completion = computed(() => {
+const props = withDefaults(defineProps<{
+  starterTotal?: number
+  starterVisible?: number
+}>(), {
+  starterTotal: 0,
+  starterVisible: 0,
+})
+
+// Combined progress across urgency items and starter setup cards
+const combinedTotals = computed(() => {
   const items = actionItems.value
-  const total = items.length
-  if (!total) return 100
-  const done = items.filter(i => ['paid', 'accepted'].includes(String(i.status).toLowerCase())).length
+  const totalItems = items.length
+  const doneItems = items.filter(i => ['paid', 'accepted'].includes(String(i.status).toLowerCase())).length
+  const starterTotal = Number(props.starterTotal || 0)
+  const starterVisible = Number(props.starterVisible || 0)
+  const doneStarter = Math.max(0, starterTotal - starterVisible)
+  const total = totalItems + starterTotal
+  const done = doneItems + doneStarter
+  return { total, done, outstanding: Math.max(0, total - done) }
+})
+
+const completion = computed(() => {
+  const { total, done } = combinedTotals.value
+  if (total <= 0) return 100
   return Math.round((done / total) * 100)
 })
 const loading = ref(false)
@@ -192,11 +211,11 @@ const stopConfetti = (revealSuggestion = false) => {
 
 onBeforeUnmount(() => stopConfetti())
 
-// Watch for transition to empty state to trigger burst
-watch(() => actionItems.value.length, (len, prev) => {
-  if (len === 0 && (prev ?? 1) > 0) {
+// Watch for transition to empty state (no outstanding across both sources)
+watch(() => combinedTotals.value.outstanding, (outstanding, prev) => {
+  if (outstanding === 0 && (prev ?? 1) > 0) {
     startConfetti()
-  } else if (len > 0) {
+  } else if (outstanding > 0) {
     stopConfetti(false)
     showSuggestion.value = false
   }
@@ -273,7 +292,7 @@ watch(() => actionItems.value.length, (len, prev) => {
       </div>
     </div>
 
-    <div v-if="!loading && !error && !actionItems.length" class="mt-4">
+    <div v-if="!loading && !error && combinedTotals.outstanding === 0" class="mt-4">
       <div class="rounded-2xl border border-emerald-200 bg-emerald-50/90 p-6 text-center shadow-sm">
         <h3 class="text-lg font-semibold text-emerald-700">🎉 All caught up</h3>
         <p class="mt-1 text-sm text-emerald-600">Nothing urgent right now — check ongoing jobs below.</p>
