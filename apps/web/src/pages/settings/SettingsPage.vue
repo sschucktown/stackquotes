@@ -54,7 +54,7 @@
           <dl class="mt-8 space-y-3 text-left text-sm text-white/80">
             <div class="flex items-center justify-between">
               <dt class="text-slate-200">Trade</dt>
-              <dd class="font-medium text-white">{{ form.trade || form.tradeType || "Add trade" }}</dd>
+              <dd class="font-medium text-white">{{ form.trade || "Add trade" }}</dd>
             </div>
             <div class="flex items-center justify-between">
               <dt class="text-slate-200">Phone</dt>
@@ -86,11 +86,6 @@
                   {{ option.label }}
                 </option>
               </SQSelect>
-              <SQInput
-                v-model="form.tradeType"
-                label="Trade specialty (optional)"
-                placeholder="Decks & Outdoor Living"
-              />
             </div>
             <div class="grid grid-cols-2 gap-3">
               <SQInput v-model="form.city" label="City" placeholder="Charleston" />
@@ -261,7 +256,7 @@ const logoInput = ref<HTMLInputElement | null>(null);
 const form = reactive({
   businessName: "",
   ownerName: "",
-  tradeType: "",
+  
   trade: "",
   averageProjectSize: "",
   city: "",
@@ -345,7 +340,6 @@ watch(
   (profile) => {
     form.businessName = profile?.businessName ?? "";
     form.ownerName = profile?.ownerName ?? "";
-    form.tradeType = profile?.tradeType ?? "";
     form.trade = profile?.trade ?? profile?.tradeType ?? "";
     form.averageProjectSize = profile?.averageProjectSize ?? "";
     form.city = profile?.city ?? "";
@@ -434,7 +428,7 @@ const handleSave = async () => {
       businessName: toNullable(form.businessName),
       ownerName: toNullable(form.ownerName),
       trade,
-      tradeType: toNullable(form.tradeType) ?? trade,
+      
       averageProjectSize: toNullable(form.averageProjectSize),
       city: toNullable(form.city),
       state: toNullable(form.state),
