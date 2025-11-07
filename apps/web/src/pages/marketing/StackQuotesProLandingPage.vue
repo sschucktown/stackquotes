@@ -61,14 +61,14 @@ const features = [
 ]
 
 const primaryCta = computed(() => ({
-  label: isAuthenticated.value ? 'Go to Pricing' : 'Start Free for 30 Days',
+  label: isAuthenticated.value ? 'Go to Onboarding' : 'Start Free for 30 Days',
   onClick: async () => {
     if (!isAuthenticated.value) {
-      setStoredRedirect('/pricing')
-      await router.push({ name: 'register', query: { plan: 'pro' } })
+      setStoredRedirect('/onboarding')
+      await router.push({ name: 'register', query: { redirect: '/onboarding', plan: 'pro' } })
       return
     }
-    await router.push({ name: 'pricing' })
+    await router.push({ name: 'onboarding' })
   },
 }))
 
@@ -79,4 +79,3 @@ const demoCta = computed(() => ({
   },
 }))
 </script>
-

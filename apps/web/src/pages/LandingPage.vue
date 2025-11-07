@@ -353,11 +353,11 @@ onUnmounted(() => {
 
 const startTrial = async () => {
   if (!auth.isAuthenticated.value) {
-    auth.setStoredRedirect(`/pricing`)
-    await router.push({ name: 'register', query: { plan: 'pro' } })
+    auth.setStoredRedirect(`/onboarding`)
+    await router.push({ name: 'register', query: { redirect: '/onboarding', plan: 'pro' } })
     return
   }
-  await router.push({ path: '/pricing' })
+  await router.push({ name: 'onboarding' })
 }
 
 const scrollToPricing = () => {
@@ -370,4 +370,3 @@ const scrollToPricing = () => {
 .fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
 .fade-enter-from, .fade-leave-to { opacity: 0; }
 </style>
-

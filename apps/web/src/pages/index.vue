@@ -15,7 +15,7 @@
           </p>
           <div class="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2" data-animate>
             <a
-              href="/auth"
+              href="/register?redirect=%2Fonboarding"
               class="inline-flex items-center justify-center rounded-full px-6 py-3 text-base font-medium bg-[#00D1FF] text-gray-900 shadow-[0_0_0_0_rgba(0,209,255,0.6)] hover:shadow-[0_0_25px_6px_rgba(0,209,255,0.45)] transition-all duration-200 hover:scale-[1.02] focus:outline-none"
             >
               Start Free for 30 Days
@@ -99,7 +99,7 @@
             <button @click="openDemo = true" class="rounded-full px-5 py-3 bg-white/10 hover:bg-white/20 border border-white/10 transition">
               Try Demo Mode
             </button>
-            <a href="/auth" class="rounded-full px-5 py-3 bg-[#00D1FF] text-gray-900 hover:opacity-95 transition">
+            <a href="/register?redirect=%2Fonboarding" class="rounded-full px-5 py-3 bg-[#00D1FF] text-gray-900 hover:opacity-95 transition">
               Start Free Trial
             </a>
           </div>
@@ -211,13 +211,13 @@
     <footer class="border-t border-white/10">
       <div class="container mx-auto px-6 py-12 text-center space-y-5" data-animate>
         <p class="text-lg md:text-xl">You build beautiful projects. StackQuotes helps you sell them.</p>
-        <a href="/auth" class="inline-flex items-center justify-center rounded-full px-6 py-3 text-base font-medium bg-[#00D1FF] text-gray-900 hover:opacity-95 transition">
+        <a href="/register?redirect=%2Fonboarding" class="inline-flex items-center justify-center rounded-full px-6 py-3 text-base font-medium bg-[#00D1FF] text-gray-900 hover:opacity-95 transition">
           Start Free for 30 Days
         </a>
         <nav class="flex flex-wrap gap-x-5 gap-y-2 justify-center text-gray-400 text-sm pt-2">
           <a href="#features" class="hover:text-white">Features</a>
           <a href="/pricing" class="hover:text-white">Pricing</a>
-          <a href="/auth" class="hover:text-white">Login</a>
+          <a href="/login" class="hover:text-white">Login</a>
           <a href="#" class="hover:text-white">Blog</a>
           <a href="#" class="hover:text-white">Terms</a>
           <a href="#" class="hover:text-white">Privacy</a>
@@ -246,7 +246,7 @@
           </div>
         </div>
         <div class="px-4 pb-4">
-          <a href="/auth" class="inline-flex items-center justify-center rounded-full px-5 py-3 text-base font-medium bg-[#00D1FF] text-gray-900 hover:opacity-95 transition w-full md:w-auto">Start Free Trial</a>
+          <a href="/register?redirect=%2Fonboarding" class="inline-flex items-center justify-center rounded-full px-5 py-3 text-base font-medium bg-[#00D1FF] text-gray-900 hover:opacity-95 transition w-full md:w-auto">Start Free Trial</a>
         </div>
       </div>
     </div>

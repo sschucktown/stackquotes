@@ -89,8 +89,8 @@ const handleProClick = async () => {
   errorMessage.value = null;
 
   if (!auth.isAuthenticated.value) {
-    auth.setStoredRedirect(`/pricing`);
-    await router.push({ name: "register", query: { plan: "pro" } });
+    auth.setStoredRedirect(`/onboarding`);
+    await router.push({ name: "register", query: { redirect: "/onboarding", plan: "pro" } });
     return;
   }
 
@@ -113,4 +113,3 @@ code {
     monospace;
 }
 </style>
-
