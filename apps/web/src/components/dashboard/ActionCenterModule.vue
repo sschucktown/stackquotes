@@ -159,8 +159,8 @@ const resetDemo = () => loadUrgencyFeed()
     <div class="mt-4">
       <div class="h-3 w-full rounded-full bg-slate-200 overflow-hidden">
         <div
-          class="h-3 rounded-full transition-all progress-fill"
-          :class="{ 'progress-complete': completion === 100 }"
+          class="h-3 rounded-full transition-all"
+          :class="{ 'progress-fill': completion < 100, 'progress-complete': completion === 100 }"
           :style="{ width: `${completion}%` }"
         />
       </div>
@@ -203,8 +203,8 @@ const resetDemo = () => loadUrgencyFeed()
 }
 .progress-complete {
   background: linear-gradient(90deg, #10b981, #34d399, #6ee7b7);
-  background-size: 200% 100%;
-  animation: shimmer 1.6s linear infinite;
+  background-size: 100% 100%;
+  animation: none;
 }
 @keyframes progressPulse {
   0% { background-position: 0% 0%; }
