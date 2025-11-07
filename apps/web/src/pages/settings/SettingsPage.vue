@@ -284,20 +284,19 @@ const sanitizeSlugValue = (value: string) =>
     .replace(/-{2,}/g, "-")
     .replace(/^-+|-+$/g, "");
 
-const tradeOptions = [
-  "Plumber",
-  "Electrician",
-  "HVAC",
-  "Deck Builder",
-  "Roofer",
-  "Pool Contractor",
-  "Landscaper",
-  "Kitchen Remodeler",
-  "Bathroom Remodeler",
-  "General Remodeler",
-  "Solar Installer",
-  "Garage Builder",
-].map((label) => ({ label, value: label }));
+  // Align with onboarding trade options so selection carries over seamlessly
+  const tradeOptions = [
+    "Decks & Porches",
+    "Fencing",
+    "Roofing",
+    "Siding",
+    "Pools & Spas",
+    "Landscaping",
+    "Painting",
+    "Electrical",
+    "Plumbing",
+    "HVAC",
+  ].map((label) => ({ label, value: label }));
 
 const projectSizeOptions = [
   { label: "< $5K", value: "< $5K" },
