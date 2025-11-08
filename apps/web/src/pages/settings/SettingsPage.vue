@@ -150,18 +150,24 @@
                   Set a unique link that clients can browse to verify your business details.
                 </p>
               </div>
-              <div class="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
+            <div class="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
                 <div>
                   <SQInput
                     v-model="form.publicSlug"
                     label="Public URL slug"
                     :placeholder="slugSuggestion"
                     maxlength="30"
+                    :disabled="profileStore.isDemo"
                   />
                   <p class="mt-2 text-xs text-slate-500">
-                    {{ publicUrl ? "Live URL:" : "Slug must be 3-30 characters." }}
+                    <template v-if="profileStore.isDemo">
+                      Demo uses a permanent URL shown below.
+                    </template>
+                    <template v-else>
+                      {{ publicUrl ? "Live URL:" : "Slug must be 3-30 characters." }}
+                    </template>
                     <a
-                      v-if="publicUrl"
+                      v-if="!profileStore.isDemo && publicUrl"
                       :href="publicUrl"
                       target="_blank"
                       rel="noopener"
@@ -176,7 +182,7 @@
                     type="button"
                     variant="secondary"
                     class="rounded-full px-4 py-2 text-sm font-medium transition hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3A7D99]/60"
-                    :disabled="!publicUrl"
+                    :disabled="profileStore.isDemo || !publicUrl"
                     @click="handleCopyLink"
                   >
                     {{ linkCopied ? "Link copied" : "Copy link" }}
@@ -184,13 +190,47 @@
                   <SQButton
                     type="button"
                     class="rounded-full !bg-[#3A7D99] !px-4 !py-2 !text-white transition hover:-translate-y-0.5 hover:!bg-[#4f8faa] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3A7D99]/60"
-                    :disabled="!publicUrl"
+                    :disabled="profileStore.isDemo || !publicUrl"
                     @click="viewPublicProfile"
                   >
                     View profile
                   </SQButton>
                 </div>
+            </div>
+
+            <!-- Permanent demo URL (not user-editable) -->
+            <div class="mt-6 grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
+              <div>
+                <label class="block text-sm font-medium text-slate-700">Permanent Demo URL</label>
+                <p class="mt-2 text-xs text-slate-500">
+                  <a
+                    :href="demoPublicUrl"
+                    target="_blank"
+                    rel="noopener"
+                    class="font-medium text-blue-600 underline decoration-blue-400/70 decoration-dotted underline-offset-2"
+                  >
+                    {{ demoPublicUrl }}
+                  </a>
+                </p>
               </div>
+              <div class="flex flex-col gap-2 md:flex-row md:justify-end">
+                <SQButton
+                  type="button"
+                  variant="secondary"
+                  class="rounded-full px-4 py-2 text-sm font-medium transition hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3A7D99]/60"
+                  @click="handleCopyDemoLink"
+                >
+                  {{ demoLinkCopied ? "Link copied" : "Copy link" }}
+                </SQButton>
+                <SQButton
+                  type="button"
+                  class="rounded-full !bg-[#3A7D99] !px-4 !py-2 !text-white transition hover:-translate-y-0.5 hover:!bg-[#4f8faa] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3A7D99]/60"
+                  @click="viewDemoProfile"
+                >
+                  View demo profile
+                </SQButton>
+              </div>
+            </div>
             </div>
 
             <div
@@ -464,6 +504,7 @@ const handleCopyLink = async () => {
       linkCopied.value = false;
       copyTimer = null;
     }, 2400);
+
   } catch (error) {
     console.error(error);
     linkCopied.value = false;
@@ -474,6 +515,34 @@ const viewPublicProfile = () => {
   if (!publicUrl.value) return;
   if (typeof window === "undefined") return;
   window.open(publicUrl.value, "_blank", "noopener");
+};
+
+// Permanent demo URL helpers (non-editable)
+const demoPublicUrl = computed(() => `${origin.replace(/\/$/, "")}/share/profile/demo`);
+const demoLinkCopied = ref(false);
+let demoCopyTimer: ReturnType<typeof setTimeout> | null = null;
+
+const handleCopyDemoLink = async () => {
+  if (typeof navigator === "undefined" || !navigator.clipboard?.writeText) {
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(demoPublicUrl.value);
+    demoLinkCopied.value = true;
+    if (demoCopyTimer) clearTimeout(demoCopyTimer);
+    demoCopyTimer = setTimeout(() => {
+      demoLinkCopied.value = false;
+      demoCopyTimer = null;
+    }, 2400);
+  } catch (error) {
+    console.error(error);
+    demoLinkCopied.value = false;
+  }
+};
+
+const viewDemoProfile = () => {
+  if (typeof window === "undefined") return;
+  window.open(demoPublicUrl.value, "_blank", "noopener");
 };
 </script>
 
