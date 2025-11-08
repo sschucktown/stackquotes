@@ -201,6 +201,8 @@ import type {
   PublicContractorProfilePayload,
   PublicContractorProfileProposal,
 } from "@modules/public/api/profile";
+import { useDemoStore } from "@/stores/demoStore";
+import { demoContractorProfile, demoProposals, demoSettings } from "@/data/demo";
 
 const props = defineProps<{
   slug: string;
@@ -282,6 +284,48 @@ async function loadData() {
   error.value = "";
   profileData.value = null;
   try {
+    // Support demo mode/public demo slug without requiring backend data
+    const slugLower = (props.slug || "").toLowerCase();
+    const demo = useDemoStore();
+    if (slugLower === "demo" || demo.active) {
+      const proposals: PublicContractorProfileProposal[] = demoProposals.map((p) => ({
+        id: p.id,
+        quickquoteId: p.quickquoteId,
+        status: p.status,
+        totals: p.totals,
+        options: p.options,
+        createdAt: p.createdAt,
+      }));
+
+      const totalProposals = proposals.length;
+      const acceptedProposals = proposals.filter((p) => String(p.status).toLowerCase() === "accepted").length;
+      const aggregateValue = proposals.reduce((sum, pr) => sum + highestProposalValue(pr), 0);
+      const revenueYtd = proposals
+        .filter((p) => String(p.status).toLowerCase() === "accepted")
+        .reduce((sum, pr) => sum + highestProposalValue(pr), 0);
+      const averageValue = totalProposals > 0 ? Math.round((aggregateValue / totalProposals) * 100) / 100 : 0;
+      const acceptanceRate = totalProposals ? Math.round((acceptedProposals / totalProposals) * 100) : 0;
+
+      profileData.value = {
+        profile: { ...demoContractorProfile, publicSlug: "demo" },
+        metrics: {
+          totalProposals,
+          acceptedProposals,
+          acceptanceRate,
+          averageValue,
+          revenueYtd,
+        },
+        proposals,
+        branding: {
+          accentColor: demoSettings.accentColor ?? null,
+          companyName: demoSettings.companyName ?? null,
+          logoUrl: demoContractorProfile.logoUrl ?? demoSettings.logoUrl ?? null,
+          footerText: demoSettings.footerText ?? null,
+        },
+      };
+      return;
+    }
+
     const response = await fetchPublicContractorProfile(props.slug);
     if (response.error) {
       error.value = response.error;
