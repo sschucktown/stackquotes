@@ -190,6 +190,62 @@
       </div>
     </div>
   </div>
+
+  <!-- Comments drawer (desktop) -->
+  <transition name=\"slide-x\">
+    <aside v-if=\"commentsOpen && isDesktop\" class=\"fixed inset-y-0 right-0 z-50 w-80 bg-white shadow-xl ring-1 ring-slate-200\">
+      <div class=\"flex items-center justify-between border-b border-slate-200 px-4 py-3\"> 
+        <h3 class=\"text-sm font-semibold text-slate-900\">Comments</h3>
+        <button type=\"button\" class=\"rounded-md px-2 py-1 text-slate-500 hover:bg-slate-100\" @click=\"closeComments()\">?</button>
+      </div>
+      <div class=\"flex h-[calc(100%-48px-56px)] flex-col-reverse overflow-y-auto px-3 py-3\">
+        <div v-for=\"c in comments\" :key=\"c.id\" class=\"mb-3 flex\" :class=\"c.authorRole==='contractor' ? 'justify-end' : 'justify-start'\">
+          <div class=\"max-w-[85%]\">
+            <div class=\"flex items-center gap-2\" :class=\"c.authorRole==='contractor' ? 'justify-end' : 'justify-start'\"> 
+              <img v-if=\"c.avatarUrl\" :src=\"c.avatarUrl\" alt=\"avatar\" class=\"h-6 w-6 rounded-full\" />
+              <span class=\"text-xs text-slate-500\">{{ c.authorName }} • {{ timeAgo(c.createdAt) }}</span>
+            </div>
+            <div :class=\"bubbleClass(c)\">{{ c.message }}</div>
+          </div>
+        </div>
+      </div>
+      <div class=\"border-t border-slate-200 p-3\">
+        <div class=\"flex items-center gap-2\">
+          <input v-model=\"draft\" type=\"text\" placeholder=\"Write a comment…\" class=\"w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-[#3A7D99] focus:outline-none focus:ring-1 focus:ring-[#3A7D99]\" @keydown.enter.prevent=\"sendComment\" />
+          <button type=\"button\" class=\"rounded-md bg-[#3A7D99] px-3 py-2 text-sm font-semibold text-white disabled:opacity-60\" :disabled=\"sending || !draft.trim()\" @click=\"sendComment\">Send</button>
+        </div>
+      </div>
+    </aside>
+  </transition>
+
+  <!-- Comments bottom sheet (mobile) -->
+  <transition name=\"slide-y\">
+    <div v-if=\"commentsOpen && !isDesktop\" class=\"fixed inset-0 z-50 flex items-end bg-black/20\">
+      <div class=\"h-[70vh] w-full rounded-t-2xl bg-white shadow-xl ring-1 ring-slate-200\">
+        <div class=\"flex items-center justify-between border-b border-slate-200 px-4 py-3\"> 
+          <h3 class=\"text-sm font-semibold text-slate-900\">Comments</h3>
+          <button type=\"button\" class=\"rounded-md px-2 py-1 text-slate-500 hover:bg-slate-100\" @click=\"closeComments()\">?</button>
+        </div>
+        <div class=\"flex h-[calc(70vh-48px-56px)] flex-col-reverse overflow-y-auto px-3 py-3\">
+          <div v-for=\"c in comments\" :key=\"c.id\" class=\"mb-3 flex\" :class=\"c.authorRole==='contractor' ? 'justify-end' : 'justify-start'\">
+            <div class=\"max-w-[85%]\">
+              <div class=\"flex items-center gap-2\" :class=\"c.authorRole==='contractor' ? 'justify-end' : 'justify-start'\"> 
+                <img v-if=\"c.avatarUrl\" :src=\"c.avatarUrl\" alt=\"avatar\" class=\"h-6 w-6 rounded-full\" />
+                <span class=\"text-xs text-slate-500\">{{ c.authorName }} • {{ timeAgo(c.createdAt) }}</span>
+              </div>
+              <div :class=\"bubbleClass(c)\">{{ c.message }}</div>
+            </div>
+          </div>
+        </div>
+        <div class=\"border-t border-slate-200 p-3\">
+          <div class=\"flex items-center gap-2\">
+            <input v-model=\"draft\" type=\"text\" placeholder=\"Write a comment…\" class=\"w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-[#3A7D99] focus:outline-none focus:ring-1 focus:ring-[#3A7D99]\" @keydown.enter.prevent=\"sendComment\" />
+            <button type=\"button\" class=\"rounded-md bg-[#3A7D99] px-3 py-2 text-sm font-semibold text-white disabled:opacity-60\" :disabled=\"sending || !draft.trim()\" @click=\"sendComment\">Send</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </transition>
 </template>
 
 <script setup lang="ts">
@@ -468,3 +524,20 @@ const sendComment = async () => {
   }
 };</script>
 
+
+
+<style scoped>
+.slide-x-enter-active,
+.slide-x-leave-active { transition: transform 200ms ease, opacity 200ms ease; }
+.slide-x-enter-from { transform: translateX(100%); opacity: 0.9; }
+.slide-x-enter-to { transform: translateX(0); opacity: 1; }
+.slide-x-leave-from { transform: translateX(0); opacity: 1; }
+.slide-x-leave-to { transform: translateX(100%); opacity: 0.9; }
+
+.slide-y-enter-active,
+.slide-y-leave-active { transition: transform 220ms ease, opacity 200ms ease; }
+.slide-y-enter-from { transform: translateY(100%); opacity: 0; }
+.slide-y-enter-to { transform: translateY(0); opacity: 1; }
+.slide-y-leave-from { transform: translateY(0); opacity: 1; }
+.slide-y-leave-to { transform: translateY(100%); opacity: 0; }
+</style>
