@@ -7,7 +7,7 @@
         class="fixed right-6 top-6 z-40 hidden items-center gap-2 rounded-full bg-white/95 px-3 py-2 text-sm font-semibold text-slate-700 shadow ring-1 ring-slate-200 transition hover:-translate-y-0.5 hover:bg-white lg:flex"
         @click="openComments()"
       >
-        <span>ðŸ’¬</span>
+        <span>&#128172;</span>
         <span>Comments</span>
       </button>
       <div v-if="loading" class="flex h-48 items-center justify-center text-slate-500">
@@ -28,7 +28,7 @@
           class="fixed bottom-24 right-6 z-40 inline-flex items-center justify-center rounded-full bg-white/95 p-3 text-lg shadow ring-1 ring-slate-200 transition hover:-translate-y-0.5 lg:hidden"
           @click="openComments()"
         >
-          ðŸ’¬
+          &#128172;
         </button>
         <header class="text-center">
           <img
@@ -192,55 +192,55 @@
   </div>
 
   <!-- Comments drawer (desktop) -->
-  <transition name=\"slide-x\">
-    <aside v-if=\"commentsOpen && isDesktop\" class=\"fixed inset-y-0 right-0 z-50 w-80 bg-white shadow-xl ring-1 ring-slate-200\">
-      <div class=\"flex items-center justify-between border-b border-slate-200 px-4 py-3\"> 
-        <h3 class=\"text-sm font-semibold text-slate-900\">Comments</h3>
-        <button type=\"button\" class=\"rounded-md px-2 py-1 text-slate-500 hover:bg-slate-100\" @click=\"closeComments()\">?</button>
+  <transition name="slide-x">
+    <aside v-if="commentsOpen && isDesktop" class="fixed inset-y-0 right-0 z-50 w-80 bg-white shadow-xl ring-1 ring-slate-200">
+      <div class="flex items-center justify-between border-b border-slate-200 px-4 py-3"> 
+        <h3 class="text-sm font-semibold text-slate-900">Comments</h3>
+        <button type="button" class="rounded-md px-2 py-1 text-slate-500 hover:bg-slate-100" @click="closeComments()">?</button>
       </div>
-      <div class=\"flex h-[calc(100%-48px-56px)] flex-col-reverse overflow-y-auto px-3 py-3\">
-        <div v-for=\"c in comments\" :key=\"c.id\" class=\"mb-3 flex\" :class=\"c.authorRole==='contractor' ? 'justify-end' : 'justify-start'\">
-          <div class=\"max-w-[85%]\">
-            <div class=\"flex items-center gap-2\" :class=\"c.authorRole==='contractor' ? 'justify-end' : 'justify-start'\"> 
-              <img v-if=\"c.avatarUrl\" :src=\"c.avatarUrl\" alt=\"avatar\" class=\"h-6 w-6 rounded-full\" />
-              <span class=\"text-xs text-slate-500\">{{ c.authorName }} • {{ timeAgo(c.createdAt) }}</span>
+      <div class="flex h-[calc(100%-48px-56px)] flex-col-reverse overflow-y-auto px-3 py-3">
+        <div v-for="c in comments" :key="c.id" class="mb-3 flex" :class="c.authorRole==='contractor' ? 'justify-end' : 'justify-start'">
+          <div class="max-w-[85%]">
+            <div class="flex items-center gap-2" :class="c.authorRole==='contractor' ? 'justify-end' : 'justify-start'"> 
+              <img v-if="c.avatarUrl" :src="c.avatarUrl" alt="avatar" class="h-6 w-6 rounded-full" />
+              <span class="text-xs text-slate-500">{{ c.authorName }} ï¿½ {{ timeAgo(c.createdAt) }}</span>
             </div>
-            <div :class=\"bubbleClass(c)\">{{ c.message }}</div>
+            <div :class="bubbleClass(c)">{{ c.message }}</div>
           </div>
         </div>
       </div>
-      <div class=\"border-t border-slate-200 p-3\">
-        <div class=\"flex items-center gap-2\">
-          <input v-model=\"draft\" type=\"text\" placeholder=\"Write a comment…\" class=\"w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-[#3A7D99] focus:outline-none focus:ring-1 focus:ring-[#3A7D99]\" @keydown.enter.prevent=\"sendComment\" />
-          <button type=\"button\" class=\"rounded-md bg-[#3A7D99] px-3 py-2 text-sm font-semibold text-white disabled:opacity-60\" :disabled=\"sending || !draft.trim()\" @click=\"sendComment\">Send</button>
+      <div class="border-t border-slate-200 p-3">
+        <div class="flex items-center gap-2">
+          <input v-model="draft" type="text" placeholder="Write a commentï¿½" class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-[#3A7D99] focus:outline-none focus:ring-1 focus:ring-[#3A7D99]" @keydown.enter.prevent="sendComment" />
+          <button type="button" class="rounded-md bg-[#3A7D99] px-3 py-2 text-sm font-semibold text-white disabled:opacity-60" :disabled="sending || !draft.trim()" @click="sendComment">Send</button>
         </div>
       </div>
     </aside>
   </transition>
 
   <!-- Comments bottom sheet (mobile) -->
-  <transition name=\"slide-y\">
-    <div v-if=\"commentsOpen && !isDesktop\" class=\"fixed inset-0 z-50 flex items-end bg-black/20\">
-      <div class=\"h-[70vh] w-full rounded-t-2xl bg-white shadow-xl ring-1 ring-slate-200\">
-        <div class=\"flex items-center justify-between border-b border-slate-200 px-4 py-3\"> 
-          <h3 class=\"text-sm font-semibold text-slate-900\">Comments</h3>
-          <button type=\"button\" class=\"rounded-md px-2 py-1 text-slate-500 hover:bg-slate-100\" @click=\"closeComments()\">?</button>
+  <transition name="slide-y">
+    <div v-if="commentsOpen && !isDesktop" class="fixed inset-0 z-50 flex items-end bg-black/20">
+      <div class="h-[70vh] w-full rounded-t-2xl bg-white shadow-xl ring-1 ring-slate-200">
+        <div class="flex items-center justify-between border-b border-slate-200 px-4 py-3"> 
+          <h3 class="text-sm font-semibold text-slate-900">Comments</h3>
+          <button type="button" class="rounded-md px-2 py-1 text-slate-500 hover:bg-slate-100" @click="closeComments()">?</button>
         </div>
-        <div class=\"flex h-[calc(70vh-48px-56px)] flex-col-reverse overflow-y-auto px-3 py-3\">
-          <div v-for=\"c in comments\" :key=\"c.id\" class=\"mb-3 flex\" :class=\"c.authorRole==='contractor' ? 'justify-end' : 'justify-start'\">
-            <div class=\"max-w-[85%]\">
-              <div class=\"flex items-center gap-2\" :class=\"c.authorRole==='contractor' ? 'justify-end' : 'justify-start'\"> 
-                <img v-if=\"c.avatarUrl\" :src=\"c.avatarUrl\" alt=\"avatar\" class=\"h-6 w-6 rounded-full\" />
-                <span class=\"text-xs text-slate-500\">{{ c.authorName }} • {{ timeAgo(c.createdAt) }}</span>
+        <div class="flex h-[calc(70vh-48px-56px)] flex-col-reverse overflow-y-auto px-3 py-3">
+          <div v-for="c in comments" :key="c.id" class="mb-3 flex" :class="c.authorRole==='contractor' ? 'justify-end' : 'justify-start'">
+            <div class="max-w-[85%]">
+              <div class="flex items-center gap-2" :class="c.authorRole==='contractor' ? 'justify-end' : 'justify-start'"> 
+                <img v-if="c.avatarUrl" :src="c.avatarUrl" alt="avatar" class="h-6 w-6 rounded-full" />
+                <span class="text-xs text-slate-500">{{ c.authorName }} ï¿½ {{ timeAgo(c.createdAt) }}</span>
               </div>
-              <div :class=\"bubbleClass(c)\">{{ c.message }}</div>
+              <div :class="bubbleClass(c)">{{ c.message }}</div>
             </div>
           </div>
         </div>
-        <div class=\"border-t border-slate-200 p-3\">
-          <div class=\"flex items-center gap-2\">
-            <input v-model=\"draft\" type=\"text\" placeholder=\"Write a comment…\" class=\"w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-[#3A7D99] focus:outline-none focus:ring-1 focus:ring-[#3A7D99]\" @keydown.enter.prevent=\"sendComment\" />
-            <button type=\"button\" class=\"rounded-md bg-[#3A7D99] px-3 py-2 text-sm font-semibold text-white disabled:opacity-60\" :disabled=\"sending || !draft.trim()\" @click=\"sendComment\">Send</button>
+        <div class="border-t border-slate-200 p-3">
+          <div class="flex items-center gap-2">
+            <input v-model="draft" type="text" placeholder="Write a commentï¿½" class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-[#3A7D99] focus:outline-none focus:ring-1 focus:ring-[#3A7D99]" @keydown.enter.prevent="sendComment" />
+            <button type="button" class="rounded-md bg-[#3A7D99] px-3 py-2 text-sm font-semibold text-white disabled:opacity-60" :disabled="sending || !draft.trim()" @click="sendComment">Send</button>
           </div>
         </div>
       </div>
@@ -541,3 +541,4 @@ const sendComment = async () => {
 .slide-y-leave-from { transform: translateY(0); opacity: 1; }
 .slide-y-leave-to { transform: translateY(100%); opacity: 0; }
 </style>
+
