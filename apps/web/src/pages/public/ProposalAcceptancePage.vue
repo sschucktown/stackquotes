@@ -1,5 +1,33 @@
 <template>
-  <div class="min-h-screen bg-slate-50 px-4 py-12">
+
+const sendComment = async () => {
+  const text = draft.value.trim();
+  if (!text) return;
+  sending.value = true;
+  const optimistic: Comment = {
+    id: `temp_${Date.now()}`,
+    authorName: clientName.value || 'You',
+    authorRole: 'client',
+    message: text,
+    createdAt: new Date().toISOString(),
+  };
+  comments.value = [...comments.value, optimistic];
+  draft.value = "";
+  try {
+    const res = await apiFetch<{ data: Comment }>(commentsEndpoint.value, { method: 'POST', body: JSON.stringify({ message: text }) });
+    if ((res as any).data) {
+      const idx = comments.value.findIndex(c => c.id === optimistic.id);
+      if (idx !== -1) comments.value.splice(idx, 1, ((res as any).data as unknown) as Comment);
+      await loadComments();
+    } else {
+      comments.value = comments.value.filter(c => c.id !== optimistic.id);
+    }
+  } catch {
+    comments.value = comments.value.filter(c => c.id !== optimistic.id);
+  } finally {
+    sending.value = false;
+  }
+};
     <div class="mx-auto w-full max-w-4xl">
       <!-- Desktop comments button -->
       <button
