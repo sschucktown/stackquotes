@@ -269,6 +269,84 @@ shareRouter.post("/proposal/:token/accept", async (c) => {
   });
 });
 
+// Public proposal comments
+shareRouter.get("/proposal/:token/comments", async (c) => {
+  const { token } = proposalTokenParams.parse(c.req.param());
+  const supabase = getServiceClient();
+
+  const proposal = await getProposalByToken(supabase, token);
+  if (!proposal) {
+    c.status(404);
+    return c.json({ error: "This proposal link is invalid or has expired." });
+  }
+
+  const { data, error } = await supabase
+    .from("proposal_comments")
+    .select("*")
+    .eq("proposal_id", proposal.id)
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    c.status(500);
+    return c.json({ error: error.message });
+  }
+  return c.json({ data: data ?? [] });
+});
+
+shareRouter.post("/proposal/:token/comments", async (c) => {
+  const { token } = proposalTokenParams.parse(c.req.param());
+
+  let body: unknown;
+  try {
+    body = await c.req.json();
+  } catch {
+    body = {};
+  }
+
+  const parsed = z
+    .object({
+      message: z.string().min(1).max(2000),
+      authorName: z.string().max(120).optional(),
+      avatarUrl: z.string().url().optional(),
+      authorRole: z.enum(["contractor", "client"]).optional(),
+    })
+    .parse(body ?? {});
+
+  const supabase = getServiceClient();
+  const proposal = await getProposalByToken(supabase, token);
+  if (!proposal) {
+    c.status(404);
+    return c.json({ error: "This proposal link is invalid or has expired." });
+  }
+
+  let authorName = parsed.authorName ?? null;
+  if (!authorName) {
+    try {
+      const client = await getClient(supabase, proposal.userId, proposal.clientId).catch(() => null);
+      authorName = client?.name ?? null;
+    } catch {}
+  }
+
+  const { data, error } = await supabase
+    .from("proposal_comments")
+    .insert({
+      proposal_id: proposal.id,
+      author_role: parsed.authorRole ?? "client",
+      author_name: authorName,
+      avatar_url: parsed.avatarUrl ?? null,
+      message: parsed.message,
+    })
+    .select("*")
+    .single();
+
+  if (error) {
+    c.status(500);
+    return c.json({ error: error.message });
+  }
+
+  return c.json({ data });
+});
+
 shareRouter.get("/profile/:slug", async (c) => {
   const { slug } = slugParams.parse(c.req.param());
   const supabase = getServiceClient();
