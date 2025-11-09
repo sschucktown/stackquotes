@@ -1,5 +1,4 @@
 <template>
-
 <div class="mx-auto w-full max-w-4xl">
       <!-- Desktop comments button -->
       <button
@@ -256,10 +255,6 @@ import { acceptPublicProposal, fetchPublicProposal } from "@modules/public/api/p
 import { apiFetch } from "@/lib/http";
 import { launchWisetackFinancing } from "@/lib/wisetack";
 
-</template>
-
-<script setup lang="ts">
-
 const route = useRoute();
 const loading = ref(true);
 const error = ref<string | null>(null);
@@ -422,16 +417,6 @@ const onFinanceWithWisetack = async () => {
   }
 };
 
-</template>
-
-<script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
-import { useRoute } from "vue-router";
-import type { PublicProposalPayload } from "@modules/public/api/proposal";
-import { acceptPublicProposal, fetchPublicProposal } from "@modules/public/api/proposal";
-import { apiFetch } from "@/lib/http";
-import { launchWisetackFinancing } from "@/lib/wisetack";
-
 const defaultSummary = (name: string) => {
   if (name === "Good") return "Essential scope to get started quickly.";
   if (name === "Best") return "Premium upgrades for a standout experience.";
@@ -555,3 +540,4 @@ const sendComment = async () => {
 .slide-y-leave-from { transform: translateY(0); opacity: 1; }
 .slide-y-leave-to { transform: translateY(100%); opacity: 0; }
 </style>
+
