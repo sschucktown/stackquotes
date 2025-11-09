@@ -15,6 +15,7 @@
         >
           Start Free Today
         </button>
+        <RouterLink to="/login" class="mt-2 sm:mt-0 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold text-white hover:bg-white/15 transition-all">Log In</RouterLink>
       </div>
     </transition>
 
@@ -70,6 +71,7 @@
               </svg>
               <span>{{ demoCta.label }}</span>
             </button>
+            <RouterLink to="/login" class="inline-flex w-full items-center justify-center gap-2 rounded-full border border-white/20 bg-white/10 px-6 py-3 text-sm font-semibold text-white transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-white/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/40 sm:w-auto">Log In</RouterLink>
           </div>
 
           <dl class="mt-6 grid gap-4 sm:grid-cols-2">
@@ -261,4 +263,3 @@ const scrollToPricing = () => {
 .fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
 .fade-enter-from, .fade-leave-to { opacity: 0; }
 </style>
-
