@@ -406,7 +406,7 @@ const commentsOpen = ref(false);
 const comments = ref<Comment[]>([]);
 const draft = ref("");
 const sending = ref(false);
-const isDesktop = computed(() => typeof window !== 'undefined' ? window.innerWidth >= 1024 : true);
+const isDesktop = computed(() => (typeof window !== 'undefined' ? window.innerWidth >= 1024 : true));
 
 const bubbleClass = (c: Comment) =>
   (c.authorRole === 'contractor'
@@ -435,7 +435,7 @@ const loadComments = async () => {
   try {
     const res = await apiFetch<{ data: Comment[] }>(commentsEndpoint.value);
     if ((res as any).error) return;
-    const list: Comment[] = ((res as any).data ?? []) as any;
+    const list: Comment[] = (((res as any).data ?? []) as unknown) as Comment[];
     comments.value = list.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
   } catch {
     // ignore silently
@@ -459,12 +459,12 @@ const sendComment = async () => {
     const res = await apiFetch<{ data: Comment }>(commentsEndpoint.value, { method: 'POST', body: JSON.stringify({ message: text }) });
     if ((res as any).data) {
       const idx = comments.value.findIndex(c => c.id === optimistic.id);
-      if (idx !== -1) comments.value.splice(idx, 1, (res as any).data as any);
+      if (idx !== -1) comments.value.splice(idx, 1, ((res as any).data as unknown) as Comment);
     }
   } catch {
     comments.value = comments.value.filter(c => c.id !== optimistic.id);
   } finally {
     sending.value = false;
   }
-};
-</script>
+};</script>
+
