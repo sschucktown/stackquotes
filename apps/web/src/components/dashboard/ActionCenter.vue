@@ -178,20 +178,27 @@ const go = (route: string) => router.push(route)
   <section class="relative z-30 rounded-3xl bg-white/90 p-5 shadow-sm ring-1 ring-slate-100">
     <header class="mb-3">
       <h2 class="text-base font-semibold text-slate-900">Getting Started</h2>
-      <p class="text-sm text-slate-600">Finish these steps to unlock fast quoting.</p>
+      <p class="text-sm text-slate-600">Finish these quick steps to unlock your dashboard.</p>
     </header>
 
     <transition-group name="collapse" tag="div" class="grid gap-3 md:grid-cols-3">
-      <ActionCard
-        v-for="card in visibleCards"
-        :key="card.id"
-        :title="card.title"
-        :description="card.description"
-        :cta-text="card.ctaText"
-        :cta-route="card.ctaRoute"
-        :icon="card.icon"
-        @click="go(card.ctaRoute)"
-      />
+      <div v-for="card in visibleCards" :key="card.id" class="space-y-2">
+        <ActionCard
+          :title="card.title"
+          :description="card.description"
+          :cta-text="card.ctaText"
+          :cta-route="card.ctaRoute"
+          :icon="card.icon"
+          @click="go(card.ctaRoute)"
+        />
+        <button
+          type="button"
+          class="text-xs text-slate-500 underline-offset-2 hover:underline"
+          @click="profileStore.save({ onboarding_skipped: true } as any)"
+        >
+          Skip for now
+        </button>
+      </div>
     </transition-group>
 
     <transition name="fade">

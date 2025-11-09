@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { useContractorProfileStore } from '@/modules/contractor/stores/profileStore'
+import { useEstimateStore } from '@/modules/quickquote/stores/estimateStore'
 import CarouselModule, { type CarouselItem } from '@/components/dashboard/CarouselModule.vue'
 import SummaryBand from '@/components/dashboard/SummaryBand.vue'
 import ActionCenterModule from '@/components/dashboard/ActionCenterModule.vue'
@@ -35,6 +37,19 @@ const emit = defineEmits<{
   (e: 'delete', item: CarouselItem): void
   (e: 'insights-cta'): void
 }>()
+
+// Onboarding gate: controls Action Center visibility
+const profileStore = useContractorProfileStore()
+const estimateStore = useEstimateStore()
+const profileComplete = computed(() => {
+  const p: any = profileStore.profile
+  if (!p) return false
+  return Boolean(p.businessName && p.phone && p.email)
+})
+const stripeConnected = computed(() => (profileStore.profile as any)?.stripeAccountStatus === 'active')
+const quickQuotesCount = computed(() => estimateStore.items.length)
+const onboardingSkipped = computed(() => Boolean((profileStore.profile as any)?.onboarding_skipped))
+const showActionCenter = computed(() => onboardingSkipped.value || (profileComplete.value && stripeConnected.value && quickQuotesCount.value > 0))
 
 const showAttentionBar = computed(() => {
   const viewed = props.proposalItems.filter(i => i.stage === 'viewed').length
@@ -113,11 +128,24 @@ const starterTotal = ref(0)
         </div>
       </transition>
 
-      <ActionCenter class="mt-4" @visible-count="(p) => { starterVisible.value = p.visible; starterTotal.value = p.total }" />
+      <transition name="fade-up">
+        <ActionCenter
+          v-if="!showActionCenter"
+          class="mt-4"
+          @visible-count="(p) => { starterVisible.value = p.visible; starterTotal.value = p.total }"
+        />
+      </transition>
 
-      <ActionCenterModule :starter-total="starterTotal" :starter-visible="starterVisible" @card-click="$emit('card-click', $event)" />
+      <transition name="fade-up">
+        <ActionCenterModule
+          v-if="showActionCenter"
+          :starter-total="starterTotal"
+          :starter-visible="starterVisible"
+          @card-click="$emit('card-click', $event)"
+        />
+      </transition>
 
-      <div class="mt-4">
+      <div v-if="showActionCenter" class="mt-4 transition-opacity duration-500">
         <SummaryBand
           :open-proposals="openProposals"
           :pending-deposits="pendingDeposits"
