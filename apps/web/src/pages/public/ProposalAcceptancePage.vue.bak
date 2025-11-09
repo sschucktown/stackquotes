@@ -1,15 +1,6 @@
 <template>
   <div class="min-h-screen bg-slate-50 px-4 py-12">
     <div class="mx-auto w-full max-w-4xl">
-      <!-- Desktop comments button -->
-      <button
-        type="button"
-        class="fixed right-6 top-6 z-40 hidden items-center gap-2 rounded-full bg-white/95 px-3 py-2 text-sm font-semibold text-slate-700 shadow ring-1 ring-slate-200 transition hover:-translate-y-0.5 hover:bg-white lg:flex"
-        @click="openComments()"
-      >
-        <span>💬</span>
-        <span>Comments</span>
-      </button>
       <div v-if="loading" class="flex h-48 items-center justify-center text-slate-500">
         Preparing proposal.
       </div>
@@ -22,14 +13,6 @@
       </div>
 
       <div v-else-if="proposal" class="space-y-8">
-        <!-- Mobile FAB for comments -->
-        <button
-          type="button"
-          class="fixed bottom-24 right-6 z-40 inline-flex items-center justify-center rounded-full bg-white/95 p-3 text-lg shadow ring-1 ring-slate-200 transition hover:-translate-y-0.5 lg:hidden"
-          @click="openComments()"
-        >
-          💬
-        </button>
         <header class="text-center">
           <img
             v-if="contractor?.logoUrl"
@@ -399,72 +382,5 @@ onMounted(() => {
     void load();
   }
 });
-
-// Comments state and helpers
-type Comment = { id: string; authorName: string; authorRole: 'contractor'|'client'; message: string; createdAt: string; avatarUrl?: string | null };
-const commentsOpen = ref(false);
-const comments = ref<Comment[]>([]);
-const draft = ref("");
-const sending = ref(false);
-const isDesktop = computed(() => typeof window !== 'undefined' ? window.innerWidth >= 1024 : true);
-
-const bubbleClass = (c: Comment) =>
-  (c.authorRole === 'contractor'
-    ? 'mt-1 rounded-xl bg-blue-100 px-3 py-2 text-sm text-slate-800'
-    : 'mt-1 rounded-xl bg-slate-100 px-3 py-2 text-sm text-slate-800');
-
-const timeAgo = (iso: string) => {
-  const ms = Date.now() - new Date(iso).getTime();
-  const mins = Math.max(0, Math.round(ms / 60000));
-  if (mins < 60) return ${mins}m ago;
-  const hours = Math.round(mins / 60);
-  if (hours < 24) return ${hours}h ago;
-  const days = Math.round(hours / 24);
-  return ${days}d ago;
-};
-
-const openComments = async () => { commentsOpen.value = true; await loadComments(); };
-const closeComments = () => { commentsOpen.value = false; };
-
-const commentsEndpoint = computed(() => {
-  const token = String(route.params.token ?? route.params.id ?? "");
-  return /share/proposal//comments;
-});
-
-const loadComments = async () => {
-  try {
-    const res = await apiFetch<{ data: Comment[] }>(commentsEndpoint.value);
-    if ((res as any).error) return;
-    const list: Comment[] = ((res as any).data ?? []) as any;
-    comments.value = list.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-  } catch {
-    // ignore silently
-  }
-};
-
-const sendComment = async () => {
-  const text = draft.value.trim();
-  if (!text) return;
-  sending.value = true;
-  const optimistic: Comment = {
-    id: 	emp_,
-    authorName: clientName.value || 'You',
-    authorRole: 'client',
-    message: text,
-    createdAt: new Date().toISOString(),
-  };
-  comments.value = [...comments.value, optimistic];
-  draft.value = "";
-  try {
-    const res = await apiFetch<{ data: Comment }>(commentsEndpoint.value, { method: 'POST', body: JSON.stringify({ message: text }) });
-    if ((res as any).data) {
-      const idx = comments.value.findIndex(c => c.id === optimistic.id);
-      if (idx !== -1) comments.value.splice(idx, 1, (res as any).data as any);
-    }
-  } catch {
-    comments.value = comments.value.filter(c => c.id !== optimistic.id);
-  } finally {
-    sending.value = false;
-  }
-};
 </script>
+
