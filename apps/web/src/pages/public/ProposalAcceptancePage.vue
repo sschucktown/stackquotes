@@ -1,34 +1,5 @@
 <template>
-
-const sendComment = async () => {
-  const text = draft.value.trim();
-  if (!text) return;
-  sending.value = true;
-  const optimistic: Comment = {
-    id: `temp_${Date.now()}`,
-    authorName: clientName.value || 'You',
-    authorRole: 'client',
-    message: text,
-    createdAt: new Date().toISOString(),
-  };
-  comments.value = [...comments.value, optimistic];
-  draft.value = "";
-  try {
-    const res = await apiFetch<{ data: Comment }>(commentsEndpoint.value, { method: 'POST', body: JSON.stringify({ message: text }) });
-    if ((res as any).data) {
-      const idx = comments.value.findIndex(c => c.id === optimistic.id);
-      if (idx !== -1) comments.value.splice(idx, 1, ((res as any).data as unknown) as Comment);
-      await loadComments();
-    } else {
-      comments.value = comments.value.filter(c => c.id !== optimistic.id);
-    }
-  } catch {
-    comments.value = comments.value.filter(c => c.id !== optimistic.id);
-  } finally {
-    sending.value = false;
-  }
-};
-    <div class="mx-auto w-full max-w-4xl">
+<div class="mx-auto w-full max-w-4xl">
       <!-- Desktop comments button -->
       <button
         type="button"
@@ -224,7 +195,7 @@ const sendComment = async () => {
     <aside v-if="commentsOpen && isDesktop" class="fixed inset-y-0 right-0 z-50 w-80 bg-white shadow-xl ring-1 ring-slate-200">
       <div class="flex items-center justify-between border-b border-slate-200 px-4 py-3"> 
         <h3 class="text-sm font-semibold text-slate-900">Comments</h3>
-        <button type="button" class="rounded-md px-2 py-1 text-slate-500 hover:bg-slate-100" @click="closeComments()">?</button>
+        <button type="button" class="rounded-md px-2 py-1 text-slate-500 hover:bg-slate-100" @click="closeComments()">&times;</button>
       </div>
       <div class="flex h-[calc(100%-48px-56px)] flex-col-reverse overflow-y-auto px-3 py-3">
         <div v-for="c in comments" :key="c.id" class="mb-3 flex" :class="c.authorRole==='contractor' ? 'justify-end' : 'justify-start'">
@@ -252,7 +223,7 @@ const sendComment = async () => {
       <div class="h-[70vh] w-full rounded-t-2xl bg-white shadow-xl ring-1 ring-slate-200">
         <div class="flex items-center justify-between border-b border-slate-200 px-4 py-3"> 
           <h3 class="text-sm font-semibold text-slate-900">Comments</h3>
-          <button type="button" class="rounded-md px-2 py-1 text-slate-500 hover:bg-slate-100" @click="closeComments()">?</button>
+          <button type="button" class="rounded-md px-2 py-1 text-slate-500 hover:bg-slate-100" @click="closeComments()">&times;</button>
         </div>
         <div class="flex h-[calc(70vh-48px-56px)] flex-col-reverse overflow-y-auto px-3 py-3">
           <div v-for="c in comments" :key="c.id" class="mb-3 flex" :class="c.authorRole==='contractor' ? 'justify-end' : 'justify-start'">
@@ -569,4 +540,3 @@ const sendComment = async () => {
 .slide-y-leave-from { transform: translateY(0); opacity: 1; }
 .slide-y-leave-to { transform: translateY(100%); opacity: 0; }
 </style>
-
