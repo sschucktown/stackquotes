@@ -416,11 +416,11 @@ const bubbleClass = (c: Comment) =>
 const timeAgo = (iso: string) => {
   const ms = Date.now() - new Date(iso).getTime();
   const mins = Math.max(0, Math.round(ms / 60000));
-  if (mins < 60) return ${mins}m ago;
+  if (mins < 60) return `${mins}m ago`;
   const hours = Math.round(mins / 60);
-  if (hours < 24) return ${hours}h ago;
+  if (hours < 24) return `${hours}h ago`;
   const days = Math.round(hours / 24);
-  return ${days}d ago;
+  return `${days}d ago`;
 };
 
 const openComments = async () => { commentsOpen.value = true; await loadComments(); };
@@ -428,7 +428,7 @@ const closeComments = () => { commentsOpen.value = false; };
 
 const commentsEndpoint = computed(() => {
   const token = String(route.params.token ?? route.params.id ?? "");
-  return /share/proposal//comments;
+  return `/share/proposal/${encodeURIComponent(token)}/comments`;
 });
 
 const loadComments = async () => {
@@ -447,7 +447,7 @@ const sendComment = async () => {
   if (!text) return;
   sending.value = true;
   const optimistic: Comment = {
-    id: 	emp_,
+    id: `temp_${Date.now()}`,
     authorName: clientName.value || 'You',
     authorRole: 'client',
     message: text,
