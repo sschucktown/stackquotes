@@ -199,7 +199,7 @@
             </div>
 
             <!-- Permanent demo URL (not user-editable) -->
-            <div class="mt-6 grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
+            <div v-if="profileStore.isDemo" class="mt-6 grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
               <div>
                 <label class="block text-sm font-medium text-slate-700">Permanent Demo URL</label>
                 <p class="mt-2 text-xs text-slate-500">
