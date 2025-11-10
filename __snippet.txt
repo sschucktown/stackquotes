@@ -1,0 +1,42 @@
+import { computed, defineProps, defineEmits } from 'vue'
+import SQBadge from '@stackquotes/ui/components/SQBadge.vue'
+
+export interface CarouselItem {
+  id: string
+  title: string
+  client?: string
+  amount?: number
+  stage: string
+  updatedAt?: string
+  route?: string
+}
+
+const props = defineProps<{
+  title: string
+  items: CarouselItem[]
+  stages: string[]
+  colorMap: Record<string, string> // values like 'emerald-500'
+  focusOnly?: boolean // optional focus mode filter
+  focusStages?: string[] // considered “awaiting action”
+}>()
+const props = defineProps<{
+  title: string
+  items: CarouselItem[]
+  stages: string[]
+  colorMap: Record<string, string> // values like 'emerald-500'
+  focusOnly?: boolean // optional focus mode filter
+  focusStages?: string[] // considered “awaiting action”
+}>()
+
+const emit = defineEmits<{
+  (e: 'card-click', item: CarouselItem): void
+  (e: 'nudge', item: CarouselItem): void
+  (e: 'delete', item: CarouselItem): void
+}>()
+
+const currency = (value?: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value || 0)
+
+// Ensure Tailwind generates these dynamic border classes
+// no-unused-locals – referenced to keep classes in build
+const __SAFE_BORDER_CLASSES = [
+  'border-emerald-500','border-rose-500','border-amber-500','border-indigo-500','border-indigo-400','border-slate-500','border-slate-400','border-sky-500','border-sky-400'

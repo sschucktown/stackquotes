@@ -166,7 +166,6 @@ const starterTotal = ref(0)
           :items="paymentItems"
           :stages="['deposit_pending','deposit_received','final_due','paid']"
           :color-map="colorMapPayments"
-          kind="payments"
           :focus-only="focusOnly"
           :focus-stages="['deposit_pending','final_due']"
           @card-click="$emit('card-click', $event)"
@@ -181,7 +180,6 @@ const starterTotal = ref(0)
           :items="proposalItems"
           :stages="['unsent','sent','viewed','accepted']"
           :color-map="colorMapProposals"
-          kind="proposals"
           :focus-only="focusOnly"
           :focus-stages="['sent','viewed']"
           @card-click="$emit('card-click', $event)"
@@ -197,7 +195,6 @@ const starterTotal = ref(0)
           :items="quickQuoteItems"
           :stages="['draft','ready_to_convert','converted']"
           :color-map="colorMapQuotes"
-          kind="quickquotes"
           :focus-only="focusOnly"
           :focus-stages="['ready_to_convert']"
           @card-click="$emit('card-click', $event)"
@@ -261,18 +258,3 @@ const starterTotal = ref(0)
           </div>
         </div>
       </section>
-    </div>
-  </div>
-</template>
-
-<style scoped>
-.fade-up-enter-active,
-.fade-up-leave-active {
-  transition: all 200ms ease;
-}
-.fade-up-enter-from,
-.fade-up-leave-to {
-  opacity: 0;
-  transform: translateY(6px);
-}
-</style>

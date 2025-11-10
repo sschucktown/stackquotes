@@ -19,8 +19,6 @@ const props = defineProps<{
   colorMap: Record<string, string> // values like 'emerald-500'
   focusOnly?: boolean // optional focus mode filter
   focusStages?: string[] // considered “awaiting action”
-  // which module this carousel represents; controls badge placement
-  kind?: 'payments' | 'proposals' | 'quickquotes'
 }>()
 
 const emit = defineEmits<{
@@ -63,23 +61,15 @@ const onClick = (item: CarouselItem) => emit('card-click', item)
         :class="[ 'border-t-4', colorFor(item.stage) ]"
         @click="onClick(item)"
       >
-        <!-- Title line (no badge here) -->
         <div class="flex items-start justify-between">
           <p class="line-clamp-1 pr-2 text-sm font-semibold text-slate-900">{{ item.title || 'Untitled' }}</p>
+          <SQBadge size="xs">{{ stageLabel(item.stage) }}</SQBadge>
         </div>
 
-        <!-- Second line: client + badge (for non-payments) -->
-        <div class="mt-1 flex items-center gap-1.5 min-h-[1rem]">
-          <p v-if="item.client" class="line-clamp-1 text-xs text-slate-500 flex-1">{{ item.client }}</p>
-          <SQBadge v-if="props.kind !== 'payments'" size="xs">{{ stageLabel(item.stage) }}</SQBadge>
-        </div>
+        <p v-if="item.client" class="mt-1 line-clamp-1 text-xs text-slate-500">{{ item.client }}</p>
 
-        <!-- Amount row: badge to the right of the amount for payments -->
         <div class="mt-2 flex items-center justify-between">
-          <div class="flex min-w-0 items-center gap-2">
-            <p v-if="item.amount !== undefined" class="text-sm font-medium text-slate-900">{{ currency(item.amount) }}</p>
-            <SQBadge v-if="props.kind === 'payments'" size="xs">{{ stageLabel(item.stage) }}</SQBadge>
-          </div>
+          <p v-if="item.amount !== undefined" class="text-sm font-medium text-slate-900">{{ currency(item.amount) }}</p>
           <p v-if="item.updatedAt" class="text-[11px] text-slate-500">{{ item.updatedAt }}</p>
         </div>
 
@@ -116,4 +106,3 @@ const onClick = (item: CarouselItem) => emit('card-click', item)
 
 <style scoped>
 </style>
-
