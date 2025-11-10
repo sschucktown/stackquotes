@@ -16,6 +16,19 @@
         </div>
       </div>
 
+      <!-- Current status badge between subtitle and form -->
+      <div v-if="!isNew && currentEstimate" class="flex items-center gap-2">
+        <span class="text-xs uppercase tracking-wide text-slate-500">Current Status</span>
+        <span
+          :class="[
+            currentStatusClass,
+            'rounded-full px-2 py-1 text-xs font-medium transition-colors',
+          ]"
+        >
+          {{ currentStatusLabel }}
+        </span>
+      </div>
+
       <EstimateForm
         :model-value="currentEstimate"
         :submitting="saving"
