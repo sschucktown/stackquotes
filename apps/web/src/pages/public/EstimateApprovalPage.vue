@@ -105,12 +105,34 @@
         </section>
 
         <section class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 class="text-lg font-semibold text-slate-900">Next Steps</h2>
-          <p class="mt-2 text-sm text-slate-600">
-            When you're ready to move forward, simply reply to the original email and we'll put
-            together a detailed proposal with a few tailored options to choose from.
-          </p>
+          <div class="flex items-center justify-between gap-3">
+            <div>
+              <h2 class="text-lg font-semibold text-slate-900">Next Steps</h2>
+              <p class="mt-1 text-sm text-slate-600">
+                Approve or decline this estimate. Your contractor will be notified.
+              </p>
+            </div>
+            <span :class="[statusBadgeClass, 'rounded-full px-2 py-1 text-xs font-medium']">{{ statusBadgeLabel }}</span>
+          </div>
           <div class="mt-4 flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              class="rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-emerald-700 disabled:opacity-60"
+              :disabled="actionBusy || isAccepted"
+              @click="onApprove"
+            >
+              <span v-if="actionBusy && pending==='approve'">Approving…</span>
+              <span v-else>Approve</span>
+            </button>
+            <button
+              type="button"
+              class="rounded-md bg-rose-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-rose-700 disabled:opacity-60"
+              :disabled="actionBusy || isDeclined"
+              @click="onDecline"
+            >
+              <span v-if="actionBusy && pending==='decline'">Declining…</span>
+              <span v-else>Decline</span>
+            </button>
             <a
               v-if="downloadUrl"
               :href="downloadUrl"
@@ -124,6 +146,8 @@
               PDF generation pending. Refresh this page after a moment.
             </span>
           </div>
+          <p v-if="actionError" class="mt-2 text-sm text-rose-600">{{ actionError }}</p>
+          <p v-if="actionMessage" class="mt-2 text-sm text-emerald-700">{{ actionMessage }}</p>
         </section>
       </div>
     </div>
@@ -133,7 +157,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
 import type { Client, Estimate, UserSettings } from "@stackquotes/types";
-import { fetchSharedEstimate } from "@modules/public/api/estimates";
+import { fetchSharedEstimate, approveSharedEstimate, declineSharedEstimate } from "@modules/public/api/estimates";
 import { statusClass, statusLabel } from "@modules/quickquote/utils/status";
 
 const props = defineProps<{
@@ -161,17 +185,60 @@ const currencyFormatter = new Intl.NumberFormat("en-US", {
 const currency = (value: number | null | undefined) =>
   currencyFormatter.format(Number.isFinite(Number(value)) ? Number(value) : 0);
 
-// Robust totals for display in case API fields are null/strings
+// Robust totals for display; prefers computed sum if DB subtotal is zero
 const displayTotals = computed(() => {
   const e = estimate.value;
   if (!e) return { subtotal: 0, tax: 0, total: 0 };
   const sumLineItems = () =>
-    (e.lineItems ?? []).reduce((sum, item) => sum + Number(item.total ?? (item.quantity ?? 0) * (item.unitPrice ?? 0)), 0);
-  const subtotal = Number.isFinite(Number(e.subtotal)) ? Number(e.subtotal) : sumLineItems();
-  const tax = Number.isFinite(Number(e.tax)) ? Number(e.tax) : 0;
-  const total = Number.isFinite(Number(e.total)) ? Number(e.total) : subtotal + tax;
+    (e.lineItems ?? []).reduce((sum, item) => sum + Number(item.total ?? (Number(item.quantity ?? 0) * Number(item.unitPrice ?? 0))), 0);
+  const computedSubtotal = sumLineItems();
+  const dbSubtotal = Number(e.subtotal ?? 0);
+  const subtotal = computedSubtotal > 0 ? computedSubtotal : dbSubtotal;
+  const dbTax = Number(e.tax ?? 0);
+  const dbTotal = Number(e.total ?? 0);
+  const computedTotal = subtotal + (dbTax > 0 ? dbTax : Math.max(0, dbTotal - dbSubtotal));
+  const total = computedTotal > 0 ? computedTotal : Math.max(dbTotal, subtotal);
+  const tax = total - subtotal >= 0 ? total - subtotal : 0;
   return { subtotal, tax, total };
 });
+
+// Approve/Decline actions
+const isAccepted = computed(() => estimate.value?.status === 'accepted');
+const isDeclined = computed(() => estimate.value?.status === 'declined');
+const actionBusy = ref(false);
+const pending = ref<"approve" | "decline" | null>(null);
+const actionError = ref("");
+const actionMessage = ref("");
+
+const onApprove = async () => {
+  if (!props.token || isAccepted.value) return;
+  actionBusy.value = true; pending.value = 'approve'; actionError.value = ""; actionMessage.value = "";
+  try {
+    const res = await approveSharedEstimate(props.token);
+    if ((res as any).error) throw new Error((res as any).error);
+    await loadData();
+    actionMessage.value = "Thanks! You've approved this estimate.";
+  } catch (e: any) {
+    actionError.value = e?.message ?? 'Failed to approve.';
+  } finally {
+    actionBusy.value = false; pending.value = null;
+  }
+};
+
+const onDecline = async () => {
+  if (!props.token || isDeclined.value) return;
+  actionBusy.value = true; pending.value = 'decline'; actionError.value = ""; actionMessage.value = "";
+  try {
+    const res = await declineSharedEstimate(props.token);
+    if ((res as any).error) throw new Error((res as any).error);
+    await loadData();
+    actionMessage.value = "You've declined this estimate.";
+  } catch (e: any) {
+    actionError.value = e?.message ?? 'Failed to decline.';
+  } finally {
+    actionBusy.value = false; pending.value = null;
+  }
+};
 
 async function loadData() {
   loading.value = true;

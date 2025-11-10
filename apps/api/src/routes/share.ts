@@ -116,6 +116,30 @@ shareRouter.post("/estimate/:token/approve", async (c) => {
   }
   return c.json({ data: estimate });
 });
+shareRouter.post("/estimate/:token/decline", async (c) => {
+  const { token } = tokenParams.parse(c.req.param());
+  let body: unknown;
+  try {
+    body = await c.req.json();
+  } catch {
+    body = undefined;
+  }
+  const parsed = approveBody.safeParse(body);
+  const supabase = getServiceClient();
+  const estimate = await getEstimateByApprovalToken(supabase, token);
+  if (!estimate) {
+    c.status(400);
+    return c.json({ error: "This approval link is invalid or has expired." });
+  }
+  const updated = await updateEstimateStatus(supabase, {
+    userId: estimate.userId,
+    estimateId: estimate.id,
+    status: "declined",
+    approvedBy: parsed.success ? parsed.data?.name ?? null : null,
+    approvedAt: null,
+  });
+  return c.json({ data: updated });
+});
 
 shareRouter.get("/proposal/:token", async (c) => {
   const { token } = proposalTokenParams.parse(c.req.param());
@@ -408,3 +432,4 @@ shareRouter.get("/profile/:slug", async (c) => {
     },
   });
 });
+

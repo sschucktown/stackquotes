@@ -1,5 +1,17 @@
-import type { PublicEstimatePayload } from "@stackquotes/types";
+import type { PublicEstimatePayload, Estimate } from "@stackquotes/types";
 import { apiFetch } from "@/lib/http";
 
 export const fetchSharedEstimate = (token: string) =>
   apiFetch<PublicEstimatePayload>(`/share/estimate/${token}`);
+
+export const approveSharedEstimate = (token: string, name?: string) =>
+  apiFetch<Estimate>(`/share/estimate/${token}/approve`, {
+    method: "POST",
+    body: JSON.stringify(name ? { name } : {}),
+  });
+
+export const declineSharedEstimate = (token: string, name?: string) =>
+  apiFetch<Estimate>(`/share/estimate/${token}/decline`, {
+    method: "POST",
+    body: JSON.stringify(name ? { name } : {}),
+  });
