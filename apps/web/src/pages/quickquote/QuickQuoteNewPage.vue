@@ -106,7 +106,10 @@
       </div>
 
       <p v-if="error" class="mt-3 text-sm text-red-600">{{ error }}</p>
-      <p v-if="emailSuccess" class="mt-3 text-sm text-emerald-600">QuickQuote created and emailed to {{ emailedTo }}.</p>
+      <p v-if="emailSuccess" class="mt-3 text-sm text-emerald-600">
+        QuickQuote created and emailed to {{ emailedTo }}.
+        <span v-if="approvalUrl" class="ml-2">Share link: <a :href="approvalUrl" target="_blank" rel="noopener" class="text-[#3A7D99] underline">Open</a></span>
+      </p>
       <p v-if="emailError" class="mt-3 text-sm text-red-600">{{ emailError }}</p>
     </div>
   </div>
@@ -165,6 +168,7 @@ const emailSending = ref(false)
 const emailSuccess = ref(false)
 const emailError = ref('')
 const emailedTo = ref('')
+const approvalUrl = ref('')
 const loadingSeed = ref(false)
 const profileTrade = ref<string | null>(null)
 
@@ -457,13 +461,14 @@ const createProposal = async () => {
       const message = `Hi ${client?.name || 'there'},\n\nPlease review your estimate totaling ${currency.format(insertPayload.total)}.\n\n${replyPrompt}\n`
 
       const pdf = await estimateStore.createPdf(id)
-      await estimateStore.emailEstimate({
+      const resp = await estimateStore.emailEstimate({
         estimateId: id,
         to,
         subject,
         message,
         downloadUrl: pdf?.downloadUrl ?? undefined,
       })
+      approvalUrl.value = (resp as any)?.approvalUrl ?? ''
       emailSuccess.value = true
       // Optionally refresh store listing
       void estimateStore.reload()
