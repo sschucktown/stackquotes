@@ -22,7 +22,7 @@
         >
           {{ client.name }} - {{ client.email }}
         </option>
-        <option value="__add__">+ Add new client…</option>
+        <option value="__add__">+ Add new client...</option>
       </SQSelect>
 
       <form v-if="showForm" class="space-y-3" @submit.prevent="create">
