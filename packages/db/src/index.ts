@@ -475,16 +475,23 @@ const lineItemTotals = (lineItems: LineItem[]) => {
   return { lineItems: normalised, subtotal };
 };
 
+// Lightweight id generator when rows miss ids in JSON payloads
+const cryptoRandomId = () => `li_${Math.random().toString(36).slice(2, 10)}`;
+
 const toLineItems = (value: Json): LineItem[] => {
   if (!Array.isArray(value)) {
     return [];
   }
-  return (value as unknown as LineItem[]).map((item) => ({
-    ...item,
-    quantity: Number(item.quantity || 0),
-    unitPrice: Number(item.unitPrice || 0),
-    total: Number(item.total || Number(item.quantity || 0) * Number(item.unitPrice || 0)),
-  }));
+  return (value as unknown as any[]).map((raw) => {
+    const quantity = Number(raw.quantity ?? raw.qty ?? 0);
+    const unitPrice = Number(raw.unitPrice ?? raw.unit_price ?? 0);
+    const total = Number(
+      raw.total ?? (Number.isFinite(quantity) && Number.isFinite(unitPrice) ? quantity * unitPrice : 0)
+    );
+    const description = typeof raw.description === 'string' ? raw.description : String(raw.description ?? '');
+    const cost = raw.cost != null ? Number(raw.cost) : undefined;
+    return { id: raw.id ?? cryptoRandomId(), description, quantity, unitPrice, total, cost } as LineItem;
+  });
 };
 
 const buildEstimateRecord = (row: DatabaseEstimateRow): Estimate => ({

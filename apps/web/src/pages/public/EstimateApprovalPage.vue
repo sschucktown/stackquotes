@@ -57,7 +57,7 @@
             <div>
               <dt class="text-xs uppercase tracking-wide text-slate-500">Total</dt>
               <dd class="text-lg font-semibold text-slate-900">
-                {{ currency(estimate.total) }}
+                {{ currency(displayTotals.total) }}
               </dd>
             </div>
           </dl>
