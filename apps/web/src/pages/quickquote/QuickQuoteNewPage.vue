@@ -39,18 +39,19 @@
         <div class="grid gap-4 sm:grid-cols-2">
           <div>
             <label class="mb-1 block text-xs font-medium text-slate-600">Client</label>
-            <select v-model="clientId" class="rounded-lg border border-slate-300 px-3 py-2 text-sm w-full bg-white text-slate-900">
+            <select v-model="clientId" @change="onClientSelect" class="rounded-lg border border-slate-300 px-3 py-2 text-sm w-full bg-white text-slate-900">
               <option disabled value="">Select a client</option>
               <option v-for="c in clients" :key="c.id" :value="c.id">{{ c.name }} — {{ c.email }}</option>
+              <option value="__add__">+ Add new client...</option>
             </select>
-            <div v-if="clients.length === 0" class="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
+            <div v-if="showAddClientForm || clients.length === 0" class="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
               <p class="text-xs text-slate-600 mb-2">No clients yet. Add one to continue.</p>
               <div class="grid gap-2 sm:grid-cols-2">
                 <input v-model="newClientName" type="text" placeholder="Client name" class="rounded-lg border border-slate-300 px-3 py-2 text-sm w-full" />
                 <input v-model="newClientEmail" type="email" placeholder="Client email" class="rounded-lg border border-slate-300 px-3 py-2 text-sm w-full" />
               </div>
               <div class="mt-2 flex items-center gap-2">
-                <button type="button" @click="addClient" :disabled="addingClient" class="rounded-full bg-emerald-500 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-400 disabled:opacity-60">
+                <button type="button" @click="addClientAndSelect" :disabled="addingClient" class="rounded-full bg-emerald-500 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-400 disabled:opacity-60">
                   {{ addingClient ? 'Adding…' : 'Add Client' }}
                 </button>
                 <span v-if="addClientError" class="text-xs text-red-600">{{ addClientError }}</span>
@@ -131,6 +132,7 @@ const projectTemplates = ref<ProjectTemplate[]>([])
 const selectedProject = ref<ProjectTemplate | null>(null)
 const clients = ref<Client[]>([])
 const clientId = ref<string>('')
+const showAddClientForm = ref(false)
 
 // Inline add-client state when dropdown is empty
 const newClientName = ref('')
@@ -289,6 +291,7 @@ const addClient = async () => {
     clientId.value = created.id
     newClientName.value = ''
     newClientEmail.value = ''
+    showAddClientForm.value = false
   } catch (e: any) {
     console.error(e)
     addClientError.value = e?.message ?? 'Unable to add client'
@@ -323,6 +326,27 @@ const handleProjectSelect = () => {
     const input = document.querySelector<HTMLInputElement>('input[type="number"]')
     input?.focus()
   })
+}
+
+const addClientAndSelect = async () => {
+  await addClient()
+}
+
+const cancelAddClient = () => {
+  showAddClientForm.value = false
+  if (clientId.value === '__add__') clientId.value = ''
+}
+
+const onClientSelect = (ev: Event) => {
+  const value = (ev.target as HTMLSelectElement).value
+  if (value === '__add__') {
+    showAddClientForm.value = true
+    clientId.value = ''
+    requestAnimationFrame(() => {
+      const input = document.querySelector<HTMLInputElement>('input[placeholder="Client name"]')
+      input?.focus()
+    })
+  }
 }
 
 const reloadTemplates = async () => {
