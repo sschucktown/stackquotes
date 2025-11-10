@@ -93,10 +93,10 @@
             </table>
           </div>
           <div class="mt-4 flex flex-col gap-2 text-sm text-slate-600 md:items-end">
-            <div>Subtotal: {{ currency(estimate.subtotal) }}</div>
-            <div>Tax: {{ currency(estimate.tax) }}</div>
+            <div>Subtotal: {{ currency(displayTotals.subtotal) }}</div>
+            <div>Tax: {{ currency(displayTotals.tax) }}</div>
             <div class="text-base font-semibold text-slate-900">
-              Total Due: {{ currency(estimate.total) }}
+              Total Due: {{ currency(displayTotals.total) }}
             </div>
           </div>
           <p v-if="estimate.notes" class="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600">
@@ -160,6 +160,18 @@ const currencyFormatter = new Intl.NumberFormat("en-US", {
 
 const currency = (value: number | null | undefined) =>
   currencyFormatter.format(Number.isFinite(Number(value)) ? Number(value) : 0);
+
+// Robust totals for display in case API fields are null/strings
+const displayTotals = computed(() => {
+  const e = estimate.value;
+  if (!e) return { subtotal: 0, tax: 0, total: 0 };
+  const sumLineItems = () =>
+    (e.lineItems ?? []).reduce((sum, item) => sum + Number(item.total ?? (item.quantity ?? 0) * (item.unitPrice ?? 0)), 0);
+  const subtotal = Number.isFinite(Number(e.subtotal)) ? Number(e.subtotal) : sumLineItems();
+  const tax = Number.isFinite(Number(e.tax)) ? Number(e.tax) : 0;
+  const total = Number.isFinite(Number(e.total)) ? Number(e.total) : subtotal + tax;
+  return { subtotal, tax, total };
+});
 
 async function loadData() {
   loading.value = true;
