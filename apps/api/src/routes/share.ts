@@ -16,6 +16,7 @@ import {
   updateProposalStatus,
 } from "@stackquotes/db";
 import { getServiceClient } from "../lib/supabase.js";
+import { generateSmartProposalFromQuote } from "../services/smartProposals.js";
 import { computeDepositAmount } from "../services/smartProposals.js";
 import { getEstimatePdfSignedUrl } from "../lib/storage.js";
 import { createDepositPaymentLink } from "../lib/stripe.js";
@@ -113,6 +114,16 @@ shareRouter.post("/estimate/:token/approve", async (c) => {
   if (!estimate) {
     c.status(400);
     return c.json({ error: "This approval link is invalid or has expired." });
+  }
+  // Best-effort: generate SmartProposal from this accepted QuickQuote
+  try {
+    await generateSmartProposalFromQuote({
+      supabase,
+      contractorId: estimate.userId,
+      quickquoteId: estimate.id,
+    });
+  } catch (e) {
+    console.error("[share/approve] failed to generate smart proposal", e);
   }
   return c.json({ data: estimate });
 });
