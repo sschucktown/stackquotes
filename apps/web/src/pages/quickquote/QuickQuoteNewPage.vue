@@ -97,13 +97,17 @@
         </div>
         <button
           @click="createProposal"
-          class="mt-3 sm:mt-0 rounded-full bg-cyan-400 px-6 py-3 text-sm font-semibold text-slate-900 hover:bg-cyan-300 transition-all"
+          :disabled="emailSending"
+          class="mt-3 sm:mt-0 rounded-full bg-cyan-400 px-6 py-3 text-sm font-semibold text-slate-900 hover:bg-cyan-300 transition-all disabled:opacity-60"
         >
-          Create QuickQuote
+          <span v-if="emailSending">Sending…</span>
+          <span v-else>Create QuickQuote</span>
         </button>
       </div>
 
       <p v-if="error" class="mt-3 text-sm text-red-600">{{ error }}</p>
+      <p v-if="emailSuccess" class="mt-3 text-sm text-emerald-600">QuickQuote created and emailed to {{ emailedTo }}.</p>
+      <p v-if="emailError" class="mt-3 text-sm text-red-600">{{ emailError }}</p>
     </div>
   </div>
 </template>
@@ -114,6 +118,7 @@ import { useRouter } from 'vue-router'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/auth'
 import { apiFetch } from '@/lib/http'
+import { useEstimateStore } from '@modules/quickquote/stores/estimateStore'
 
 type ProjectTemplate = {
   id: string
@@ -156,6 +161,10 @@ const tax = computed(() => subtotal.value * taxRate.value)
 const total = computed(() => subtotal.value + tax.value)
 
 const error = ref<string | null>(null)
+const emailSending = ref(false)
+const emailSuccess = ref(false)
+const emailError = ref('')
+const emailedTo = ref('')
 const loadingSeed = ref(false)
 const profileTrade = ref<string | null>(null)
 
@@ -431,8 +440,39 @@ const createProposal = async () => {
     const id = data?.id
     if (!id) throw new Error('Failed to create draft')
 
-    // Route to the QuickQuote editor where email can be sent
-    await router.push({ name: 'quickquote-estimate', params: { id } })
+    // Auto-generate PDF and email the estimate to the client
+    const estimateStore = useEstimateStore()
+    emailSending.value = true
+    emailSuccess.value = false
+    emailError.value = ''
+    try {
+      const client = clients.value.find((c) => c.id === clientId.value)
+      const to = client?.email ?? ''
+      if (!to) throw new Error('Selected client has no email')
+      emailedTo.value = to
+      const subject = `Estimate - ${insertPayload.project_title}`
+
+      const currency = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' })
+      const replyPrompt = "When you're ready to move forward, simply reply to this email and we'll put together a detailed proposal with a few options to choose from."
+      const message = `Hi ${client?.name || 'there'},\n\nPlease review your estimate totaling ${currency.format(insertPayload.total)}.\n\n${replyPrompt}\n`
+
+      const pdf = await estimateStore.createPdf(id)
+      await estimateStore.emailEstimate({
+        estimateId: id,
+        to,
+        subject,
+        message,
+        downloadUrl: pdf?.downloadUrl ?? undefined,
+      })
+      emailSuccess.value = true
+      // Optionally refresh store listing
+      void estimateStore.reload()
+    } catch (e: any) {
+      console.error(e)
+      emailError.value = e?.message ?? 'Unable to send email'
+    } finally {
+      emailSending.value = false
+    }
   } catch (e: any) {
     console.error(e)
     error.value = e?.message ?? 'Unable to create proposal'
