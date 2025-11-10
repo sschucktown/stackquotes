@@ -189,8 +189,7 @@
         </section>
       </div>
     </div>
-  </div>
-
+  
   <!-- Comments drawer (desktop) -->
   <transition name="slide-x">
     <aside v-if="commentsOpen && isDesktop" class="fixed inset-y-0 right-0 z-50 w-80 bg-white shadow-xl ring-1 ring-slate-200">
@@ -203,7 +202,7 @@
           <div class="max-w-[85%]">
             <div class="flex items-center gap-2" :class="c.authorRole==='contractor' ? 'justify-end' : 'justify-start'"> 
               <img v-if="c.avatarUrl" :src="c.avatarUrl" alt="avatar" class="h-6 w-6 rounded-full" />
-              <span class="text-xs text-slate-500">{{ c.authorName }} � {{ timeAgo(c.createdAt) }}</span>
+              <span class="text-xs text-slate-500">{{ c.authorName }} · {{ timeAgo(c.createdAt) }}</span>
             </div>
             <div :class="bubbleClass(c)">{{ c.message }}</div>
           </div>
@@ -211,7 +210,7 @@
       </div>
       <div class="border-t border-slate-200 p-3">
         <div class="flex items-center gap-2">
-          <input v-model="draft" type="text" placeholder="Write a comment�" class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-[#3A7D99] focus:outline-none focus:ring-1 focus:ring-[#3A7D99]" @keydown.enter.prevent="sendComment" />
+          <input v-model="draft" type="text" placeholder="Write a comment..." class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-[#3A7D99] focus:outline-none focus:ring-1 focus:ring-[#3A7D99]" @keydown.enter.prevent="sendComment" />
           <button type="button" class="rounded-md bg-[#3A7D99] px-3 py-2 text-sm font-semibold text-white disabled:opacity-60" :disabled="sending || !draft.trim()" @click="sendComment">Send</button>
         </div>
       </div>
@@ -231,7 +230,7 @@
             <div class="max-w-[85%]">
               <div class="flex items-center gap-2" :class="c.authorRole==='contractor' ? 'justify-end' : 'justify-start'"> 
                 <img v-if="c.avatarUrl" :src="c.avatarUrl" alt="avatar" class="h-6 w-6 rounded-full" />
-                <span class="text-xs text-slate-500">{{ c.authorName }} � {{ timeAgo(c.createdAt) }}</span>
+                <span class="text-xs text-slate-500">{{ c.authorName }} · {{ timeAgo(c.createdAt) }}</span>
               </div>
               <div :class="bubbleClass(c)">{{ c.message }}</div>
             </div>
@@ -239,7 +238,7 @@
         </div>
         <div class="border-t border-slate-200 p-3">
           <div class="flex items-center gap-2">
-            <input v-model="draft" type="text" placeholder="Write a comment�" class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-[#3A7D99] focus:outline-none focus:ring-1 focus:ring-[#3A7D99]" @keydown.enter.prevent="sendComment" />
+            <input v-model="draft" type="text" placeholder="Write a comment..." class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-[#3A7D99] focus:outline-none focus:ring-1 focus:ring-[#3A7D99]" @keydown.enter.prevent="sendComment" />
             <button type="button" class="rounded-md bg-[#3A7D99] px-3 py-2 text-sm font-semibold text-white disabled:opacity-60" :disabled="sending || !draft.trim()" @click="sendComment">Send</button>
           </div>
         </div>
@@ -255,10 +254,6 @@ import type { PublicProposalPayload } from "@modules/public/api/proposal";
 import { acceptPublicProposal, fetchPublicProposal } from "@modules/public/api/proposal";
 import { apiFetch } from "@/lib/http";
 import { launchWisetackFinancing } from "@/lib/wisetack";
-
-</template>
-
-<script setup lang="ts">
 
 const route = useRoute();
 const loading = ref(true);
@@ -422,15 +417,7 @@ const onFinanceWithWisetack = async () => {
   }
 };
 
-</template>
-
-<script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
-import { useRoute } from "vue-router";
-import type { PublicProposalPayload } from "@modules/public/api/proposal";
-import { acceptPublicProposal, fetchPublicProposal } from "@modules/public/api/proposal";
-import { apiFetch } from "@/lib/http";
-import { launchWisetackFinancing } from "@/lib/wisetack";
+ 
 
 const defaultSummary = (name: string) => {
   if (name === "Good") return "Essential scope to get started quickly.";

@@ -22,6 +22,7 @@
         >
           {{ client.name }} - {{ client.email }}
         </option>
+        <option value="__add__">+ Add new client…</option>
       </SQSelect>
 
       <form v-if="showForm" class="space-y-3" @submit.prevent="create">
@@ -66,7 +67,14 @@ onMounted(() => {
 });
 
 const onSelect = (value: string | number) => {
-  emit("update:modelValue", String(value));
+  const v = String(value);
+  if (v === "__add__") {
+    showForm.value = true;
+    // Clear the selection so the placeholder shows
+    emit("update:modelValue", "");
+    return;
+  }
+  emit("update:modelValue", v);
 };
 
 const create = async () => {
