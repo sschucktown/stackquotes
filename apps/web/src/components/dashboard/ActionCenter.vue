@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { computed, onMounted, onBeforeUnmount, ref, watchEffect } from 'vue'
 import { useRouter } from 'vue-router'
 import { useContractorProfileStore } from '@/modules/contractor/stores/profileStore'
@@ -38,7 +38,7 @@ const allCards = computed<StarterCard[]>(() => [
   {
     id: 'get_visible',
     title: 'Get Visible',
-    description: 'Add your business info so clients know who they’re dealing with.',
+    description: 'Add your business info so clients know who theyâ€™re dealing with.',
     ctaText: 'Finish Profile',
     ctaRoute: '/settings',
     icon: 'Eye',
@@ -47,7 +47,7 @@ const allCards = computed<StarterCard[]>(() => [
   {
     id: 'get_paid',
     title: 'Get Paid',
-    description: 'Set up payments once—then get paid automatically when clients accept.',
+    description: 'Set up payments onceâ€”then get paid automatically when clients accept.',
     ctaText: 'Connect Stripe',
     ctaRoute: '/payments',
     icon: 'CreditCard',
@@ -175,7 +175,7 @@ const go = (route: string) => router.push(route)
 </script>
 
 <template>
-  <section class="relative z-30 rounded-3xl bg-white/90 p-5 shadow-sm ring-1 ring-slate-100">
+  <section v-if="visibleCards.length" class="relative z-30 rounded-3xl bg-white/90 p-5 shadow-sm ring-1 ring-slate-100">
     <header class="mb-3">
       <h2 class="text-base font-semibold text-slate-900">Getting Started</h2>
       <p class="text-sm text-slate-600">Finish these quick steps to unlock your dashboard.</p>
@@ -203,7 +203,7 @@ const go = (route: string) => router.push(route)
 
     <transition name="fade">
       <div v-if="!visibleCards.length" class="relative mt-3 rounded-xl border border-emerald-200 bg-emerald-50/80 p-4 text-emerald-800">
-        <p class="text-sm">✅ You’re ready to quote. Send your first SmartProposal!</p>
+        <p class="text-sm">âœ… Youâ€™re ready to quote. Send your first SmartProposal!</p>
         <canvas ref="confettiCanvas" class="pointer-events-none absolute inset-x-0 -top-2 h-[120px] w-full"></canvas>
       </div>
     </transition>
