@@ -145,15 +145,6 @@ const showProfitPulse = computed(() => {
   return (pay + prop + qq) > 0
 })
 </script>
-
-      <transition name="fade-up">
-        <div v-if="showActionCenter && (skipFlag || onboardingSkipped) && needsStarterTasks" class="mt-2 flex justify-end">
-          <button type="button" class="text-xs text-slate-500 underline-offset-2 hover:underline" @click="resumeGettingStarted">
-            Resume Getting Started
-          </button>
-        </div>
-      </transition>
-
 <template>
   <div class="min-h-screen bg-white">
     <div class="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
@@ -177,6 +168,13 @@ const showProfitPulse = computed(() => {
         />
       </transition>
 
+      <transition name="fade-up">
+        <div v-if="showActionCenter && (skipFlag || onboardingSkipped) && needsStarterTasks" class="mt-2 flex justify-end">
+          <button type="button" class="text-xs text-slate-500 underline-offset-2 hover:underline" @click="resumeGettingStarted">
+            Resume Getting Started
+          </button>
+        </div>
+      </transition>
       <transition name="fade-up">
         <ActionCenterModule
           v-if="showActionCenter"
