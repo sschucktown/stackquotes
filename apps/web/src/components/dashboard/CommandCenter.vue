@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useContractorProfileStore } from '@/modules/contractor/stores/profileStore'
 import { useEstimateStore } from '@/modules/quickquote/stores/estimateStore'
@@ -56,6 +56,9 @@ const skipFlag = ref(
 const onboardingSkipped = computed(() => Boolean((profileStore.profile as any)?.onboarding_skipped))
 const showActionCenter = computed(() => Boolean(skipFlag.value) || onboardingSkipped.value || (profileComplete.value && stripeConnected.value && quickQuotesCount.value > 0))
 
+// If any starter task remains incomplete, we can bring the cards back
+const needsStarterTasks = computed(() => !profileComplete.value || !stripeConnected.value || quickQuotesCount.value === 0)
+
 const showAttentionBar = computed(() => {
   const viewed = props.proposalItems.filter(i => i.stage === 'viewed').length
   return (props.pendingDeposits > 0) || (props.openProposals > 0) || viewed > 0
@@ -65,10 +68,10 @@ const attentionMessage = computed(() => {
   const parts: string[] = []
   const deposits = props.pendingDeposits
   const viewed = props.proposalItems.filter(i => i.stage === 'viewed').length
-  if (deposits > 0) parts.push(`💰 ${deposits} deposit${deposits === 1 ? '' : 's'} pending`)
-  if (viewed > 0) parts.push(`👀 ${viewed} client${viewed === 1 ? '' : 's'} viewed your quote`)
+  if (deposits > 0) parts.push(`ðŸ’° ${deposits} deposit${deposits === 1 ? '' : 's'} pending`)
+  if (viewed > 0) parts.push(`ðŸ‘€ ${viewed} client${viewed === 1 ? '' : 's'} viewed your quote`)
   if (!parts.length && props.openProposals > 0) parts.push(`${props.openProposals} open proposal${props.openProposals === 1 ? '' : 's'}`)
-  return parts.join(' · ')
+  return parts.join(' Â· ')
 })
 
 const currency = (value: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value || 0)
@@ -122,6 +125,18 @@ const onVisibleCount = (p: { visible: number; total: number }) => {
   starterTotal.value = p.total
 }
 
+// Allow user to bring back Getting Started cards if previously skipped
+const resumeGettingStarted = async () => {
+  try {
+    if (typeof window !== 'undefined') {
+      window.localStorage.removeItem('onboarding_skipped')
+    }
+    try { await profileStore.save({ onboarding_skipped: false } as any) } catch {}
+  } finally {
+    skipFlag.value = 0
+  }
+}
+
 // Hide ProfitPulse snapshot for brand new users with no activity
 const showProfitPulse = computed(() => {
   const pay = Array.isArray(props.paymentItems) ? props.paymentItems.length : 0
@@ -130,6 +145,14 @@ const showProfitPulse = computed(() => {
   return (pay + prop + qq) > 0
 })
 </script>
+
+      <transition name="fade-up">
+        <div v-if="showActionCenter && (skipFlag || onboardingSkipped) && needsStarterTasks" class="mt-2 flex justify-end">
+          <button type="button" class="text-xs text-slate-500 underline-offset-2 hover:underline" @click="resumeGettingStarted">
+            Resume Getting Started
+          </button>
+        </div>
+      </transition>
 
 <template>
   <div class="min-h-screen bg-white">
@@ -267,7 +290,7 @@ const showProfitPulse = computed(() => {
           <div class="animate-pulse rounded-2xl bg-slate-100 p-10 ring-1 ring-slate-200" />
         </div>
         <div v-else class="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-rose-900">
-          <p class="text-sm font-semibold">We couldn’t load your summary</p>
+          <p class="text-sm font-semibold">We couldnâ€™t load your summary</p>
           <p v-if="error" class="mt-1 text-sm opacity-80">{{ error }}</p>
           <div class="mt-3 flex gap-2">
             <button type="button" class="rounded-md bg-slate-200 px-3 py-1.5 text-sm font-semibold text-slate-800 hover:bg-slate-300" @click="$emit('filter','proposals')">
