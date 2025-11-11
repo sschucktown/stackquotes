@@ -30,10 +30,7 @@
 
     <TotalsBar
       :subtotal="subtotal"
-      :tax="tax"
-      :tax-rate="state.taxRate"
       :total="total"
-      @update:taxRate="onTaxRateChange"
     />
 
     <div class="flex flex-col gap-3 sm:flex-row sm:justify-end">
@@ -57,13 +54,11 @@ const props = withDefaults(
     modelValue?: Estimate | null;
     submitting?: boolean;
     submitLabel?: string;
-    defaultTaxRate?: number;
   }>(),
   {
     modelValue: null,
     submitting: false,
     submitLabel: "Save Estimate",
-    defaultTaxRate: undefined,
   }
 );
 
@@ -74,7 +69,6 @@ const emit = defineEmits<{
 const {
   state,
   subtotal,
-  tax,
   total,
   addLineItem,
   removeLineItem,
@@ -82,26 +76,6 @@ const {
   reset,
   toPayload,
 } = useEstimateForm(props.modelValue ?? undefined);
-
-let defaultTaxApplied = false;
-
-watch(
-  () => [props.defaultTaxRate, props.modelValue],
-  ([defaultTaxRate, modelValue]) => {
-    if (modelValue) {
-      defaultTaxApplied = true;
-      return;
-    }
-    if (defaultTaxApplied) {
-      return;
-    }
-    if (typeof defaultTaxRate === "number" && !Number.isNaN(defaultTaxRate) && state.taxRate === 0) {
-      state.taxRate = defaultTaxRate;
-      defaultTaxApplied = true;
-    }
-  },
-  { immediate: true }
-);
 
 watch(
   () => props.modelValue,
@@ -111,18 +85,12 @@ watch(
         projectTitle: value.projectTitle,
         clientId: value.clientId,
         notes: value.notes ?? "",
-        taxRate: value.subtotal === 0 ? 0 : value.tax / value.subtotal,
         lineItems: value.lineItems,
       });
     }
   },
   { immediate: true }
 );
-
-const onTaxRateChange = (value: number) => {
-  defaultTaxApplied = true;
-  state.taxRate = value;
-};
 
 const submitLabel = computed(() => props.submitLabel);
 const submitting = computed(() => props.submitting);

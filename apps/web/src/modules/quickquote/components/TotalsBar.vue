@@ -5,27 +5,6 @@
       <span class="text-lg font-semibold text-slate-900">{{ currency(subtotal) }}</span>
     </div>
 
-    <div class="flex items-center justify-between">
-      <div>
-        <span class="text-sm text-slate-500">Tax</span>
-        <div class="mt-1 text-xs text-slate-400">{{ (taxRate * 100).toFixed(2) }}%</div>
-      </div>
-      <span class="text-lg font-semibold text-slate-900">{{ currency(tax) }}</span>
-    </div>
-
-    <div>
-      <SQInput
-        :model-value="taxRate"
-        label="Tax Rate"
-        type="number"
-        min="0"
-        max="1"
-        step="0.01"
-        hint="0.00 - 1.00"
-        @update:model-value="handleTaxRateChange"
-      />
-    </div>
-
     <div class="flex items-center justify-between border-t border-slate-200 pt-4">
       <span class="text-base font-semibold text-slate-700">Total</span>
       <span class="text-2xl font-bold text-slate-900">{{ currency(total) }}</span>
@@ -36,19 +15,8 @@
 <script setup lang="ts">
 const props = defineProps<{
   subtotal: number;
-  tax: number;
   total: number;
-  taxRate: number;
-}>();
-
-const emit = defineEmits<{
-  (e: "update:taxRate", value: number): void;
 }>();
 
 const currency = (value: number) => `$${value.toFixed(2)}`;
-
-const handleTaxRateChange = (value: string | number | null | undefined) => {
-  const numeric = Number(value ?? 0);
-  emit("update:taxRate", Number.isFinite(numeric) ? numeric : 0);
-};
 </script>

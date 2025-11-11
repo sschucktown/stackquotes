@@ -33,7 +33,6 @@
         :model-value="currentEstimate"
         :submitting="saving"
         :submit-label="isNew ? 'Create Estimate' : 'Save Changes'"
-        :default-tax-rate="defaultTaxRate"
         @submit="save"
       />
 
@@ -192,7 +191,7 @@ const currentClient = computed(() => {
   return clientStore.items.find((client) => client.id === currentEstimate.value?.clientId) ?? null;
 });
 
-const defaultTaxRate = computed(() => settingsStore.data?.defaultTaxRate);
+// tax rate removed
 const currentStatusClass = computed(() =>
   currentEstimate.value ? statusClassName(currentEstimate.value.status) : "bg-slate-200 text-slate-700"
 );
@@ -249,7 +248,8 @@ const save = async (payload: EstimateFormPayload) => {
         projectTitle: payload.projectTitle,
         lineItems: payload.lineItems,
         notes: payload.notes,
-        taxRate: payload.taxRate,
+        // ensure no tax applied
+        taxRate: 0,
       });
       if (result) {
         router.replace(`/quickquotes/${result.id}`);
@@ -260,7 +260,8 @@ const save = async (payload: EstimateFormPayload) => {
         projectTitle: payload.projectTitle,
         lineItems: payload.lineItems,
         notes: payload.notes,
-        taxRate: payload.taxRate,
+        // ensure no tax applied
+        taxRate: 0,
       });
     }
   } finally {

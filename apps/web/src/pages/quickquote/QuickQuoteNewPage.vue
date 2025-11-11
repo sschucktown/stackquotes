@@ -78,10 +78,7 @@
             <label class="mb-1 block text-xs font-medium text-slate-600">Unit Price</label>
             <input v-model.number="unitPrice" type="number" min="0" step="0.01" class="rounded-lg border border-slate-300 px-3 py-2 text-sm w-full" />
           </div>
-          <div>
-            <label class="mb-1 block text-xs font-medium text-slate-600">Tax Rate (%)</label>
-            <input v-model.number="taxRatePct" type="number" min="0" step="0.1" class="rounded-lg border border-slate-300 px-3 py-2 text-sm w-full" />
-          </div>
+          
           <div class="sm:col-span-2">
             <label class="mb-1 block text-xs font-medium text-slate-600">Notes</label>
             <textarea v-model="notes" rows="3" class="rounded-lg border border-slate-300 px-3 py-2 text-sm w-full" />
@@ -92,7 +89,6 @@
       <!-- Sticky Footer Summary -->
       <div class="sticky bottom-0 bg-white border-t border-slate-200 p-5 flex flex-col sm:flex-row sm:justify-between sm:items-center">
         <div>
-          <p class="text-sm text-slate-600">Tax ({{ taxRatePct.toFixed(1) }}%)</p>
           <p class="text-lg font-semibold text-slate-900">Total: ${{ total.toFixed(2) }}</p>
         </div>
         <button
@@ -153,15 +149,8 @@ const description = ref('')
 const unitPrice = ref<number>(0)
 const notes = ref('')
 
-const taxRate = ref<number>(0)
-const taxRatePct = computed({
-  get: () => taxRate.value * 100,
-  set: (v: number) => (taxRate.value = (Number(v) || 0) / 100),
-})
-
 const subtotal = computed(() => Number(unitPrice.value || 0))
-const tax = computed(() => subtotal.value * taxRate.value)
-const total = computed(() => subtotal.value + tax.value)
+const total = computed(() => subtotal.value)
 
 const error = ref<string | null>(null)
 const emailSending = ref(false)
@@ -262,12 +251,10 @@ const loadProfileAndTemplates = async () => {
 
   const { data: settings } = await supabase
     .from('user_settings')
-    .select('default_tax_rate')
+    .select('id')
     .eq('user_id', uid)
     .maybeSingle()
-  if (settings?.default_tax_rate != null) {
-    taxRate.value = Number(settings.default_tax_rate) || 0
-  }
+  // no-op: tax rate removed
 }
 
 const loadClients = async () => {
@@ -428,7 +415,6 @@ const createProposal = async () => {
       project_title: projectTitle.value || selectedProject.value.project_name,
       line_items: lineItems,
       subtotal: subtotal.value,
-      tax: tax.value,
       total: total.value,
       notes: notes.value,
       status: 'draft',

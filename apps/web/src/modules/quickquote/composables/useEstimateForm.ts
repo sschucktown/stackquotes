@@ -5,7 +5,6 @@ export interface EstimateFormPayload {
   projectTitle: string;
   clientId: string;
   notes: string;
-  taxRate: number;
   lineItems: LineItemDraft[];
 }
 
@@ -26,7 +25,6 @@ export const useEstimateForm = (initial?: Partial<EstimateFormPayload>) => {
     projectTitle: initial?.projectTitle ?? "",
     clientId: initial?.clientId ?? "",
     notes: initial?.notes ?? "",
-    taxRate: initial?.taxRate ?? 0,
     lineItems:
       initial?.lineItems?.map((item) => ({
         ...item,
@@ -38,8 +36,7 @@ export const useEstimateForm = (initial?: Partial<EstimateFormPayload>) => {
     state.lineItems.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0)
   );
 
-  const tax = computed(() => subtotal.value * state.taxRate);
-  const total = computed(() => subtotal.value + tax.value);
+  const total = computed(() => subtotal.value);
 
   const addLineItem = () => {
     state.lineItems.push(createLineItem());
@@ -65,7 +62,6 @@ export const useEstimateForm = (initial?: Partial<EstimateFormPayload>) => {
     state.projectTitle = payload?.projectTitle ?? "";
     state.clientId = payload?.clientId ?? "";
     state.notes = payload?.notes ?? "";
-    state.taxRate = payload?.taxRate ?? 0;
     state.lineItems =
       payload?.lineItems?.map((item) => ({
         ...item,
@@ -82,7 +78,6 @@ export const useEstimateForm = (initial?: Partial<EstimateFormPayload>) => {
     projectTitle: state.projectTitle,
     clientId: state.clientId,
     notes: state.notes,
-    taxRate: state.taxRate,
     lineItems: state.lineItems.map((item) => ({
       ...item,
       total: roundTo(item.quantity * item.unitPrice, 2),
@@ -92,7 +87,6 @@ export const useEstimateForm = (initial?: Partial<EstimateFormPayload>) => {
   return {
     state,
     subtotal,
-    tax,
     total,
     addLineItem,
     removeLineItem,
