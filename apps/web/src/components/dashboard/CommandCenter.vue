@@ -48,8 +48,13 @@ const profileComplete = computed(() => {
 })
 const stripeConnected = computed(() => (profileStore.profile as any)?.stripeAccountStatus === 'active')
 const quickQuotesCount = computed(() => estimateStore.items.length)
+const skipFlag = ref(
+  typeof window !== 'undefined' && (window.localStorage.getItem('onboarding_skipped') === '1' || window.localStorage.getItem('onboarding_skipped') === 'true')
+    ? 1
+    : 0
+)
 const onboardingSkipped = computed(() => Boolean((profileStore.profile as any)?.onboarding_skipped))
-const showActionCenter = computed(() => onboardingSkipped.value || (profileComplete.value && stripeConnected.value && quickQuotesCount.value > 0))
+const showActionCenter = computed(() => Boolean(skipFlag.value) || onboardingSkipped.value || (profileComplete.value && stripeConnected.value && quickQuotesCount.value > 0))
 
 const showAttentionBar = computed(() => {
   const viewed = props.proposalItems.filter(i => i.stage === 'viewed').length
@@ -137,6 +142,7 @@ const onVisibleCount = (p: { visible: number; total: number }) => {
           v-if="!showActionCenter"
           class="mt-4"
           @visible-count="onVisibleCount"
+          @skipped="() => { skipFlag.value = 1 }"
         />
       </transition>
 

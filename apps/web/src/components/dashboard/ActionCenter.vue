@@ -68,6 +68,7 @@ const visibleCards = computed(() => allCards.value.filter(c => c.visible))
 
 const emit = defineEmits<{
   (e: 'visible-count', payload: { visible: number; total: number }): void
+  (e: 'skipped'): void
 }>()
 
 // Confetti + banner when all done
@@ -172,6 +173,19 @@ watchEffect(() => {
 })
 
 const go = (route: string) => router.push(route)
+
+const handleSkip = async () => {
+  try {
+    // Persist locally so UI can react instantly even if API ignores the field
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('onboarding_skipped', '1')
+    }
+    // Attempt to persist on profile; ignore failure
+    try { await profileStore.save({ onboarding_skipped: true } as any) } catch {}
+  } finally {
+    emit('skipped')
+  }
+}
 </script>
 
 <template>
@@ -194,7 +208,7 @@ const go = (route: string) => router.push(route)
         <button
           type="button"
           class="text-xs text-slate-500 underline-offset-2 hover:underline"
-          @click="profileStore.save({ onboarding_skipped: true } as any)"
+          @click="handleSkip"
         >
           Skip for now
         </button>
