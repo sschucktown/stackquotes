@@ -16,6 +16,11 @@ const error = ref<string | null>(null)
 const stripeConnected = computed(() => profileStore.profile?.stripeAccountStatus === 'active')
 const stripeStatus = computed(() => profileStore.profile?.stripeAccountStatus ?? 'pending')
 
+// Default zero states for new users
+const paymentsReceived30 = computed(() => 0)
+const paymentsPending = computed(() => 0)
+const currency = (value?: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value || 0)
+
 async function startStripeOnboarding() {
   error.value = null
   loading.value = true
@@ -60,12 +65,12 @@ onMounted(async () => {
       <section class="mt-6 grid gap-4 sm:grid-cols-2">
         <article class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <p class="text-xs uppercase tracking-wide text-slate-500">Received</p>
-          <p class="mt-2 text-3xl font-semibold text-slate-900">$9,200</p>
+          <p class="mt-2 text-3xl font-semibold text-slate-900">{{ currency(paymentsReceived30) }}</p>
           <p class="mt-1 text-xs text-slate-500">Last 30 days</p>
         </article>
         <article class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <p class="text-xs uppercase tracking-wide text-slate-500">Pending</p>
-          <p class="mt-2 text-3xl font-semibold text-slate-900">$2,300</p>
+          <p class="mt-2 text-3xl font-semibold text-slate-900">{{ currency(paymentsPending) }}</p>
           <p class="mt-1 text-xs text-slate-500">Awaiting payment</p>
         </article>
       </section>

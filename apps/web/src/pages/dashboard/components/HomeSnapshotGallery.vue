@@ -17,9 +17,13 @@ const todayNewQuotes = computed(() => {
   }
 });
 
-const smartProposalsAwaiting = computed(() => 3);
-const paymentsSummary = computed(() => ({ received: 9200, pending: 2300 }));
-const profitChange = computed(() => 18);
+// Treat users with no quotes yet as "new" for initial zero states
+const isNewUser = computed(() => (estimateStore.items?.length || 0) === 0);
+
+const smartProposalsAwaiting = computed(() => 0);
+const paymentsSummary = computed(() => ({ received: 0, pending: 0 }));
+// Show no ProfitPulse change for new users
+const profitChange = computed<number | null>(() => (isNewUser.value ? null : 0));
 
 const go = (name: string) => router.push({ name });
 </script>
@@ -77,7 +81,8 @@ const go = (name: string) => router.push({ name });
         <div class="flex items-center justify-between">
           <div>
             <h3 class="text-base font-semibold text-slate-900">ProfitPulse</h3>
-            <p class="text-sm text-slate-600"><span class="font-semibold">+{{ profitChange }}%</span> vs last month</p>
+            <p v-if="profitChange !== null" class="text-sm text-slate-600"><span class="font-semibold">+{{ profitChange }}%</span> vs last month</p>
+            <p v-else class="text-sm text-slate-500">No data yet</p>
           </div>
           <span class="rounded-lg bg-brand-50 p-2 text-brand-700"><ChartBarIcon class="h-5 w-5" /></span>
         </div>

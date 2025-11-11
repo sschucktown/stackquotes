@@ -121,6 +121,14 @@ const onVisibleCount = (p: { visible: number; total: number }) => {
   starterVisible.value = p.visible
   starterTotal.value = p.total
 }
+
+// Hide ProfitPulse snapshot for brand new users with no activity
+const showProfitPulse = computed(() => {
+  const pay = Array.isArray(props.paymentItems) ? props.paymentItems.length : 0
+  const prop = Array.isArray(props.proposalItems) ? props.proposalItems.length : 0
+  const qq = Array.isArray(props.quickQuoteItems) ? props.quickQuoteItems.length : 0
+  return (pay + prop + qq) > 0
+})
 </script>
 
 <template>
@@ -217,7 +225,7 @@ const onVisibleCount = (p: { visible: number; total: number }) => {
         <div class="h-px bg-gradient-to-r from-slate-800/0 via-slate-800/40 to-slate-800/0" />
 
         <!-- ProfitPulse snapshot -->
-        <article class="rounded-3xl bg-white/95 p-4 shadow-sm ring-1 ring-black/5">
+        <article v-if="showProfitPulse" class="rounded-3xl bg-white/95 p-4 shadow-sm ring-1 ring-black/5">
           <h3 class="text-sm font-semibold text-slate-900">ProfitPulse</h3>
           <div class="mt-2 grid gap-4 md:grid-cols-2">
             <div class="rounded-xl bg-slate-50 p-4">
