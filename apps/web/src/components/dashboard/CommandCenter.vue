@@ -112,6 +112,10 @@ const displayStatus = (s?: string | null) => {
 // Track starter (setup) cards from ActionCenter to coordinate with ActionCenterModule
 const starterVisible = ref(0)
 const starterTotal = ref(0)
+const onVisibleCount = (p: { visible: number; total: number }) => {
+  starterVisible.value = p.visible
+  starterTotal.value = p.total
+}
 </script>
 
 <template>
@@ -132,7 +136,7 @@ const starterTotal = ref(0)
         <ActionCenter
           v-if="!showActionCenter"
           class="mt-4"
-          @visible-count="(p) => { starterVisible = p.visible; starterTotal = p.total }"
+          @visible-count="onVisibleCount"
         />
       </transition>
 
