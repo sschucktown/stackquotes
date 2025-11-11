@@ -132,7 +132,7 @@ const starterTotal = ref(0)
         <ActionCenter
           v-if="!showActionCenter"
           class="mt-4"
-          @visible-count="(p) => { starterVisible.value = p.visible; starterTotal.value = p.total }"
+          @visible-count="(p) => { starterVisible = p.visible; starterTotal = p.total }"
         />
       </transition>
 
