@@ -49,6 +49,21 @@ const router = useRouter();
 const profileStore = useContractorProfileStore();
 const { clearStoredRedirect } = useAuth();
 
+const ONBOARDING_SKIP_KEY = "stackquotes:onboarding:skip";
+const ONBOARDING_DONE_KEY = "stackquotes:onboarding:done";
+const setSessionFlag = (key: string, value: boolean) => {
+  if (typeof window === "undefined") return;
+  try {
+    if (value) {
+      window.sessionStorage.setItem(key, "1");
+    } else {
+      window.sessionStorage.removeItem(key);
+    }
+  } catch {
+    // ignore storage errors
+  }
+};
+
 const TRADE_OPTIONS = [
   "Decks & Porches",
   "Fencing",
@@ -94,6 +109,7 @@ onMounted(async () => {
 });
 
 const handleSkip = async () => {
+  setSessionFlag(ONBOARDING_SKIP_KEY, true);
   await router.push({ name: "dashboard-home" });
 };
 
@@ -110,6 +126,8 @@ const handleContinue = async () => {
     });
     await profileStore.load(true);
     clearStoredRedirect();
+    setSessionFlag(ONBOARDING_DONE_KEY, true);
+    setSessionFlag(ONBOARDING_SKIP_KEY, false);
     await router.push({ name: "dashboard-home" });
   } catch (err) {
     error.value = err instanceof Error ? err.message : "Unable to save your onboarding details.";

@@ -18,6 +18,21 @@ const waitForAuth = async () => {
   });
 };
 
+// Session flags to soften onboarding redirect behavior
+const ONBOARDING_SKIP_KEY = "stackquotes:onboarding:skip";
+const ONBOARDING_DONE_KEY = "stackquotes:onboarding:done";
+const isOnboardingBypassed = (): boolean => {
+  if (typeof window === "undefined") return false;
+  try {
+    return (
+      window.sessionStorage.getItem(ONBOARDING_SKIP_KEY) === "1" ||
+      window.sessionStorage.getItem(ONBOARDING_DONE_KEY) === "1"
+    );
+  } catch {
+    return false;
+  }
+};
+
 const router = createRouter({
   history: createWebHistory(),
   routes: [
@@ -220,10 +235,11 @@ router.beforeEach(async (to) => {
     const hasTrade =
       Boolean(profileStore.profile?.trade ?? profileStore.profile?.tradeType);
     const needsOnboarding = !profileStore.isDemo && (!profileStore.profile || !hasTrade);
-    if (needsOnboarding && to.name !== "onboarding") {
+    const bypass = isOnboardingBypassed();
+    if (needsOnboarding && !bypass && to.name !== "onboarding") {
       return { name: "onboarding", replace: true };
     }
-    if (!needsOnboarding && to.name === "onboarding") {
+    if ((!needsOnboarding || bypass) && to.name === "onboarding") {
       return { name: "dashboard-home", replace: true };
     }
   }
