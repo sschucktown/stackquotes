@@ -144,7 +144,7 @@ const router = createRouter({
         },
         {
           path: "payments",
-          alias: "/payments",
+          alias: ["/payments", "/settings/payments"],
           name: "payments",
           component: () => import("@/pages/payments/PaymentsPage.vue"),
         },
