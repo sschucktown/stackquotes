@@ -217,8 +217,9 @@ router.beforeEach(async (to) => {
         console.error("[router] failed to load contractor profile", error);
       }
     }
-    const needsOnboarding =
-      !profileStore.isDemo && (!profileStore.profile || !profileStore.profile.trade);
+    const hasTrade =
+      Boolean(profileStore.profile?.trade ?? profileStore.profile?.tradeType);
+    const needsOnboarding = !profileStore.isDemo && (!profileStore.profile || !hasTrade);
     if (needsOnboarding && to.name !== "onboarding") {
       return { name: "onboarding", replace: true };
     }
