@@ -21,17 +21,18 @@ const waitForAuth = async () => {
 // Session flags to soften onboarding redirect behavior
 const ONBOARDING_SKIP_KEY = "stackquotes:onboarding:skip";
 const ONBOARDING_DONE_KEY = "stackquotes:onboarding:done";
-const isOnboardingBypassed = (): boolean => {
+const readFlag = (key: string): boolean => {
   if (typeof window === "undefined") return false;
   try {
-    return (
-      window.sessionStorage.getItem(ONBOARDING_SKIP_KEY) === "1" ||
-      window.sessionStorage.getItem(ONBOARDING_DONE_KEY) === "1"
-    );
+    const storages: (Storage | null)[] = [window.localStorage, window.sessionStorage];
+    return storages.some((storage) => storage?.getItem(key) === "1");
   } catch {
     return false;
   }
 };
+
+const isOnboardingBypassed = (): boolean =>
+  readFlag(ONBOARDING_SKIP_KEY) || readFlag(ONBOARDING_DONE_KEY);
 
 const router = createRouter({
   history: createWebHistory(),
@@ -232,9 +233,10 @@ router.beforeEach(async (to) => {
         console.error("[router] failed to load contractor profile", error);
       }
     }
-    const hasTrade =
-      Boolean(profileStore.profile?.trade ?? profileStore.profile?.tradeType);
-    const needsOnboarding = !profileStore.isDemo && (!profileStore.profile || !hasTrade);
+    const hasTrade = Boolean(profileStore.profile?.trade ?? profileStore.profile?.tradeType);
+    const hasProfile = Boolean(profileStore.profile);
+    const hasError = Boolean(profileStore.error);
+    const needsOnboarding = !profileStore.isDemo && !hasError && (!hasProfile || !hasTrade);
     const bypass = isOnboardingBypassed();
     if (needsOnboarding && !bypass && to.name !== "onboarding") {
       return { name: "onboarding", replace: true };

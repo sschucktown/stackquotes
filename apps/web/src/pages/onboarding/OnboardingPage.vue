@@ -51,17 +51,24 @@ const { clearStoredRedirect } = useAuth();
 
 const ONBOARDING_SKIP_KEY = "stackquotes:onboarding:skip";
 const ONBOARDING_DONE_KEY = "stackquotes:onboarding:done";
-const setSessionFlag = (key: string, value: boolean) => {
+const setOnboardingFlag = (key: string, value: boolean) => {
   if (typeof window === "undefined") return;
-  try {
-    if (value) {
-      window.sessionStorage.setItem(key, "1");
-    } else {
-      window.sessionStorage.removeItem(key);
+  const storages: (Storage | null)[] = [
+    window.localStorage ?? null,
+    window.sessionStorage ?? null,
+  ];
+  storages.forEach((storage) => {
+    if (!storage) return;
+    try {
+      if (value) {
+        storage.setItem(key, "1");
+      } else {
+        storage.removeItem(key);
+      }
+    } catch {
+      // ignore storage errors
     }
-  } catch {
-    // ignore storage errors
-  }
+  });
 };
 
 const TRADE_OPTIONS = [
@@ -109,7 +116,7 @@ onMounted(async () => {
 });
 
 const handleSkip = async () => {
-  setSessionFlag(ONBOARDING_SKIP_KEY, true);
+  setOnboardingFlag(ONBOARDING_SKIP_KEY, true);
   await router.push({ name: "dashboard-home" });
 };
 
@@ -126,8 +133,8 @@ const handleContinue = async () => {
     });
     await profileStore.load(true);
     clearStoredRedirect();
-    setSessionFlag(ONBOARDING_DONE_KEY, true);
-    setSessionFlag(ONBOARDING_SKIP_KEY, false);
+    setOnboardingFlag(ONBOARDING_DONE_KEY, true);
+    setOnboardingFlag(ONBOARDING_SKIP_KEY, false);
     await router.push({ name: "dashboard-home" });
   } catch (err) {
     error.value = err instanceof Error ? err.message : "Unable to save your onboarding details.";
