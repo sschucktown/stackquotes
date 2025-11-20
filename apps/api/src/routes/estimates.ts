@@ -72,14 +72,17 @@ estimatesRouter.get("/list", async (c) => {
 
 estimatesRouter.post("/create", async (c) => {
   const user = await requireUser(c);
+  const raw = await c.req.json();
   try {
-    await assertCreateEditAllowed(user.id);
+    const source =
+      typeof (raw as any)?.source === "string" ? ((raw as any).source as string) : undefined;
+    await assertCreateEditAllowed(user.id, source);
   } catch (e) {
     const status = (e as any)?.status ?? 403;
     c.status(status);
     return c.json({ error: (e as Error).message });
   }
-  const payload = createSchema.parse(await c.req.json());
+  const payload = createSchema.parse(raw);
   const supabase = getServiceClient();
   const settings =
     payload.taxRate === undefined ? await getUserSettings(supabase, user.id) : null;
@@ -109,14 +112,17 @@ estimatesRouter.post("/create", async (c) => {
 
 estimatesRouter.patch("/update", async (c) => {
   const user = await requireUser(c);
+  const raw = await c.req.json();
   try {
-    await assertCreateEditAllowed(user.id);
+    const source =
+      typeof (raw as any)?.source === "string" ? ((raw as any).source as string) : undefined;
+    await assertCreateEditAllowed(user.id, source);
   } catch (e) {
     const status = (e as any)?.status ?? 403;
     c.status(status);
     return c.json({ error: (e as Error).message });
   }
-  const payload = updateSchema.parse(await c.req.json());
+  const payload = updateSchema.parse(raw);
   const supabase = getServiceClient();
   const { id, lineItems, ...rest } = payload;
   const updateInput: EstimateUpdateInput = {

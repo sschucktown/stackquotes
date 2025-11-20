@@ -18,13 +18,14 @@ export const updateQuickQuote = async (
   id: string,
   input: QuickQuoteUpdateInput
 ): Promise<QuickQuote> => {
-  const payload: Partial<EstimatePayload> = {
+  const payload: Partial<EstimatePayload> & { source: string } = {
     clientId: input.clientId,
     projectTitle: input.projectTitle,
     lineItems: input.lineItems,
     notes: input.notes,
     taxRate: 0,
     status: input.status,
+    source: "quickquote",
   };
   const { data, error } = await updateEstimate(id, payload);
   if (error || !data) {
@@ -36,4 +37,3 @@ export const updateQuickQuote = async (
   }
   return quote;
 };
-

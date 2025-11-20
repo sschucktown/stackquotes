@@ -46,7 +46,14 @@ export class PlanRestrictionError extends Error {
   status = 403;
 }
 
-export const assertCreateEditAllowed = async (userId: string): Promise<void> => {
+export const assertCreateEditAllowed = async (
+  userId: string,
+  source?: string
+): Promise<void> => {
+  // QuickQuote estimates are always allowed on free tier.
+  if (source === "quickquote") {
+    return;
+  }
   const status = await getPlanStatus(userId);
   if (!status.hasProFeatures) {
     const err = new PlanRestrictionError(
@@ -55,4 +62,3 @@ export const assertCreateEditAllowed = async (userId: string): Promise<void> => 
     throw err;
   }
 };
-

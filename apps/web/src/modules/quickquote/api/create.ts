@@ -17,13 +17,14 @@ export interface QuickQuoteCreateInput {
 export const createQuickQuote = async (
   input: QuickQuoteCreateInput
 ): Promise<QuickQuote> => {
-  const payload: EstimatePayload = {
+  const payload: EstimatePayload & { source: string } = {
     clientId: input.clientId,
     projectTitle: input.projectTitle,
     lineItems: input.lineItems,
     notes: input.notes,
     taxRate: 0,
     status: input.status,
+    source: "quickquote",
   };
   const { data, error } = await createEstimate(payload);
   if (error || !data) {
@@ -35,4 +36,3 @@ export const createQuickQuote = async (
   }
   return quote;
 };
-
