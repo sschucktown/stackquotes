@@ -61,25 +61,8 @@ export const generateSmartProposalFromQuote = async ({
 
   const branding = { businessName: profile?.businessName ?? null };
 
-  let options = previous?.options ?? [];
-  let depositConfig = previous?.depositConfig ?? null;
-  let source: SmartProposalGenerationSource = "recycled";
-
-  if (!options.length) {
-    const draft = createSmartProposalFromLineItems(estimate.lineItems, branding);
-    options = draft.options;
-    depositConfig = draft.deposit ?? DEFAULT_DEPOSIT;
-    source = "quickquote";
-  } else if (!depositConfig) {
-    const draft = createSmartProposalFromLineItems(estimate.lineItems, branding);
-    depositConfig = draft.deposit ?? DEFAULT_DEPOSIT;
-  }
-
-  if (!depositConfig) {
-    depositConfig = DEFAULT_DEPOSIT;
-  }
-
-  // Gating: Launch (non-trial) plans only get a single option (baseline from QuickQuote)
+  // Gating: Launch (non-trial) plans only get a single option (baseline from QuickQuote).
+  // Pro/Crew and active trials should receive full Good/Better/Best options.
   const tier = (plan?.data?.subscription_tier as string | undefined)?.toLowerCase?.() ?? "launch";
   const trialEndRaw = plan?.data?.trial_end as string | null | undefined;
   const inTrial = (() => {
@@ -88,9 +71,47 @@ export const generateSmartProposalFromQuote = async ({
     return !Number.isNaN(d.getTime()) && d.getTime() > Date.now();
   })();
   const allowMultiOptions = tier === "pro" || tier === "crew" || inTrial; // paid tiers and active trial allow multi-options
-  if (!allowMultiOptions && options.length > 1) {
-    const better = options.find((o) => o.name?.toLowerCase?.() === "better");
-    options = [better ?? options[0]];
+
+  let options = previous?.options ?? [];
+  let depositConfig = previous?.depositConfig ?? null;
+  let source: SmartProposalGenerationSource = options.length ? "recycled" : "quickquote";
+
+  if (allowMultiOptions) {
+    // On Pro/Crew (or active trial), always ensure the client gets a full
+    // Good/Better/Best proposal derived from the current QuickQuote.
+    // If a previous proposal only had a single option (e.g. from Launch),
+    // regenerate fresh multi-option pricing from the QuickQuote.
+    if (options.length <= 1) {
+      const draft = createSmartProposalFromLineItems(estimate.lineItems, branding);
+      options = draft.options;
+      depositConfig = depositConfig ?? draft.deposit ?? DEFAULT_DEPOSIT;
+      source = "quickquote";
+    } else if (!depositConfig) {
+      // Preserve existing multi-option structure but normalise deposit config when missing.
+      const draft = createSmartProposalFromLineItems(estimate.lineItems, branding);
+      depositConfig = draft.deposit ?? DEFAULT_DEPOSIT;
+    }
+  } else {
+    // Launch / non-trial: reuse previous proposal structure when available,
+    // otherwise fall back to a single-option baseline from the QuickQuote.
+    if (!options.length) {
+      const draft = createSmartProposalFromLineItems(estimate.lineItems, branding);
+      options = draft.options;
+      depositConfig = draft.deposit ?? DEFAULT_DEPOSIT;
+      source = "quickquote";
+    } else if (!depositConfig) {
+      const draft = createSmartProposalFromLineItems(estimate.lineItems, branding);
+      depositConfig = draft.deposit ?? DEFAULT_DEPOSIT;
+    }
+
+    if (options.length > 1) {
+      const better = options.find((o) => o.name?.toLowerCase?.() === "better");
+      options = [better ?? options[0]];
+    }
+  }
+
+  if (!depositConfig) {
+    depositConfig = DEFAULT_DEPOSIT;
   }
 
   const proposal = await createProposalRecord(supabase, {
