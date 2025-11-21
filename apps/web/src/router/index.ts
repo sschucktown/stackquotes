@@ -153,6 +153,14 @@ const router = createRouter({
           component: () => import("@/pages/smartproposals/SmartProposalsPage.vue"),
         },
         {
+          path: "proposals-v2",
+          name: "ProposalsV2Dev",
+          component: () => import("@/pages/smartproposals/SmartProposalsV2Page.vue"),
+          meta: {
+            requiresAuth: true,
+          },
+        },
+        {
           path: "analytics",
           alias: "/analytics",
           name: "analytics",
