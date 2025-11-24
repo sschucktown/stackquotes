@@ -1,265 +1,433 @@
 <template>
-  <div class="relative overflow-hidden bg-slate-950 text-white">
-    <transition name="fade">
-      <div
-        v-show="showRibbon"
-        class="fixed top-0 inset-x-0 z-50 flex flex-col sm:flex-row sm:items-center sm:justify-between px-4 py-3 md:px-10 bg-gradient-to-r from-cyan-500/20 via-slate-900 to-cyan-400/20 backdrop-blur-md border-b border-white/10"
-      >
-        <p class="text-sm font-medium text-white/90 text-center sm:text-left">
-          StackQuotes Pro • $79/mo • 30-Day Free Trial
-        </p>
-        <button
-          type="button"
-          @click="scrollToPricing()"
-          class="mt-2 sm:mt-0 rounded-full bg-[#00D1FF] px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-cyan-300 transition-all"
-        >
-          Start Free Today
-        </button>
-        <RouterLink to="/login" class="mt-2 sm:mt-0 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold text-white hover:bg-white/15 transition-all">Log In</RouterLink>
-      </div>
-    </transition>
-
-    <div class="absolute inset-0">
-      <div class="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 opacity-90" />
-      <div class="absolute -left-32 top-16 h-72 w-72 rounded-full bg-cyan-500/20 blur-3xl md:-left-16 md:h-96 md:w-96" />
-      <div class="absolute -right-24 bottom-0 h-80 w-80 rounded-full bg-teal-400/20 blur-3xl md:-right-10 md:h-[28rem] md:w-[28rem]" />
+  <div class="relative min-h-screen overflow-hidden bg-slate-950 text-white">
+    <div class="pointer-events-none absolute inset-0">
+      <div class="absolute inset-0 bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900" />
+      <div class="absolute -left-16 top-12 h-72 w-72 rounded-full bg-cyan-500/15 blur-3xl md:-left-10 md:h-96 md:w-96" />
+      <div class="absolute -right-10 bottom-[-6rem] h-80 w-80 rounded-full bg-teal-400/15 blur-3xl md:h-[26rem] md:w-[26rem]" />
     </div>
 
     <div class="relative">
-      <header class="mx-auto flex max-w-6xl flex-col gap-16 px-6 pb-24 pt-20 md:px-10 lg:flex-row lg:items-center lg:gap-12 lg:pb-28 lg:pt-24">
-        <div class="max-w-3xl space-y-8 lg:w-1/2">
-          <div class="inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/10 px-4 py-2 text-xs font-medium uppercase tracking-[0.4em] text-cyan-200/90">
-            <span class="h-2 w-2 rounded-full bg-cyan-300 shadow-[0_0_0_4px_rgba(0,209,255,0.25)]" />
-            <span>Close More Jobs</span>
-            <span class="text-white/40">Good / Better / Best</span>
-          </div>
-          <h1 class="text-4xl font-semibold leading-tight text-white sm:text-5xl lg:text-6xl">
-            Close more jobs with 3-option quotes your clients can accept instantly.
-          </h1>
-          <p class="max-w-xl text-base text-slate-200 sm:text-lg">
-            StackQuotes helps contractors send polished Good/Better/Best proposals, capture signatures, and get paid faster.
-            Everything is wired into your workflow — from instant deposits to automated follow-up.
-          </p>
-          <div class="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:gap-5">
-            <button
-              type="button"
-              class="group inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#00D1FF] px-6 py-3 text-sm font-semibold text-slate-900 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-cyan-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-200 sm:w-auto"
-              @click="primaryCta.onClick?.()"
-            >
-              <span>{{ primaryCta.label }}</span>
-              <span class="hidden items-center text-xs font-medium tracking-wide sm:flex">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" viewBox="0 0 20 20" fill="currentColor">
-                  <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 0 1 1.414 0l5 5c.03.03.058.063.083.097l.007.01.002.003c.03.046.057.094.085.145l.01.02c.03.074.053.149.073.227l.003.02c.02.159.02.322 0 .482l-.003.02a1 1 0 0 1-.073.228l-.01.02a.993.993 0 0 1-.085.148l-.002.003-.007.01a.997.997 0 0 1-.083.094l-5 5a1 1 0 1 1-1.414-1.414L13.586 11H4a1 1 0 1 1 0-2h9.586l-3.293-3.293a1 1 0 0 1 0-1.414Z" clip-rule="evenodd" />
-                </svg>
-              </span>
-            </button>
-            <button
-              type="button"
-              class="group inline-flex w-full items-center justify-center gap-2 rounded-full border border-white/20 bg-white/10 px-6 py-3 text-sm font-semibold text-white transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-white/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/40 sm:w-auto"
-              @click="scrollToPricing()"
-            >
-              <span>See Pricing</span>
-              <span class="hidden text-xs font-medium tracking-wide text-cyan-200/90 group-hover:translate-x-1 group-hover:text-cyan-100 sm:flex">$79/mo — no card required</span>
-            </button>
-            <button
-              type="button"
-              class="inline-flex w-full items-center justify-center gap-2 rounded-full border border-transparent px-6 py-3 text-sm font-semibold text-cyan-200 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-200 sm:w-auto"
-              @click="demoCta.onClick?.()"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M4 2a2 2 0 0 0-2 2v12a1 1 0 1 0 2 0V4h10a2 2 0 0 0-2-2H4Zm4.293 4.293a1 1 0 0 1 1.414 0L14 10.586l2.293-2.293a1 1 0 0 1 1.414 1.414l-3 3a1 1 0 0 1-1.414 0L9.707 9.414l-2.293 2.293A1 1 0 0 1 6 10.293l3-3a1 1 0 0 1 1.293-.293Z" clip-rule="evenodd" />
-              </svg>
-              <span>{{ demoCta.label }}</span>
-            </button>
-            <RouterLink to="/login" class="inline-flex w-full items-center justify-center gap-2 rounded-full border border-white/20 bg-white/10 px-6 py-3 text-sm font-semibold text-white transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-white/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/40 sm:w-auto">Log In</RouterLink>
-          </div>
-
-          <dl class="mt-6 grid gap-4 sm:grid-cols-2">
-            <div v-for="stat in heroStats" :key="stat.label" class="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur">
-              <dt class="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-200/80">{{ stat.label }}</dt>
-              <dd class="mt-2 text-2xl font-semibold text-white">{{ stat.value }}</dd>
-              <p class="mt-1 text-sm text-slate-300/90">{{ stat.caption }}</p>
-            </div>
-          </dl>
-        </div>
-
-        <div class="relative w-full max-w-xl shrink-0 self-center rounded-[2.5rem] border border-white/10 bg-white/5 p-6 shadow-2xl backdrop-blur-lg lg:w-1/2">
-          <div class="absolute -left-10 top-10 hidden h-24 w-24 rounded-full border border-cyan-200/30 bg-cyan-400/20 blur-xl lg:block" />
-          <img :src="heroImage" :alt="heroAlt" loading="lazy" class="w-full rounded-[1.75rem] border border-white/10 shadow-2xl" />
-          <div class="mt-6 space-y-3 text-sm text-slate-200/80">
-            <p class="flex items-center gap-2">
-              <span class="rounded-full bg-emerald-400/20 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-emerald-200">Live Demo</span>
-              <span>Good / Better / Best quote with instant payments</span>
+      <!-- HERO -->
+      <section class="mx-auto max-w-6xl px-6 pt-16 pb-12 md:pt-20 lg:pt-24 lg:pb-16">
+        <div class="grid gap-10 lg:grid-cols-2 lg:items-center">
+          <div class="space-y-6">
+            <span class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-cyan-100/80">
+              January Launch
+            </span>
+            <h1 class="text-4xl font-semibold leading-tight sm:text-5xl lg:text-6xl">
+              Close more jobs with Good/Better/Best proposals.
+            </h1>
+            <p class="text-lg text-slate-200">
+              Send fast, polished quotes your clients can accept instantly - all from your phone.
             </p>
-            <div class="grid gap-2 sm:grid-cols-2">
-              <div class="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
-                <p class="text-xs uppercase tracking-wide text-white/70">Avg. acceptance</p>
-                <p class="mt-1 text-lg font-semibold text-white">44% lift</p>
-              </div>
-              <div class="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
-                <p class="text-xs uppercase tracking-wide text-white/70">Fastest payout</p>
-                <p class="mt-1 text-lg font-semibold text-white">Next-day ACH</p>
-              </div>
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <button
+                type="button"
+                class="w-full rounded-full bg-[#00D1FF] px-6 py-3 text-sm font-semibold text-slate-900 shadow-lg transition hover:-translate-y-0.5 hover:bg-cyan-300 sm:w-auto"
+                @click="handlePrimary"
+              >
+                Start Free (30 Days)
+              </button>
+              <button
+                type="button"
+                class="w-full rounded-full border border-white/20 bg-white/10 px-6 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-white/20 sm:w-auto"
+                @click="handleDemo"
+              >
+                Watch 20-Second Demo
+              </button>
+            </div>
+            <div class="flex flex-wrap gap-3 text-sm text-slate-300">
+              <span class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2">Mobile-first builder</span>
+              <span class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2">Instant accept & pay</span>
+              <span class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2">Good/Better/Best ready</span>
             </div>
           </div>
-        </div>
-      </header>
-
-      <section id="pricing" class="mx-auto max-w-5xl px-6 pb-20 md:px-10 lg:pb-24">
-        <div class="rounded-[2.5rem] border border-white/10 bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 p-10 text-center shadow-[0_25px_80px_-40px_rgba(6,182,212,0.6)] backdrop-blur">
-          <h2 class="text-3xl font-semibold text-white sm:text-4xl">StackQuotes Pro — $79/mo</h2>
-          <p class="mt-3 text-base text-slate-200/90 sm:text-lg max-w-2xl mx-auto">
-            If you want to run your contracting business on StackQuotes, this is the plan for you.
-            Includes every feature we offer — instant proposals, instant payments, and real-time analytics —
-            with unlimited projects and unlimited clients.
-          </p>
-          <div class="mt-8">
-            <button
-              type="button"
-              class="inline-flex items-center justify-center gap-2 rounded-full bg-[#00D1FF] px-8 py-4 text-base font-semibold text-slate-900 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-cyan-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-200"
-              @click="primaryCta.onClick?.()"
-            >
-              Start a Free 30-Day Trial
-            </button>
-            <p class="mt-2 text-sm text-slate-400">No credit card required · Cancel anytime</p>
-          </div>
-
-          <div class="mt-10 grid gap-6 sm:grid-cols-2 md:grid-cols-3 text-left text-slate-200/90">
-            <div class="flex items-start gap-3">
-              <span class="mt-1 h-3 w-3 flex-shrink-0 rounded-full bg-cyan-300"></span>
-              <div>
-                <p class="font-semibold text-white">Unlimited Proposals</p>
-                <p class="text-sm text-slate-400">Create and send as many proposals as you need.</p>
-              </div>
-            </div>
-            <div class="flex items-start gap-3">
-              <span class="mt-1 h-3 w-3 flex-shrink-0 rounded-full bg-cyan-300"></span>
-              <div>
-                <p class="font-semibold text-white">Instant Payments</p>
-                <p class="text-sm text-slate-400">Clients approve, sign, and pay on the spot.</p>
-              </div>
-            </div>
-            <div class="flex items-start gap-3">
-              <span class="mt-1 h-3 w-3 flex-shrink-0 rounded-full bg-cyan-300"></span>
-              <div>
-                <p class="font-semibold text-white">Good / Better / Best Templates</p>
-                <p class="text-sm text-slate-400">Tiered upgrade paths built into every quote.</p>
-              </div>
-            </div>
-            <div class="flex items-start gap-3">
-              <span class="mt-1 h-3 w-3 flex-shrink-0 rounded-full bg-cyan-300"></span>
-              <div>
-                <p class="font-semibold text-white">Analytics Dashboard</p>
-                <p class="text-sm text-slate-400">Track acceptance rates, deposits, and ROI in ProfitPulse.</p>
-              </div>
-            </div>
-            <div class="flex items-start gap-3">
-              <span class="mt-1 h-3 w-3 flex-shrink-0 rounded-full bg-cyan-300"></span>
-              <div>
-                <p class="font-semibold text-white">QuickBooks Sync</p>
-                <p class="text-sm text-slate-400">Automatically sync invoices, clients, and payments.</p>
-              </div>
-            </div>
-            <div class="flex items-start gap-3">
-              <span class="mt-1 h-3 w-3 flex-shrink-0 rounded-full bg-cyan-300"></span>
-              <div>
-                <p class="font-semibold text-white">Full Team Access</p>
-                <p class="text-sm text-slate-400">Collaborate with your crew — up to 5 users included.</p>
+          <div class="relative">
+            <div class="rounded-[2rem] border border-white/10 bg-white/5 p-4 shadow-2xl backdrop-blur">
+              <img :src="heroImage" :alt="heroAlt" loading="lazy" class="w-full rounded-[1.5rem] border border-white/10 object-cover" />
+              <div class="mt-4 grid gap-3 sm:grid-cols-2">
+                <div class="flex items-center gap-2 rounded-xl border border-white/10 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
+                  <span class="h-2 w-2 rounded-full bg-emerald-300"></span>
+                  <span>Accept & pay on the spot</span>
+                </div>
+                <div class="flex items-center gap-2 rounded-xl border border-white/10 bg-cyan-500/10 px-4 py-3 text-sm text-cyan-100">
+                  <span class="h-2 w-2 rounded-full bg-cyan-300"></span>
+                  <span>3-option proposals ready to send</span>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      <section class="mx-auto max-w-6xl px-6 pb-20 md:px-10 lg:pb-28">
-        <div class="grid gap-8 lg:grid-cols-3">
-          <article
-            v-for="feature in features"
-            :key="feature.title"
-            class="group h-full rounded-3xl border border-white/10 bg-white/[0.04] p-8 transition-all duration-200 hover:-translate-y-1 hover:border-cyan-300/40 hover:bg-white/[0.08]"
-          >
-            <div class="inline-flex items-center justify-center rounded-full border border-cyan-200/40 bg-cyan-400/15 p-3 text-cyan-200">
-              <component :is="feature.icon" class="h-5 w-5" />
+      <!-- SPEED-RUN -->
+      <section class="mx-auto max-w-5xl px-6 pb-14">
+        <div class="rounded-3xl border border-white/10 bg-white/5 p-8 shadow-lg">
+          <div class="space-y-2 text-center">
+            <h2 class="text-3xl font-semibold">See how fast it really is.</h2>
+            <p class="text-slate-300">QuickQuote -> ScopeForge -> SmartProposal -> Accept & Pay.</p>
+          </div>
+          <div class="mt-6 rounded-2xl border border-white/10 bg-slate-900/70 p-4">
+            <div id="sq-speedrun-gif" class="flex h-60 items-center justify-center rounded-xl border border-dashed border-white/20 bg-slate-800/80 text-sm text-slate-300">
+              Looping GIF placeholder
             </div>
-            <h3 class="mt-6 text-xl font-semibold text-white">{{ feature.title }}</h3>
-            <p class="mt-3 text-sm text-slate-300/90">{{ feature.description }}</p>
-            <ul v-if="feature.points?.length" class="mt-4 space-y-2 text-sm text-slate-300/80">
-              <li v-for="point in feature.points" :key="point" class="flex items-start gap-2">
-                <span class="mt-1 h-1.5 w-1.5 rounded-full bg-cyan-300" />
-                <span>{{ point }}</span>
+            <div class="mt-4 flex flex-wrap justify-center gap-2">
+              <span
+                v-for="step in speedrunSteps"
+                :key="step"
+                class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-200"
+              >
+                <span class="h-1.5 w-1.5 rounded-full bg-cyan-300"></span>
+                {{ step }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ACCORDION FEATURES -->
+      <section class="mx-auto max-w-5xl px-6 pb-14">
+        <div class="space-y-3">
+          <h2 class="text-3xl font-semibold">Build and send in minutes.</h2>
+          <p class="text-slate-300">Tap through the workflow contractors use in the field.</p>
+        </div>
+        <div class="mt-6 space-y-3">
+          <div v-for="item in accordionItems" :key="item.key" class="rounded-2xl border border-white/10 bg-white/5">
+            <button class="flex w-full items-center justify-between gap-3 px-4 py-4 text-left" @click="toggleAccordion(item.key)">
+              <div class="flex items-center gap-3">
+                <span class="flex h-8 w-8 items-center justify-center rounded-full bg-cyan-500/10 text-sm font-semibold text-cyan-200">{{ item.order }}</span>
+                <div>
+                  <p class="text-lg font-semibold">{{ item.title }}</p>
+                  <p v-if="item.subtitle" class="text-sm text-slate-300">{{ item.subtitle }}</p>
+                </div>
+              </div>
+              <svg :class="['h-5 w-5 text-slate-200 transition-transform', isOpen(item.key) ? 'rotate-180' : '']" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m6 9 6 6 6-6" />
+              </svg>
+            </button>
+            <transition name="accordion">
+              <div v-if="isOpen(item.key)" class="space-y-4 border-t border-white/10 px-4 pb-5 pt-2">
+                <div v-if="item.hasMobileShot" class="rounded-xl border border-white/10 bg-slate-900/70 p-3 text-sm text-slate-300">
+                  Mobile screenshot placeholder
+                </div>
+                <ul class="space-y-2 text-slate-200">
+                  <li v-for="point in item.bullets" :key="point" class="flex items-start gap-2">
+                    <CheckIcon class="mt-0.5 h-4 w-4 text-cyan-300" />
+                    <span>{{ point }}</span>
+                  </li>
+                </ul>
+              </div>
+            </transition>
+          </div>
+        </div>
+      </section>
+
+      <!-- TRADES -->
+      <section class="mx-auto max-w-5xl px-6 pb-14">
+        <div class="space-y-3 text-center">
+          <h2 class="text-3xl font-semibold">Trades we serve</h2>
+          <p class="text-slate-300">Built with crews in mind.</p>
+        </div>
+        <div class="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-7">
+          <div
+            v-for="trade in trades"
+            :key="trade"
+            class="flex items-center justify-center rounded-2xl border border-white/10 bg-white/5 px-3 py-4 text-sm font-semibold text-slate-100"
+          >
+            {{ trade }}
+          </div>
+        </div>
+      </section>
+
+      <!-- DAY ONE -->
+      <section class="mx-auto max-w-5xl px-6 pb-14">
+        <div class="rounded-3xl border border-white/10 bg-white/5 p-8 shadow-lg">
+          <h2 class="text-2xl font-semibold">What you get on day 1</h2>
+          <ul class="mt-4 grid gap-3 sm:grid-cols-2">
+            <li
+              v-for="item in dayOneList"
+              :key="item"
+              class="flex items-start gap-3 rounded-xl border border-white/10 bg-slate-900/60 px-4 py-3"
+            >
+              <CheckIcon class="mt-1 h-5 w-5 text-emerald-300" />
+              <span class="text-slate-200">{{ item }}</span>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- PRICING -->
+      <section id="pricing" class="mx-auto max-w-6xl px-6 pb-14">
+        <div class="space-y-3 text-center">
+          <h2 class="text-3xl font-semibold">Choose your plan</h2>
+          <p class="text-slate-300">Simple launch pricing for January.</p>
+        </div>
+        <div class="mt-8 grid gap-6 md:grid-cols-2">
+          <div
+            v-for="plan in pricingPlans"
+            :key="plan.name"
+            class="relative rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg"
+          >
+            <div class="flex items-center justify-between gap-3">
+              <div>
+                <p class="text-sm uppercase tracking-[0.25em] text-slate-300">{{ plan.name }}</p>
+                <p class="mt-2 text-2xl font-semibold text-white">{{ plan.price }}</p>
+              </div>
+              <span
+                v-if="plan.badge"
+                class="rounded-full bg-cyan-500/20 px-3 py-1 text-xs font-semibold text-cyan-100"
+              >
+                {{ plan.badge }}
+              </span>
+            </div>
+            <ul class="mt-5 space-y-2 text-slate-200">
+              <li v-for="benefit in plan.benefits" :key="benefit" class="flex items-start gap-2">
+                <CheckIcon class="mt-0.5 h-4 w-4 text-cyan-300" />
+                <span>{{ benefit }}</span>
               </li>
             </ul>
-          </article>
-        </div>
-      </section>
-
-      <section class="mx-auto flex max-w-6xl flex-col gap-12 px-6 pb-24 md:px-10 lg:flex-row lg:items-center lg:gap-16">
-        <div class="relative flex-1">
-          <div class="absolute inset-0 rounded-[2.5rem] border border-white/10 bg-gradient-to-br from-white/10 via-white/5 to-transparent" />
-          <img :src="founderImage" :alt="founderAlt" loading="lazy" class="relative rounded-[2.5rem] border border-white/10 object-cover" />
-          <div class="absolute inset-0 border border-white/20 mix-blend-overlay" />
-        </div>
-        <div class="space-y-6">
-          <div>
-            <p class="text-xs font-semibold uppercase tracking-[0.4em] text-cyan-200/70">Founder insight</p>
-            <p class="mt-3 text-2xl font-semibold text-white">
-              “Contractors close 3x more jobs when homeowners see clear upgrade paths and can accept on the spot.
-              StackQuotes turns every estimate into a conversion engine.”
-            </p>
-          </div>
-          <div class="flex items-center gap-4 text-sm text-slate-200/90">
-            <div>
-              <p class="font-semibold text-white">Alex Rivers</p>
-              <p class="text-xs uppercase tracking-[0.3em] text-cyan-200/70">Founder, StackQuotes</p>
-            </div>
-            <div class="hidden h-px flex-1 bg-white/10 sm:block" />
             <button
               type="button"
-              class="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-cyan-200/90 transition hover:bg-white/20"
-              @click="primaryCta.onClick?.()"
+              class="mt-6 w-full rounded-full px-4 py-3 text-sm font-semibold transition"
+              :class="plan.name === 'Pro' ? 'bg-[#00D1FF] text-slate-900 hover:bg-cyan-300' : 'border border-white/20 bg-white/10 text-white hover:bg-white/20'"
+              @click="plan.cta === 'upgrade' ? handleUpgrade() : handlePrimary()"
             >
-              Start your free trial
+              {{ plan.ctaLabel }}
             </button>
           </div>
         </div>
       </section>
 
-      <footer class="mx-auto max-w-5xl px-6 pb-20 md:px-10 lg:pb-24">
-        <div class="rounded-[2.5rem] border border-white/10 bg-gradient-to-br from-cyan-400/20 via-white/10 to-transparent p-10 text-center backdrop-blur">
-          <p class="text-xs font-semibold uppercase tracking-[0.4em] text-cyan-100/70">Ready in Minutes</p>
-          <h2 class="mt-4 text-3xl font-semibold text-white sm:text-4xl">Start with our Good/Better/Best templates and send your first proposal today.</h2>
-          <p class="mt-4 text-base text-slate-200/90 sm:text-lg">No credit card required for 30 days. Bring your crew, drop in your pricing, and convert the next lead with a polished proposal that pays you faster.</p>
-          <div class="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
-            <button type="button" class="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#00D1FF] px-6 py-3 text-sm font-semibold text-slate-900 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-cyan-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-200 sm:w-auto" @click="primaryCta.onClick?.()">Start Free for 30 Days</button>
-            <button type="button" class="inline-flex w-full items-center justify-center gap-2 rounded-full border border-white/20 bg-white/10 px-6 py-3 text-sm font-semibold text-white transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-white/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/40 sm:w-auto" @click="demoCta.onClick?.()">Watch 60‑Second Demo</button>
+      <!-- FAQ -->
+      <section class="mx-auto max-w-5xl px-6 pb-14">
+        <div class="space-y-3 text-center">
+          <h2 class="text-3xl font-semibold">FAQ</h2>
+          <p class="text-slate-300">Quick answers for busy crews.</p>
+        </div>
+        <div class="mt-6 divide-y divide-white/10 rounded-2xl border border-white/10 bg-white/5">
+          <div v-for="faq in faqs" :key="faq.q" class="px-5 py-4">
+            <p class="text-lg font-semibold text-white">{{ faq.q }}</p>
+            <p class="mt-1 text-slate-300">{{ faq.a }}</p>
           </div>
         </div>
-      </footer>
+      </section>
+
+      <!-- FINAL CTA -->
+      <section class="mx-auto max-w-4xl px-6 pb-16 text-center">
+        <div class="rounded-3xl border border-white/10 bg-gradient-to-r from-cyan-500/15 via-white/5 to-cyan-400/15 p-10 shadow-lg backdrop-blur">
+          <h2 class="text-3xl font-semibold">Start Free for 30 Days</h2>
+          <p class="mt-3 text-slate-200">Send your first Good/Better/Best proposal tonight.</p>
+          <div class="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <button
+              type="button"
+              class="w-full rounded-full bg-[#00D1FF] px-6 py-3 text-sm font-semibold text-slate-900 shadow-lg transition hover:-translate-y-0.5 hover:bg-cyan-300 sm:w-auto"
+              @click="handlePrimary"
+            >
+              Start Free (30 Days)
+            </button>
+            <button
+              type="button"
+              class="w-full rounded-full border border-white/20 bg-white/10 px-6 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-white/20 sm:w-auto"
+              @click="handleDemo"
+            >
+              Watch 20-Second Demo
+            </button>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- DEMO MODAL -->
+    <div v-if="openDemo" class="fixed inset-0 z-50 grid place-items-center bg-black/70 backdrop-blur-sm px-4">
+      <div class="w-full max-w-2xl rounded-2xl border border-white/10 bg-slate-900 shadow-2xl">
+        <div class="flex items-center justify-between border-b border-white/10 px-4 py-3">
+          <p class="font-semibold text-white">20-Second Demo</p>
+          <button class="text-slate-300 hover:text-white" @click="openDemo = false">x</button>
+        </div>
+        <div class="p-4">
+          <div class="relative aspect-video rounded-xl border border-white/10 bg-gradient-to-br from-slate-800 to-slate-900">
+            <div class="absolute inset-0 grid place-items-center text-slate-300">Demo video placeholder</div>
+          </div>
+        </div>
+        <div class="px-4 pb-4">
+          <button
+            type="button"
+            class="w-full rounded-full bg-[#00D1FF] px-5 py-3 text-sm font-semibold text-slate-900 transition hover:bg-cyan-300"
+            @click="handlePrimary"
+          >
+            Start Free (30 Days)
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import type { FunctionalComponent } from 'vue'
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref } from 'vue'
 
-interface CTAConfig { label: string; tagline?: string; onClick?: () => void }
-interface FeatureConfig { title: string; description: string; points?: string[]; icon: FunctionalComponent }
-
-defineProps<{ primaryCta: CTAConfig; demoCta: CTAConfig; heroImage: string; heroAlt: string; founderImage: string; founderAlt: string; heroStats: Array<{ label: string; value: string; caption: string }>; features: FeatureConfig[]; }>()
-
-const showRibbon = ref(false)
-const handleScroll = () => { showRibbon.value = window.scrollY > 200 }
-onMounted(() => window.addEventListener('scroll', handleScroll))
-onUnmounted(() => window.removeEventListener('scroll', handleScroll))
-
-const scrollToPricing = () => {
-  const el = document.getElementById('pricing')
-  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+interface CTAConfig {
+  label?: string
+  onClick?: () => void
 }
+
+interface AccordionItem {
+  key: string
+  title: string
+  subtitle?: string
+  bullets: string[]
+  hasMobileShot?: boolean
+  order: string
+}
+
+interface FAQItem {
+  q: string
+  a: string
+}
+
+const props = defineProps<{
+  primaryCta?: CTAConfig
+  demoCta?: CTAConfig
+  upgradeCta?: CTAConfig
+  heroImage: string
+  heroAlt: string
+}>()
+
+const openDemo = ref(false)
+const activeAccordion = ref<string>('QuickQuote')
+
+const speedrunSteps = ['QuickQuote', 'ScopeForge', 'SmartProposal', 'Accept & Pay']
+
+const accordionItems: AccordionItem[] = [
+  {
+    key: 'QuickQuote',
+    title: 'QuickQuote',
+    subtitle: 'Capture scope in the driveway',
+    bullets: ['Add materials and labor from your phone in under 2 minutes.', 'Auto-calc taxes, fees, and deposits on the fly.', 'Send the estimate before you leave the job site.'],
+    hasMobileShot: true,
+    order: '1',
+  },
+  {
+    key: 'ScopeForge',
+    title: 'ScopeForge (Good/Better/Best)',
+    subtitle: 'Upgrade-friendly options',
+    bullets: ['Present three clear options with upsells already baked in.', 'Swap finishes and add-ons without rebuilding the quote.', 'Clients see exactly what upgrades do for the price.'],
+    order: '2',
+  },
+  {
+    key: 'SmartProposal',
+    title: 'SmartProposal',
+    subtitle: 'Polished, professional packages',
+    bullets: ['Drop in photos, scope notes, and allowances clients understand.', 'Brand the proposal with your logo and color in seconds.', 'Export-ready PDF plus mobile-friendly share links.'],
+    order: '3',
+  },
+  {
+    key: 'AcceptPay',
+    title: 'Accept & Pay',
+    subtitle: 'Instant approvals',
+    bullets: ['Clients tap to accept, sign, and pay from any device.', 'Offer deposits, milestones, or pay-in-full at checkout.', 'Next-step prompts keep the job moving without emails.'],
+    order: '4',
+  },
+  {
+    key: 'ProfitPulse',
+    title: 'ProfitPulse',
+    subtitle: 'Know the numbers',
+    bullets: ['Track win rate, upgrades, and deposit velocity at a glance.', 'See fees, payouts, and milestones in one feed.', 'Spot which options close fastest across your trades.'],
+    order: '5',
+  },
+]
+
+const trades = ['Decks', 'Fencing', 'Painting', 'Concrete', 'Siding', 'Pools', 'Remodeling']
+
+const dayOneList = [
+  '3-option proposals',
+  'Instant deposits',
+  'Full mobile builder',
+  'Zero setup',
+  'Professional templates',
+  'Works with your current workflow',
+]
+
+const pricingPlans = [
+  {
+    name: 'Free',
+    price: '$0/mo + 3% platform fee',
+    benefits: ['Single-option proposals', 'Mobile quote builder', 'Accept payments', 'ProfitPulse Basic'],
+    cta: 'start',
+    ctaLabel: 'Start Free',
+  },
+  {
+    name: 'Pro',
+    price: '$49.99/mo',
+    badge: 'Most popular',
+    benefits: [
+      'No platform fee',
+      'Good/Better/Best (ScopeForge)',
+      'Branded proposals',
+      'Comments + revisions',
+      'Milestone payments',
+      'ProfitPulse Pro',
+      'Save templates',
+    ],
+    cta: 'upgrade',
+    ctaLabel: 'Upgrade to Pro',
+  },
+]
+
+const faqs: FAQItem[] = [
+  { q: 'Do clients need an account?', a: 'No. Clients open the proposal link, choose an option, sign, and pay without creating an account.' },
+  { q: 'How fast do I get paid?', a: 'Instant payouts or ACH, depending on what you enable. Deposits and milestones are available.' },
+  { q: 'Does this work on my phone?', a: 'Yes - 100% mobile-first. Build, send, and collect payments directly from your phone.' },
+  { q: 'Can I customize the quote?', a: 'Yes, fully editable. Swap materials, add allowances, and brand the proposal in seconds.' },
+  { q: 'Is Stripe included?', a: 'Yes. Built-in Stripe Connect for fast, secure payments.' },
+]
+
+const handlePrimary = () => {
+  if (props.primaryCta?.onClick) {
+    props.primaryCta.onClick()
+  }
+}
+
+const handleDemo = () => {
+  if (props.demoCta?.onClick) {
+    props.demoCta.onClick()
+    return
+  }
+  openDemo.value = true
+}
+
+const handleUpgrade = () => {
+  if (props.upgradeCta?.onClick) {
+    props.upgradeCta.onClick()
+    return
+  }
+  handlePrimary()
+}
+
+const toggleAccordion = (key: string) => {
+  activeAccordion.value = activeAccordion.value === key ? '' : key
+}
+
+const isOpen = (key: string) => activeAccordion.value === key
+
+const CheckIcon = (iconProps: { class?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class={iconProps.class ?? ''}>
+    <path
+      fill-rule="evenodd"
+      d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.707-9.707a1 1 0 0 0-1.414-1.414L9 10.172 7.707 8.879a1 1 0 0 0-1.414 1.414l2 2a1 1 0 0 0 1.414 0l4-4Z"
+      clip-rule="evenodd"
+    />
+  </svg>
+)
 </script>
 
 <style scoped>
-.fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
-.fade-enter-from, .fade-leave-to { opacity: 0; }
+.accordion-enter-active,
+.accordion-leave-active {
+  transition: opacity 0.2s ease;
+}
+.accordion-enter-from,
+.accordion-leave-to {
+  opacity: 0;
+}
 </style>
