@@ -264,7 +264,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { defineComponent, h, ref } from 'vue'
 
 interface CTAConfig {
   label?: string
@@ -410,15 +410,31 @@ const toggleAccordion = (key: string) => {
 
 const isOpen = (key: string) => activeAccordion.value === key
 
-const CheckIcon = (iconProps: { class?: string }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class={iconProps.class ?? ''}>
-    <path
-      fill-rule="evenodd"
-      d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.707-9.707a1 1 0 0 0-1.414-1.414L9 10.172 7.707 8.879a1 1 0 0 0-1.414 1.414l2 2a1 1 0 0 0 1.414 0l4-4Z"
-      clip-rule="evenodd"
-    />
-  </svg>
-)
+const CheckIcon = defineComponent({
+  name: 'CheckIcon',
+  props: {
+    class: String,
+  },
+  setup(props) {
+    return () =>
+      h(
+        'svg',
+        {
+          xmlns: 'http://www.w3.org/2000/svg',
+          viewBox: '0 0 20 20',
+          fill: 'currentColor',
+          class: props.class ?? '',
+        },
+        [
+          h('path', {
+            fillRule: 'evenodd',
+            d: 'M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.707-9.707a1 1 0 0 0-1.414-1.414L9 10.172 7.707 8.879a1 1 0 0 0-1.414 1.414l2 2a1 1 0 0 0 1.414 0l4-4Z',
+            clipRule: 'evenodd',
+          }),
+        ]
+      )
+  },
+})
 </script>
 
 <style scoped>
