@@ -1,4 +1,5 @@
 import { defineStore } from "pinia";
+import type { PackageTierId } from "../types";
 
 export type Spv2SectionType = "hero" | "packages" | "why-us" | "payment" | "footer";
 export type FontPreset = "clean" | "friendly" | "bold";
@@ -12,9 +13,16 @@ export interface SectionConfig {
 
 export interface PackageData {
   label: string;
+  title: string;
+  subtitle?: string;
   price: number;
-  summary: string;
   bullets: string[];
+  metricLabel?: string;
+  metricValue?: string;
+  imageUrl?: string | null;
+  secondaryImageUrl?: string | null;
+  badgeLabel?: string;
+  isRecommended?: boolean;
 }
 
 interface BrandSettings {
@@ -49,6 +57,7 @@ export interface Spv2State {
   title: string;
   clientName: string;
   jobAddress: string;
+  selectedPackageId: PackageTierId | null;
   brand: BrandSettings;
   hero: HeroContent;
   sections: SectionConfig[];
@@ -67,6 +76,7 @@ const getDefaultState = (): Spv2State => ({
   title: "Modern Exterior Makeover",
   clientName: "Avery Thompson",
   jobAddress: "2143 Magnolia Lane, Austin, TX",
+  selectedPackageId: "better",
   brand: {
     primaryColor: "#0F62FE",
     accentColor: "#EEF2FF",
@@ -88,31 +98,56 @@ const getDefaultState = (): Spv2State => ({
   packages: {
     good: {
       label: "Good",
+      title: "Core refresh package",
+      subtitle: "Refresh focused on essential repairs and a clean finish.",
       price: 18500,
-      summary: "Refresh focused on essential repairs and a clean finish.",
       bullets: ["Pressure wash & prep", "Repair trim + fascia", "Premium exterior paint"],
+      metricLabel: "Timeline",
+      metricValue: "2-3 wks",
+      imageUrl:
+        "https://images.unsplash.com/photo-1505691938895-1758d7feb511?auto=format&fit=crop&w=960&q=80",
+      secondaryImageUrl:
+        "https://images.unsplash.com/photo-1505692069463-5e3405e3e7ee?auto=format&fit=crop&w=360&q=80",
     },
     better: {
       label: "Better",
+      title: "Elevated curb appeal upgrade",
+      subtitle: "Adds architectural accents and an upgraded coating system.",
       price: 24800,
-      summary: "Adds architectural accents and an upgraded coating system.",
       bullets: [
         "Everything in Good",
         "Smooth coat stucco repair",
         "Soffit + gutter refresh",
         "Upgraded coating warranty",
       ],
+      metricLabel: "Warranty",
+      metricValue: "8 yr",
+      imageUrl:
+        "https://images.unsplash.com/photo-1505691938895-1758d7feb511?auto=format&fit=crop&w=1080&q=80",
+      secondaryImageUrl:
+        "https://images.unsplash.com/photo-1505692069463-5e3405e3e7ee?auto=format&fit=crop&w=360&q=80",
+      badgeLabel: "Recommended",
+      isRecommended: true,
     },
     best: {
       label: "Best",
+      title: "Signature transformation",
+      subtitle: "Complete transformation with modern lighting and detail work.",
       price: 31200,
-      summary: "Complete transformation with modern lighting and detail work.",
       bullets: [
         "Everything in Better",
         "Custom cedar accents",
         "Low-voltage lighting package",
         "Priority project timeline",
       ],
+      metricLabel: "Timeline",
+      metricValue: "Priority",
+      imageUrl:
+        "https://images.unsplash.com/photo-1505691938895-1758d7feb511?auto=format&fit=crop&w=1200&q=80",
+      secondaryImageUrl:
+        "https://images.unsplash.com/photo-1505691938895-1758d7feb511?auto=format&fit=crop&w=320&q=80",
+      badgeLabel: "Most comprehensive",
+      isRecommended: true,
     },
   },
   whyUsText:
@@ -140,6 +175,9 @@ export const useSpv2Store = defineStore("spv2", {
   actions: {
     resetToDefaults() {
       Object.assign(this, getDefaultState());
+    },
+    setSelectedPackage(id: PackageTierId | null) {
+      this.selectedPackageId = id;
     },
     updateBrand(payload: Partial<BrandSettings>) {
       this.brand = { ...this.brand, ...payload };

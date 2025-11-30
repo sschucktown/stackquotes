@@ -126,55 +126,191 @@
       </div>
 
       <div v-else-if="selectedSection?.type === 'packages'" class="space-y-6">
+        <div class="rounded-2xl border border-dashed border-slate-200 p-4">
+          <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Default selection</p>
+          <div class="mt-3 flex flex-wrap gap-2">
+            <button
+              v-for="pkg in packageEntries"
+              :key="pkg.key"
+              type="button"
+              class="rounded-2xl px-3 py-2 text-xs font-semibold transition"
+              :class="store.selectedPackageId === pkg.key
+                ? 'border border-slate-900 bg-slate-900 text-white'
+                : 'border border-slate-200 text-slate-700 hover:border-slate-300'"
+              @click="setSelectedPackage(pkg.key)"
+            >
+              {{ pkg.data.label }}
+            </button>
+          </div>
+        </div>
+
         <div
           v-for="pkg in packageEntries"
           :key="pkg.key"
-          class="rounded-2xl border border-slate-200 p-4"
+          class="space-y-3 rounded-2xl border border-slate-200 p-4"
         >
-          <div class="flex items-center justify-between">
-            <h3 class="text-sm font-semibold text-slate-900">{{ pkg.data.label }}</h3>
-            <input
-              type="number"
-              min="0"
-              class="w-32 rounded-xl border border-slate-200 px-2 py-1 text-sm text-right"
-              :value="pkg.data.price"
-              @input="updatePackageField(pkg.key, 'price', $event)"
-            />
-          </div>
-          <label class="mt-3 block text-xs uppercase tracking-wide text-slate-500">Summary</label>
-          <textarea
-            rows="2"
-            class="mt-1 w-full rounded-xl border border-slate-200 px-2 py-1 text-sm"
-            :value="pkg.data.summary"
-            @input="updatePackageField(pkg.key, 'summary', $event)"
-          />
-          <label class="mt-3 block text-xs uppercase tracking-wide text-slate-500">Bullets</label>
-          <div class="mt-1 flex flex-col gap-2">
-            <div
-              v-for="(bullet, index) in pkg.data.bullets"
-              :key="index"
-              class="flex items-center gap-2"
-            >
+          <div class="flex flex-wrap items-center gap-3">
+            <label class="flex-1 text-xs uppercase tracking-wide text-slate-500">
+              <span class="block text-[11px] font-semibold">Label</span>
               <input
-                class="flex-1 rounded-xl border border-slate-200 px-2 py-1 text-sm"
-                :value="bullet"
-                @input="updateBullet(pkg.key, index, $event)"
+                class="mt-1 w-full rounded-xl border border-slate-200 px-2 py-1 text-sm"
+                :value="pkg.data.label"
+                @input="updatePackageText(pkg.key, 'label', $event)"
               />
-              <button
-                type="button"
-                class="rounded-full border border-slate-200 px-2 py-1 text-xs text-slate-500"
-                @click="removeBullet(pkg.key, index)"
-              >
-                Remove
-              </button>
+            </label>
+            <label class="text-xs uppercase tracking-wide text-slate-500">
+              <span class="block text-[11px] font-semibold">Price</span>
+              <input
+                type="number"
+                min="0"
+                class="mt-1 w-28 rounded-xl border border-slate-200 px-2 py-1 text-sm text-right"
+                :value="pkg.data.price"
+                @input="updatePackagePrice(pkg.key, $event)"
+              />
+            </label>
+          </div>
+
+          <label class="block text-xs uppercase tracking-wide text-slate-500">
+            <span class="text-[11px] font-semibold">Headline</span>
+            <input
+              class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
+              :value="pkg.data.title"
+              @input="updatePackageText(pkg.key, 'title', $event)"
+            />
+          </label>
+
+          <label class="block text-xs uppercase tracking-wide text-slate-500">
+            <span class="text-[11px] font-semibold">Subheadline</span>
+            <textarea
+              rows="2"
+              class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
+              :value="pkg.data.subtitle"
+              @input="updatePackageText(pkg.key, 'subtitle', $event)"
+            />
+          </label>
+
+          <div class="grid gap-3 sm:grid-cols-2">
+            <label class="block text-xs uppercase tracking-wide text-slate-500">
+              <span class="text-[11px] font-semibold">Metric label</span>
+              <input
+                class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
+                :value="pkg.data.metricLabel"
+                @input="updatePackageText(pkg.key, 'metricLabel', $event)"
+              />
+            </label>
+            <label class="block text-xs uppercase tracking-wide text-slate-500">
+              <span class="text-[11px] font-semibold">Metric value</span>
+              <input
+                class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
+                :value="pkg.data.metricValue"
+                @input="updatePackageText(pkg.key, 'metricValue', $event)"
+              />
+            </label>
+          </div>
+
+          <div class="grid gap-3 sm:grid-cols-2">
+            <div>
+              <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Primary image</p>
+              <div class="mt-2 flex flex-col gap-2 rounded-xl border border-dashed border-slate-300 p-3">
+                <input
+                  type="file"
+                  accept="image/*"
+                  class="text-xs"
+                  @change="handlePackageImageUpload(pkg.key, 'imageUrl', $event)"
+                />
+                <div
+                  v-if="pkg.data.imageUrl"
+                  class="flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-slate-50 p-2"
+                >
+                  <img :src="pkg.data.imageUrl" alt="" class="h-14 w-14 rounded-md object-contain" />
+                  <button
+                    type="button"
+                    class="text-xs text-rose-500"
+                    @click="removePackageImage(pkg.key, 'imageUrl')"
+                  >
+                    Remove
+                  </button>
+                </div>
+                <p class="text-[11px] text-slate-500">Images stay in-browser only for this sandbox.</p>
+              </div>
             </div>
+            <div>
+              <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Secondary image</p>
+              <div class="mt-2 flex flex-col gap-2 rounded-xl border border-dashed border-slate-300 p-3">
+                <input
+                  type="file"
+                  accept="image/*"
+                  class="text-xs"
+                  @change="handlePackageImageUpload(pkg.key, 'secondaryImageUrl', $event)"
+                />
+                <div
+                  v-if="pkg.data.secondaryImageUrl"
+                  class="flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-slate-50 p-2"
+                >
+                  <img :src="pkg.data.secondaryImageUrl" alt="" class="h-14 w-14 rounded-md object-contain" />
+                  <button
+                    type="button"
+                    class="text-xs text-rose-500"
+                    @click="removePackageImage(pkg.key, 'secondaryImageUrl')"
+                  >
+                    Remove
+                  </button>
+                </div>
+                <p class="text-[11px] text-slate-500">Optional thermostat / badge visual.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-3">
+            <label class="flex-1 text-xs uppercase tracking-wide text-slate-500">
+              <span class="text-[11px] font-semibold">Badge label</span>
+              <input
+                class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
+                :value="pkg.data.badgeLabel"
+                @input="updatePackageText(pkg.key, 'badgeLabel', $event)"
+              />
+            </label>
             <button
               type="button"
-              class="text-xs font-semibold text-slate-700"
-              @click="addBullet(pkg.key)"
+              class="rounded-xl border px-3 py-2 text-xs font-semibold transition"
+              :class="pkg.data.isRecommended
+                ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
+                : 'border-slate-200 text-slate-700 hover:border-slate-300'"
+              @click="toggleRecommended(pkg.key)"
             >
-              + Add bullet
+              {{ pkg.data.isRecommended ? "Marked recommended" : "Mark recommended" }}
             </button>
+          </div>
+
+          <div>
+            <label class="block text-xs uppercase tracking-wide text-slate-500">Bullets</label>
+            <div class="mt-2 flex flex-col gap-2">
+              <div
+                v-for="(bullet, index) in pkg.data.bullets"
+                :key="index"
+                class="flex items-center gap-2"
+              >
+                <input
+                  class="flex-1 rounded-xl border border-slate-200 px-2 py-1 text-sm"
+                  :value="bullet"
+                  @input="updateBullet(pkg.key, index, $event)"
+                />
+                <button
+                  type="button"
+                  class="rounded-full border border-slate-200 px-2 py-1 text-xs text-slate-500"
+                  @click="removeBullet(pkg.key, index)"
+                >
+                  Remove
+                </button>
+              </div>
+              <button
+                type="button"
+                class="text-xs font-semibold text-slate-700"
+                @click="addBullet(pkg.key)"
+              >
+                + Add bullet
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -357,17 +493,45 @@ const updateHero = (key: "title" | "subtitle" | "projectAddress", event: Event) 
   store.updateHero({ [key]: value });
 };
 
-const updatePackageField = (
+const setSelectedPackage = (id: PackageKey) => {
+  store.setSelectedPackage(id);
+};
+
+const updatePackageText = (
   key: PackageKey,
-  field: "price" | "summary",
+  field: "label" | "title" | "subtitle" | "metricLabel" | "metricValue" | "badgeLabel",
   event: Event
 ) => {
   const value = (event.target as HTMLInputElement | HTMLTextAreaElement).value;
-  if (field === "price") {
-    store.updatePackage(key, { price: Number(value) });
-  } else {
-    store.updatePackage(key, { summary: value });
+  store.updatePackage(key, { [field]: value });
+};
+
+const updatePackagePrice = (key: PackageKey, event: Event) => {
+  const value = Number((event.target as HTMLInputElement).value);
+  store.updatePackage(key, { price: value });
+};
+
+const toggleRecommended = (key: PackageKey) => {
+  const current = store.packages[key].isRecommended ?? false;
+  store.updatePackage(key, { isRecommended: !current });
+};
+
+type PackageImageField = "imageUrl" | "secondaryImageUrl";
+
+const handlePackageImageUpload = async (key: PackageKey, field: PackageImageField, event: Event) => {
+  const target = event.target as HTMLInputElement;
+  const file = target.files?.[0];
+  if (!file) return;
+  try {
+    const dataUrl = await readFileAsDataUrl(file);
+    store.updatePackage(key, { [field]: dataUrl });
+  } finally {
+    target.value = "";
   }
+};
+
+const removePackageImage = (key: PackageKey, field: PackageImageField) => {
+  store.updatePackage(key, { [field]: null });
 };
 
 const updateBullet = (key: PackageKey, index: number, event: Event) => {
