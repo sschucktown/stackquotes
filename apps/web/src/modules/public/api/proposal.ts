@@ -13,12 +13,20 @@ export interface PublicProposalDepositMeta {
   config: ProposalDepositConfig | null;
 }
 
+export interface PublicProposalPlanMeta {
+  tier: string;
+  allowMultiOptions: boolean;
+  wowPortalEnabled: boolean;
+  inTrial?: boolean;
+}
+
 export interface PublicProposalPayload {
   proposal: Proposal;
   contractor: PublicProposalContractorBranding | null;
   client: Client | null;
   deposit: PublicProposalDepositMeta;
   paymentLinkUrl: string | null;
+  plan?: PublicProposalPlanMeta | null;
 }
 
 export const fetchPublicProposal = (token: string) =>

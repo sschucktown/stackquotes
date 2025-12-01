@@ -550,6 +550,34 @@ const buildProposalEventRecord = (row: DatabaseProposalEventRow): ProposalEvent 
 const isPlainRecord = (input: unknown): input is Record<string, unknown> =>
   typeof input === "object" && input !== null && !Array.isArray(input);
 
+const normaliseProposalVisual = (input: unknown): ProposalOption["visual"] | undefined => {
+  if (!isPlainRecord(input)) return undefined;
+  const abstractRaw =
+    input.abstract_key ??
+    input.abstractKey ??
+    input.key ??
+    input.visual_key ??
+    input.visualKey ??
+    null;
+  const customRaw =
+    input.custom_image_url ??
+    input.customImageUrl ??
+    input.image_url ??
+    input.imageUrl ??
+    null;
+  const accentRaw = input.accent_key ?? input.accentKey ?? null;
+  const abstract = typeof abstractRaw === "string" && abstractRaw.trim().length ? abstractRaw.trim() : null;
+  const custom =
+    typeof customRaw === "string" && customRaw.trim().length ? customRaw.trim() : null;
+  const accent = typeof accentRaw === "string" && accentRaw.trim().length ? accentRaw.trim() : null;
+  if (!abstract && !custom && !accent) return undefined;
+  return {
+    abstract_key: abstract ?? "generic-good",
+    custom_image_url: custom,
+    accent_key: accent,
+  };
+};
+
 const normaliseProposalLineItem = (item: unknown): ProposalOptionLineItem => {
   const record = isPlainRecord(item) ? item : {};
   const quantity = Number(record.quantity ?? 0);
@@ -572,6 +600,7 @@ const coerceProposalOption = (value: unknown): ProposalOption => {
     typeof record.subtotal === "number"
       ? record.subtotal
       : lineItems.reduce((sum, item) => sum + item.total, 0);
+  const visual = normaliseProposalVisual(record.visual ?? record.cardVisual ?? null);
   return {
     name: String(record.name ?? "Option"),
     summary: record.summary !== undefined && record.summary !== null ? String(record.summary) : null,
@@ -581,6 +610,7 @@ const coerceProposalOption = (value: unknown): ProposalOption => {
       record.multiplier !== undefined && record.multiplier !== null
         ? Number(record.multiplier)
         : null,
+    visual: visual ?? null,
   };
 };
 

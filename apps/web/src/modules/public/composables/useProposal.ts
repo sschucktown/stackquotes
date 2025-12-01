@@ -1,7 +1,7 @@
 import { ref, computed } from "vue";
 import { supabase } from "@/lib/supabase";
 import { apiFetch } from "@/lib/http";
-import type { ApiResponse, Estimate, Proposal } from "@stackquotes/types";
+import type { ApiResponse, Estimate, Proposal, ProposalDepositConfig } from "@stackquotes/types";
 
 export type UnifiedType = "estimate" | "proposal";
 
@@ -21,7 +21,7 @@ export interface PublicProposalContractorBranding {
 
 export interface PublicProposalDepositMeta {
   amount: number | null;
-  config: unknown | null;
+  config: ProposalDepositConfig | null;
 }
 
 export interface PublicProposalPayload {
@@ -30,6 +30,12 @@ export interface PublicProposalPayload {
   client: { id: string; name: string; email?: string } | null;
   deposit: PublicProposalDepositMeta;
   paymentLinkUrl: string | null;
+  plan?: {
+    tier: string;
+    allowMultiOptions: boolean;
+    wowPortalEnabled: boolean;
+    inTrial?: boolean;
+  } | null;
 }
 
 export interface UnifiedProposalState {

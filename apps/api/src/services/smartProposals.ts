@@ -19,10 +19,39 @@ const normaliseTitle = (projectTitle?: string | null): string => {
 
 const normaliseDescription = (notes?: string | null): string | null => {
   if (!notes) return null;
-  return notes.length > 600 ? `${notes.slice(0, 597)}…` : notes;
+  return notes.length > 600 ? `${notes.slice(0, 597)}...` : notes;
 };
 
 const DEFAULT_DEPOSIT: ProposalDepositConfig = { type: "percentage", value: 30 };
+
+const deriveTierFromName = (name: string): "good" | "better" | "best" => {
+  const lower = (name ?? "").toLowerCase();
+  if (lower.includes("best")) return "best";
+  if (lower.includes("better")) return "better";
+  return "good";
+};
+
+const normaliseTrade = (trade?: string | null): string => {
+  if (!trade) return "generic";
+  const trimmed = trade.trim().toLowerCase();
+  return trimmed.length ? trimmed : "generic";
+};
+
+const withDefaultVisuals = (options: Proposal["options"], trade?: string | null) =>
+  options.map((option) => {
+    const existing = option.visual ?? null;
+    const abstractKey =
+      existing?.abstract_key ??
+      `${normaliseTrade(trade)}-${deriveTierFromName(option.name ?? "good")}`;
+    return {
+      ...option,
+      visual: {
+        abstract_key: abstractKey,
+        custom_image_url: existing?.custom_image_url ?? null,
+        accent_key: existing?.accent_key ?? null,
+      },
+    };
+  });
 
 export interface GenerateSmartProposalParams {
   supabase: SupabaseClient;
@@ -59,7 +88,10 @@ export const generateSmartProposalFromQuote = async ({
     supabase.from("users").select("subscription_tier, trial_end").eq("id", contractorId).maybeSingle(),
   ]);
 
-  const branding = { businessName: profile?.businessName ?? null };
+  const branding = {
+    businessName: profile?.businessName ?? null,
+    trade: profile?.trade ?? profile?.tradeType ?? null,
+  };
 
   // Gating: Launch (non-trial) plans only get a single option (baseline from QuickQuote).
   // Pro/Crew and active trials should receive full Good/Better/Best options.
@@ -113,6 +145,8 @@ export const generateSmartProposalFromQuote = async ({
   if (!depositConfig) {
     depositConfig = DEFAULT_DEPOSIT;
   }
+
+  options = withDefaultVisuals(options, branding.trade);
 
   const proposal = await createProposalRecord(supabase, {
     userId: contractorId,

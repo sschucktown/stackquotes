@@ -26,9 +26,29 @@ export const SMART_PROPOSAL_MULTIPLIERS: Array<{ name: string; factor: number; s
 
 const roundCurrency = (value: number): number => Math.round(value * 100) / 100;
 
+const normaliseTrade = (trade?: string | null): string => {
+  if (!trade) return "generic";
+  const trimmed = trade.trim().toLowerCase();
+  return trimmed.length ? trimmed : "generic";
+};
+
+const deriveTierFromName = (name: string): "good" | "better" | "best" => {
+  const lower = name.toLowerCase();
+  if (lower.includes("best")) return "best";
+  if (lower.includes("better")) return "better";
+  return "good";
+};
+
+const buildDefaultVisual = (trade: string | null | undefined, tierLabel: string) => {
+  const tier = deriveTierFromName(tierLabel);
+  const key = `${normaliseTrade(trade)}-${tier}`;
+  return { abstract_key: key, custom_image_url: null, accent_key: null };
+};
+
 const mapOption = (
   items: LineItem[],
-  multiplier: { name: string; factor: number; summary: string }
+  multiplier: { name: string; factor: number; summary: string },
+  trade?: string | null
 ): ProposalOption => {
   const lineItems = items.map((item) => {
     const quantity = Number(item.quantity ?? 0);
@@ -50,19 +70,20 @@ const mapOption = (
     lineItems,
     subtotal,
     multiplier: multiplier.factor,
+    visual: buildDefaultVisual(trade, multiplier.name),
   };
 };
 
 export const createSmartProposalFromLineItems = (
   lineItems: LineItem[],
-  branding: { businessName?: string | null } = {}
+  branding: { businessName?: string | null; trade?: string | null } = {}
 ): {
   options: ProposalOption[];
   totals: ProposalTotal[];
   deposit: ProposalDepositConfig;
   recommendedOption: string;
 } => {
-  const options = SMART_PROPOSAL_MULTIPLIERS.map((entry) => mapOption(lineItems, entry));
+  const options = SMART_PROPOSAL_MULTIPLIERS.map((entry) => mapOption(lineItems, entry, branding.trade));
 
   if (branding.businessName && options.length >= 3) {
     options[2] = {

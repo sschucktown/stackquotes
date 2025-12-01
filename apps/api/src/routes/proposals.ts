@@ -79,12 +79,19 @@ const optionLineItemSchema = z.object({
   total: z.number().min(0).optional(),
 });
 
+const optionVisualSchema = z.object({
+  abstract_key: z.string().min(1).optional(),
+  custom_image_url: z.string().url().optional().nullable(),
+  accent_key: z.string().optional().nullable(),
+});
+
 const optionSchema = z.object({
   name: z.string().min(1),
   summary: z.string().optional().nullable(),
   multiplier: z.number().optional().nullable(),
   lineItems: z.array(optionLineItemSchema).min(1),
   subtotal: z.number().min(0).optional(),
+  visual: optionVisualSchema.optional().nullable(),
 });
 
 const depositSchema = z.object({
@@ -132,6 +139,28 @@ const DEFAULT_DEPOSIT: ProposalDepositConfig = { type: "percentage", value: 30 }
 
 const roundCurrency = (value: number): number => Math.round(value * 100) / 100;
 
+const sanitizeVisual = (visual: z.infer<typeof optionVisualSchema> | undefined | null) => {
+  if (!visual) return null;
+  const abstract =
+    typeof visual.abstract_key === "string" && visual.abstract_key.trim().length
+      ? visual.abstract_key.trim()
+      : null;
+  const custom =
+    typeof visual.custom_image_url === "string" && visual.custom_image_url.trim().length
+      ? visual.custom_image_url.trim()
+      : null;
+  const accent =
+    typeof visual.accent_key === "string" && visual.accent_key.trim().length
+      ? visual.accent_key.trim()
+      : null;
+  if (!abstract && !custom && !accent) return null;
+  return {
+    abstract_key: abstract ?? "generic-good",
+    custom_image_url: custom,
+    accent_key: accent,
+  };
+};
+
 const sanitizeOption = (option: z.infer<typeof optionSchema>): ProposalOption => {
   const lineItems = option.lineItems.map((item) => {
     const quantity = Number(item.quantity ?? 0);
@@ -152,6 +181,7 @@ const sanitizeOption = (option: z.infer<typeof optionSchema>): ProposalOption =>
     multiplier: option.multiplier ?? null,
     lineItems,
     subtotal,
+    visual: sanitizeVisual(option.visual),
   };
 };
 

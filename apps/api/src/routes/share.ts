@@ -15,6 +15,7 @@ import {
   getProposalByToken,
   updateProposalStatus,
 } from "@stackquotes/db";
+import type { Proposal } from "@stackquotes/types";
 import { getServiceClient } from "../lib/supabase.js";
 import { generateSmartProposalFromQuote } from "../services/smartProposals.js";
 import { computeDepositAmount } from "../services/smartProposals.js";
@@ -51,6 +52,35 @@ const proposalTokenParams = z.object({
 const proposalAcceptBody = z.object({
   optionName: z.string().min(1, "Option selection is required"),
 });
+
+const normaliseTrade = (trade?: string | null): string => {
+  if (!trade) return "generic";
+  const trimmed = trade.trim().toLowerCase();
+  return trimmed.length ? trimmed : "generic";
+};
+
+const deriveTierFromName = (name: string): "good" | "better" | "best" => {
+  const lower = (name ?? "").toLowerCase();
+  if (lower.includes("best")) return "best";
+  if (lower.includes("better")) return "better";
+  return "good";
+};
+
+const ensureVisuals = (options: Proposal["options"], trade?: string | null) =>
+  options.map((option) => {
+    const existing = option.visual ?? null;
+    const abstractKey =
+      existing?.abstract_key ??
+      `${normaliseTrade(trade)}-${deriveTierFromName(option.name ?? "good")}`;
+    return {
+      ...option,
+      visual: {
+        abstract_key: abstractKey,
+        custom_image_url: existing?.custom_image_url ?? null,
+        accent_key: existing?.accent_key ?? null,
+      },
+    };
+  });
 
 export const shareRouter = new Hono();
 
@@ -165,23 +195,35 @@ shareRouter.get("/proposal/:token", async (c) => {
     getUserSettings(supabase, proposal.userId),
     getContractorProfile(supabase, proposal.userId),
     getClient(supabase, proposal.userId, proposal.clientId).catch(() => null),
-    supabase.from("users").select("subscription_tier, trial_end").eq("id", proposal.userId).maybeSingle(),
+    supabase
+      .from("users")
+      .select("subscription_tier, trial_end")
+      .eq("id", proposal.userId)
+      .maybeSingle(),
   ]);
   const selectedOption = proposal.acceptedOption ?? null;
   // Launch (non-trial) contractors: show only one baseline option to clients
   const tier = (plan?.data?.subscription_tier as string | undefined)?.toLowerCase?.() ?? "launch";
+  const trialEndRaw = plan?.data?.trial_end as string | null | undefined;
+  const inTrial = (() => {
+    if (typeof trialEndRaw !== "string") return false;
+    const d = new Date(trialEndRaw);
+    return !Number.isNaN(d.getTime()) && d.getTime() > Date.now();
+  })();
   const allowMultiOptions = tier === "pro" || tier === "crew";
+  const visualTrade = contractorProfile?.trade ?? contractorProfile?.tradeType ?? null;
   const visibleOptions = (() => {
     if (allowMultiOptions) return proposal.options;
     const better = proposal.options.find((o) => o.name?.toLowerCase?.() === "better");
     return [better ?? proposal.options[0]].filter(Boolean);
   })();
+  const optionsForClient = ensureVisuals(visibleOptions, visualTrade);
   const proposalForClient = allowMultiOptions
-    ? proposal
+    ? { ...proposal, options: ensureVisuals(proposal.options, visualTrade) }
     : {
         ...proposal,
-        options: visibleOptions,
-        totals: visibleOptions.map((o) => ({ name: o.name, total: o.subtotal })),
+        options: optionsForClient,
+        totals: optionsForClient.map((o) => ({ name: o.name, total: o.subtotal })),
       };
   const depositMeta = selectedOption
     ? computeDepositAmount(proposalForClient, { optionName: selectedOption })
@@ -225,6 +267,12 @@ shareRouter.get("/proposal/:token", async (c) => {
         config: depositMeta.config,
       },
       paymentLinkUrl: selectedOption ? proposal.paymentLinkUrl ?? null : null,
+      plan: {
+        tier,
+        allowMultiOptions,
+        wowPortalEnabled: allowMultiOptions,
+        inTrial,
+      },
     },
   });
 });

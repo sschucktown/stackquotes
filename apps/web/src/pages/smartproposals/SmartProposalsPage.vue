@@ -141,6 +141,92 @@
                 Add line item
               </SQButton>
             </div>
+
+            <div class="rounded-xl border border-slate-200 bg-slate-50/70 p-3">
+              <div class="flex items-center justify-between gap-3">
+                <div>
+                  <p class="text-sm font-semibold text-slate-800">Card visual (optional)</p>
+                  <p class="text-xs text-slate-500">We auto-generate clean artwork if you skip this.</p>
+                </div>
+                <button
+                  type="button"
+                  class="text-xs font-semibold text-slate-600 underline-offset-2 hover:text-slate-800"
+                  @click="visualPanels[option.id] = !visualPanels[option.id]"
+                  :aria-expanded="visualPanels[option.id] ?? false"
+                >
+                  {{ visualPanels[option.id] ? "Hide" : "Edit" }}
+                </button>
+              </div>
+
+              <div v-if="visualPanels[option.id]" class="mt-3 space-y-3">
+                <div class="flex flex-wrap items-center gap-4 text-sm text-slate-700">
+                  <label class="inline-flex items-center gap-2">
+                    <input
+                      type="radio"
+                      class="h-4 w-4 border-slate-300 text-[#3A7D99] focus:ring-[#3A7D99]"
+                      :checked="visualModeForOption(option) === 'default'"
+                      @change="setVisualMode(option.id, 'default')"
+                    />
+                    Use default abstract visual
+                  </label>
+                  <label class="inline-flex items-center gap-2">
+                    <input
+                      type="radio"
+                      class="h-4 w-4 border-slate-300 text-[#3A7D99] focus:ring-[#3A7D99]"
+                      :checked="visualModeForOption(option) === 'custom'"
+                      @change="setVisualMode(option.id, 'custom')"
+                    />
+                    Upload custom image
+                  </label>
+                </div>
+
+                <div v-if="visualModeForOption(option) === 'default'" class="grid gap-3 md:grid-cols-2">
+                  <div class="flex flex-col gap-2">
+                    <label class="text-xs font-semibold uppercase tracking-wide text-slate-600">Trade</label>
+                    <select
+                      class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm focus:border-[#3A7D99] focus:outline-none focus:ring-1 focus:ring-[#3A7D99]"
+                      :value="visualTradeForOption(option)"
+                      @change="onVisualTradeChange(option.id, ($event.target as HTMLSelectElement).value)"
+                    >
+                      <option v-for="trade in tradeOptions" :key="trade" :value="trade">
+                        {{ trade.charAt(0).toUpperCase() + trade.slice(1) }}
+                      </option>
+                    </select>
+                  </div>
+                  <div class="flex flex-col gap-2">
+                    <label class="text-xs font-semibold uppercase tracking-wide text-slate-600">Abstract key</label>
+                    <div class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-mono text-slate-700">
+                      {{ visualKeyForOption(option) }}
+                    </div>
+                  </div>
+                </div>
+
+                <div v-else class="grid gap-3 md:grid-cols-2">
+                  <SQInput
+                    label="Custom image URL"
+                    placeholder="https://..."
+                    :model-value="option.visual?.custom_image_url ?? ''"
+                    @update:model-value="onCustomImageChange(option.id, $event as string)"
+                  />
+                  <p class="text-xs text-slate-500">
+                    Use an existing hosted image URL. TODO: wire uploader for local files.
+                  </p>
+                </div>
+
+                <div class="grid gap-3 md:grid-cols-2">
+                  <SQInput
+                    label="Accent class (optional)"
+                    placeholder="from-sky-500 to-cyan-400"
+                    :model-value="option.visual?.accent_key ?? ''"
+                    @update:model-value="onAccentKeyChange(option.id, $event as string)"
+                  />
+                  <div class="rounded-lg border border-dashed border-slate-200 bg-white px-3 py-2 text-xs text-slate-600">
+                    Matches Tesla card gradient. Leave blank to auto-pick based on trade and tier.
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div class="overflow-x-auto">
               <table class="min-w-full divide-y divide-slate-200 text-sm">
                 <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
@@ -295,6 +381,7 @@ import { useEstimateStore } from "@modules/quickquote/stores/estimateStore";
 import { useClientStore } from "@modules/quickquote/stores/clientStore";
 import { useDemoStore } from "@/stores/demoStore";
 import { useTier } from "@/composables/useTier";
+import { useContractorProfileStore } from "@modules/contractor/stores/profileStore";
 import UpgradeBanner from "@/components/billing/UpgradeBanner.vue";
 import UpgradeModal from "@/components/billing/UpgradeModal.vue";
 import type { Proposal, ProposalDepositConfig, ProposalOption } from "@stackquotes/types";
@@ -315,6 +402,7 @@ interface OptionForm {
   multiplier?: number | null;
   lineItems: LineItemForm[];
   subtotal: number;
+  visual: ProposalOption["visual"] | null;
 }
 
 interface ProposalForm {
@@ -339,6 +427,7 @@ interface ToastMessage {
 const proposalStore = useProposalStore();
 const route = useRoute();
 const router = useRouter();
+const profileStore = useContractorProfileStore();
 
 // Route-aware filtering for sidebar list
 const statusFilter = computed(() => {
@@ -360,7 +449,10 @@ const filteredItems = computed(() => {
 const estimateStore = useEstimateStore();
 const clientStore = useClientStore();
 const demoStore = useDemoStore();
-  const { isPaid } = useTier();
+const { isPaid } = useTier();
+const defaultTrade = computed(() => profileStore.profile?.trade ?? profileStore.profile?.tradeType ?? "generic");
+const visualPanels = reactive<Record<string, boolean>>({});
+const tradeOptions = ["generic", "hvac", "roofing", "solar", "landscape", "remodel"];
 const isFree = computed(() => !isPaid.value);
 const showUpgradeBanner = computed(() => isFree.value);
 const upgradeModalOpen = ref(false);
@@ -456,6 +548,30 @@ const formatDate = (iso: string) => {
   }
 };
 
+const normaliseTrade = (value?: string | null): string => {
+  if (!value) return "generic";
+  const trimmed = value.trim().toLowerCase();
+  if (trimmed === "roof") return "roofing";
+  if (trimmed === "landscaping") return "landscape";
+  if (trimmed === "remodeling" || trimmed === "remodelling") return "remodel";
+  return trimmed.length ? trimmed : "generic";
+};
+
+const cleanString = (value?: string | null): string | null => {
+  const trimmed = value?.trim?.() ?? "";
+  return trimmed.length ? trimmed : null;
+};
+
+const deriveTierFromName = (name: string): "good" | "better" | "best" => {
+  const lower = (name ?? "").toLowerCase();
+  if (lower.includes("best")) return "best";
+  if (lower.includes("better")) return "better";
+  return "good";
+};
+
+const buildAbstractKey = (trade: string, name: string) =>
+  `${normaliseTrade(trade)}-${deriveTierFromName(name)}`;
+
 const fallbackTitle = (proposal: Proposal) => proposal.title || `Proposal ${proposal.id.slice(0, 6).toUpperCase()}`;
 
 const calculateDepositAmount = (options: OptionForm[] | ProposalOption[], deposit: ProposalDepositConfig): number => {
@@ -466,6 +582,16 @@ const calculateDepositAmount = (options: OptionForm[] | ProposalOption[], deposi
   const target = list.find((option) => option.name.toLowerCase() === "better") ?? list[0] ?? null;
   if (!target) return 0;
   return Math.round(target.subtotal * (deposit.value / 100) * 100) / 100;
+};
+
+const ensureOptionVisual = (option: OptionForm, tradeOverride?: string | null) => {
+  const baseTrade = tradeOverride ?? defaultTrade.value;
+  const existing = option.visual ?? null;
+  option.visual = {
+    abstract_key: existing?.abstract_key ?? buildAbstractKey(baseTrade, option.name),
+    custom_image_url: cleanString(existing?.custom_image_url),
+    accent_key: cleanString(existing?.accent_key),
+  };
 };
 
 const initialiseForm = (proposal: Proposal) => {
@@ -484,6 +610,7 @@ const initialiseForm = (proposal: Proposal) => {
     multiplier: option.multiplier ?? null,
     lineItems: option.lineItems.map(mapLineItem),
     subtotal: option.subtotal,
+    visual: option.visual ?? null,
   });
 
   const depositConfig: ProposalDepositConfig = proposal.depositConfig ?? {
@@ -492,6 +619,10 @@ const initialiseForm = (proposal: Proposal) => {
   };
 
   let optionForms = proposal.options.map(mapOption);
+  optionForms.forEach((option) => {
+    ensureOptionVisual(option);
+    visualPanels[option.id] = false;
+  });
   if (!optionForms.length) {
     optionForms = [
       {
@@ -509,8 +640,13 @@ const initialiseForm = (proposal: Proposal) => {
           },
         ],
         subtotal: 0,
+        visual: null,
       },
     ];
+    optionForms.forEach((option) => {
+      ensureOptionVisual(option);
+      visualPanels[option.id] = false;
+    });
   }
 
   if (isFree.value) {
@@ -531,7 +667,10 @@ const initialiseForm = (proposal: Proposal) => {
     message: "",
     status: proposal.status ?? "draft",
   };
-  form.value.options.forEach((option) => recomputeOptionTotals(option));
+  form.value.options.forEach((option) => {
+    ensureOptionVisual(option);
+    recomputeOptionTotals(option);
+  });
 };
 
 const recomputeOptionTotals = (option: OptionForm) => {
@@ -548,6 +687,49 @@ const selectProposal = (id: string) => {
 };
 
 const findOptionById = (id: string) => form.value?.options.find((o) => o.id === id);
+
+const visualModeForOption = (option: OptionForm) =>
+  option.visual?.custom_image_url ? "custom" : "default";
+
+const visualTradeForOption = (option: OptionForm) =>
+  normaliseTrade(option.visual?.abstract_key?.split("-")[0] ?? defaultTrade.value);
+
+const visualKeyForOption = (option: OptionForm) =>
+  option.visual?.abstract_key ?? buildAbstractKey(defaultTrade.value, option.name);
+
+const setVisualMode = (optionId: string, mode: "default" | "custom") => {
+  const option = findOptionById(optionId);
+  if (!option) return;
+  ensureOptionVisual(option);
+  if (mode === "default") {
+    option.visual!.custom_image_url = null;
+    option.visual!.abstract_key = buildAbstractKey(visualTradeForOption(option), option.name);
+  } else {
+    option.visual!.custom_image_url = null;
+  }
+};
+
+const onVisualTradeChange = (optionId: string, trade: string) => {
+  const option = findOptionById(optionId);
+  if (!option) return;
+  ensureOptionVisual(option, trade);
+};
+
+const onCustomImageChange = (optionId: string, url: string) => {
+  const option = findOptionById(optionId);
+  if (!option) return;
+  ensureOptionVisual(option);
+  const trimmed = url?.trim() ?? "";
+  option.visual!.custom_image_url = trimmed.length ? trimmed : null;
+};
+
+const onAccentKeyChange = (optionId: string, value: string) => {
+  const option = findOptionById(optionId);
+  if (!option) return;
+  ensureOptionVisual(option);
+  const trimmed = value?.trim() ?? "";
+  option.visual!.accent_key = trimmed.length ? trimmed : null;
+};
 
 const onLineItemChangeById = (optionId: string, itemIndex: number) => {
   const option = findOptionById(optionId);
@@ -612,6 +794,7 @@ const generateFromLatestQuote = async () => {
 const handleSave = async () => {
   if (!form.value) return;
   try {
+    form.value.options.forEach((option) => ensureOptionVisual(option));
     const payload: ProposalSavePayload = {
       id: form.value.id ?? undefined,
       clientId: form.value.clientId,
@@ -623,6 +806,7 @@ const handleSave = async () => {
         summary: option.summary,
         multiplier: option.multiplier ?? null,
         subtotal: option.subtotal,
+        visual: option.visual ?? null,
         lineItems: option.lineItems.map((item) => ({
           id: item.id,
           description: item.description,
@@ -688,7 +872,7 @@ watch(
 
 onMounted(async () => {
   try {
-    await Promise.all([proposalStore.load(), clientStore.load()]);
+    await Promise.all([proposalStore.load(), clientStore.load(), profileStore.load()]);
   } catch (e) {
     console.error('[SmartProposals] Failed to load initial data', e);
   }

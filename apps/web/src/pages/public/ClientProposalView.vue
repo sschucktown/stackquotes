@@ -112,67 +112,118 @@
         </section>
 
         <!-- SmartProposal expanded -->
-        <section v-if="hasProposalPayload" class="space-y-4 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <section
+          v-if="hasProposalPayload"
+          class="space-y-5 rounded-3xl bg-white/95 p-6 shadow-sm ring-1 ring-slate-100"
+        >
           <div class="flex items-start justify-between gap-4">
             <div>
               <h2 class="text-lg font-semibold text-slate-900">{{ proposalTitle }}</h2>
               <p v-if="proposalDescription" class="mt-1 text-sm text-slate-600">{{ proposalDescription }}</p>
             </div>
             <span
-              class="rounded-full px-2 py-1 text-xs font-medium"
+              class="rounded-full px-3 py-1 text-xs font-semibold"
               :class="proposalStatusClass"
             >
               {{ proposalStatusLabel }}
             </span>
           </div>
 
-          <div class="mt-2 grid gap-4 md:grid-cols-2">
-            <div class="space-y-3">
-              <h3 class="text-sm font-semibold text-slate-800">Package Options</h3>
-              <div
-                v-for="opt in proposalOptions"
-                :key="opt.name"
-                class="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-4 py-3"
-              >
+          <div v-if="useWowPortal" class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <ClientPackageCard
+              v-for="opt in proposalOptions"
+              :key="opt.name"
+              :option="opt"
+              :trade="optionTrade(opt)"
+              :tier="optionTier(opt)"
+              :selected="opt.name === selectedOptionName"
+              :deposit-text="optionDepositText(opt)"
+              @select="selectOption(opt.name)"
+            />
+          </div>
+
+          <div v-else class="space-y-3">
+            <div
+              v-for="opt in proposalOptions"
+              :key="opt.name"
+              class="flex flex-col gap-2 rounded-2xl border border-slate-200 bg-slate-50/60 p-4"
+            >
+              <div class="flex items-center justify-between gap-3">
                 <div>
-                  <div class="text-sm font-medium text-slate-900">{{ opt.name }}</div>
+                  <div class="text-sm font-semibold text-slate-900">{{ opt.name }}</div>
                   <div class="text-xs text-slate-600">{{ opt.summary || defaultSummary(opt.name) }}</div>
                 </div>
                 <div class="text-base font-semibold text-slate-900">{{ currency(opt.subtotal) }}</div>
               </div>
-            </div>
-
-            <div class="rounded-lg bg-slate-50 p-4">
-              <h3 class="text-xs uppercase tracking-wide text-slate-500">Deposit</h3>
-              <div class="mt-2">
-                <template v-if="proposalAccepted && depositAmount !== null">
-                  <div class="text-2xl font-semibold text-slate-900">{{ currency(depositAmount) }}</div>
-                  <p class="mt-1 text-sm text-slate-600">Deposit due to secure your project.</p>
-                </template>
-                <template v-else>
-                  <p class="text-sm text-slate-600">Deposit will be shown upon acceptance.</p>
-                </template>
-              </div>
-
-              <!-- Stripe PayLink visible only when proposal is accepted -->
-              <div v-if="proposalAccepted && paymentLinkUrl" class="mt-4">
-                <a
-                  :href="paymentLinkUrl"
-                  target="_blank"
-                  rel="noopener"
-                  class="inline-flex items-center rounded-md bg-[#3A7D99] px-4 py-2 text-sm font-semibold text-white shadow hover:bg-[#31687e]"
+              <div class="flex items-center gap-3">
+                <button
+                  type="button"
+                  class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-slate-300 transition hover:bg-white"
+                  :class="opt.name === selectedOptionName ? 'bg-slate-900 text-white ring-slate-900' : ''"
+                  @click="selectOption(opt.name)"
                 >
-                  Pay Deposit
-                </a>
+                  {{ opt.name === selectedOptionName ? "Selected" : "Select" }}
+                </button>
+                <span v-if="optionDepositText(opt)" class="text-xs text-slate-500">{{ optionDepositText(opt) }}</span>
               </div>
             </div>
           </div>
 
-          <div class="mt-2">
+          <div class="grid gap-4 md:grid-cols-[minmax(0,2fr)_1fr] md:items-start">
+            <div class="rounded-2xl border border-slate-100 bg-slate-50/70 p-4">
+              <p class="text-xs uppercase tracking-[0.16em] text-slate-500">Selected package</p>
+              <div class="mt-2 flex items-center justify-between gap-3">
+                <div>
+                  <div class="text-lg font-semibold text-slate-900">
+                    {{ selectedOption?.name ?? "Option" }}
+                  </div>
+                  <p class="text-sm text-slate-600">
+                    {{ selectedOption?.summary || defaultSummary(selectedOption?.name || "Option") }}
+                  </p>
+                </div>
+                <div class="text-right">
+                  <div class="text-2xl font-semibold text-slate-900">
+                    {{ currency(selectedOption?.subtotal) }}
+                  </div>
+                  <div class="text-xs text-slate-600" v-if="selectedDepositAmount !== null">
+                    Deposit: {{ currency(selectedDepositAmount) }}
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="flex flex-col gap-2">
+              <button
+                type="button"
+                class="inline-flex items-center justify-center rounded-xl bg-[#0F62FE] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0d55e5] disabled:opacity-60"
+                :disabled="!selectedOption || submitting || selectionState === 'accepted' || !proposalToken"
+                @click="acceptSelectedOption"
+              >
+                <span v-if="submitting">Submitting…</span>
+                <span v-else-if="selectionState === 'accepted'">Accepted</span>
+                <span v-else>Accept proposal</span>
+              </button>
+              <p v-if="acceptError" class="text-sm text-rose-600">{{ acceptError }}</p>
+              <p v-if="acceptMessage" class="text-sm text-emerald-700">{{ acceptMessage }}</p>
+              <a
+                v-if="proposalAccepted && paymentLinkUrl"
+                :href="paymentLinkUrl"
+                target="_blank"
+                rel="noopener"
+                class="inline-flex items-center justify-center rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50"
+              >
+                Pay Deposit
+              </a>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between gap-3">
+            <div class="text-sm text-slate-500">
+              Need clarity? Use comments to ask questions or request tweaks.
+            </div>
             <button
               v-if="hasProposalToken"
               type="button"
-              class="rounded-md px-4 py-2 text-sm font-semibold text-slate-700 ring-1 ring-inset ring-slate-300 hover:bg-slate-50"
+              class="rounded-full px-3 py-2 text-sm font-semibold text-slate-700 ring-1 ring-inset ring-slate-300 transition hover:bg-slate-50"
               @click="openComments()"
             >
               View Comments
@@ -241,20 +292,34 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import { useProposal } from "@modules/public/composables/useProposal";
-import type { ProposalOption } from "@stackquotes/types";
+import type { ProposalDepositConfig, ProposalOption } from "@stackquotes/types";
 import { apiFetch } from "@/lib/http";
+import ClientPackageCard from "@/modules/proposals/components/ClientPackageCard.vue";
+import { acceptPublicProposal } from "@modules/public/api/proposal";
+import {
+  resolveTierFromAbstractKey,
+  resolveTradeFromAbstractKey,
+  type ProposalTier,
+  type ProposalTrade,
+} from "@/modules/proposals/utils/visualAssets";
 
 const route = useRoute();
 const id = computed(() => String(route.params.id ?? ""));
 
-const { loading, error, state, isEstimate, isProposal, proposalDisplayPayload, load, approveEstimate } = useProposal(id.value);
+const { loading, error, state, isEstimate, proposalDisplayPayload, load, approveEstimate } = useProposal(id.value);
 
 onMounted(() => {
   void load();
 });
+
+const selectedOptionName = ref<string | null>(null);
+const selectionState = ref<"idle" | "selecting" | "reviewing" | "submitting" | "accepted" | "error">("idle");
+const acceptError = ref<string | null>(null);
+const acceptMessage = ref<string | null>(null);
+const submitting = ref(false);
 
 // Header branding and labels
 const headerLogoUrl = computed(() => {
@@ -313,7 +378,29 @@ const proposalAccepted = computed(() => (proposal.value?.status ?? "") === "acce
 const proposalTitle = computed(() => proposal.value?.title ?? "SmartProposal");
 const proposalDescription = computed(() => proposal.value?.description ?? "");
 const paymentLinkUrl = computed(() => proposalDisplayPayload.value?.paymentLinkUrl ?? null);
-const depositAmount = computed(() => proposalDisplayPayload.value?.deposit?.amount ?? null);
+const planMeta = computed(() => proposalDisplayPayload.value?.plan ?? null);
+const allowMultiOptions = computed(
+  () => planMeta.value?.allowMultiOptions ?? proposalOptions.value.length > 1
+);
+const wowPortalEnabled = computed(() => planMeta.value?.wowPortalEnabled ?? false);
+const useWowPortal = computed(
+  () => wowPortalEnabled.value && allowMultiOptions.value && proposalOptions.value.length > 1
+);
+const depositConfig = computed<ProposalDepositConfig | null>(
+  () =>
+    proposal.value?.depositConfig ??
+    ((proposalDisplayPayload.value?.deposit?.config as ProposalDepositConfig | null) ?? null)
+);
+const proposalToken = computed(
+  () => state.value.proposalToken ?? state.value.linkedProposalToken ?? null
+);
+const selectedOption = computed<ProposalOption | null>(() => {
+  const current =
+    proposalOptions.value.find((opt) => opt.name === selectedOptionName.value) ??
+    proposalOptions.value[0] ??
+    null;
+  return current;
+});
 const hasProposalPayload = computed(() => Boolean(proposalDisplayPayload.value));
 
 const proposalStatusLabel = computed(() => {
@@ -331,8 +418,103 @@ const proposalStatusClass = computed(() => {
   return "bg-slate-100 text-slate-700";
 });
 
+const currency = (n: number | null | undefined) =>
+  new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 2,
+  }).format(Number(n ?? 0));
+
+const optionTier = (option: ProposalOption): ProposalTier => {
+  const abstractKey = option.visual?.abstract_key ?? null;
+  if (abstractKey) return resolveTierFromAbstractKey(abstractKey);
+  const lower = option.name.toLowerCase();
+  if (lower.includes("best")) return "best";
+  if (lower.includes("better")) return "better";
+  return "good";
+};
+
+const optionTrade = (option: ProposalOption): ProposalTrade => {
+  const abstractKey = option.visual?.abstract_key ?? null;
+  return resolveTradeFromAbstractKey(abstractKey ?? undefined);
+};
+
+const computeDepositForOption = (
+  option: ProposalOption | null,
+  config: ProposalDepositConfig | null
+): number | null => {
+  if (!option || !config) return null;
+  if (config.type === "fixed") {
+    return Math.round(config.value * 100) / 100;
+  }
+  const subtotal = Number(option.subtotal ?? 0);
+  if (!Number.isFinite(subtotal) || subtotal <= 0) return null;
+  return Math.round(subtotal * (config.value / 100) * 100) / 100;
+};
+
+const selectedDepositAmount = computed(() =>
+  proposalAccepted.value && proposalDisplayPayload.value?.deposit?.amount != null
+    ? proposalDisplayPayload.value.deposit.amount
+    : computeDepositForOption(selectedOption.value, depositConfig.value)
+);
+
+const optionDepositText = (option: ProposalOption) => {
+  const amount = computeDepositForOption(option, depositConfig.value);
+  if (amount === null) return null;
+  return `${currency(amount)} deposit`;
+};
+
+const selectOption = (name: string) => {
+  selectedOptionName.value = name;
+  selectionState.value = "reviewing";
+  acceptError.value = null;
+  acceptMessage.value = null;
+};
+
+const acceptSelectedOption = async () => {
+  if (!proposalToken.value || !selectedOption.value) return;
+  submitting.value = true;
+  acceptError.value = null;
+  acceptMessage.value = null;
+  selectionState.value = "submitting";
+  try {
+    const res = await acceptPublicProposal(proposalToken.value, selectedOption.value.name);
+    if ((res as any).error) {
+      throw new Error((res as any).error as string);
+    }
+    acceptMessage.value = "Thanks! Your selection has been saved.";
+    selectionState.value = "accepted";
+    await load();
+  } catch (e: any) {
+    acceptError.value = e?.message ?? "Unable to accept proposal right now.";
+    selectionState.value = "error";
+  } finally {
+    submitting.value = false;
+  }
+};
+
+watch(
+  proposalOptions,
+  (opts) => {
+    const accepted = proposal.value?.acceptedOption ?? null;
+    const fallback = opts[0]?.name ?? null;
+    selectedOptionName.value = accepted ?? selectedOptionName.value ?? fallback;
+    selectionState.value = accepted ? "accepted" : "idle";
+  },
+  { immediate: true }
+);
+
+watch(
+  () => proposal.value?.acceptedOption,
+  (accepted) => {
+    if (accepted) {
+      selectedOptionName.value = accepted;
+      selectionState.value = "accepted";
+    }
+  }
+);
+
 // Comments state (uses proposal public token under the hood)
-const proposalToken = computed(() => state.value.proposalToken ?? state.value.linkedProposalToken ?? null);
 const hasProposalToken = computed(() => Boolean(proposalToken.value));
 
 type Comment = { id: string; authorName: string; authorRole: 'contractor'|'client'; message: string; createdAt: string; avatarUrl?: string | null };
@@ -395,13 +577,9 @@ const sendComment = async () => {
 };
 
 // Utils
-const currency = (n: number | null | undefined) =>
-  new Intl.NumberFormat(undefined, { style: 'currency', currency: 'USD', maximumFractionDigits: 2 }).format(Number(n ?? 0));
-
 const defaultSummary = (name: string) => {
   if (name === "Good") return "Essential scope to get started quickly.";
   if (name === "Best") return "Premium upgrades for a standout experience.";
   return "Balanced deliverables aligned with your goals.";
 };
 </script>
-

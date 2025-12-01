@@ -105,12 +105,19 @@ export interface ProposalOptionLineItem {
   total: number;
 }
 
+export interface ProposalOptionVisual {
+  abstract_key: string;
+  custom_image_url?: string | null;
+  accent_key?: string | null;
+}
+
 export interface ProposalOption {
   name: string;
   summary?: string | null;
   lineItems: ProposalOptionLineItem[];
   subtotal: number;
   multiplier?: number | null;
+  visual?: ProposalOptionVisual | null;
 }
 
 export interface ProposalTotal {

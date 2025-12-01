@@ -65,6 +65,11 @@ const buildProposalOptions = (lineItems: LineItem[]): ProposalOption[] =>
       lineItems: mapped,
       subtotal,
       multiplier: preset.factor,
+      visual: {
+        abstract_key: `generic-${preset.name.toLowerCase()}`,
+        custom_image_url: null,
+        accent_key: null,
+      },
     };
   });
 
