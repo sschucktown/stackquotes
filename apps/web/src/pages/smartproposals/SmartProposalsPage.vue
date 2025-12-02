@@ -321,6 +321,24 @@
             <SQTextarea v-model="form.message" rows="3" placeholder="Optional note that appears in the email body" />
           </section>
 
+          <section class="space-y-3 rounded-2xl border border-slate-200 bg-white p-4">
+            <div class="flex items-center justify-between gap-3">
+              <div>
+                <h3 class="text-sm font-semibold text-slate-800">Comments</h3>
+                <p class="text-xs text-slate-500">
+                  Proposal-specific thread shared with your client in the SmartProposal v2 portal.
+                </p>
+              </div>
+              <span v-if="!form?.id" class="text-xs text-slate-500">Save draft to start commenting.</span>
+            </div>
+            <CommentsPanel
+              :proposal-id="form?.id ?? null"
+              mode="contractor"
+              :accent-color="profileStore.profile?.accentColor ?? null"
+              :disabled="!form?.id"
+            />
+          </section>
+
           <section class="flex flex-wrap items-center justify-between gap-3 pt-4">
             <div class="text-xs text-slate-500">
               Last updated {{ formatDate(currentProposal?.updatedAt ?? currentProposal?.createdAt ?? new Date().toISOString()) }}
@@ -384,6 +402,7 @@ import { useTier } from "@/composables/useTier";
 import { useContractorProfileStore } from "@modules/contractor/stores/profileStore";
 import UpgradeBanner from "@/components/billing/UpgradeBanner.vue";
 import UpgradeModal from "@/components/billing/UpgradeModal.vue";
+import CommentsPanel from "@/modules/smartproposal/components/CommentsPanel.vue";
 import type { Proposal, ProposalDepositConfig, ProposalOption } from "@stackquotes/types";
 import type { ProposalSavePayload, ProposalSendPayload } from "@modules/proposals/api/proposals";
 

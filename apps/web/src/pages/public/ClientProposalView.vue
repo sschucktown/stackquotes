@@ -1,19 +1,8 @@
 <template>
   <div class="min-h-screen bg-slate-50 px-4 py-10">
     <div class="mx-auto w-full max-w-4xl">
-      <!-- Desktop comments button -->
-      <button
-        v-if="hasProposalToken"
-        type="button"
-        class="fixed right-6 top-6 z-40 hidden items-center gap-2 rounded-full bg-white/95 px-3 py-2 text-sm font-semibold text-slate-700 shadow ring-1 ring-slate-200 transition hover:-translate-y-0.5 hover:bg-white lg:flex"
-        @click="openComments()"
-      >
-        <span>💬</span>
-        <span>Comments</span>
-      </button>
-
       <div v-if="loading" class="flex h-48 items-center justify-center text-slate-500">
-        Loading…
+        Loading...
       </div>
 
       <div
@@ -80,15 +69,6 @@
             >
               <span v-if="approving">Approving…</span>
               <span v-else>Approve QuickQuote</span>
-            </button>
-
-            <button
-              type="button"
-              class="rounded-md px-4 py-2 text-sm font-semibold text-slate-700 ring-1 ring-inset ring-slate-300 hover:bg-slate-50 disabled:opacity-60"
-              :disabled="!hasProposalToken"
-              @click="openComments()"
-            >
-              Comments
             </button>
           </div>
           <p v-if="approveError" class="mt-2 text-sm text-rose-600">{{ approveError }}</p>
@@ -191,11 +171,11 @@
                 </div>
               </div>
             </div>
-            <div class="flex flex-col gap-2">
-              <button
-                type="button"
-                class="inline-flex items-center justify-center rounded-xl bg-[#0F62FE] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0d55e5] disabled:opacity-60"
-                :disabled="!selectedOption || submitting || selectionState === 'accepted' || !proposalToken"
+          <div class="flex flex-col gap-2">
+            <button
+              type="button"
+              class="inline-flex items-center justify-center rounded-xl bg-[#0F62FE] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0d55e5] disabled:opacity-60"
+              :disabled="!selectedOption || submitting || selectionState === 'accepted' || !proposalToken"
                 @click="acceptSelectedOption"
               >
                 <span v-if="submitting">Submitting…</span>
@@ -216,76 +196,15 @@
             </div>
           </div>
 
-          <div class="flex items-center justify-between gap-3">
-            <div class="text-sm text-slate-500">
-              Need clarity? Use comments to ask questions or request tweaks.
-            </div>
-            <button
-              v-if="hasProposalToken"
-              type="button"
-              class="rounded-full px-3 py-2 text-sm font-semibold text-slate-700 ring-1 ring-inset ring-slate-300 transition hover:bg-slate-50"
-              @click="openComments()"
-            >
-              View Comments
-            </button>
+          <div v-if="showCommentsPanel" class="mt-6">
+            <CommentsPanel
+              :proposal-id="proposal.value?.id ?? null"
+              :token="proposalToken"
+              mode="client"
+              :accent-color="proposalDisplayPayload?.contractor?.accentColor ?? null"
+            />
           </div>
         </section>
-
-        <!-- Comments drawer (desktop) -->
-        <transition name="slide-x">
-          <aside v-if="commentsOpen && isDesktop" class="fixed inset-y-0 right-0 z-50 w-80 bg-white shadow-xl ring-1 ring-slate-200">
-            <div class="flex items-center justify-between border-b border-slate-200 px-4 py-3">
-              <h3 class="text-sm font-semibold text-slate-900">Comments</h3>
-              <button type="button" class="rounded-md px-2 py-1 text-slate-500 hover:bg-slate-100" @click="closeComments()">&times;</button>
-            </div>
-            <div class="flex h-[calc(100%-48px-56px)] flex-col-reverse overflow-y-auto px-3 py-3">
-              <div v-for="c in comments" :key="c.id" class="mb-3 flex" :class="c.authorRole==='contractor' ? 'justify-end' : 'justify-start'">
-                <div class="max-w-[85%]">
-                  <div class="flex items-center gap-2" :class="c.authorRole==='contractor' ? 'justify-end' : 'justify-start'">
-                    <img v-if="c.avatarUrl" :src="c.avatarUrl" alt="avatar" class="h-6 w-6 rounded-full" />
-                    <span class="text-xs text-slate-500">{{ c.authorName }} · {{ timeAgo(c.createdAt) }}</span>
-                  </div>
-                  <div :class="bubbleClass(c)">{{ c.message }}</div>
-                </div>
-              </div>
-            </div>
-            <div class="border-t border-slate-200 p-3">
-              <div class="flex items-center gap-2">
-                <input v-model="draft" type="text" placeholder="Write a comment..." class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-[#3A7D99] focus:outline-none focus:ring-1 focus:ring-[#3A7D99]" @keydown.enter.prevent="sendComment" />
-                <button type="button" class="rounded-md bg-[#3A7D99] px-3 py-2 text-sm font-semibold text-white disabled:opacity-60" :disabled="sending || !draft.trim()" @click="sendComment">Send</button>
-              </div>
-            </div>
-          </aside>
-        </transition>
-
-        <!-- Comments bottom sheet (mobile) -->
-        <transition name="slide-y">
-          <div v-if="commentsOpen && !isDesktop" class="fixed inset-0 z-50 flex items-end bg-black/20">
-            <div class="h-[70vh] w-full rounded-t-2xl bg-white shadow-xl ring-1 ring-slate-200">
-              <div class="flex items-center justify-between border-b border-slate-200 px-4 py-3">
-                <h3 class="text-sm font-semibold text-slate-900">Comments</h3>
-                <button type="button" class="rounded-md px-2 py-1 text-slate-500 hover:bg-slate-100" @click="closeComments()">&times;</button>
-              </div>
-              <div class="flex h-[calc(70vh-48px-56px)] flex-col-reverse overflow-y-auto px-3 py-3">
-                <div v-for="c in comments" :key="c.id" class="mb-3 flex" :class="c.authorRole==='contractor' ? 'justify-end' : 'justify-start'">
-                  <div class="max-w-[85%]">
-                    <div class="flex items-center gap-2" :class="c.authorRole==='contractor' ? 'justify-end' : 'justify-start'">
-                      <img v-if="c.avatarUrl" :src="c.avatarUrl" alt="avatar" class="h-6 w-6 rounded-full" />
-                      <span class="text-xs text-slate-500">{{ c.authorName }} · {{ timeAgo(c.createdAt) }}</span>
-                    </div>
-                    <div :class="bubbleClass(c)">{{ c.message }}</div>
-                  </div>
-                </div>
-              </div>
-              <div class="border-t border-slate-200 p-3">
-                <div class="flex items-center gap-2">
-                  <input v-model="draft" type="text" placeholder="Write a comment..." class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-[#3A7D99] focus:outline-none focus:ring-1 focus:ring-[#3A7D99]" @keydown.enter.prevent="sendComment" />
-                  <button type="button" class="rounded-md bg-[#3A7D99] px-3 py-2 text-sm font-semibold text-white disabled:opacity-60" :disabled="sending || !draft.trim()" @click="sendComment">Send</button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </transition>
       </div>
     </div>
   </div>
@@ -296,7 +215,6 @@ import { computed, onMounted, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import { useProposal } from "@modules/public/composables/useProposal";
 import type { ProposalDepositConfig, ProposalOption } from "@stackquotes/types";
-import { apiFetch } from "@/lib/http";
 import ClientPackageCard from "@/modules/proposals/components/ClientPackageCard.vue";
 import { acceptPublicProposal } from "@modules/public/api/proposal";
 import {
@@ -305,6 +223,7 @@ import {
   type ProposalTier,
   type ProposalTrade,
 } from "@/modules/proposals/utils/visualAssets";
+import CommentsPanel from "@/modules/smartproposal/components/CommentsPanel.vue";
 
 const route = useRoute();
 const id = computed(() => String(route.params.id ?? ""));
@@ -393,6 +312,9 @@ const depositConfig = computed<ProposalDepositConfig | null>(
 );
 const proposalToken = computed(
   () => state.value.proposalToken ?? state.value.linkedProposalToken ?? null
+);
+const showCommentsPanel = computed(() =>
+  wowPortalEnabled.value && Boolean(proposal.value?.id && proposalToken.value)
 );
 const selectedOption = computed<ProposalOption | null>(() => {
   const current =
@@ -513,68 +435,6 @@ watch(
     }
   }
 );
-
-// Comments state (uses proposal public token under the hood)
-const hasProposalToken = computed(() => Boolean(proposalToken.value));
-
-type Comment = { id: string; authorName: string; authorRole: 'contractor'|'client'; message: string; createdAt: string; avatarUrl?: string | null };
-const commentsOpen = ref(false);
-const comments = ref<Comment[]>([]);
-const draft = ref("");
-const sending = ref(false);
-const isDesktop = computed(() => (typeof window !== 'undefined' ? window.innerWidth >= 1024 : true));
-
-const bubbleClass = (c: Comment) =>
-  (c.authorRole === 'contractor'
-    ? 'mt-1 rounded-xl bg-blue-100 px-3 py-2 text-sm text-slate-800'
-    : 'mt-1 rounded-xl bg-slate-100 px-3 py-2 text-sm text-slate-800');
-
-const timeAgo = (iso: string) => {
-  const ms = Date.now() - new Date(iso).getTime();
-  const mins = Math.max(0, Math.round(ms / 60000));
-  if (mins < 60) return `${mins}m ago`;
-  const hours = Math.round(mins / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.round(hours / 24);
-  return `${days}d ago`;
-};
-
-const openComments = async () => { if (!hasProposalToken.value) return; commentsOpen.value = true; await loadComments(); };
-const closeComments = () => { commentsOpen.value = false; };
-
-const commentsEndpoint = computed(() => {
-  const token = proposalToken.value;
-  return token ? `/share/proposal/${encodeURIComponent(token)}/comments` : null;
-});
-
-const loadComments = async () => {
-  if (!commentsEndpoint.value) return;
-  try {
-    const res = await apiFetch<{ data: Comment[] }>(commentsEndpoint.value);
-    if ((res as any).error) return;
-    const list: Comment[] = (((res as any).data ?? []) as unknown) as Comment[];
-    comments.value = list.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-  } catch {
-    // ignore silently
-  }
-};
-
-const sendComment = async () => {
-  if (!commentsEndpoint.value || !draft.value.trim()) return;
-  sending.value = true;
-  try {
-    const res = await apiFetch<{ data: Comment }>(commentsEndpoint.value, {
-      method: 'POST',
-      body: JSON.stringify({ message: draft.value.trim(), authorRole: 'client' }),
-    });
-    if (!(res as any).error) {
-      draft.value = '';
-      await loadComments();
-    }
-  } finally {
-    sending.value = false;
-  }
-};
 
 // Utils
 const defaultSummary = (name: string) => {
