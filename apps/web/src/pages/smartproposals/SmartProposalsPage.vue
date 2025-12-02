@@ -503,7 +503,9 @@ const depositReferenceLabel = computed(() =>
 const clientName = computed(() => {
   if (!form.value) return "";
   const client = clientStore.items.find((item) => item.id === form.value?.clientId);
-  return client?.name ?? "Unknown client";
+  const name = client?.name ?? "Unknown client";
+  const email = client?.email?.trim();
+  return email ? `${name} (${email})` : name;
 });
 
 const currentProposal = computed<Proposal | null>(() => proposalStore.current);
