@@ -57,7 +57,7 @@ commentsRouter.get("/", async (c) => {
     ? await getProposalByToken(supabase, token)
     : await getProposalById(supabase, (await requireUser(c)).id, params.proposalId);
 
-  if (!proposal || proposal.id !== params.proposalId) {
+  if (!proposal) {
     c.status(404);
     return c.json({ error: "Proposal not found" });
   }
@@ -93,7 +93,7 @@ commentsRouter.post("/", async (c) => {
     ? await getProposalByToken(supabase, token!)
     : await getProposalById(supabase, user!.id, params.proposalId);
 
-  if (!proposal || proposal.id !== params.proposalId) {
+  if (!proposal) {
     c.status(404);
     return c.json({ error: "Proposal not found" });
   }
