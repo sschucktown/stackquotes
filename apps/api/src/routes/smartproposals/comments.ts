@@ -138,6 +138,10 @@ commentsRouter.post("/", async (c) => {
   }
 
   if (insertError) {
+    if (typeof insertError.message === "string" && insertError.message.includes("proposal_id_fkey")) {
+      c.status(404);
+      return c.json({ error: "Proposal not found for comments. Please refresh and try again." });
+    }
     c.status(500);
     return c.json({ error: insertError.message });
   }
