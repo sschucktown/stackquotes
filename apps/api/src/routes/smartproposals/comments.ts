@@ -103,8 +103,14 @@ commentsRouter.post("/", async (c) => {
   const clientRecord = await getClient(supabase, proposal.userId, proposal.clientId).catch(() => null);
   const contractorProfile = await getContractorProfile(supabase, proposal.userId).catch(() => null);
 
+  const proposalId = proposal.id;
+  if (!proposalId) {
+    c.status(404);
+    return c.json({ error: "Proposal not found" });
+  }
+
   const insertPayload: Record<string, any> = {
-    proposal_id: proposal.id,
+    proposal_id: proposalId,
     author_type: authorType,
     message,
     author_role: authorType,
