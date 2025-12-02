@@ -106,10 +106,11 @@ commentsRouter.post("/", async (c) => {
   const insertPayload: Record<string, any> = {
     proposal_id: proposal.id,
     author_type: authorType,
-    author_id: authorType === "contractor" ? user?.id ?? null : null,
     message,
     author_role: authorType,
   };
+
+  const authorIdValue = authorType === "contractor" ? user?.id ?? null : null;
 
   if (authorType === "contractor") {
     insertPayload.author_name = contractorProfile?.businessName ?? contractorProfile?.ownerName ?? "Contractor";
@@ -117,7 +118,25 @@ commentsRouter.post("/", async (c) => {
     insertPayload.author_name = clientRecord?.name ?? "Client";
   }
 
-  const { error: insertError } = await supabase.from("proposal_comments").insert(insertPayload);
+  // Prefer storing author_id when the column exists; fall back gracefully otherwise.
+  let insertError: any = null;
+  {
+    const { error } = await supabase
+      .from("proposal_comments")
+      .insert({ ...insertPayload, author_id: authorIdValue });
+    insertError = error;
+  }
+
+  if (insertError && typeof insertError.message === "string" && insertError.message.includes("author_id")) {
+    // Retry without author_id to support environments where the column hasn't been migrated yet.
+    const { error } = await supabase.from("proposal_comments").insert(insertPayload);
+    if (error) {
+      insertError = error;
+    } else {
+      insertError = null;
+    }
+  }
+
   if (insertError) {
     c.status(500);
     return c.json({ error: insertError.message });

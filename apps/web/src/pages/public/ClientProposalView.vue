@@ -313,9 +313,7 @@ const depositConfig = computed<ProposalDepositConfig | null>(
 const proposalToken = computed(
   () => state.value.proposalToken ?? state.value.linkedProposalToken ?? null
 );
-const showCommentsPanel = computed(() =>
-  wowPortalEnabled.value && Boolean(proposal.value?.id && proposalToken.value)
-);
+const showCommentsPanel = computed(() => Boolean(proposal.value?.id && proposalToken.value));
 const selectedOption = computed<ProposalOption | null>(() => {
   const current =
     proposalOptions.value.find((opt) => opt.name === selectedOptionName.value) ??
