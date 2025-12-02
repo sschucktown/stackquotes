@@ -198,7 +198,7 @@
 
           <div v-if="showCommentsPanel" class="mt-6">
             <CommentsPanel
-              :proposal-id="proposal.value?.id ?? null"
+              :proposal-id="proposalIdForComments"
               :token="proposalToken"
               mode="client"
               :accent-color="proposalDisplayPayload?.contractor?.accentColor ?? null"
@@ -313,7 +313,10 @@ const depositConfig = computed<ProposalDepositConfig | null>(
 const proposalToken = computed(
   () => state.value.proposalToken ?? state.value.linkedProposalToken ?? null
 );
-const showCommentsPanel = computed(() => Boolean(proposal.value?.id && proposalToken.value));
+const proposalIdForComments = computed(
+  () => proposal.value?.id ?? state.value.linkedProposalId ?? null
+);
+const showCommentsPanel = computed(() => Boolean(proposalIdForComments.value && proposalToken.value));
 const selectedOption = computed<ProposalOption | null>(() => {
   const current =
     proposalOptions.value.find((opt) => opt.name === selectedOptionName.value) ??
