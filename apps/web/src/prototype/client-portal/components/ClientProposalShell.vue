@@ -77,39 +77,64 @@ function handlePaymentComplete() {
 
 <template>
   <div class="min-h-screen bg-slate-50">
-    <div class="mx-auto flex min-h-screen max-w-3xl flex-col px-4 pb-24 pt-4 sm:px-6 lg:px-8">
-      <div class="mb-4">
+    <div
+      class="mx-auto flex min-h-screen max-w-3xl flex-col px-4 pb-[120px] pt-6 sm:px-6 lg:px-8 lg:pt-8"
+    >
+      <div class="mb-8 animate-fade-in">
         <HeroSection :proposal="proposal" :theme-classes="themeClasses" />
       </div>
 
-      <div class="flex-1 space-y-6">
-        <GallerySection v-if="proposal.galleryUrls.length" :proposal="proposal" />
+      <div class="flex-1 space-y-10">
+        <div v-if="proposal.galleryUrls.length" class="animate-fade-in">
+          <GallerySection :proposal="proposal" />
+        </div>
 
-        <PackageSelector
-          :proposal="proposal"
-          :theme-classes="themeClasses"
-          :selected-package-id="selectedPackageId"
-          @select-package="handleSelectPackage"
-        />
+        <div class="h-px bg-slate-200/60" />
 
-        <CostSummarySection :proposal="proposal" :theme-classes="themeClasses" />
+        <div class="animate-fade-in">
+          <PackageSelector
+            :proposal="proposal"
+            :theme-classes="themeClasses"
+            :selected-package-id="selectedPackageId"
+            @select-package="handleSelectPackage"
+          />
+        </div>
 
-        <InclusionsSection :title="'Details & Inclusions'" :groups="proposal.inclusions" />
+        <div class="h-px bg-slate-200/60" />
 
-        <InclusionsSection
-          v-if="proposal.exclusions.length"
-          :title="'Not Included'"
-          :groups="proposal.exclusions"
-          :variant="'subtle'"
-        />
+        <div class="animate-fade-in">
+          <CostSummarySection :proposal="proposal" :theme-classes="themeClasses" />
+        </div>
 
-        <TimelineSection :proposal="proposal" :theme-classes="themeClasses" />
+        <div class="animate-fade-in">
+          <InclusionsSection :title="'Details & Inclusions'" :groups="proposal.inclusions" />
+        </div>
 
-        <TestimonialsSection v-if="proposal.testimonials.length" :proposal="proposal" />
+        <div v-if="proposal.exclusions.length" class="animate-fade-in">
+          <InclusionsSection :title="'Not Included'" :groups="proposal.exclusions" :variant="'subtle'" />
+        </div>
 
-        <TermsSection :proposal="proposal" />
+        <div class="h-px bg-slate-200/60" />
 
-        <CompanyFooter :proposal="proposal" :theme-classes="themeClasses" />
+        <div class="animate-fade-in">
+          <TimelineSection :proposal="proposal" :theme-classes="themeClasses" />
+        </div>
+
+        <div class="h-px bg-slate-200/60" />
+
+        <div v-if="proposal.testimonials.length" class="animate-fade-in">
+          <TestimonialsSection :proposal="proposal" />
+        </div>
+
+        <div class="h-px bg-slate-200/60" />
+
+        <div class="animate-fade-in">
+          <TermsSection :proposal="proposal" />
+        </div>
+
+        <div class="animate-fade-in">
+          <CompanyFooter :proposal="proposal" :theme-classes="themeClasses" />
+        </div>
       </div>
     </div>
 
@@ -129,3 +154,19 @@ function handlePaymentComplete() {
     />
   </div>
 </template>
+
+<style scoped>
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-fade-in {
+  animation: fadeUp 320ms ease-out forwards;
+}
+</style>

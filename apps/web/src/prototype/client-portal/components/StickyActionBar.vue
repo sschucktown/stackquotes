@@ -23,19 +23,21 @@ const currency = (n: number) =>
 <template>
   <div class="pointer-events-none fixed inset-x-0 bottom-0 z-20">
     <div class="mx-auto flex max-w-3xl justify-center px-4 pb-4 sm:px-6 lg:px-8">
-      <div class="pointer-events-auto w-full rounded-2xl border border-slate-200 bg-white/95 px-4 py-3 shadow-lg backdrop-blur">
+      <div
+        class="pointer-events-auto w-full rounded-2xl border border-slate-200 bg-white/95 px-4 py-3 shadow-[0_-2px_10px_rgba(0,0,0,0.07)] backdrop-blur supports-[padding:env(safe-area-inset-bottom)]:pb-[env(safe-area-inset-bottom)]"
+      >
         <div class="flex items-center justify-between gap-3">
           <div class="flex flex-1 flex-col">
             <p class="text-xs font-semibold text-slate-700">
               {{ selectedPackage ? selectedPackage.label : "Select a package to continue" }}
             </p>
-            <p v-if="selectedPackage" class="text-[0.7rem] text-slate-500">
+            <p v-if="selectedPackage" class="text-[0.75rem] text-slate-600">
               Deposit due today:
-              <span class="font-semibold text-slate-800">
+              <span class="font-semibold text-slate-900">
                 {{ currency(selectedPackage.depositAmount) }}
               </span>
             </p>
-            <p v-else class="text-[0.7rem] text-slate-500">
+            <p v-else class="text-[0.75rem] text-slate-600">
               Tap one of the options above to see deposit and monthly estimate.
             </p>
           </div>
