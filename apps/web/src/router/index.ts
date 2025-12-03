@@ -71,6 +71,10 @@ const router = createRouter({
       meta: { public: true, allowAuthenticated: true },
     },
     {
+      path: "/app/prototypes/client-portal",
+      redirect: "/prototype/client-portal",
+    },
+    {
       path: "/prototype/client-portal",
       name: "ClientProposalPrototypePublic",
       component: () => import("@/prototype/client-portal/ClientProposalPage.vue"),
