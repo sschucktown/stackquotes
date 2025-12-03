@@ -153,6 +153,12 @@ const router = createRouter({
           component: () => import("@/pages/smartproposals/SmartProposalsPage.vue"),
         },
         {
+          path: "prototypes/client-portal",
+          name: "ClientProposalPrototype",
+          component: () => import("@/prototype/client-portal/ClientProposalPage.vue"),
+          meta: { public: true, allowAuthenticated: true },
+        },
+        {
           path: "proposals-v2",
           name: "ProposalsV2Dev",
           component: () => import("@/pages/smartproposals/SmartProposalsV2Page.vue"),
