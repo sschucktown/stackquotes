@@ -24,6 +24,7 @@ import PackageGridBlock from "./blocks/PackageGridBlock.vue";
 import WhyUsBlock from "./blocks/WhyUsBlock.vue";
 import PaymentBlock from "./blocks/PaymentBlock.vue";
 import FooterBlock from "./blocks/FooterBlock.vue";
+import FencingBlock from "./blocks/FencingBlock.vue";
 import { useSpv2Store } from "../stores/useSpv2Store";
 
 type Variant = "builder" | "modal";
@@ -41,6 +42,7 @@ const componentByType = {
   "why-us": WhyUsBlock,
   payment: PaymentBlock,
   footer: FooterBlock,
+  fencing: FencingBlock,
 } as const;
 
 const renderedSections = computed(() => store.sections.filter((section) => !section.hidden));

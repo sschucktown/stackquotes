@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
 import type { PackageTierId } from "../types";
 
-export type Spv2SectionType = "hero" | "packages" | "why-us" | "payment" | "footer";
+export type Spv2SectionType = "hero" | "packages" | "why-us" | "payment" | "footer" | "fencing";
 export type FontPreset = "clean" | "friendly" | "bold";
 
 export interface SectionConfig {
@@ -91,6 +91,7 @@ const getDefaultState = (): Spv2State => ({
   sections: [
     { id: "hero", type: "hero", title: "Hero" },
     { id: "packages", type: "packages", title: "Packages" },
+    { id: "fencing", type: "fencing", title: "Fencing wow layout" },
     { id: "why-us", type: "why-us", title: "Why choose us" },
     { id: "payment", type: "payment", title: "Payment terms" },
     { id: "footer", type: "footer", title: "Footer" },
