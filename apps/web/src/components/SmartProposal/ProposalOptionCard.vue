@@ -24,7 +24,7 @@
       <div
         class="mt-5 overflow-hidden rounded-2xl bg-gradient-to-br from-white via-white to-slate-50 ring-1 ring-slate-100"
       >
-        <img src="/assets/fence.png" alt="Fence illustration" class="h-40 w-full object-cover" />
+        <img :src="fenceImage" alt="Fence illustration" class="h-40 w-full object-cover" />
       </div>
 
       <div class="mt-5 space-y-3">
@@ -116,6 +116,8 @@ const tone = computed(() => {
   if (props.theme === "better") return "blue";
   return "slate";
 });
+
+const fenceImage = "/proposal-visuals/generic-good.svg";
 
 const cardClass = computed(() => {
   if (props.theme === "best") return "border-amber-500 bg-amber-50 shadow-lg shadow-amber-100";
