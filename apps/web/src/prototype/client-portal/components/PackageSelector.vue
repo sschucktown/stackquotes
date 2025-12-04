@@ -44,16 +44,11 @@ function handleSelect(id: string) {
         :ref="(el) => (cardRefs[pkg.id] = el as HTMLButtonElement | null)"
         type="button"
         @click="handleSelect(pkg.id)"
-        class="group relative w-full origin-center rounded-xl border p-5 text-left shadow-sm transition-all duration-300 ease-out hover:shadow-xl hover:scale-[1.01] active:scale-[0.98] sm:rounded-3xl sm:border-slate-200 sm:bg-white sm:p-8 sm:shadow-lg focus:outline-none"
+        class="group relative w-full origin-center rounded-2xl border border-slate-200 bg-white px-5 pt-12 pb-6 text-left shadow-sm transition-all duration-300 ease-out sm:rounded-3xl sm:px-8 sm:pt-10 sm:pb-8 sm:shadow-lg sm:hover:shadow-xl sm:hover:scale-[1.01] focus:outline-none"
         :class="[
-          pkg.tier === 'Good'
-            ? 'bg-white border-slate-200'
-            : pkg.tier === 'Better'
-              ? 'bg-slate-50 border-slate-300'
-              : '',
-          pkg.tier === 'Best'
-            ? 'border-2 border-blue-500 shadow-sm'
-            : '',
+          pkg.tier === 'Good' ? 'bg-white border-slate-200' : '',
+          pkg.tier === 'Better' ? 'bg-slate-50 border-slate-300' : '',
+          pkg.tier === 'Best' ? 'border-2 border-blue-500 shadow-sm' : '',
           selectedPackageId === pkg.id
             ? 'border-2 border-blue-500 bg-blue-50/40 shadow-[0_0_0_4px_rgba(59,130,246,0.18)] scale-[1.015]'
             : '',
@@ -62,12 +57,12 @@ function handleSelect(id: string) {
       >
         <div
           v-if="pkg.isRecommended"
-          class="inline-flex items-center rounded-full bg-slate-900 px-2 py-1 text-[11px] font-semibold text-white shadow-lg absolute top-3 right-3 sm:top-4 sm:right-4 sm:px-3 sm:py-1"
+          class="absolute top-3 right-3 z-20 inline-flex items-center rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold text-white shadow-md"
         >
           Most Popular
         </div>
 
-        <div class="flex items-start justify-between gap-4">
+        <div class="mt-2 flex items-start justify-between gap-4 sm:mt-3">
           <div class="space-y-1.5">
             <p class="text-[0.8rem] font-semibold uppercase tracking-wide text-slate-500">
               {{ pkg.tier }}
@@ -76,7 +71,7 @@ function handleSelect(id: string) {
             <p class="text-sm leading-relaxed text-slate-700">{{ pkg.description }}</p>
           </div>
 
-          <div class="text-right space-y-1">
+          <div class="text-right space-y-1 mt-1">
             <p class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">{{ currency(pkg.priceTotal) }}</p>
             <p v-if="pkg.monthlyEstimate" class="text-xs text-slate-400 mt-1 sm:text-[0.78rem] sm:text-slate-500">
               ~{{ currency(pkg.monthlyEstimate) }}/mo with financing
