@@ -97,7 +97,7 @@ const router = createRouter({
     {
       path: "/prototype/hq",
       name: "ContractorHQPrototypePublic",
-      component: () => import("@/prototype/contractor/HQ.vue"),
+      component: () => import("@/prototype/ContractorHQ.vue"),
       meta: { public: true, allowAuthenticated: true },
     },
     {
