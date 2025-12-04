@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { reactive, ref } from "vue";
 import QuickQuoteCommentsFab from "./QuickQuoteCommentsFab.vue";
 
 const contractor = {
@@ -49,9 +49,32 @@ const steps = [
 ];
 
 const fabRef = ref<InstanceType<typeof QuickQuoteCommentsFab> | null>(null);
+const isVisitModalOpen = ref(false);
+const visitSubmitted = ref(false);
+const visitForm = reactive({
+  date: "",
+  timeWindow: "morning",
+  name: "Jordan Miller",
+  email: "jordan@example.com",
+  phone: "(843) 555-1122",
+  notes: "",
+});
 
 const openChat = () => {
   fabRef.value?.open();
+};
+
+const openVisitModal = () => {
+  visitSubmitted.value = false;
+  isVisitModalOpen.value = true;
+};
+
+const closeVisitModal = () => {
+  isVisitModalOpen.value = false;
+};
+
+const submitVisit = () => {
+  visitSubmitted.value = true;
 };
 </script>
 
@@ -246,6 +269,7 @@ const openChat = () => {
           <button
             type="button"
             class="inline-flex w-full items-center justify-center rounded-full bg-gradient-to-r from-[#1E5EFF] to-[#1b4fd1] px-6 py-3 text-sm font-semibold text-white shadow-md transition hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 sm:w-full md:w-auto md:min-w-[240px] md:text-base"
+            @click="openVisitModal"
           >
             Schedule On-Site Visit
           </button>
@@ -283,5 +307,134 @@ const openChat = () => {
     </div>
 
     <QuickQuoteCommentsFab ref="fabRef" :contractor-name="contractor.name" />
+
+    <!-- Visit Modal / Bottom Sheet -->
+    <Transition name="fade">
+      <div v-if="isVisitModalOpen" class="fixed inset-0 z-50 flex items-end justify-center px-4 pb-4 md:items-center">
+        <div class="absolute inset-0 bg-black/40" @click="closeVisitModal"></div>
+        <div
+          class="relative w-full max-w-full rounded-t-2xl bg-white shadow-xl md:max-w-[480px] md:rounded-2xl"
+        >
+          <div class="absolute right-3 top-3">
+            <button
+              class="rounded-full p-2 text-slate-500 hover:bg-slate-100"
+              @click="closeVisitModal"
+            >
+              <span class="sr-only">Close</span>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-5 w-5">
+                <path
+                  fill="currentColor"
+                  d="M6.225 4.811 4.81 6.225 10.586 12l-5.775 5.775 1.414 1.414L12 13.414l5.775 5.775 1.414-1.414L13.414 12l5.775-5.775-1.414-1.414L12 10.586z"
+                />
+              </svg>
+            </button>
+          </div>
+
+          <div class="p-6 space-y-6 md:p-8">
+            <div class="space-y-1">
+              <p class="text-lg font-semibold text-slate-900">Schedule On-Site Visit</p>
+              <p class="text-xs text-slate-500">Pick a time that works and we will confirm shortly.</p>
+            </div>
+
+            <div v-if="!visitSubmitted" class="space-y-4 text-sm text-slate-900">
+              <div class="space-y-2">
+                <label class="text-sm font-medium text-slate-800">Preferred Date</label>
+                <input
+                  v-model="visitForm.date"
+                  type="date"
+                  class="w-full rounded-xl border border-[#E8EDF3] px-3 py-2 text-sm focus:border-[#1E5EFF] focus:outline-none focus:ring-2 focus:ring-[#1E5EFF]/60"
+                />
+              </div>
+
+              <div class="space-y-2">
+                <p class="text-sm font-medium text-slate-800">Preferred Time Window</p>
+                <div class="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                  <label class="flex items-center gap-2 rounded-xl border border-[#E8EDF3] px-3 py-2">
+                    <input type="radio" value="morning" v-model="visitForm.timeWindow" />
+                    <span class="text-sm text-slate-800">Morning (8-11)</span>
+                  </label>
+                  <label class="flex items-center gap-2 rounded-xl border border-[#E8EDF3] px-3 py-2">
+                    <input type="radio" value="afternoon" v-model="visitForm.timeWindow" />
+                    <span class="text-sm text-slate-800">Afternoon (12-3)</span>
+                  </label>
+                  <label class="flex items-center gap-2 rounded-xl border border-[#E8EDF3] px-3 py-2">
+                    <input type="radio" value="evening" v-model="visitForm.timeWindow" />
+                    <span class="text-sm text-slate-800">Evening (3-6)</span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="space-y-3">
+                <div class="space-y-2">
+                  <label class="text-sm font-medium text-slate-800">Name</label>
+                  <input
+                    v-model="visitForm.name"
+                    type="text"
+                    class="w-full rounded-xl border border-[#E8EDF3] px-3 py-2 text-sm focus:border-[#1E5EFF] focus:outline-none focus:ring-2 focus:ring-[#1E5EFF]/60"
+                  />
+                </div>
+                <div class="space-y-2">
+                  <label class="text-sm font-medium text-slate-800">Email</label>
+                  <input
+                    v-model="visitForm.email"
+                    type="email"
+                    class="w-full rounded-xl border border-[#E8EDF3] px-3 py-2 text-sm focus:border-[#1E5EFF] focus:outline-none focus:ring-2 focus:ring-[#1E5EFF]/60"
+                  />
+                </div>
+                <div class="space-y-2">
+                  <label class="text-sm font-medium text-slate-800">Phone</label>
+                  <input
+                    v-model="visitForm.phone"
+                    type="text"
+                    class="w-full rounded-xl border border-[#E8EDF3] px-3 py-2 text-sm focus:border-[#1E5EFF] focus:outline-none focus:ring-2 focus:ring-[#1E5EFF]/60"
+                  />
+                </div>
+              </div>
+
+              <div class="space-y-2">
+                <label class="text-sm font-medium text-slate-800">Notes (Optional)</label>
+                <textarea
+                  v-model="visitForm.notes"
+                  rows="3"
+                  placeholder="Anything we should know before the visit?"
+                  class="w-full rounded-xl border border-[#E8EDF3] px-3 py-2 text-sm focus:border-[#1E5EFF] focus:outline-none focus:ring-2 focus:ring-[#1E5EFF]/60"
+                ></textarea>
+              </div>
+
+              <div class="pt-2">
+                <button
+                  type="button"
+                  class="w-full rounded-xl bg-sq-primary px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
+                  @click="submitVisit"
+                >
+                  Submit Request
+                </button>
+              </div>
+            </div>
+
+            <div v-else class="space-y-4 text-center">
+              <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-6 w-6">
+                  <path fill="currentColor" d="M9.5 16.2 5.8 12.5 4.4 13.9 9.5 19 20 8.5 18.6 7.1z" />
+                </svg>
+              </div>
+              <div class="space-y-1">
+                <p class="text-lg font-semibold text-slate-900">Your visit request has been sent.</p>
+                <p class="text-sm text-slate-600">We will confirm the time shortly.</p>
+              </div>
+              <div class="pt-2">
+                <button
+                  type="button"
+                  class="w-full rounded-xl bg-sq-primary px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
+                  @click="closeVisitModal"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Transition>
   </div>
 </template>
