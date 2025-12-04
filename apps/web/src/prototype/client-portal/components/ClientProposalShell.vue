@@ -82,7 +82,8 @@ const updateScrollState = () => {
   const el = packageSectionRef.value;
   if (!el) return;
   const rect = el.getBoundingClientRect();
-  pastPackages.value = rect.bottom < (window.innerHeight - 80);
+  const threshold = Math.min(rect.height * 0.25, 200);
+  pastPackages.value = rect.top + threshold < 0;
 };
 
 onMounted(() => {
@@ -99,19 +100,15 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="min-h-screen bg-slate-50">
-    <div
-      class="mx-auto flex min-h-screen max-w-3xl flex-col px-4 pb-[140px] pt-6 sm:px-6 lg:px-8 lg:pt-8"
-    >
-      <div class="mb-8 animate-fade-in">
+    <div class="page-shell mx-auto flex min-h-screen max-w-3xl flex-col px-4 pb-32 pt-10 sm:px-6 sm:pt-12 lg:px-0">
+      <div class="mb-10 animate-fade-in">
         <HeroSection :proposal="proposal" :theme-classes="themeClasses" />
       </div>
 
-      <div class="flex-1 space-y-10">
+      <div class="flex-1">
         <div v-if="proposal.galleryUrls.length" class="animate-fade-in">
           <GallerySection :proposal="proposal" />
         </div>
-
-        <div class="h-px bg-slate-200/60" />
 
         <div class="animate-fade-in" ref="packageSectionRef">
           <PackageSelector
@@ -122,33 +119,40 @@ onBeforeUnmount(() => {
           />
         </div>
 
-        <div class="h-px bg-slate-200/60" />
-
         <div class="animate-fade-in">
           <CostSummarySection :proposal="proposal" :theme-classes="themeClasses" />
         </div>
 
+        <div class="h-px bg-slate-200/60 mt-12 mb-8" />
+
         <div class="animate-fade-in">
-          <InclusionsSection :title="'Details & Inclusions'" :groups="proposal.inclusions" />
+          <InclusionsSection
+            :title="'Details & Inclusions'"
+            :description="'Everything included in this proposal, organized for clarity.'"
+            :groups="proposal.inclusions"
+          />
         </div>
 
         <div v-if="proposal.exclusions.length" class="animate-fade-in">
-          <InclusionsSection :title="'Not Included'" :groups="proposal.exclusions" :variant="'subtle'" />
+          <InclusionsSection
+            :title="'Not Included'"
+            :description="'Items outside this scope so there are no surprises.'"
+            :groups="proposal.exclusions"
+            :variant="'subtle'"
+          />
         </div>
 
-        <div class="h-px bg-slate-200/60" />
+        <div class="h-px bg-slate-200/60 mt-12 mb-8" />
 
         <div class="animate-fade-in">
           <TimelineSection :proposal="proposal" :theme-classes="themeClasses" />
         </div>
 
-        <div class="h-px bg-slate-200/60" />
+        <div class="h-px bg-slate-200/60 mt-12 mb-8" />
 
         <div v-if="proposal.testimonials.length" class="animate-fade-in">
           <TestimonialsSection :proposal="proposal" />
         </div>
-
-        <div class="h-px bg-slate-200/60" />
 
         <div class="animate-fade-in">
           <TermsSection :proposal="proposal" />
@@ -191,5 +195,11 @@ onBeforeUnmount(() => {
 }
 .animate-fade-in {
   animation: fadeUp 320ms ease-out forwards;
+}
+
+.page-shell {
+  opacity: 0;
+  transform: translateY(6px);
+  animation: fadeUp 360ms ease-out forwards;
 }
 </style>

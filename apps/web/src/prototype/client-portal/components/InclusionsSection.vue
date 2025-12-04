@@ -5,19 +5,25 @@ defineProps<{
   title: string;
   groups: InclusionGroup[];
   variant?: "default" | "subtle";
+  description?: string;
 }>();
 </script>
 
 <template>
-  <section class="space-y-3 mt-12">
-    <h2 class="text-lg font-semibold tracking-tight text-slate-900">
-      {{ title }}
-    </h2>
+  <section class="mt-16 space-y-4">
+    <div>
+      <h2 class="text-lg sm:text-xl font-semibold tracking-tight text-slate-900 mb-2">
+        {{ title }}
+      </h2>
+      <p v-if="description" class="text-sm text-slate-500 mb-4">
+        {{ description }}
+      </p>
+    </div>
     <div
-      class="space-y-4 rounded-2xl border bg-white p-5 text-sm shadow-sm"
-      :class="variant === 'subtle' ? 'border-dashed border-slate-200 bg-slate-50' : 'border-slate-200'"
+      class="space-y-5 rounded-2xl border bg-white p-5 text-sm shadow-sm sm:p-6"
+      :class="variant === 'subtle' ? 'border-dashed border-slate-200 bg-slate-50' : 'border-slate-200/80'"
     >
-      <div v-for="group in groups" :key="group.id" class="space-y-2">
+      <div v-for="group in groups" :key="group.id" class="space-y-2.5">
         <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">
           {{ group.title }}
         </p>

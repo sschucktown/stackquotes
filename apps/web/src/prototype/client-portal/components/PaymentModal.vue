@@ -49,14 +49,14 @@ const depositFormatted = computed(() => {
       <div class="mt-4 flex flex-col gap-2 text-xs text-slate-600">
         <button
           type="button"
-          class="w-full rounded-full bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-emerald-700"
+          class="w-full rounded-full bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:opacity-90 active:opacity-80"
           @click="emit('complete')"
         >
           Simulate Successful Payment
         </button>
         <button
           type="button"
-          class="w-full rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+          class="w-full rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700 transition hover:opacity-90 active:opacity-80"
           @click="emit('close')"
         >
           Cancel

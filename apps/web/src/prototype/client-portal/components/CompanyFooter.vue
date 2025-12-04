@@ -13,13 +13,20 @@ defineProps<{
 </script>
 
 <template>
-  <footer class="space-y-3 pb-6">
-    <div class="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-700 shadow-sm">
+  <footer class="mt-16 space-y-3 pb-6">
+    <div class="flex items-start gap-3 rounded-2xl border border-slate-200/70 bg-white p-5 text-sm text-slate-700 shadow-sm">
       <div
         v-if="proposal.contractorBrand.logoUrl"
         class="h-12 w-12 overflow-hidden rounded-xl bg-slate-100 ring-1 ring-slate-200"
       >
         <img :src="proposal.contractorBrand.logoUrl" alt="Brand logo" class="h-full w-full object-cover" />
+      </div>
+      <div
+        v-else
+        class="flex h-12 w-12 items-center justify-center rounded-full border border-slate-200 text-sm font-semibold text-white"
+        :class="themeClasses.accentBg"
+      >
+        {{ proposal.contractorBrand.name.charAt(0) }}
       </div>
       <div class="space-y-1">
         <p class="text-sm font-semibold text-slate-900">
@@ -30,7 +37,7 @@ defineProps<{
         </p>
       </div>
     </div>
-    <p class="text-center text-[0.7rem] text-slate-400">
+    <p class="mt-6 text-center text-[0.7rem] text-slate-400">
       Powered by StackQuotes — proposal viewer prototype
     </p>
   </footer>

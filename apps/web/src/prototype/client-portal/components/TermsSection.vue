@@ -7,22 +7,29 @@ defineProps<{
 </script>
 
 <template>
-  <section class="space-y-4">
-    <div class="mt-12">
-      <h2 class="text-lg font-semibold tracking-tight text-slate-900">Terms & Warranty</h2>
+  <section class="mt-16 space-y-4">
+    <div>
+      <h2 class="text-lg sm:text-xl font-semibold tracking-tight text-slate-900 mb-2">Terms & Warranty</h2>
+      <p class="text-sm text-slate-500 mb-4">Clear guardrails so you know exactly what to expect.</p>
     </div>
-    <div class="space-y-3 rounded-2xl border border-slate-200/50 bg-slate-50 p-6 text-sm text-slate-700 shadow-sm">
-      <ul class="space-y-1.5 leading-relaxed">
-        <li v-for="t in proposal.terms" :key="t" class="flex gap-2">
-          <span class="mt-[5px] h-[5px] w-[5px] flex-none rounded-full bg-slate-400" />
-          <span>{{ t }}</span>
-        </li>
-      </ul>
-      <div class="mt-3 border-t border-slate-200 pt-3 text-[0.95rem]">
-        <p class="font-semibold text-slate-900">Warranty</p>
-        <p class="mt-1 leading-relaxed">
-          {{ proposal.warranty }}
-        </p>
+    <div class="space-y-4 rounded-2xl border border-slate-200/80 bg-white p-6 text-sm text-slate-700 shadow-sm sm:p-7">
+      <div>
+        <p class="text-sm font-semibold text-slate-900">Terms</p>
+        <ul class="mt-3 space-y-1.5 text-sm leading-relaxed">
+          <li v-for="t in proposal.terms" :key="t" class="flex gap-2">
+            <span class="mt-[6px] h-[6px] w-[6px] flex-none rounded-full bg-slate-300" />
+            <span>{{ t }}</span>
+          </li>
+        </ul>
+      </div>
+      <div class="pt-1">
+        <p class="text-sm font-semibold text-slate-900">Warranty</p>
+        <ul class="mt-3 space-y-1.5 text-sm leading-relaxed">
+          <li class="flex gap-2">
+            <span class="mt-[6px] h-[6px] w-[6px] flex-none rounded-full bg-slate-300" />
+            <span>{{ proposal.warranty }}</span>
+          </li>
+        </ul>
       </div>
     </div>
   </section>

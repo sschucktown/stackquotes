@@ -13,12 +13,12 @@ defineProps<{
 </script>
 
 <template>
-  <section class="space-y-4">
-    <div class="mt-12">
-      <h2 class="text-lg font-semibold tracking-tight text-slate-900">What the process looks like</h2>
-      <p class="text-sm text-slate-600">Exactly how we move from approval to completion.</p>
+  <section class="mt-16 space-y-4">
+    <div>
+      <h2 class="text-lg sm:text-xl font-semibold tracking-tight text-slate-900 mb-2">What the process looks like</h2>
+      <p class="text-sm text-slate-500 mb-4">Exactly how we move from approval to completion.</p>
     </div>
-    <div class="space-y-3 rounded-2xl border border-slate-200 bg-white p-6 text-sm shadow-sm">
+    <div class="space-y-4 rounded-2xl border border-slate-200/80 bg-white p-6 text-sm shadow-sm sm:p-7">
       <div v-for="(step, index) in proposal.timeline" :key="step.id" class="flex gap-4">
         <div class="flex flex-col items-center">
           <div
@@ -27,7 +27,7 @@ defineProps<{
           >
             {{ index + 1 }}
           </div>
-          <div v-if="index < proposal.timeline.length - 1" class="mt-1 h-full w-px flex-1 bg-slate-200" />
+          <div v-if="index < proposal.timeline.length - 1" class="mt-1 h-full w-px flex-1 bg-slate-200/80" />
         </div>
         <div class="flex-1 space-y-1.5">
           <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">
@@ -36,7 +36,7 @@ defineProps<{
           <p class="text-sm leading-relaxed text-slate-700">
             {{ step.description }}
           </p>
-          <p class="text-[0.8rem] font-medium text-slate-600">
+          <p class="text-[0.82rem] font-medium text-slate-600">
             Typical timing: {{ step.days }}
           </p>
         </div>

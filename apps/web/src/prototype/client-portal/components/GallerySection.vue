@@ -7,10 +7,10 @@ defineProps<{
 </script>
 
 <template>
-  <section class="space-y-4">
-    <div class="mt-12">
-      <h2 class="text-lg font-semibold tracking-tight text-slate-900">Project Photos & Inspiration</h2>
-      <p class="text-sm text-slate-600">Visualize the finish level we’re targeting for your project.</p>
+  <section class="mt-12 space-y-4">
+    <div>
+      <h2 class="text-lg sm:text-xl font-semibold tracking-tight text-slate-900 mb-2">Project Photos & Inspiration</h2>
+      <p class="text-sm text-slate-500 mb-4">Visualize the finish level we're targeting for your project.</p>
     </div>
     <div class="overflow-x-auto">
       <div class="flex gap-4">
