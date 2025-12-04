@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import ProposalCommentsFab from "@/components/proposals/ProposalCommentsFab.vue";
+import { ref } from "vue";
+import QuickQuoteCommentsFab from "./QuickQuoteCommentsFab.vue";
 
 const contractor = {
   name: "Northstar Deck & Fence",
@@ -34,18 +35,24 @@ const addOns = [
 
 const steps = [
   {
-    title: "Review your estimate",
-    detail: "Confirm the range looks right for your project.",
+    title: "Review your estimate and confirm it matches your project goals.",
+    detail: "Look over the range and make sure it aligns with what you want to build.",
   },
   {
-    title: "Schedule an on-site visit",
-    detail: "We measure, verify access, and talk through materials.",
+    title: "We measure, verify access, and walk through materials.",
+    detail: "On-site visit to confirm layout, access, and the material options you prefer.",
   },
   {
-    title: "Receive your final proposal",
-    detail: "Lock in the scope, price, and schedule with confidence.",
+    title: "Your final proposal includes Good/Better/Best options tailored for you.",
+    detail: "We finalize price, timeline, and scope so you can approve with confidence.",
   },
 ];
+
+const fabRef = ref<InstanceType<typeof QuickQuoteCommentsFab> | null>(null);
+
+const openChat = () => {
+  fabRef.value?.open();
+};
 </script>
 
 <template>
@@ -53,18 +60,19 @@ const steps = [
     <div class="mx-auto flex min-h-screen max-w-3xl flex-col px-4 pb-28 pt-8 sm:px-6 lg:px-0">
       <!-- Hero -->
       <section
-        class="overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-slate-50 shadow-[0_4px_18px_rgba(0,0,0,0.10)]"
+        class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0E1A2B] via-[#0f2138] to-[#102544] text-slate-50 shadow-[0_4px_18px_rgba(0,0,0,0.10)]"
       >
         <div class="p-6 sm:p-8 space-y-5">
           <div class="flex items-start justify-between gap-6">
             <div class="space-y-2">
               <p class="text-[11px] uppercase tracking-[0.2em] text-slate-300">QuickQuote Portal</p>
-              <h1 class="text-2xl font-semibold leading-tight tracking-tight sm:text-3xl">
-                Your QuickQuote Estimate
-              </h1>
-              <p class="text-sm leading-relaxed text-slate-200">
-                For Jordan Miller | Fast estimate based on your project details
-              </p>
+              <div class="space-y-1">
+                <h1 class="text-2xl font-semibold leading-tight tracking-tight sm:text-3xl">
+                  Your QuickQuote Estimate
+                </h1>
+                <p class="text-sm font-normal text-slate-200">Fast estimate prepared using your project details</p>
+              </div>
+              <p class="text-sm leading-relaxed text-slate-200">For Jordan Miller</p>
             </div>
 
             <div class="flex items-center gap-3 rounded-2xl bg-slate-800/60 px-3 py-2 shadow-inner">
@@ -73,32 +81,43 @@ const steps = [
                 alt="Contractor"
                 class="h-10 w-10 rounded-xl object-cover ring-2 ring-white/10"
               />
-              <div class="space-y-0.5 text-right">
+              <div class="space-y-0.5 text-right max-w-[170px]">
                 <p class="text-[11px] uppercase tracking-[0.18em] text-slate-300">Contractor</p>
-                <p class="text-sm font-semibold text-slate-50">{{ contractor.name }}</p>
-                <p class="text-xs text-slate-300">{{ contractor.trade }}</p>
+                <p class="text-sm font-semibold text-slate-50 line-clamp-2">{{ contractor.name }}</p>
+                <p class="text-xs text-slate-300 line-clamp-1">{{ contractor.trade }}</p>
               </div>
             </div>
           </div>
 
           <div class="flex flex-wrap items-center gap-2 text-xs text-slate-200">
-            <span class="rounded-full bg-slate-800/80 px-3 py-1 shadow-sm">
-              {{ contractor.badge }}
+            <span class="inline-flex items-center gap-1 rounded-full bg-slate-800/80 px-3 py-1 shadow-sm">
+              <span class="h-1.5 w-1.5 rounded-full bg-emerald-400" /> Licensed
+            </span>
+            <span class="inline-flex items-center gap-1 rounded-full bg-slate-800/80 px-3 py-1 shadow-sm">
+              <span class="h-1.5 w-1.5 rounded-full bg-blue-300" /> Insured
+            </span>
+            <span class="inline-flex items-center gap-1 rounded-full bg-slate-800/80 px-3 py-1 shadow-sm">
+              <span class="h-1.5 w-1.5 rounded-full bg-sky-300" /> Local
             </span>
             <span class="rounded-full bg-slate-800/80 px-3 py-1 shadow-sm">
-              Estimate prepared today
+              Prepared 10 min ago
             </span>
             <span class="rounded-full bg-blue-600 px-3 py-1 font-semibold shadow-sm">10 min review</span>
           </div>
         </div>
+
+        <div class="absolute bottom-4 right-5 rounded-full bg-white/5 px-3 py-1 text-[12px] text-slate-200">
+          Powered by StackQuotes
+        </div>
       </section>
 
-      <div class="my-6 h-px w-full bg-slate-200/70"></div>
+      <div class="my-6 h-px w-full bg-[#E8EDF3]"></div>
 
       <!-- Gallery -->
       <section class="space-y-4">
+        <div class="h-px w-full bg-[#E8EDF3]"></div>
         <div>
-          <h2 class="text-lg sm:text-xl font-semibold tracking-tight text-slate-900 mb-2">Photos & Inspiration</h2>
+          <h2 class="text-lg sm:text-xl font-medium tracking-tight text-slate-900 mb-2">Photos & Inspiration</h2>
           <p class="text-sm text-slate-500 mb-2">A quick visual benchmark to align on finish level.</p>
         </div>
         <div class="relative">
@@ -108,7 +127,7 @@ const steps = [
             <div
               v-for="url in gallery"
               :key="url"
-              class="h-28 w-48 shrink-0 snap-start overflow-hidden rounded-lg bg-slate-200 border border-slate-200/70 transition-all duration-300 ease-out sm:h-32 sm:w-56 sm:rounded-2xl sm:shadow-md sm:hover:-translate-y-1 sm:hover:shadow-lg"
+              class="h-28 w-48 shrink-0 snap-center overflow-hidden rounded-[10px] bg-slate-200 border border-[#E8EDF3] transition-all duration-300 ease-out sm:h-32 sm:w-56 sm:rounded-[10px] sm:shadow-md sm:hover:-translate-y-1 sm:hover:shadow-lg"
             >
               <div class="relative h-full w-full">
                 <img :src="url" alt="Project inspiration" class="h-full w-full object-cover" />
@@ -117,77 +136,98 @@ const steps = [
             </div>
           </div>
         </div>
+        <p class="text-xs text-slate-500">These photos reflect general finish levels - not exact materials.</p>
+        <div class="h-px w-full bg-[#E8EDF3]"></div>
       </section>
 
       <!-- Price Snapshot -->
       <section class="mt-12 space-y-4">
         <div>
-          <h2 class="text-lg sm:text-xl font-semibold tracking-tight text-slate-900 mb-2">Estimated Project Range</h2>
+          <h2 class="text-lg sm:text-xl font-medium tracking-tight text-slate-900 mb-2">Estimated Project Range</h2>
           <p class="text-sm text-slate-500 mb-4">Lightweight snapshot so you can decide the next step quickly.</p>
         </div>
         <div
-          class="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-6 text-sm shadow-sm sm:rounded-3xl sm:p-8 sm:shadow-md"
+          class="flex flex-col gap-4 rounded-2xl border border-[#E8EDF3] bg-white p-6 text-sm shadow-sm sm:rounded-3xl sm:p-8 sm:shadow-md"
         >
-          <div class="flex flex-wrap items-center gap-4">
+          <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
             <div>
-              <p class="text-[11px] font-semibold tracking-wide text-slate-500 uppercase sm:text-xs">Range</p>
+              <p class="text-sm font-medium text-slate-700">Your Estimated Project Range</p>
+              <p class="mt-1 text-[11px] font-semibold tracking-wide text-slate-500 uppercase sm:text-xs">Range</p>
               <p class="mt-1 text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl sm:font-bold">
-                $9,800 - $14,900
+                <span class="font-bold">$9,800 - $14,900</span>
               </p>
             </div>
-            <span
-              class="ml-auto inline-flex items-center rounded-full bg-blue-600 px-3 py-1 text-[11px] font-semibold text-white shadow-sm sm:px-4 sm:py-2 sm:text-xs sm:shadow-md"
+            <button
+              type="button"
+              class="inline-flex items-center justify-center rounded-full border border-blue-200 px-3 py-1 text-[12px] font-semibold text-blue-700 shadow-sm transition hover:bg-blue-50"
             >
-              QuickQuote preview
-            </span>
+              How this was calculated
+            </button>
           </div>
           <p class="text-sm leading-relaxed text-slate-600">
-            Final price depends on material choice, access, and build complexity.
+            Final price depends on site access, materials, and build complexity.
           </p>
           <p class="text-xs text-slate-500">We refine this during the on-site visit - no obligation until you approve.</p>
         </div>
+        <p class="text-xs text-slate-500">We'll confirm this range during the on-site visit.</p>
       </section>
 
       <!-- Lists -->
-      <section class="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:rounded-2xl sm:p-6">
-          <p class="text-sm font-semibold text-slate-900">What’s Included</p>
-          <p class="mt-1 text-sm text-slate-500">A streamlined scope to get started.</p>
-          <ul class="mt-4 space-y-2 text-sm leading-relaxed text-slate-700">
-            <li v-for="item in inclusions" :key="item" class="flex gap-2">
-              <span class="mt-[6px] h-[6px] w-[6px] flex-none rounded-full bg-slate-300" />
-              <span>{{ item }}</span>
-            </li>
-          </ul>
+      <section class="mt-12 space-y-4">
+        <div>
+          <h2 class="text-lg sm:text-xl font-medium tracking-tight text-slate-900 mb-1">What This Includes</h2>
+          <p class="text-sm text-slate-500">A simple breakdown so you know what is covered.</p>
         </div>
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div class="rounded-2xl border border-[#E8EDF3] bg-white p-6 shadow-sm sm:rounded-2xl sm:p-6">
+            <p class="text-sm font-medium text-slate-900">What's Included</p>
+            <p class="mt-1 text-sm text-slate-500">A streamlined scope to get started.</p>
+            <ul class="mt-4 space-y-2 text-sm leading-5 text-slate-700">
+              <li
+                v-for="(item, idx) in inclusions"
+                :key="item"
+                class="flex gap-2"
+                :class="inclusions.length > 5 && idx < inclusions.length - 1 ? 'border-b border-slate-100 pb-2' : ''"
+              >
+                <span class="mt-[6px] h-[6px] w-[6px] flex-none rounded-full bg-slate-300" />
+                <span>{{ item }}</span>
+              </li>
+            </ul>
+          </div>
 
-        <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:rounded-2xl sm:p-6">
-          <p class="text-sm font-semibold text-slate-900">Possible Add-Ons</p>
-          <p class="mt-1 text-sm text-slate-500">Upgrade ideas if you want more.</p>
-          <ul class="mt-4 space-y-2 text-sm leading-relaxed text-slate-700">
-            <li v-for="item in addOns" :key="item" class="flex gap-2">
-              <span class="mt-[6px] h-[6px] w-[6px] flex-none rounded-full bg-slate-300" />
-              <span>{{ item }}</span>
-            </li>
-          </ul>
+          <div class="rounded-2xl border border-[#E8EDF3] bg-white p-6 shadow-sm sm:rounded-2xl sm:p-6">
+            <p class="text-sm font-medium text-slate-900">Possible Add-Ons</p>
+            <p class="mt-1 text-sm text-slate-500">Upgrade ideas if you want more.</p>
+            <ul class="mt-4 space-y-2 text-sm leading-5 text-slate-700">
+              <li
+                v-for="(item, idx) in addOns"
+                :key="item"
+                class="flex gap-2"
+                :class="addOns.length > 5 && idx < addOns.length - 1 ? 'border-b border-slate-100 pb-2' : ''"
+              >
+                <span class="mt-[6px] h-[6px] w-[6px] flex-none rounded-full bg-slate-300" />
+                <span>{{ item }}</span>
+              </li>
+            </ul>
+          </div>
         </div>
       </section>
 
       <!-- Next Steps -->
       <section class="mt-12 space-y-4">
         <div>
-          <h2 class="text-lg sm:text-xl font-semibold tracking-tight text-slate-900 mb-2">Next Steps</h2>
+          <h2 class="text-lg sm:text-xl font-medium tracking-tight text-slate-900 mb-2">Next Steps</h2>
           <p class="text-sm text-slate-500 mb-2">A simple 3-step glidepath from estimate to proposal.</p>
         </div>
-        <div class="space-y-4 rounded-2xl border border-slate-200 bg-white p-6 text-sm shadow-sm sm:rounded-2xl sm:p-7">
+        <div class="space-y-4 rounded-2xl border border-[#E8EDF3] bg-white p-6 text-sm shadow-sm sm:rounded-2xl sm:p-7">
           <div v-for="(step, index) in steps" :key="step.title" class="flex gap-4">
             <div class="flex flex-col items-center">
               <div
-                class="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-xs font-semibold text-white shadow-sm"
+                class="flex h-9 w-9 items-center justify-center rounded-full border-2 border-blue-500 bg-white text-sm font-semibold text-blue-700 shadow-sm"
               >
                 {{ index + 1 }}
               </div>
-              <div v-if="index < steps.length - 1" class="mt-1 h-full w-px flex-1 bg-slate-200/80" />
+              <div v-if="index < steps.length - 1" class="mt-1 h-full w-px flex-1 bg-[#E8EDF3]" />
             </div>
             <div class="flex-1 space-y-1">
               <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">{{ step.title }}</p>
@@ -195,34 +235,44 @@ const steps = [
             </div>
           </div>
         </div>
+        <p class="text-xs text-slate-500">No obligation until you approve the final proposal.</p>
       </section>
 
       <!-- CTA -->
-      <section class="mt-12 rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm sm:p-10">
+      <section class="mt-12 rounded-3xl border border-[#E8EDF3] bg-white p-8 text-center shadow-sm sm:p-10">
         <p class="text-base font-semibold text-slate-900">Ready to move forward?</p>
         <p class="mt-2 text-sm text-slate-600">Schedule a quick visit so we can finalize the proposal together.</p>
         <div class="mt-6 flex flex-col items-center gap-3">
           <button
             type="button"
-            class="inline-flex w-full items-center justify-center rounded-full bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-md transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 sm:w-auto sm:text-base"
+            class="inline-flex w-full items-center justify-center rounded-full bg-gradient-to-r from-[#1E5EFF] to-[#1b4fd1] px-6 py-3 text-sm font-semibold text-white shadow-md transition hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 sm:w-full md:w-auto md:min-w-[240px] md:text-base"
           >
             Schedule On-Site Visit
           </button>
-          <button type="button" class="text-sm font-medium text-blue-700 hover:text-blue-800">
+          <button type="button" class="text-sm font-medium text-blue-700 hover:text-blue-800" @click="openChat">
             Ask a question
           </button>
         </div>
+        <p class="mt-3 text-xs text-slate-500">This helps us finalize the proposal accurately.</p>
       </section>
 
       <!-- Contractor Footer -->
       <footer class="mt-12 space-y-3 pb-4">
-        <div class="flex items-start gap-4 rounded-2xl border border-slate-200 bg-white p-5 text-sm shadow-sm">
+        <div class="flex items-start gap-4 rounded-2xl border border-[#E8EDF3] bg-white p-5 text-sm shadow-sm">
           <div class="h-12 w-12 overflow-hidden rounded-xl bg-slate-100 ring-1 ring-slate-200">
             <img :src="contractor.avatar" alt="Brand logo" class="h-full w-full object-cover" />
           </div>
           <div class="space-y-1">
             <p class="text-sm font-semibold text-slate-900">{{ contractor.name }}</p>
             <p class="text-sm leading-relaxed text-slate-700">{{ contractor.trade }}</p>
+            <div class="flex items-center gap-2 text-xs text-emerald-600">
+              <span class="inline-flex h-5 w-5 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-3.5 w-3.5">
+                  <path fill="currentColor" d="M9.5 16.2 5.8 12.5 4.4 13.9 9.5 19 20 8.5 18.6 7.1z" />
+                </svg>
+              </span>
+              Verified Contractor
+            </div>
             <p class="text-xs text-slate-500">{{ contractor.license }}</p>
           </div>
         </div>
@@ -232,6 +282,6 @@ const steps = [
       </footer>
     </div>
 
-    <ProposalCommentsFab proposal-id="quickquote-prototype" :contractor-name="contractor.name" />
+    <QuickQuoteCommentsFab ref="fabRef" :contractor-name="contractor.name" />
   </div>
 </template>
