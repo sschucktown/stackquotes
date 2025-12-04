@@ -1,15 +1,17 @@
 <template>
   <article
-    class="flex min-w-[200px] flex-col gap-1.5 rounded-xl p-4 shadow-sm"
+    class="flex min-w-[210px] flex-col gap-1.5 rounded-xl p-4 shadow-sm transition hover:translate-y-[1px] hover:cursor-pointer hover:shadow-sm animate-alert-bounce"
     :class="toneClasses[alert.tone]"
   >
     <div class="flex items-center gap-3">
-      <div class="flex h-10 w-10 items-center justify-center rounded-full bg-white/60 text-current shadow-[0_1px_2px_rgba(0,0,0,0.08)]">
+      <div
+        class="flex h-10 w-10 items-center justify-center rounded-full bg-white/70 text-current shadow-[0_1px_2px_rgba(0,0,0,0.08)]"
+      >
         <component :is="iconMap[alert.icon] || iconMap.info" class="h-5 w-5" />
       </div>
       <div class="flex-1">
-        <p class="text-sm font-semibold text-slate-900">{{ alert.title }}</p>
-        <p class="text-xs text-slate-600">{{ alert.subtitle }}</p>
+        <p class="text-base font-semibold text-slate-900">{{ alert.title }}</p>
+        <p class="text-xs text-slate-600 opacity-60">{{ alert.subtitle }}</p>
       </div>
     </div>
   </article>
@@ -36,20 +38,49 @@ const toneClasses: Record<AlertTone, string> = {
   danger: "bg-[#FDEEEE] text-rose-900",
 };
 
-const makeIcon = (path: string) => ({
+const makeIcon = (paths: string | string[]) => ({
   render() {
+    const parts = Array.isArray(paths) ? paths : [paths];
     return h(
       "svg",
-      { xmlns: "http://www.w3.org/2000/svg", viewBox: "0 0 24 24", fill: "currentColor" },
-      h("path", { d: path })
+      {
+        xmlns: "http://www.w3.org/2000/svg",
+        viewBox: "0 0 24 24",
+        fill: "none",
+        stroke: "currentColor",
+        "stroke-width": 1.8,
+        "stroke-linecap": "round",
+        "stroke-linejoin": "round",
+      },
+      parts.map((d) => h("path", { d }))
     );
   },
 });
 
 const iconMap: Record<AlertIcon, any> = {
-  info: makeIcon("M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm-1 7V7h2v2h-2Zm0 8v-6h2v6h-2Z"),
-  check: makeIcon("M9.55 18 4 12.45l1.41-1.4 4.14 4.12L18.59 6l1.41 1.41Z"),
-  alert: makeIcon("M12 2 1 21h22L12 2Zm1 15h-2v-2h2v2Zm0-4h-2V9h2v4Z"),
-  flag: makeIcon("M6 3h13l-1.8 5H19l-3.6 7H6v6H4V3Zm2 2v8h6.4l2.4-5H13l1.2-3H8Z"),
+  info: makeIcon(["M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Z", "M12 8h.01", "M11.5 12h1v4h1"]),
+  check: makeIcon(["M20 6 9 17l-5-5"]),
+  alert: makeIcon(["m12 9-2 4h4l-2 4", "M12 5v.01"]),
+  flag: makeIcon(["M4 5h12l-1 5 1 5H4V5Z", "M4 3v2", "M4 15v3"]),
 };
 </script>
+
+<style scoped>
+@keyframes alert-bounce {
+  0% {
+    transform: translateY(4px);
+    opacity: 0;
+  }
+  60% {
+    transform: translateY(-2px);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+.animate-alert-bounce {
+  animation: alert-bounce 0.45s ease-out both;
+}
+</style>

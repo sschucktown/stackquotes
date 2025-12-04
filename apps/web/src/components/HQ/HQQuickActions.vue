@@ -1,14 +1,15 @@
 <template>
-  <div class="flex flex-wrap gap-4 sm:gap-5 md:gap-6">
+  <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:flex lg:flex-wrap lg:gap-5">
     <div
       v-for="action in actions"
       :key="action.label"
-      class="flex min-w-[120px] flex-1 basis-[140px] flex-col items-center gap-2 rounded-xl border border-slate-200 bg-white/80 px-3 py-4 text-center shadow-sm transition hover:shadow"
+      class="flex min-h-[130px] min-w-[120px] flex-1 basis-[140px] flex-col items-center gap-2 rounded-xl border border-slate-200 px-3 py-4 text-center shadow-sm transition hover:-translate-y-[1px] hover:scale-[1.03] hover:shadow-md"
+      :class="action.tint"
     >
       <div
-        class="flex h-16 w-16 items-center justify-center rounded-full bg-slate-50 text-slate-700 shadow-[0_1px_2px_rgba(0,0,0,0.06)]"
+        class="flex h-14 w-14 items-center justify-center rounded-full bg-white/70 text-slate-700 shadow-[0_1px_2px_rgba(0,0,0,0.08)]"
       >
-        <component :is="iconMap[action.icon]" class="h-6 w-6" />
+        <component :is="iconMap[action.icon]" class="h-6 w-6" :class="action.iconClass" />
       </div>
       <span class="text-sm font-medium text-slate-800">{{ action.label }}</span>
     </div>
@@ -20,28 +21,37 @@ import { h } from "vue";
 type ActionIcon = "document" | "sparkles" | "swap" | "calendar" | "card";
 
 const actions = [
-  { label: "New Quote", icon: "document" as ActionIcon },
-  { label: "New Proposal", icon: "sparkles" as ActionIcon },
-  { label: "Change Order", icon: "swap" as ActionIcon },
-  { label: "Schedule Visit", icon: "calendar" as ActionIcon },
-  { label: "Send Payment Link", icon: "card" as ActionIcon },
+  { label: "New Quote", icon: "document" as ActionIcon, tint: "bg-blue-50/80", iconClass: "text-blue-600" },
+  { label: "New Proposal", icon: "sparkles" as ActionIcon, tint: "bg-violet-50/80", iconClass: "text-violet-600" },
+  { label: "Change Order", icon: "swap" as ActionIcon, tint: "bg-orange-50/80", iconClass: "text-orange-600" },
+  { label: "Schedule Visit", icon: "calendar" as ActionIcon, tint: "bg-green-50/80", iconClass: "text-green-600" },
+  { label: "Send Payment Link", icon: "card" as ActionIcon, tint: "bg-amber-50/80", iconClass: "text-amber-600" },
 ];
 
-const makeIcon = (path: string) => ({
+const makeIcon = (paths: string | string[]) => ({
   render() {
+    const parts = Array.isArray(paths) ? paths : [paths];
     return h(
       "svg",
-      { xmlns: "http://www.w3.org/2000/svg", viewBox: "0 0 24 24", fill: "currentColor" },
-      h("path", { d: path })
+      {
+        xmlns: "http://www.w3.org/2000/svg",
+        viewBox: "0 0 24 24",
+        fill: "none",
+        stroke: "currentColor",
+        "stroke-width": 1.8,
+        "stroke-linecap": "round",
+        "stroke-linejoin": "round",
+      },
+      parts.map((d) => h("path", { d }))
     );
   },
 });
 
 const iconMap: Record<ActionIcon, any> = {
-  document: makeIcon("M6 2h8l4 4v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Zm7 2H6v16h12V8h-5V4Z"),
-  sparkles: makeIcon("M12 2 9.8 8.2 4 10l5.8 1.8L12 18l2.2-6.2L20 10l-5.8-1.8L12 2Zm-6 11-1 2-2 1 2 1 1 2 1-2 2-1-2-1-1-2Zm12 0-1 2-2 1 2 1 1 2 1-2 2-1-2-1-1-2Z"),
-  swap: makeIcon("M7 2 1 8h4v5h2V8h4L7 2Zm10 20 6-6h-4v-5h-2v5h-4l4 6Z"),
-  calendar: makeIcon("M7 2h2v2h6V2h2v2h3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h3V2Zm13 8H4v10h16V10Z"),
-  card: makeIcon("M3 5h18a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Zm18 4V7H3v2h18ZM3 17h18v-4H3v4Z"),
+  document: makeIcon(["M12 2 19 9v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h5Z", "M12 2v7h7"]),
+  sparkles: makeIcon(["M12 3 10.5 8.5 5 10l5.5 1.5L12 17l1.5-5.5L19 10l-5.5-1.5L12 3Z", "M5 16l-1 2-2 1 2 1 1 2 1-2 2-1-2-1-1-2Z", "M19 16l-1 2-2 1 2 1 1 2 1-2 2-1-2-1-1-2Z"]),
+  swap: makeIcon(["M7 3 3 7h4v6", "m17 21 4-4h-4v-6", "M7 7h4", "M13 13h4"]),
+  calendar: makeIcon(["M7 3v2", "M17 3v2", "M4 7h16", "M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"]),
+  card: makeIcon(["M3 5h18a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z", "M3 9h18", "M7 15h4"]),
 };
 </script>

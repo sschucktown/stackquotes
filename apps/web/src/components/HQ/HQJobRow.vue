@@ -1,6 +1,6 @@
 <template>
   <article
-    class="group flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-3.5 py-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition hover:shadow-sm"
+    class="group flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white/95 px-5 py-5 shadow-[0_1px_2px_rgba(0,0,0,0.04)] backdrop-blur-sm transition hover:translate-y-[1px] hover:shadow-[0_2px_8px_rgba(0,0,0,0.06)]"
   >
     <div class="flex items-start gap-3">
       <div
@@ -18,7 +18,10 @@
             {{ job.type }}
           </span>
         </div>
-        <div class="mt-1 inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[11px] font-medium" :class="statusClasses[job.status]">
+        <div
+          class="mt-1 inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[11px] font-medium"
+          :class="statusClasses[job.status]"
+        >
           <span class="h-2 w-2 rounded-full" :class="dotClasses[job.status]"></span>
           {{ job.status }}
         </div>
@@ -27,7 +30,7 @@
     </div>
     <div class="text-slate-400 opacity-0 transition group-hover:opacity-100 group-hover:translate-x-0.5">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-5 w-5">
-        <path fill="currentColor" d="m9 18 6-6-6-6v12Z" />
+        <path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="m9 18 6-6-6-6" />
       </svg>
     </div>
   </article>
@@ -50,10 +53,10 @@ defineProps<{
 }>();
 
 const statusClasses: Record<JobStatus, string> = {
-  "In Progress": "bg-emerald-50 text-emerald-700 border-emerald-100",
-  Scheduled: "bg-blue-50 text-blue-700 border-blue-100",
-  Pending: "bg-amber-50 text-amber-700 border-amber-100",
-  "Needs Visit": "bg-slate-100 text-slate-700 border-slate-200",
+  "In Progress": "bg-emerald-50 text-emerald-700 border-emerald-100 border-l-[6px] pl-1.5",
+  Scheduled: "bg-blue-50 text-blue-700 border-blue-100 border-l-[6px] pl-1.5",
+  Pending: "bg-amber-50 text-amber-700 border-amber-100 border-l-[6px] pl-1.5",
+  "Needs Visit": "bg-slate-100 text-slate-700 border-slate-200 border-l-[6px] pl-1.5",
 };
 
 const dotClasses: Record<JobStatus, string> = {
@@ -74,8 +77,8 @@ const makeIcon = (path: string) => ({
 });
 
 const tradeIcons: Record<TradeType, any> = {
-  deck: makeIcon("M4 5h16v2H4V5Zm0 4h16v2H4V9Zm0 4h16v2H4v-2Zm0 4h16v2H4v-2Z"),
-  fence: makeIcon("M6 3 4 5v16h2v-6h2v6h2V5l-2-2-2 2-2-2Zm10 0-2 2v14h2v-4h2v4h2V5l-2-2-2 2-2-2Z"),
-  patio: makeIcon("M4 4h16v4H4V4Zm0 6h16v4H4v-4Zm0 6h16v4H4v-4Z"),
+  deck: makeIcon("M3 7h18M3 12h18M3 17h18"),
+  fence: makeIcon(["M4 4v16", "M10 4v16", "M16 4v16", "M2 10h20", "M2 14h20"]),
+  patio: makeIcon(["M4 4h16v4H4V4Z", "M4 10h16v4H4v-4Z", "M4 16h16v4H4v-4Z"]),
 };
 </script>
