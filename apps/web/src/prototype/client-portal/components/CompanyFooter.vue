@@ -14,7 +14,7 @@ defineProps<{
 
 <template>
   <footer class="mt-16 space-y-3 pb-6">
-    <div class="flex items-start gap-3 rounded-2xl border border-slate-200/70 bg-white p-5 text-sm text-slate-700 shadow-sm">
+    <div class="flex items-start gap-4 rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-700 shadow-sm">
       <div
         v-if="proposal.contractorBrand.logoUrl"
         class="h-12 w-12 overflow-hidden rounded-xl bg-slate-100 ring-1 ring-slate-200"
@@ -23,8 +23,8 @@ defineProps<{
       </div>
       <div
         v-else
-        class="flex h-12 w-12 items-center justify-center rounded-full border border-slate-200 text-sm font-semibold text-white"
-        :class="themeClasses.accentBg"
+        class="flex h-12 w-12 items-center justify-center rounded-full text-sm font-semibold text-white shadow-md border border-white/50"
+        :class="themeClasses.accentBg || 'bg-slate-900'"
       >
         {{ proposal.contractorBrand.name.charAt(0) }}
       </div>

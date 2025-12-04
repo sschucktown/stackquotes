@@ -44,17 +44,17 @@ function handleSelect(id: string) {
         :ref="(el) => (cardRefs[pkg.id] = el as HTMLButtonElement | null)"
         type="button"
         @click="handleSelect(pkg.id)"
-        class="group w-full rounded-2xl border border-slate-200 bg-white p-6 text-left shadow-md transition-all duration-300 ease-out hover:shadow-xl hover:scale-[1.01] origin-center sm:p-7 focus:outline-none"
+        class="group relative w-full rounded-3xl border border-slate-200 bg-white p-7 text-left shadow-lg transition-all duration-300 ease-out hover:shadow-xl hover:scale-[1.01] hover:bg-slate-50 origin-center sm:p-8 focus:outline-none"
         :class="[
           selectedPackageId === pkg.id
-            ? 'border-2 border-blue-500 bg-blue-50 shadow-[0_0_0_3px_rgba(59,130,246,0.15)] scale-[1.01]'
+            ? 'border-2 border-blue-500 bg-blue-50/40 shadow-[0_0_0_4px_rgba(59,130,246,0.18)] scale-[1.015]'
             : '',
           pkg.isRecommended ? 'relative' : ''
         ]"
       >
         <div
           v-if="pkg.isRecommended"
-          class="absolute right-5 top-5 inline-flex items-center rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold text-white shadow-sm"
+          class="inline-flex items-center rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold text-white shadow-lg absolute top-4 right-4"
         >
           Most Popular
         </div>
@@ -64,13 +64,13 @@ function handleSelect(id: string) {
             <p class="text-[0.8rem] font-semibold uppercase tracking-wide text-slate-500">
               {{ pkg.tier }}
             </p>
-            <h3 class="text-base font-semibold text-slate-900">{{ pkg.label }}</h3>
+            <h3 class="text-base sm:text-lg font-semibold text-slate-900">{{ pkg.label }}</h3>
             <p class="text-sm leading-relaxed text-slate-700">{{ pkg.description }}</p>
           </div>
 
           <div class="text-right space-y-1">
-            <p class="text-xl font-semibold tracking-tight text-slate-900">{{ currency(pkg.priceTotal) }}</p>
-            <p v-if="pkg.monthlyEstimate" class="text-[0.78rem] text-slate-600">
+            <p class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">{{ currency(pkg.priceTotal) }}</p>
+            <p v-if="pkg.monthlyEstimate" class="text-xs text-slate-500 mt-1">
               ~{{ currency(pkg.monthlyEstimate) }}/mo with financing
             </p>
           </div>

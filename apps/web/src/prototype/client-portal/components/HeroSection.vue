@@ -14,7 +14,7 @@ defineProps<{
 
 <template>
   <header
-    class="overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-slate-50 shadow-xl transition-all duration-300 ease-out"
+    class="overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-slate-50 shadow-[0_4px_18px_rgba(0,0,0,0.10)] transition-all duration-300 ease-out"
   >
     <div class="p-6 sm:p-8 space-y-4">
       <div class="flex items-start justify-between gap-6">

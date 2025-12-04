@@ -101,12 +101,14 @@ onBeforeUnmount(() => {
 <template>
   <div class="min-h-screen bg-slate-50">
     <div class="page-shell mx-auto flex min-h-screen max-w-3xl flex-col px-4 pb-32 pt-10 sm:px-6 sm:pt-12 lg:px-0">
-      <div class="mb-10 animate-fade-in">
+      <div class="mb-6 animate-fade-in">
         <HeroSection :proposal="proposal" :theme-classes="themeClasses" />
       </div>
 
+      <div class="h-px w-full bg-slate-200/70 mb-6"></div>
+
       <div class="flex-1">
-        <div v-if="proposal.galleryUrls.length" class="animate-fade-in">
+        <div v-if="proposal.galleryUrls.length" class="animate-fade-in mt-6">
           <GallerySection :proposal="proposal" />
         </div>
 
