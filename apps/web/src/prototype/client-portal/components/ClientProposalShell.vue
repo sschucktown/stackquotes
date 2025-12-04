@@ -76,7 +76,7 @@ function handlePaymentComplete() {
   isPaymentOpen.value = false;
 }
 
-const showStickyCta = computed(() => !selectedPackage.value && pastPackages.value);
+const showStickyCta = computed(() => pastPackages.value);
 
 const updateScrollState = () => {
   const el = packageSectionRef.value;
@@ -152,12 +152,14 @@ onBeforeUnmount(() => {
 
         <div class="h-px bg-slate-200/60 mt-12 mb-8" />
 
-        <div v-if="proposal.testimonials.length" class="animate-fade-in">
-          <TestimonialsSection :proposal="proposal" />
-        </div>
-
         <div class="animate-fade-in">
           <TermsSection :proposal="proposal" />
+        </div>
+
+        <div class="h-px bg-slate-200/60 mt-12 mb-8" />
+
+        <div v-if="proposal.testimonials.length" class="animate-fade-in">
+          <TestimonialsSection :proposal="proposal" />
         </div>
 
         <div class="animate-fade-in">
