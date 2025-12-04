@@ -100,7 +100,7 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="min-h-screen bg-slate-50">
-    <div class="page-shell mx-auto flex min-h-screen max-w-3xl flex-col px-4 pb-32 pt-10 sm:px-6 sm:pt-12 lg:px-0">
+    <div class="page-shell mx-auto flex min-h-screen max-w-3xl flex-col px-4 pb-32 pt-8 sm:px-6 sm:pt-12 lg:px-0">
       <div class="mb-6 animate-fade-in">
         <HeroSection :proposal="proposal" :theme-classes="themeClasses" />
       </div>

@@ -9,17 +9,17 @@ const starArray = (rating: number) => Array.from({ length: 5 }, (_, i) => i < ra
 </script>
 
 <template>
-  <section class="mt-16 space-y-4">
+  <section class="mt-16 space-y-4 sm:mt-16">
     <div>
       <h2 class="text-lg sm:text-xl font-semibold tracking-tight text-slate-900 mb-2">What other homeowners are saying</h2>
       <p class="text-sm text-slate-500 mb-4">Proof from recent projects in your area.</p>
     </div>
-    <div class="rounded-2xl border border-slate-200/60 bg-white p-6 text-sm shadow-sm sm:p-7 space-y-5">
+    <div class="rounded-xl border border-slate-200 bg-white p-5 text-sm shadow-sm space-y-5 sm:rounded-2xl sm:border-slate-200/60 sm:p-7">
       <article
         v-for="(t, index) in proposal.testimonials"
         :key="t.id"
         class="space-y-3"
-        :class="index !== 0 ? 'border-t border-slate-200/60 pt-5' : ''"
+        :class="index !== 0 ? 'border-t border-slate-200/60 pt-4 sm:pt-5' : ''"
       >
         <div class="flex items-start justify-between gap-3">
           <div class="flex items-center gap-3">

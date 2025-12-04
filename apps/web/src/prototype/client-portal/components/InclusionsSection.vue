@@ -10,7 +10,7 @@ defineProps<{
 </script>
 
 <template>
-  <section class="mt-16 space-y-4">
+  <section class="mt-16 space-y-4 sm:mt-16">
     <div>
       <h2 class="text-lg sm:text-xl font-semibold tracking-tight text-slate-900 mb-2">
         {{ title }}
@@ -20,7 +20,7 @@ defineProps<{
       </p>
     </div>
     <div
-      class="space-y-5 rounded-2xl border bg-white p-5 text-sm shadow-sm sm:p-6"
+      class="space-y-5 rounded-xl border bg-white p-5 text-sm shadow-sm sm:rounded-2xl sm:p-6"
       :class="variant === 'subtle' ? 'border-dashed border-slate-200 bg-slate-50' : 'border-slate-200/80'"
     >
       <div v-for="group in groups" :key="group.id" class="space-y-2.5">

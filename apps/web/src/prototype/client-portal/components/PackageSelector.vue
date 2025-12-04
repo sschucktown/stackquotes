@@ -37,15 +37,23 @@ function handleSelect(id: string) {
       <p class="text-sm text-slate-500 mb-4">Good / Better / Best packages designed to fit how you want to use your space.</p>
     </div>
 
-    <div class="space-y-5">
+    <div class="space-y-5 sm:space-y-5">
       <button
         v-for="pkg in proposal.packages"
         :key="pkg.id"
         :ref="(el) => (cardRefs[pkg.id] = el as HTMLButtonElement | null)"
         type="button"
         @click="handleSelect(pkg.id)"
-        class="group relative w-full rounded-3xl border border-slate-200 bg-white p-7 text-left shadow-lg transition-all duration-300 ease-out hover:shadow-xl hover:scale-[1.01] hover:bg-slate-50 origin-center sm:p-8 focus:outline-none"
+        class="group relative w-full origin-center rounded-xl border p-5 text-left shadow-sm transition-all duration-300 ease-out hover:shadow-xl hover:scale-[1.01] active:scale-[0.98] sm:rounded-3xl sm:border-slate-200 sm:bg-white sm:p-8 sm:shadow-lg focus:outline-none"
         :class="[
+          pkg.tier === 'Good'
+            ? 'bg-white border-slate-200'
+            : pkg.tier === 'Better'
+              ? 'bg-slate-50 border-slate-300'
+              : '',
+          pkg.tier === 'Best'
+            ? 'border-2 border-blue-500 shadow-sm'
+            : '',
           selectedPackageId === pkg.id
             ? 'border-2 border-blue-500 bg-blue-50/40 shadow-[0_0_0_4px_rgba(59,130,246,0.18)] scale-[1.015]'
             : '',
@@ -54,7 +62,7 @@ function handleSelect(id: string) {
       >
         <div
           v-if="pkg.isRecommended"
-          class="inline-flex items-center rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold text-white shadow-lg absolute top-4 right-4"
+          class="inline-flex items-center rounded-full bg-slate-900 px-2 py-1 text-[11px] font-semibold text-white shadow-lg absolute top-3 right-3 sm:top-4 sm:right-4 sm:px-3 sm:py-1"
         >
           Most Popular
         </div>
@@ -70,7 +78,7 @@ function handleSelect(id: string) {
 
           <div class="text-right space-y-1">
             <p class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">{{ currency(pkg.priceTotal) }}</p>
-            <p v-if="pkg.monthlyEstimate" class="text-xs text-slate-500 mt-1">
+            <p v-if="pkg.monthlyEstimate" class="text-xs text-slate-400 mt-1 sm:text-[0.78rem] sm:text-slate-500">
               ~{{ currency(pkg.monthlyEstimate) }}/mo with financing
             </p>
           </div>
@@ -83,7 +91,7 @@ function handleSelect(id: string) {
           </li>
         </ul>
 
-        <div class="mt-6 flex items-center justify-between text-[0.85rem]">
+        <div class="mt-6 -mb-1 flex items-center justify-between text-[0.85rem]">
           <div class="flex items-center gap-3">
             <span
               class="inline-flex h-7 w-7 items-center justify-center rounded-full border-2 border-slate-300 transition-all duration-300"

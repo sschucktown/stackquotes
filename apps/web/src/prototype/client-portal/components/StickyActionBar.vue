@@ -19,10 +19,10 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <div v-if="show" class="pointer-events-none fixed inset-x-0 bottom-0 z-20 pb-[env(safe-area-inset-bottom)]">
-    <div class="mx-auto max-w-3xl px-4 pb-4 sm:px-6 lg:px-0">
+  <div v-if="show" class="pointer-events-none fixed inset-x-0 bottom-0 z-50 pb-[env(safe-area-inset-bottom)]">
+    <div class="mx-auto max-w-lg px-4 pb-4 sm:max-w-3xl sm:px-6 lg:px-0">
       <div
-        class="pointer-events-auto flex items-center justify-between gap-3 rounded-2xl border border-slate-200/80 bg-white px-4 py-3 shadow-[0_-4px_18px_rgba(15,23,42,0.15)] supports-[padding:env(safe-area-inset-bottom)]:pb-[env(safe-area-inset-bottom)]"
+        class="pointer-events-auto flex items-center justify-between gap-3 rounded-xl border border-slate-200/80 bg-white px-4 py-3 shadow-[0_-4px_12px_rgba(0,0,0,0.12)] supports-[padding:env(safe-area-inset-bottom)]:pb-[env(safe-area-inset-bottom)]"
       >
         <div class="flex flex-col text-left">
           <p class="text-sm font-medium text-slate-900">Ready when you are</p>

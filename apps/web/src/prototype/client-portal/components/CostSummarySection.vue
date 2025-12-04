@@ -13,22 +13,22 @@ defineProps<{
 </script>
 
 <template>
-  <section class="mt-16 space-y-4">
+  <section class="mt-16 space-y-4 sm:mt-16">
     <div>
       <h2 class="text-lg sm:text-xl font-semibold tracking-tight text-slate-900 mb-2">Investment Summary</h2>
       <p class="text-sm text-slate-500 mb-4">Your reassuring midpoint: choose what fits today, add upgrades later.</p>
     </div>
-    <div class="flex flex-col gap-4 rounded-3xl border border-slate-200 bg-gradient-to-b from-white to-slate-50 p-7 text-sm shadow-md sm:p-8">
+    <div class="flex flex-col gap-4 rounded-xl border border-slate-200 bg-white p-5 text-sm shadow-sm sm:rounded-3xl sm:bg-gradient-to-b sm:from-white sm:to-slate-50 sm:p-8 sm:shadow-md">
       <div class="flex items-center justify-between gap-4">
         <div>
-          <p class="text-xs font-semibold tracking-wide text-slate-500">
+          <p class="text-[11px] font-semibold tracking-wide text-slate-500 uppercase sm:text-xs sm:normal-case sm:tracking-wide">
             {{ proposal.costSummary.rangeLabel }}
           </p>
-          <p class="mt-2 text-3xl sm:text-4xl font-bold tracking-tight text-slate-900">
+          <p class="mt-1 text-xl font-semibold tracking-tight text-slate-900 sm:mt-2 sm:text-3xl sm:font-bold sm:tracking-tight sm:text-slate-900">
             {{ proposal.costSummary.rangeValue }}
           </p>
         </div>
-        <div class="ml-auto inline-flex items-center rounded-full bg-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-md">
+        <div class="ml-auto inline-flex items-center rounded-full bg-blue-600 px-3 py-1 text-[11px] font-semibold text-white shadow-sm sm:px-4 sm:py-2 sm:text-xs sm:shadow-md">
           NO OBLIGATION UNTIL YOU APPROVE
         </div>
       </div>
