@@ -9,7 +9,7 @@ defineProps<{
 </script>
 
 <template>
-  <section class="space-y-3">
+  <section class="space-y-3 mt-12">
     <h2 class="text-lg font-semibold tracking-tight text-slate-900">
       {{ title }}
     </h2>

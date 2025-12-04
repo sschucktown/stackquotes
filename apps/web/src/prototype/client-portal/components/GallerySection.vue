@@ -7,8 +7,8 @@ defineProps<{
 </script>
 
 <template>
-  <section class="space-y-3">
-    <div>
+  <section class="space-y-4">
+    <div class="mt-12">
       <h2 class="text-lg font-semibold tracking-tight text-slate-900">Project Photos & Inspiration</h2>
       <p class="text-sm text-slate-600">Visualize the finish level we’re targeting for your project.</p>
     </div>

@@ -13,12 +13,12 @@ defineProps<{
 </script>
 
 <template>
-  <section class="space-y-3">
-    <div>
+  <section class="space-y-4">
+    <div class="mt-12">
       <h2 class="text-lg font-semibold tracking-tight text-slate-900">What the process looks like</h2>
       <p class="text-sm text-slate-600">Exactly how we move from approval to completion.</p>
     </div>
-    <div class="space-y-3 rounded-2xl border border-slate-200 bg-white p-5 text-sm shadow-sm">
+    <div class="space-y-3 rounded-2xl border border-slate-200 bg-white p-6 text-sm shadow-sm">
       <div v-for="(step, index) in proposal.timeline" :key="step.id" class="flex gap-4">
         <div class="flex flex-col items-center">
           <div

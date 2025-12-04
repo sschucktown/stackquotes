@@ -4,6 +4,7 @@ import type { PackageOption, ProposalData } from "../data/mockProposal";
 const props = defineProps<{
   proposal: ProposalData;
   selectedPackage: PackageOption | null;
+  show?: boolean;
   themeClasses: {
     accent: string;
     accentBg: string;
@@ -21,7 +22,7 @@ const currency = (n: number) =>
 </script>
 
 <template>
-  <div class="pointer-events-none fixed inset-x-0 bottom-0 z-20">
+  <div v-if="show" class="pointer-events-none fixed inset-x-0 bottom-0 z-20">
     <div class="mx-auto flex max-w-3xl justify-center px-4 pb-4 sm:px-6 lg:px-8">
       <div
         class="pointer-events-auto w-full rounded-2xl border border-slate-200 bg-white/95 px-4 py-3 shadow-[0_-2px_10px_rgba(0,0,0,0.07)] backdrop-blur supports-[padding:env(safe-area-inset-bottom)]:pb-[env(safe-area-inset-bottom)]"

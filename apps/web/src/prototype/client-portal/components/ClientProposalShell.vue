@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import type { ProposalData, PackageOption, ThemeName } from "../data/mockProposal";
 import HeroSection from "./HeroSection.vue";
 import GallerySection from "./GallerySection.vue";
@@ -19,6 +19,8 @@ const props = defineProps<{
 
 const selectedPackageId = ref<string | null>(null);
 const isPaymentOpen = ref(false);
+const pastPackages = ref(false);
+const packageSectionRef = ref<HTMLElement | null>(null);
 
 const selectedPackage = computed<PackageOption | null>(() => {
   if (!selectedPackageId.value) return null;
@@ -73,12 +75,32 @@ function handlePayClick() {
 function handlePaymentComplete() {
   isPaymentOpen.value = false;
 }
+
+const showStickyCta = computed(() => !selectedPackage.value && pastPackages.value);
+
+const updateScrollState = () => {
+  const el = packageSectionRef.value;
+  if (!el) return;
+  const rect = el.getBoundingClientRect();
+  pastPackages.value = rect.bottom < (window.innerHeight - 80);
+};
+
+onMounted(() => {
+  updateScrollState();
+  window.addEventListener("scroll", updateScrollState, { passive: true });
+  window.addEventListener("resize", updateScrollState);
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener("scroll", updateScrollState);
+  window.removeEventListener("resize", updateScrollState);
+});
 </script>
 
 <template>
   <div class="min-h-screen bg-slate-50">
     <div
-      class="mx-auto flex min-h-screen max-w-3xl flex-col px-4 pb-[120px] pt-6 sm:px-6 lg:px-8 lg:pt-8"
+      class="mx-auto flex min-h-screen max-w-3xl flex-col px-4 pb-[140px] pt-6 sm:px-6 lg:px-8 lg:pt-8"
     >
       <div class="mb-8 animate-fade-in">
         <HeroSection :proposal="proposal" :theme-classes="themeClasses" />
@@ -91,7 +113,7 @@ function handlePaymentComplete() {
 
         <div class="h-px bg-slate-200/60" />
 
-        <div class="animate-fade-in">
+        <div class="animate-fade-in" ref="packageSectionRef">
           <PackageSelector
             :proposal="proposal"
             :theme-classes="themeClasses"
@@ -142,6 +164,7 @@ function handlePaymentComplete() {
       :proposal="proposal"
       :selected-package="selectedPackage"
       :theme-classes="themeClasses"
+      :show="showStickyCta"
       @pay="handlePayClick"
     />
 
