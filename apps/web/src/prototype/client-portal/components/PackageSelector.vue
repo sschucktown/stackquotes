@@ -55,11 +55,12 @@ function handleSelect(id: string) {
           pkg.isRecommended ? 'relative' : ''
         ]"
       >
-        <div
-          v-if="pkg.isRecommended"
-          class="absolute top-3 right-3 z-20 inline-flex items-center rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold text-white shadow-md"
-        >
-          Most Popular
+        <div v-if="pkg.isRecommended" class="pointer-events-none absolute top-2 right-2 z-20 sm:top-3 sm:right-3">
+          <span
+            class="inline-flex items-center rounded-full bg-slate-900 text-white text-[10px] font-semibold px-2 py-0.5 shadow-md sm:text-xs sm:px-3 sm:py-1"
+          >
+            Most Popular
+          </span>
         </div>
 
         <div class="mt-2 flex items-start justify-between gap-4 sm:mt-3">
