@@ -83,6 +83,10 @@ const router = createRouter({
       redirect: "/prototype/hq",
     },
     {
+      path: "/app/prototypes/job-view",
+      redirect: "/prototype/job-view",
+    },
+    {
       path: "/prototype/client-portal",
       name: "ClientProposalPrototypePublic",
       component: () => import("@/prototype/client-portal/ClientProposalPage.vue"),
@@ -98,6 +102,12 @@ const router = createRouter({
       path: "/prototype/hq",
       name: "ContractorHQPrototypePublic",
       component: () => import("@/prototype/ContractorHQ.vue"),
+      meta: { public: true, allowAuthenticated: true },
+    },
+    {
+      path: "/prototype/job-view",
+      name: "ContractorJobViewPrototypePublic",
+      component: () => import("@/prototype/contractor/JobView.vue"),
       meta: { public: true, allowAuthenticated: true },
     },
     {
