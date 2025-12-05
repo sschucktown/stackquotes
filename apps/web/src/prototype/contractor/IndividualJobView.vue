@@ -23,6 +23,12 @@
               >
                 Messages
               </button>
+              <button
+                class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700 shadow-inner transition hover:bg-slate-200"
+                @click="openFiles"
+              >
+                Files
+              </button>
             </div>
             <p class="text-xs text-slate-500">Individual Job View</p>
           </div>
@@ -137,6 +143,35 @@
             <span class="text-sm font-medium text-slate-900">{{ task }}</span>
           </li>
         </ul>
+        <button class="mt-4 text-sm font-semibold text-blue-600 underline-offset-4 hover:underline" @click="openFiles">
+          Manage Task Files ->
+        </button>
+      </section>
+
+      <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:p-6">
+        <div class="mb-3 flex items-center justify-between">
+          <h2 class="text-lg font-semibold text-slate-900">Files &amp; Photos</h2>
+          <button class="text-sm font-semibold text-blue-600 underline-offset-4 hover:underline" @click="openFiles">
+            View All Files ->
+          </button>
+        </div>
+
+        <div class="grid grid-cols-3 gap-3 sm:grid-cols-4">
+          <div
+            v-for="file in previewFiles"
+            :key="file.id"
+            class="aspect-square overflow-hidden rounded-lg border border-slate-200 bg-slate-100"
+          >
+            <img
+              v-if="file.type === 'image'"
+              :src="file.url"
+              class="h-full w-full object-cover"
+            />
+            <div v-else class="flex h-full w-full items-center justify-center text-sm font-semibold text-slate-500">
+              {{ file.type.toUpperCase() }}
+            </div>
+          </div>
+        </div>
       </section>
 
       <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -190,38 +225,6 @@
         </div>
       </section>
 
-      <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:p-6">
-        <div class="mb-3 flex items-center justify-between">
-          <h2 class="text-lg font-semibold text-slate-900">Files &amp; Photos</h2>
-          <button class="text-sm font-medium text-blue-600 hover:underline">
-            Add File
-          </button>
-        </div>
-
-        <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <div
-            v-for="file in previewFiles"
-            :key="file.id"
-            class="aspect-square overflow-hidden rounded-lg border border-slate-200 bg-slate-100"
-          >
-            <img
-              v-if="file.type === 'image'"
-              :src="file.url"
-              class="h-full w-full object-cover"
-            />
-            <div v-else class="flex h-full w-full items-center justify-center text-sm font-semibold text-slate-500">
-              {{ file.type.toUpperCase() }}
-            </div>
-          </div>
-        </div>
-
-        <button
-          class="mt-4 text-sm font-medium text-slate-600 underline transition hover:text-slate-800"
-        >
-          View All Files
-        </button>
-      </section>
-
       <div class="pb-20"></div>
     </div>
 
@@ -231,6 +234,9 @@
     <Transition name="fade">
       <FullMessagingInbox v-if="showInbox" @close="showInbox = false" />
     </Transition>
+    <Transition name="fade">
+      <FilesManager v-if="showFiles" @close="showFiles = false" />
+    </Transition>
   </div>
 </template>
 
@@ -238,9 +244,11 @@
 import { ref } from "vue";
 import PaymentActivity from "./PaymentActivity.vue";
 import FullMessagingInbox from "./FullMessagingInbox.vue";
+import FilesManager from "./FilesManager.vue";
 
 const showPayments = ref(false);
 const showInbox = ref(false);
+const showFiles = ref(false);
 
 const timeline = [
   { title: "Deposit received", meta: "Jun 27, 4:12 PM" },
@@ -272,6 +280,10 @@ function openPayments() {
 
 function openInbox() {
   showInbox.value = true;
+}
+
+function openFiles() {
+  showFiles.value = true;
 }
 </script>
 
