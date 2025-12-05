@@ -113,7 +113,13 @@ const router = createRouter({
     {
       path: "/prototype/task",
       name: "ContractorTaskPagePrototype",
-      component: () => import("@/prototype/contractor/TaskPage.vue"),
+      component: () => import("@/prototype/task/TaskPage.vue"),
+      meta: { public: true, allowAuthenticated: true },
+    },
+    {
+      path: "/prototype/job/files",
+      name: "ContractorJobFilesPrototype",
+      component: () => import("@/prototype/job/FilesManager.vue"),
       meta: { public: true, allowAuthenticated: true },
     },
     {
