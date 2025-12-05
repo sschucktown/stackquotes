@@ -1,12 +1,9 @@
 <template>
   <div v-if="show">
-    <div
-      class="fixed inset-0 bg-black/70 backdrop-blur-sm z-40"
-      @click="handleClose"
-    ></div>
+    <div class="fixed inset-0 z-40 bg-black/70 backdrop-blur-sm" @click="handleClose"></div>
 
     <button
-      class="fixed top-4 right-4 z-50 rounded-full bg-white/20 p-2 text-white backdrop-blur transition hover:bg-white/30"
+      class="fixed right-4 top-4 z-50 rounded-full bg-white/20 p-2 text-white backdrop-blur transition hover:bg-white/30"
       @click="handleClose"
     >
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -24,17 +21,11 @@
       />
     </div>
 
-    <div class="fixed bottom-6 inset-x-0 z-50 flex justify-center gap-4">
-      <button
-        class="rounded-full bg-white/10 px-4 py-2 text-white transition hover:bg-white/20"
-        @click="zoomOut"
-      >
-        –
+    <div class="fixed inset-x-0 bottom-6 z-50 flex justify-center gap-4">
+      <button class="rounded-full bg-white/10 px-4 py-2 text-white transition hover:bg-white/20" @click="zoomOut">
+        -
       </button>
-      <button
-        class="rounded-full bg-white/10 px-4 py-2 text-white transition hover:bg-white/20"
-        @click="zoomIn"
-      >
+      <button class="rounded-full bg-white/10 px-4 py-2 text-white transition hover:bg-white/20" @click="zoomIn">
         +
       </button>
     </div>
@@ -56,9 +47,7 @@ const emit = defineEmits<{
 
 const zoom = ref(1);
 
-const imageSrc = computed(
-  () => props.src || "https://via.placeholder.com/800x600?text=Preview"
-);
+const imageSrc = computed(() => props.src || "https://via.placeholder.com/800x600?text=Preview");
 
 const handleClose = () => {
   emit("close");
@@ -67,9 +56,7 @@ const handleClose = () => {
 };
 
 const handleEscape = (e: KeyboardEvent) => {
-  if (e.key === "Escape") {
-    handleClose();
-  }
+  if (e.key === "Escape") handleClose();
 };
 
 const zoomOut = () => {
@@ -80,15 +67,6 @@ const zoomIn = () => {
   zoom.value = Math.min(2.5, +(zoom.value + 0.1).toFixed(2));
 };
 
-onMounted(() => {
-  window.addEventListener("keydown", handleEscape);
-});
-
-onUnmounted(() => {
-  window.removeEventListener("keydown", handleEscape);
-});
+onMounted(() => window.addEventListener("keydown", handleEscape));
+onUnmounted(() => window.removeEventListener("keydown", handleEscape));
 </script>
-
-<style scoped>
-/* Locks scroll via backdrop overlap; page remains covered while open */
-</style>
