@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen bg-slate-50 text-slate-900">
-    <!-- Header -->
-    <header class="sticky top-0 z-20 bg-white border-b border-slate-200/80">
+    <!-- Sticky Header with Back Button -->
+    <header class="sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-slate-200/80">
       <div class="mx-auto flex max-w-4xl items-center gap-3 px-4 py-3">
         <button
           type="button"
@@ -20,12 +20,13 @@
       </div>
     </header>
 
+    <!-- MAIN CONTENT -->
     <main class="mx-auto max-w-4xl space-y-6 px-4 pb-28 pt-4 md:space-y-8">
-      <!-- Today Tasks -->
+      <!-- Section: Today's Tasks -->
       <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:p-5">
         <div class="mb-3 flex items-center justify-between">
           <h2 class="text-lg font-semibold">Today’s Tasks</h2>
-          <span class="text-xs rounded-full bg-slate-100 px-3 py-1 text-slate-600">6 items</span>
+          <span class="rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-600">6 items</span>
         </div>
         <div class="divide-y divide-slate-200">
           <div v-for="task in tasks" :key="task" class="flex items-center justify-between gap-3 py-3">
@@ -40,7 +41,7 @@
         </div>
       </section>
 
-      <!-- Quick Actions -->
+      <!-- Section: Quick Actions -->
       <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:p-5">
         <h2 class="mb-3 text-lg font-semibold">Quick Actions</h2>
         <div class="grid grid-cols-2 gap-3 sm:gap-4">
@@ -57,7 +58,7 @@
         </div>
       </section>
 
-      <!-- Job Details -->
+      <!-- Section: Job Details (Accordion) -->
       <details class="group rounded-2xl border border-slate-200 bg-white shadow-sm">
         <summary class="flex cursor-pointer items-center justify-between px-4 py-3 text-left md:px-5">
           <div>
@@ -71,50 +72,46 @@
         <div class="border-t border-slate-200 px-4 py-4 space-y-4 md:px-5">
           <div class="space-y-1">
             <p class="text-xs uppercase tracking-wide text-slate-500">Job Info</p>
-            <ul class="text-sm text-slate-800 space-y-1">
-              <li>Visit Time: Today at 3PM</li>
-              <li>Client: Sarah Thompson</li>
-              <li>Address: 123 Maple Street, Charleston SC</li>
+            <ul class="space-y-1 text-sm text-slate-800">
+              <li>Visit Time: {{ jobInfo.visitTime }}</li>
+              <li>Client: {{ jobInfo.client }}</li>
+              <li>Address: {{ jobInfo.address }}</li>
             </ul>
           </div>
           <div class="space-y-1">
             <p class="text-xs uppercase tracking-wide text-slate-500">Scope Highlights</p>
-            <ul class="text-sm text-slate-800 space-y-1">
-              <li>12' x 20' composite deck</li>
-              <li>Standard railing</li>
-              <li>New footings</li>
+            <ul class="space-y-1 text-sm text-slate-800">
+              <li v-for="item in jobInfo.scope" :key="item">{{ item }}</li>
             </ul>
           </div>
         </div>
       </details>
 
-      <!-- Recent Activity -->
+      <!-- Section: Recent Activity -->
       <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:p-5">
         <h2 class="mb-3 text-lg font-semibold">Recent Activity</h2>
         <div class="divide-y divide-slate-200 text-sm text-slate-800">
-          <div class="flex items-center justify-between py-3">
-            <span>Job Mode activated</span>
-            <span class="text-xs text-slate-500">2 min ago</span>
-          </div>
-          <div class="flex items-center justify-between py-3">
-            <span>Visit scheduled</span>
-            <span class="text-xs text-slate-500">Today</span>
-          </div>
-          <div class="flex items-center justify-between py-3">
-            <span>Proposal follow-up pending</span>
-            <span class="text-xs text-slate-500">Yesterday</span>
+          <div
+            v-for="entry in recentActivity"
+            :key="entry.label"
+            class="flex items-center justify-between py-3"
+          >
+            <span>{{ entry.label }}</span>
+            <span class="text-xs text-slate-500">{{ entry.time }}</span>
           </div>
         </div>
       </section>
     </main>
 
+    <!-- Floating FAB for Comments -->
     <ProposalCommentsFab proposal-id="demo-proposal" contractor-name="Jordan Deckworks" />
   </div>
 </template>
 
 <script setup lang="ts">
-import ProposalCommentsFab from "@/components/proposals/ProposalCommentsFab.vue";
 import { h } from "vue";
+import { ref } from "vue";
+import ProposalCommentsFab from "@/components/proposals/ProposalCommentsFab.vue";
 
 const tasks = [
   "Perform site measurements",
@@ -131,6 +128,19 @@ const quickActions = [
   { label: "Change Order", icon: "repeat" as const },
   { label: "Payment Link", icon: "card" as const },
 ];
+
+const recentActivity = [
+  { label: "Job Mode activated", time: "2 min ago" },
+  { label: "Visit scheduled", time: "Today" },
+  { label: "Proposal follow-up pending", time: "Yesterday" },
+];
+
+const jobInfo = {
+  client: "Sarah Thompson",
+  address: "123 Maple Street, Charleston SC",
+  visitTime: "Today at 3PM",
+  scope: ["12' x 20' composite deck", "Standard railing", "New footings"],
+};
 
 const makeIcon = (paths: string | string[]) => ({
   render() {
@@ -150,3 +160,9 @@ const iconMap = {
   card: makeIcon(["M2 7a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2Z", "M2 10h20", "M6 16h4"]),
 };
 </script>
+
+<style scoped>
+.hq-fab :deep(button:hover) {
+  box-shadow: 0 0 0 10px rgba(59, 130, 246, 0.15), 0 10px 20px -10px rgba(59, 130, 246, 0.45);
+}
+</style>
