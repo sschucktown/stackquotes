@@ -4,7 +4,10 @@
       <header class="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-5">
         <div class="space-y-2">
           <div class="flex flex-wrap items-center gap-2 text-sm text-slate-600">
-            <button class="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 font-semibold text-slate-700 shadow-inner transition hover:bg-slate-200">
+            <button
+              class="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 font-semibold text-slate-700 shadow-inner transition hover:bg-slate-200"
+              @click="emit('close')"
+            >
               <span class="text-lg leading-none">&larr;</span>
               <span>Back</span>
             </button>
@@ -182,6 +185,10 @@
 
 <script setup lang="ts">
 import { computed, h, ref } from "vue";
+
+const emit = defineEmits<{
+  (e: "close"): void;
+}>();
 
 type PaymentEvent = {
   id: string;
