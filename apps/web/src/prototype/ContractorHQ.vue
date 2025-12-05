@@ -38,23 +38,7 @@
 
     <main class="mx-auto max-w-5xl space-y-10 px-4 pb-32 pt-8 md:space-y-12 md:px-6 lg:px-8">
       <!-- Alerts -->
-      <section
-        class="rounded-2xl border border-slate-200/70 bg-white p-4 shadow-sm md:p-5 shadow-[0_10px_20px_-16px_rgba(15,23,42,0.45)]"
-      >
-        <div class="mb-3 flex items-center justify-between">
-          <div>
-            <h2 class="text-lg font-semibold">Today's Attention</h2>
-            <p class="text-sm text-slate-500">Quick read alerts to keep you ahead</p>
-          </div>
-          <div class="grid h-9 w-9 place-items-center rounded-full bg-sky-50 text-sky-600">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 3v18" />
-              <path d="M5 8h14M5 16h14" />
-            </svg>
-          </div>
-        </div>
-        <AlertsCarousel />
-      </section>
+      <TodayAttention />
 
       <!-- Jobs -->
       <section class="rounded-2xl border border-slate-200/70 bg-white p-4 shadow-sm transition hover:shadow-md md:p-6">
@@ -159,8 +143,7 @@
 </template>
 
 <script setup lang="ts">
-import AlertsCarousel from "@/components/HQ/AlertsCarousel.vue";
-import HQAlertCard from "@/components/HQ/HQAlertCard.vue";
+import TodayAttention from "@/components/HQ/TodayAttention.vue";
 import HQJobRow from "@/components/HQ/HQJobRow.vue";
 import HQMessages from "@/components/HQ/HQMessages.vue";
 import HQQuickActions from "@/components/HQ/HQQuickActions.vue";
