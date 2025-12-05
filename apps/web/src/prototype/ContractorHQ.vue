@@ -36,6 +36,7 @@
       </div>
     </header>
 
+    <!-- FIXED: Single Transition wrapping BOTH views -->
     <Transition name="fade">
       <main
         v-if="!isJobMode"
@@ -101,9 +102,8 @@
               </svg>
             </div>
           </div>
-          <div
-            class="grid gap-3 divide-y divide-slate-200 sm:grid-cols-3 sm:divide-y-0 sm:divide-x"
-          >
+
+          <div class="grid gap-3 divide-y divide-slate-200 sm:grid-cols-3 sm:divide-y-0 sm:divide-x">
             <div
               v-for="stat in stats"
               :key="stat.label"
@@ -136,9 +136,8 @@
           <HQMessages :threads="messages" />
         </section>
       </main>
-    </Transition>
 
-    <Transition name="fade">
+      <!-- FIXED: v-else is now inside same parent as v-if -->
       <JobMode v-else @exitJobMode="isJobMode = false" />
     </Transition>
 
@@ -157,7 +156,18 @@ import ProposalCommentsFab from "@/components/proposals/ProposalCommentsFab.vue"
 import JobMode from "@/prototype/contractor/JobMode.vue";
 import { ref } from "vue";
 
-const todayJobs = [
+type JobStatus = "In Progress" | "Scheduled" | "Pending" | "Needs Visit";
+type TradeType = "deck" | "fence" | "patio";
+type Job = {
+  name: string;
+  type: string;
+  status: JobStatus;
+  detail: string;
+  photo?: string;
+  trade: TradeType;
+};
+
+const todayJobs: Job[] = [
   {
     name: "Maple St Deck",
     type: "Deck",
