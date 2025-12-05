@@ -72,33 +72,18 @@
           <article
             v-for="file in visibleFiles"
             :key="file.name"
-            class="flex cursor-pointer flex-col gap-3 rounded-2xl border border-slate-200 bg-gradient-to-br from-white via-slate-50 to-slate-100 p-3 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
-            @click="openDetail(file)"
+            class="group flex cursor-pointer flex-col gap-3 rounded-2xl border border-slate-200 bg-gradient-to-br from-white via-slate-50 to-slate-100 p-3 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+            @click="openViewer(file)"
           >
             <div
-              class="relative h-36 overflow-hidden rounded-xl border border-slate-100 bg-gradient-to-br"
-              :class="previewGradient(file.type)"
+              class="relative h-36 overflow-hidden rounded-xl border border-slate-100 bg-slate-100"
             >
-              <div v-if="file.type === 'image'" class="absolute inset-0">
-                <div class="absolute -left-6 -top-10 h-24 w-28 rounded-full bg-blue-200/50 blur-3xl"></div>
-                <div class="absolute bottom-0 right-0 h-28 w-32 rounded-full bg-slate-200/50 blur-3xl"></div>
-                <div class="absolute inset-2 rounded-lg border border-white/50 bg-white/30 backdrop-blur" />
-              </div>
-              <div v-else-if="file.type === 'video'" class="absolute inset-0 flex items-center justify-center">
-                <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/80 text-violet-600 shadow-lg ring-1 ring-violet-100">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-6 w-6" fill="currentColor">
-                    <path d="m9.5 7.5 7 4.5-7 4.5v-9Z" />
-                  </svg>
-                </div>
-              </div>
-              <div v-else class="absolute inset-0 flex items-center justify-center">
-                <div class="flex h-14 w-12 items-center justify-center rounded-xl bg-white/80 text-slate-700 shadow-inner ring-1 ring-slate-200">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M7 3h7l4 4v14H7z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M14 3v4h4" />
-                  </svg>
-                </div>
-              </div>
+              <img
+                :src="previewSrc(file)"
+                class="h-full w-full object-cover transition duration-200 group-hover:brightness-90"
+                alt=""
+              />
+              <div class="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-900/10 to-transparent"></div>
             </div>
             <div class="flex items-center justify-between">
               <div>
@@ -204,6 +189,12 @@
       </div>
     </Transition>
 
+    <ImageViewerModal
+      :show="showViewer"
+      :src="viewerSrc"
+      @close="showViewer = false"
+    />
+
     <AddFileModal
       :show="showAddFileModal"
       @close="showAddFileModal = false"
@@ -214,6 +205,7 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import AddFileModal from "@/prototype/contractor/AddFileModal.vue";
+import ImageViewerModal from "@/prototype/contractor/ImageViewerModal.vue";
 
 type FileType = "image" | "video" | "document";
 type FilterType = FileType | "all";
@@ -223,6 +215,7 @@ type FileItem = {
   type: FileType;
   created: string;
   updated: string;
+  src?: string;
 };
 
 const jobName = "Maple St Deck";
@@ -235,19 +228,21 @@ const filters = [
 ];
 
 const files = ref<FileItem[]>([
-  { name: "deck_before.jpg", type: "image", created: "Nov 28, 2025 at 9:12 AM", updated: "Dec 3, 2025 at 1:45 PM" },
-  { name: "joist_detail.jpg", type: "image", created: "Nov 29, 2025 at 2:30 PM", updated: "Dec 3, 2025 at 1:45 PM" },
-  { name: "material_notes.png", type: "image", created: "Nov 30, 2025 at 10:10 AM", updated: "Dec 4, 2025 at 9:05 AM" },
-  { name: "site_walk.mp4", type: "video", created: "Dec 1, 2025 at 4:22 PM", updated: "Dec 4, 2025 at 10:20 AM" },
-  { name: "measurement_sheet.pdf", type: "document", created: "Dec 1, 2025 at 8:00 AM", updated: "Dec 3, 2025 at 3:30 PM" },
-  { name: "ledger_inspection.jpg", type: "image", created: "Dec 2, 2025 at 11:15 AM", updated: "Dec 4, 2025 at 1:00 PM" },
-  { name: "demo_area.mp4", type: "video", created: "Dec 2, 2025 at 5:45 PM", updated: "Dec 4, 2025 at 5:10 PM" },
-  { name: "permit_notes.pdf", type: "document", created: "Dec 3, 2025 at 9:00 AM", updated: "Dec 4, 2025 at 6:00 PM" }
+  { name: "deck_before.jpg", type: "image", created: "Nov 28, 2025 at 9:12 AM", updated: "Dec 3, 2025 at 1:45 PM", src: "https://source.unsplash.com/random/640x480?deck" },
+  { name: "joist_detail.jpg", type: "image", created: "Nov 29, 2025 at 2:30 PM", updated: "Dec 3, 2025 at 1:45 PM", src: "https://source.unsplash.com/random/640x480?framing" },
+  { name: "material_notes.png", type: "image", created: "Nov 30, 2025 at 10:10 AM", updated: "Dec 4, 2025 at 9:05 AM", src: "https://source.unsplash.com/random/640x480?blueprint" },
+  { name: "site_walk.mp4", type: "video", created: "Dec 1, 2025 at 4:22 PM", updated: "Dec 4, 2025 at 10:20 AM", src: "https://source.unsplash.com/random/640x480?jobsite" },
+  { name: "measurement_sheet.pdf", type: "document", created: "Dec 1, 2025 at 8:00 AM", updated: "Dec 3, 2025 at 3:30 PM", src: "https://source.unsplash.com/random/640x480?plans" },
+  { name: "ledger_inspection.jpg", type: "image", created: "Dec 2, 2025 at 11:15 AM", updated: "Dec 4, 2025 at 1:00 PM", src: "https://source.unsplash.com/random/640x480?inspection" },
+  { name: "demo_area.mp4", type: "video", created: "Dec 2, 2025 at 5:45 PM", updated: "Dec 4, 2025 at 5:10 PM", src: "https://source.unsplash.com/random/640x480?demolition" },
+  { name: "permit_notes.pdf", type: "document", created: "Dec 3, 2025 at 9:00 AM", updated: "Dec 4, 2025 at 6:00 PM", src: "https://source.unsplash.com/random/640x480?paperwork" }
 ]);
 
 const activeFilter = ref<FilterType>("all");
 const selectedFile = ref<FileItem | null>(null);
 const showAddFileModal = ref(false);
+const showViewer = ref(false);
+const viewerSrc = ref("");
 
 const totalLabel = computed(() => `${files.value.length} items`);
 
@@ -263,6 +258,18 @@ const openDetail = (file: FileItem) => {
 
 const closeDetail = () => {
   selectedFile.value = null;
+};
+
+const openViewer = (file: FileItem) => {
+  viewerSrc.value = previewSrc(file);
+  showViewer.value = true;
+};
+
+const previewSrc = (file: FileItem) => {
+  if (file.src) return file.src;
+  if (file.type === "video") return "https://source.unsplash.com/random/640x480?video";
+  if (file.type === "document") return "https://source.unsplash.com/random/640x480?document";
+  return "https://source.unsplash.com/random/640x480?photo";
 };
 
 const typeLabel = (type: FileType) => {
