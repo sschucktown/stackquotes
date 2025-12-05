@@ -53,23 +53,7 @@
             </svg>
           </div>
         </div>
-        <div class="relative">
-          <div class="pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-white via-white/80 to-transparent"></div>
-          <div class="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-white via-white/80 to-transparent"></div>
-          <div class="flex gap-3 overflow-x-auto pb-1 pr-6">
-            <HQAlertCard v-for="alert in alerts" :key="alert.title" :alert="alert" />
-          </div>
-          <div class="pointer-events-none absolute inset-y-0 left-2 flex items-center text-slate-300">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <path d="m15 18-6-6 6-6" />
-            </svg>
-          </div>
-          <div class="pointer-events-none absolute inset-y-0 right-2 flex items-center text-slate-400">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <path d="m9 18 6-6-6-6" />
-            </svg>
-          </div>
-        </div>
+        <AlertsCarousel />
       </section>
 
       <!-- Jobs -->
@@ -175,19 +159,12 @@
 </template>
 
 <script setup lang="ts">
+import AlertsCarousel from "@/components/HQ/AlertsCarousel.vue";
 import HQAlertCard from "@/components/HQ/HQAlertCard.vue";
 import HQJobRow from "@/components/HQ/HQJobRow.vue";
 import HQMessages from "@/components/HQ/HQMessages.vue";
 import HQQuickActions from "@/components/HQ/HQQuickActions.vue";
 import ProposalCommentsFab from "@/components/proposals/ProposalCommentsFab.vue";
-
-const alerts = [
-  { title: "3 new visit requests", subtitle: "Needs visit", tone: "info", icon: "info" },
-  { title: "Proposal accepted - Maple St Deck", subtitle: "Signed today", tone: "success", icon: "check" },
-  { title: "Payment received - $2,400", subtitle: "Payment received", tone: "success", icon: "check" },
-  { title: "CO awaiting approval - Kitchen Remodel", subtitle: "Client review", tone: "warning", icon: "flag" },
-  { title: "2 unanswered client messages", subtitle: "Follow up", tone: "danger", icon: "alert" },
-];
 
 const todayJobs = [
   {
