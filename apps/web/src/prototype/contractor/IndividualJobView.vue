@@ -17,6 +17,12 @@
               >
                 Payments
               </button>
+              <button
+                class="inline-flex items-center gap-2 rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-xs font-semibold text-violet-700 shadow-inner transition hover:bg-violet-100"
+                @click="openInbox"
+              >
+                Messages
+              </button>
             </div>
             <p class="text-xs text-slate-500">Individual Job View</p>
           </div>
@@ -98,7 +104,9 @@
       <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <div class="mb-4 flex items-center justify-between">
           <h3 class="text-base font-semibold text-slate-900">Project Timeline</h3>
-          <span class="text-xs text-slate-500">Recent</span>
+          <button class="text-sm font-semibold text-blue-600 underline-offset-4 hover:underline" @click="openInbox">
+            View Inbox
+          </button>
         </div>
         <div class="relative pl-5">
           <div class="absolute left-2 top-3 bottom-3 w-px bg-slate-200"></div>
@@ -133,8 +141,13 @@
 
       <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <div class="mb-3 flex items-center justify-between">
-          <h3 class="text-base font-semibold text-slate-900">Recent Messages</h3>
-          <span class="text-xs text-slate-500">3</span>
+          <div class="flex items-center gap-2">
+            <h3 class="text-base font-semibold text-slate-900">Recent Messages</h3>
+            <span class="text-xs text-slate-500">3</span>
+          </div>
+          <button class="text-sm font-semibold text-blue-600 underline-offset-4 hover:underline" @click="openInbox">
+            View Full Inbox ->
+          </button>
         </div>
         <div class="space-y-3">
           <div
@@ -215,14 +228,19 @@
     <Transition name="fade">
       <PaymentActivity v-if="showPayments" @close="showPayments = false" />
     </Transition>
+    <Transition name="fade">
+      <FullMessagingInbox v-if="showInbox" @close="showInbox = false" />
+    </Transition>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from "vue";
 import PaymentActivity from "./PaymentActivity.vue";
+import FullMessagingInbox from "./FullMessagingInbox.vue";
 
 const showPayments = ref(false);
+const showInbox = ref(false);
 
 const timeline = [
   { title: "Deposit received", meta: "Jun 27, 4:12 PM" },
@@ -250,6 +268,10 @@ const messages = [
 
 function openPayments() {
   showPayments.value = true;
+}
+
+function openInbox() {
+  showInbox.value = true;
 }
 </script>
 
