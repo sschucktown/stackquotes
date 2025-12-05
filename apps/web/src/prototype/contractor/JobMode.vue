@@ -15,7 +15,7 @@
         </button>
         <div>
           <p class="text-base font-semibold leading-tight">Maple St Deck</p>
-          <p class="text-sm text-slate-500 leading-tight">Today’s Visit</p>
+          <p class="text-sm text-slate-500 leading-tight">Today's Visit</p>
         </div>
       </div>
     </header>
@@ -25,7 +25,7 @@
       <!-- Section: Today's Tasks -->
       <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:p-5">
         <div class="mb-3 flex items-center justify-between">
-          <h2 class="text-lg font-semibold">Today’s Tasks</h2>
+          <h2 class="text-lg font-semibold">Today's Tasks</h2>
           <span class="rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-600">6 items</span>
         </div>
         <div class="divide-y divide-slate-200">
@@ -38,6 +38,14 @@
               Pending
             </span>
           </div>
+        </div>
+        <div class="mt-4 flex justify-end">
+          <button
+            class="text-sm font-semibold text-blue-600 underline-offset-4 hover:underline"
+            @click="showTaskList = true"
+          >
+            Open Full Task List
+          </button>
         </div>
       </section>
 
@@ -105,6 +113,9 @@
 
     <!-- Floating FAB for Comments -->
     <ProposalCommentsFab proposal-id="demo-proposal" contractor-name="Jordan Deckworks" />
+
+    <TaskList v-if="showTaskList" @back="showTaskList = false" @openTask="openTaskDetail" />
+    <TaskDetail v-if="activeTask" :task="activeTask" @close="activeTask = null" />
   </div>
 </template>
 
@@ -112,6 +123,8 @@
 import { h } from "vue";
 import { ref } from "vue";
 import ProposalCommentsFab from "@/components/proposals/ProposalCommentsFab.vue";
+import TaskDetail from "./TaskDetail.vue";
+import TaskList from "./TaskList.vue";
 
 const tasks = [
   "Perform site measurements",
@@ -140,6 +153,13 @@ const jobInfo = {
   address: "123 Maple Street, Charleston SC",
   visitTime: "Today at 3PM",
   scope: ["12' x 20' composite deck", "Standard railing", "New footings"],
+};
+
+const showTaskList = ref(false);
+const activeTask = ref<null | { id: number; name: string; status: string; hasNotes?: boolean; hasPhotos?: boolean }>(null);
+
+const openTaskDetail = (task: { id: number; name: string; status: string; hasNotes?: boolean; hasPhotos?: boolean }) => {
+  activeTask.value = task;
 };
 
 const makeIcon = (paths: string | string[]) => ({
