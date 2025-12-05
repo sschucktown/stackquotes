@@ -37,13 +37,13 @@
           <div class="flex flex-wrap items-center gap-2">
             <button
               class="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700 shadow-inner transition hover:-translate-y-0.5 hover:bg-blue-100"
-              @click="showAddFileModal = true"
+              @click="showAddFile = true"
             >
               Add Photo
             </button>
             <button
               class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 shadow-inner transition hover:-translate-y-0.5 hover:bg-slate-200"
-              @click="navigateFiles"
+              @click="openJobFiles"
             >
               View All Files
             </button>
@@ -68,16 +68,30 @@
         </div>
       </section>
 
-      <FileGrid title="Photos" :files="taskFiles" @open="openViewer">
-        <template #action>
+      <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:p-6">
+        <div class="mb-3 flex items-center justify-between">
+          <h2 class="text-lg font-semibold">Photos & Files</h2>
           <button
-            class="rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 shadow-inner transition hover:bg-blue-100"
-            @click="showAddFileModal = true"
+            class="text-sm font-medium text-blue-600 hover:underline"
+            @click="showAddFile = true"
           >
-            Add Photo
+            Add File
           </button>
-        </template>
-      </FileGrid>
+        </div>
+
+        <FileGrid
+          :files="taskFiles"
+          title=""
+          @open="openViewer"
+        />
+
+        <button
+          class="mt-4 text-sm font-medium text-slate-600 underline transition hover:text-slate-800"
+          @click="openJobFiles"
+        >
+          View All Files →
+        </button>
+      </section>
 
       <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <div class="mb-3 flex items-center justify-between">
@@ -132,7 +146,7 @@
         <div class="flex gap-2">
           <button
             class="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700 shadow-inner transition hover:-translate-y-0.5 hover:bg-blue-100"
-            @click="showAddFileModal = true"
+            @click="showAddFile = true"
           >
             Add Photo
           </button>
@@ -153,15 +167,16 @@
     </div>
 
     <ImageViewerModal
+      v-if="showViewer"
+      :file="viewerFile"
       :show="showViewer"
-      :images="taskFiles"
-      :start-index="viewerIndex"
       @close="showViewer = false"
     />
 
     <AddFileModal
-      :show="showAddFileModal"
-      @close="showAddFileModal = false"
+      v-if="showAddFile"
+      :show="showAddFile"
+      @close="showAddFile = false"
       @add="handleAddFile"
     />
 
@@ -218,10 +233,9 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { useRouter } from "vue-router";
-import AddFileModal from "@/components/files/AddFileModal.vue";
-import FileGrid from "@/components/files/FileGrid.vue";
-import type { FileCardItem } from "@/components/files/FileCard.vue";
-import ImageViewerModal from "@/components/files/ImageViewerModal.vue";
+import FileGrid from "@/prototype/contractor/files/FileGrid.vue";
+import AddFileModal from "@/prototype/contractor/files/AddFileModal.vue";
+import ImageViewerModal from "@/prototype/contractor/files/ImageViewerModal.vue";
 
 const router = useRouter();
 
@@ -236,10 +250,10 @@ const subtasks = [
   "Confirm stair layout"
 ];
 
-const taskFiles = ref<FileCardItem[]>([
-  { id: "t1", name: "measurement_1.jpg", type: "image", thumbnail: "https://source.unsplash.com/random/400x300?construction" },
-  { id: "t2", name: "measurement_2.jpg", type: "image", thumbnail: "https://source.unsplash.com/random/400x300?measuring" },
-  { id: "t3", name: "material_notes.png", type: "image", thumbnail: "https://source.unsplash.com/random/400x300?wood" }
+const taskFiles = ref([
+  { id: 1, name: "measurement1.jpg", url: "https://source.unsplash.com/random/400x300?measurement", type: "image" },
+  { id: 2, name: "ledger.jpg", url: "https://source.unsplash.com/random/400x300?wood", type: "image" },
+  { id: 3, name: "note.pdf", url: "/demo/task_note.pdf", type: "document" }
 ]);
 
 const notes = [
@@ -255,8 +269,7 @@ const timeline = [
 ];
 
 const showViewer = ref(false);
-const viewerIndex = ref(0);
-const showAddFileModal = ref(false);
+const showAddFile = ref(false);
 const showNoteModal = ref(false);
 
 const statusLabel = computed(() => {
@@ -275,24 +288,25 @@ const toggleComplete = () => {
   status.value = status.value === "done" ? "pending" : "done";
 };
 
-const openViewer = (file: FileCardItem) => {
-  const index = taskFiles.value.findIndex((item) => item.id === file.id);
-  viewerIndex.value = Math.max(0, index);
+const viewerFile = ref<any>(null);
+
+const openViewer = (file: any) => {
+  viewerFile.value = file;
   showViewer.value = true;
 };
 
 const handleAddFile = (file: { name: string; type: "image" | "document" | "video"; thumbnail: string }) => {
-  const newFile: FileCardItem = {
-    id: String(Date.now()),
+  taskFiles.value.push({
+    id: Date.now(),
     name: file.name,
-    type: file.type,
-    thumbnail: file.thumbnail
-  };
-  taskFiles.value = [newFile, ...taskFiles.value];
+    url: file.thumbnail,
+    type: file.type
+  });
+  showAddFile.value = false;
 };
 
-const navigateFiles = () => {
-  router.push("/prototype/job/files");
+const openJobFiles = () => {
+  router.push("/prototype/contractor/files?jobId=demo-job");
 };
 </script>
 
