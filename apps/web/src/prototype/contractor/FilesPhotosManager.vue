@@ -17,7 +17,7 @@
         </div>
         <button
           class="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-sm font-semibold text-blue-700 shadow-inner transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-100"
-          @click="showAddModal = true"
+          @click="showAddFileModal = true"
         >
           <span class="flex h-6 w-6 items-center justify-center rounded-full bg-white text-blue-700 shadow-inner">+</span>
           Add File
@@ -60,6 +60,15 @@
           <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">Demo Only</span>
         </div>
         <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div
+            class="flex cursor-pointer items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50 p-6 text-slate-400 transition hover:-translate-y-0.5 hover:bg-slate-100"
+            @click="showAddFileModal = true"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 5v14" />
+              <path d="M5 12h14" />
+            </svg>
+          </div>
           <article
             v-for="file in visibleFiles"
             :key="file.name"
@@ -195,51 +204,16 @@
       </div>
     </Transition>
 
-    <Transition name="modal">
-      <div
-        v-if="showAddModal"
-        class="fixed inset-0 z-40 flex items-end justify-center bg-slate-900/50 px-3 pb-3 md:items-center md:px-4 md:pb-0"
-      >
-        <div class="w-full max-w-md transform rounded-t-3xl bg-white shadow-2xl transition md:rounded-2xl">
-          <div class="flex items-start justify-between border-b border-slate-200 px-5 py-4">
-            <div>
-              <p class="text-sm font-semibold uppercase tracking-wide text-slate-500">Add File</p>
-              <h3 class="text-lg font-semibold text-slate-900">Prototype Placeholder</h3>
-            </div>
-            <button
-              class="rounded-full p-2 text-slate-500 transition hover:bg-slate-100"
-              @click="showAddModal = false"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <path d="m18 6-12 12" />
-                <path d="m6 6 12 12" />
-              </svg>
-            </button>
-          </div>
-          <div class="space-y-4 px-5 py-5">
-            <div class="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-600">
-              This modal is a non-functional placeholder. In the full build, uploading would live here.
-            </div>
-            <div class="flex items-center justify-end gap-2">
-              <button
-                class="rounded-full px-4 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-100"
-                @click="showAddModal = false"
-              >
-                Close
-              </button>
-              <button class="rounded-full border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700 shadow-inner">
-                Save (Disabled)
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </Transition>
+    <AddFileModal
+      :show="showAddFileModal"
+      @close="showAddFileModal = false"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from "vue";
+import AddFileModal from "@/prototype/contractor/AddFileModal.vue";
 
 type FileType = "image" | "video" | "document";
 type FilterType = FileType | "all";
@@ -273,7 +247,7 @@ const files = ref<FileItem[]>([
 
 const activeFilter = ref<FilterType>("all");
 const selectedFile = ref<FileItem | null>(null);
-const showAddModal = ref(false);
+const showAddFileModal = ref(false);
 
 const totalLabel = computed(() => `${files.value.length} items`);
 
