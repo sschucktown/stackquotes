@@ -36,105 +36,111 @@
       </div>
     </header>
 
-    <main class="mx-auto max-w-5xl space-y-10 px-4 pb-32 pt-8 md:space-y-12 md:px-6 lg:px-8">
-      <!-- Alerts -->
-      <TodayAttention />
+    <Transition name="fade">
+      <main
+        v-if="!isJobMode"
+        class="mx-auto max-w-5xl space-y-10 px-4 pb-32 pt-8 md:space-y-12 md:px-6 lg:px-8"
+      >
+        <!-- Alerts -->
+        <TodayAttention />
 
-      <!-- Jobs -->
-      <section class="rounded-2xl border border-slate-200/70 bg-white p-4 shadow-sm transition hover:shadow-md md:p-6">
-        <div class="mb-3 flex items-center justify-between">
-          <div>
-            <h2 class="text-lg font-semibold">Your Jobs</h2>
-            <p class="text-sm text-slate-500">Today and in motion</p>
+        <!-- Jobs -->
+        <section class="rounded-2xl border border-slate-200/70 bg-white p-4 shadow-sm transition hover:shadow-md md:p-6">
+          <div class="mb-3 flex items-center justify-between">
+            <div>
+              <h2 class="text-lg font-semibold">Your Jobs</h2>
+              <p class="text-sm text-slate-500">Today and in motion</p>
+            </div>
+            <button
+              type="button"
+              class="group inline-flex w-full items-center justify-center gap-2 rounded-full border border-[#BFD7FF] bg-[#F3F3F5] px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm transition hover:border-blue-400 hover:bg-blue-50 hover:shadow md:w-auto"
+              @click="isJobMode = true"
+            >
+              Job Mode
+              <span class="transition group-hover:translate-x-0.5">-></span>
+            </button>
           </div>
-          <button
-            type="button"
-            class="group inline-flex w-full items-center justify-center gap-2 rounded-full border border-[#BFD7FF] bg-[#F3F3F5] px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm transition hover:border-blue-400 hover:bg-blue-50 hover:shadow md:w-auto"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <path d="m12 3 4 4-4 4-4-4 4-4Z" />
-              <path d="m12 13 4 4-4 4-4-4 4-4Z" />
-            </svg>
-            Field Command Mode
-            <span class="transition group-hover:translate-x-0.5">-></span>
-          </button>
-        </div>
 
-        <div class="space-y-5">
-          <div class="mt-2">
-            <p class="text-xs uppercase tracking-wide text-slate-500/80 mb-2">Today</p>
-            <div class="space-y-2">
-              <HQJobRow v-for="job in todayJobs" :key="job.name" :job="job" />
+          <div class="space-y-5">
+            <div class="mt-2">
+              <p class="text-xs uppercase tracking-wide text-slate-500/80 mb-2">Today</p>
+              <div class="space-y-2">
+                <HQJobRow v-for="job in todayJobs" :key="job.name" :job="job" />
+              </div>
+            </div>
+            <div class="mt-2">
+              <p class="text-xs uppercase tracking-wide text-slate-500/80 mb-2">In Progress</p>
+              <div class="space-y-2">
+                <HQJobRow v-for="job in inProgressJobs" :key="job.name" :job="job" />
+              </div>
             </div>
           </div>
-          <div class="mt-2">
-            <p class="text-xs uppercase tracking-wide text-slate-500/80 mb-2">In Progress</p>
-            <div class="space-y-2">
-              <HQJobRow v-for="job in inProgressJobs" :key="job.name" :job="job" />
+        </section>
+
+        <!-- Quick Actions -->
+        <section class="rounded-2xl border border-slate-200/70 bg-white p-4 shadow-sm transition hover:shadow-md md:p-6">
+          <div class="mb-3 flex items-center justify-between">
+            <div>
+              <h2 class="text-lg font-semibold">Quick Actions</h2>
+              <p class="text-sm text-slate-500">One tap to move work forward</p>
             </div>
           </div>
-        </div>
-      </section>
+          <HQQuickActions />
+        </section>
 
-      <!-- Quick Actions -->
-      <section class="rounded-2xl border border-slate-200/70 bg-white p-4 shadow-sm transition hover:shadow-md md:p-6">
-        <div class="mb-3 flex items-center justify-between">
-          <div>
-            <h2 class="text-lg font-semibold">Quick Actions</h2>
-            <p class="text-sm text-slate-500">One tap to move work forward</p>
-          </div>
-        </div>
-        <HQQuickActions />
-      </section>
-
-      <!-- Performance Snapshot -->
-      <section class="rounded-2xl border border-slate-200/70 bg-white p-4 shadow-sm transition hover:shadow-md md:p-6">
-        <div class="mb-3 flex items-center justify-between">
-          <div>
-            <h2 class="text-lg font-semibold">Performance Snapshot</h2>
-            <p class="text-sm text-slate-500">Mini ProfitPulse</p>
-          </div>
-          <div class="grid h-9 w-9 place-items-center rounded-full bg-emerald-50 text-emerald-600">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M5 3h14a2 2 0 0 1 2 2v14l-4-4H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z" />
-            </svg>
-          </div>
-        </div>
-        <div
-          class="grid gap-3 divide-y divide-slate-200 sm:grid-cols-3 sm:divide-y-0 sm:divide-x"
-        >
-          <div
-            v-for="stat in stats"
-            :key="stat.label"
-            class="flex items-center gap-3 py-2 sm:py-0 sm:px-3"
-            :title="stat.tooltip"
-          >
-            <div class="grid h-10 w-10 place-items-center rounded-xl border border-slate-200 bg-slate-50 text-slate-700">
+        <!-- Performance Snapshot -->
+        <section class="rounded-2xl border border-slate-200/70 bg-white p-4 shadow-sm transition hover:shadow-md md:p-6">
+          <div class="mb-3 flex items-center justify-between">
+            <div>
+              <h2 class="text-lg font-semibold">Performance Snapshot</h2>
+              <p class="text-sm text-slate-500">Mini ProfitPulse</p>
+            </div>
+            <div class="grid h-9 w-9 place-items-center rounded-full bg-emerald-50 text-emerald-600">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M4 13h3l2 6 4-14 3 8h4" />
+                <path d="M5 3h14a2 2 0 0 1 2 2v14l-4-4H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z" />
               </svg>
             </div>
-            <div>
-              <div class="flex items-center gap-1 text-xl font-semibold leading-tight">
-                <span>{{ stat.value }}</span>
-                <span :class="stat.trend === 'up' ? 'text-emerald-600' : 'text-rose-500'">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path v-if="stat.trend === 'up'" d="M3 17 9 11l4 4 7-7" />
-                    <path v-else d="m21 7-6 6-4-4-7 7" />
-                  </svg>
-                </span>
+          </div>
+          <div
+            class="grid gap-3 divide-y divide-slate-200 sm:grid-cols-3 sm:divide-y-0 sm:divide-x"
+          >
+            <div
+              v-for="stat in stats"
+              :key="stat.label"
+              class="flex items-center gap-3 py-2 sm:py-0 sm:px-3"
+              :title="stat.tooltip"
+            >
+              <div class="grid h-10 w-10 place-items-center rounded-xl border border-slate-200 bg-slate-50 text-slate-700">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 13h3l2 6 4-14 3 8h4" />
+                </svg>
               </div>
-              <p class="text-sm text-slate-500">{{ stat.label }}</p>
+              <div>
+                <div class="flex items-center gap-1 text-xl font-semibold leading-tight">
+                  <span>{{ stat.value }}</span>
+                  <span :class="stat.trend === 'up' ? 'text-emerald-600' : 'text-rose-500'">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path v-if="stat.trend === 'up'" d="M3 17 9 11l4 4 7-7" />
+                      <path v-else d="m21 7-6 6-4-4-7 7" />
+                    </svg>
+                  </span>
+                </div>
+                <p class="text-sm text-slate-500">{{ stat.label }}</p>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <!-- Messages -->
-      <section class="rounded-2xl border border-slate-200/70 bg-white p-4 shadow-sm transition hover:shadow-md md:p-6">
-        <HQMessages :threads="messages" />
-      </section>
-    </main>
+        <!-- Messages -->
+        <section class="rounded-2xl border border-slate-200/70 bg-white p-4 shadow-sm transition hover:shadow-md md:p-6">
+          <HQMessages :threads="messages" />
+        </section>
+      </main>
+    </Transition>
+
+    <Transition name="fade">
+      <JobMode v-else @exitJobMode="isJobMode = false" />
+    </Transition>
 
     <div class="hq-fab">
       <ProposalCommentsFab proposal-id="demo-proposal" contractor-name="Jordan Deckworks" />
@@ -148,6 +154,8 @@ import HQJobRow from "@/components/HQ/HQJobRow.vue";
 import HQMessages from "@/components/HQ/HQMessages.vue";
 import HQQuickActions from "@/components/HQ/HQQuickActions.vue";
 import ProposalCommentsFab from "@/components/proposals/ProposalCommentsFab.vue";
+import JobMode from "@/prototype/contractor/JobMode.vue";
+import { ref } from "vue";
 
 const todayJobs = [
   {
@@ -206,6 +214,8 @@ const messages = [
   { name: "Mike Robertson", project: "Lakeview Patio", preview: "Did you get the photos?", time: "4h ago", initials: "MR", jobType: "Patio", unread: true, delay: "60ms" },
   { name: "Julia Perez", project: "Fence Repair", preview: "We're good for tomorrow!", time: "6h ago", initials: "JP", jobType: "Fence", delay: "90ms" },
 ];
+
+const isJobMode = ref(false);
 </script>
 
 <style scoped>
