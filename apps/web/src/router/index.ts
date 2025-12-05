@@ -111,6 +111,12 @@ const router = createRouter({
       meta: { public: true, allowAuthenticated: true },
     },
     {
+      path: "/prototype/task",
+      name: "ContractorTaskPagePrototype",
+      component: () => import("@/prototype/contractor/TaskPage.vue"),
+      meta: { public: true, allowAuthenticated: true },
+    },
+    {
       path: "/login",
       name: "login",
       component: () => import("@/pages/auth/LoginPage.vue"),
