@@ -117,11 +117,11 @@
         <div class="relative pl-5">
           <div class="absolute left-2 top-3 bottom-3 w-px bg-slate-200"></div>
           <div class="space-y-4">
-            <div v-for="item in timeline" :key="item.title" class="relative flex gap-4">
+            <div v-for="item in previewTimeline" :key="item.id" class="relative flex gap-4">
               <div class="absolute left-[-1px] top-1.5 h-3 w-3 rounded-full bg-blue-500 shadow"></div>
               <div class="pl-5">
                 <p class="text-sm font-semibold text-slate-900">{{ item.title }}</p>
-                <p class="text-xs text-slate-600">{{ item.meta }}</p>
+                <p class="text-xs text-slate-600">{{ item.time }}</p>
               </div>
             </div>
           </div>
@@ -241,10 +241,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import PaymentActivity from "./PaymentActivity.vue";
 import FullMessagingInbox from "./FullMessagingInbox.vue";
 import FilesManager from "./FilesManager.vue";
+import { timelineEvents } from "./usePrototypeEvents";
 
 const showPayments = ref(false);
 const showInbox = ref(false);
@@ -273,6 +274,8 @@ const messages = [
   { title: "Mike Robertson (Patio)", preview: "Did you get the photos?", time: "4h ago" },
   { title: "Auto message", preview: "Proposal follow-up pending", time: "Yesterday" }
 ];
+
+const previewTimeline = computed(() => timelineEvents.value.slice(0, 3));
 
 function openPayments() {
   showPayments.value = true;

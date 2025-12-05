@@ -121,6 +121,9 @@
               >
                 {{ filter.label }}
               </button>
+              <div v-if="justSynced" class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 shadow-inner">
+                ✓ Synced to Timeline
+              </div>
             </div>
           </div>
 
@@ -160,6 +163,26 @@
                   </div>
                 </div>
                 <p class="mt-3 text-sm text-slate-700">{{ event.description }}</p>
+                <div class="mt-3 flex flex-wrap gap-2">
+                  <button
+                    class="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 shadow-inner transition hover:-translate-y-0.5 hover:bg-blue-100"
+                    @click="triggerSync(event.amount)"
+                  >
+                    Mark Deposit Received
+                  </button>
+                  <button
+                    class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-slate-50"
+                    @click="triggerSync(event.amount, 'Payment Succeeded')"
+                  >
+                    Payment Succeeded
+                  </button>
+                  <button
+                    class="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700 shadow-inner transition hover:-translate-y-0.5 hover:bg-amber-100"
+                    @click="triggerSync(event.amount, 'Offline Payment Recorded')"
+                  >
+                    Record Offline Payment
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -185,6 +208,7 @@
 
 <script setup lang="ts">
 import { computed, h, ref } from "vue";
+import { addTimelineEvent } from "./usePrototypeEvents";
 
 const emit = defineEmits<{
   (e: "close"): void;
@@ -274,6 +298,8 @@ const events = ref<PaymentEvent[]>([
 ]);
 
 const activeFilter = ref<typeof filters[number]["value"]>("all");
+const justSynced = ref(false);
+const justSynced = ref(false);
 
 const filteredEvents = computed(() => {
   if (activeFilter.value === "all") return events.value;
@@ -282,6 +308,39 @@ const filteredEvents = computed(() => {
   }
   return events.value.filter((event) => event.category === activeFilter.value);
 });
+
+const triggerSync = (amount = "$2,400", title = "Payment Received") => {
+  addTimelineEvent({
+    id: `sync-${Date.now()}`,
+    type: "payment",
+    title,
+    description: "Synced from Payment Activity (prototype)",
+    amount,
+    time: "Just now",
+    method: "Card .... 4242",
+    meta: "Payment"
+  });
+  justSynced.value = true;
+  setTimeout(() => {
+    justSynced.value = false;
+  }, 1200);
+};
+
+function syncTimeline(amount = "$2,400") {
+  addTimelineEvent({
+    id: `sync-${Date.now()}`,
+    type: "payment",
+    title: "Payment Received",
+    amount,
+    description: "Synced from Payment Activity (prototype)",
+    time: "Just now",
+    method: "Card •••• 4242"
+  });
+  justSynced.value = true;
+  setTimeout(() => {
+    justSynced.value = false;
+  }, 1200);
+}
 
 const dotClass = (category: PaymentEvent["category"]) => {
   if (category === "deposit" || category === "link") return "bg-blue-500";

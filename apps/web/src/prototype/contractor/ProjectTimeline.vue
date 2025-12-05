@@ -280,6 +280,7 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import ImageViewerModal from "@/prototype/contractor/files/ImageViewerModal.vue";
+import { timelineEvents } from "./usePrototypeEvents";
 
 const activeFilter = ref<"all" | "task" | "file" | "note" | "message" | "payment" | "status">("all");
 const showViewer = ref(false);
@@ -318,124 +319,10 @@ function openViewer(src?: string) {
   showViewer.value = true;
 }
 
-const events = ref([
-  {
-    id: "evt-1",
-    type: "file",
-    time: "Jun 28, 2025 9:15 AM",
-    title: "3 photos uploaded",
-    description: "Ledger, joists, and stair angles added to the job files.",
-    fileUrl: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=900&q=80",
-    thumbnails: [
-      "https://images.unsplash.com/photo-1505691938895-1758d7feb511?auto=format&fit=crop&w=600&q=80",
-      "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=600&q=80",
-      "https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&fit=crop&w=600&q=80"
-    ]
-  },
-  {
-    id: "evt-2",
-    type: "task",
-    time: "Jun 28, 2025 9:02 AM",
-    title: "Measurements finished",
-    description: "Mark Sullivan completed the site measurements checklist.",
-    taskName: "Site Measurements"
-  },
-  {
-    id: "evt-3",
-    type: "note",
-    time: "Jun 27, 2025 6:32 PM",
-    title: "Note added",
-    description: "Ledger looks rotted along the left span - likely need CO before demo."
-  },
-  {
-    id: "evt-4",
-    type: "message",
-    time: "Jun 27, 2025 6:10 PM",
-    title: "Homeowner asked about composite upgrade",
-    messagePreview: "Can we swap to Trex Transcend in Spiced Rum? Price difference?",
-    description: "Client replied via SMS thread."
-  },
-  {
-    id: "evt-5",
-    type: "payment",
-    time: "Jun 27, 2025 4:12 PM",
-    title: "Deposit payment received",
-    description: "Paid via card | Auth code 59328 | Email receipt sent.",
-    amount: "$4,000"
-  },
-  {
-    id: "evt-6",
-    type: "status",
-    time: "Jun 27, 2025 3:05 PM",
-    title: "Visit scheduled for 3PM",
-    description: "Calendar invite sent to Sarah Thompson with arrival window."
-  },
-  {
-    id: "evt-7",
-    type: "file",
-    time: "Jun 27, 2025 1:20 PM",
-    title: "Permit PDF added",
-    description: "Preliminary permit package uploaded for review.",
-    fileUrl: "https://images.unsplash.com/photo-1529429617124-aee7f4ae7890?auto=format&fit=crop&w=800&q=80"
-  },
-  {
-    id: "evt-8",
-    type: "task",
-    time: "Jun 27, 2025 12:45 PM",
-    title: "Task updated",
-    description: "Footing layout marked as \"In review\" for engineering feedback.",
-    taskName: "Footing Layout"
-  },
-  {
-    id: "evt-9",
-    type: "message",
-    time: "Jun 27, 2025 11:18 AM",
-    title: "Crew chat",
-    messagePreview: "Materials staged by side gate. Need to tarp if rain tonight."
-  },
-  {
-    id: "evt-10",
-    type: "note",
-    time: "Jun 27, 2025 10:03 AM",
-    title: "Note added",
-    description: "Check stair stringer clearance; neighbor fence is tight on south side."
-  },
-  {
-    id: "evt-11",
-    type: "payment",
-    time: "Jun 26, 2025 6:40 PM",
-    title: "Change order deposit",
-    description: "Composite upgrade partial payment recorded.",
-    amount: "$850"
-  },
-  {
-    id: "evt-12",
-    type: "file",
-    time: "Jun 26, 2025 4:22 PM",
-    title: "Sketch uploaded",
-    description: "Hand sketch of stair turn and landing dimension.",
-    fileUrl: "https://images.unsplash.com/photo-1453928582365-b6ad33cbcf64?auto=format&fit=crop&w=800&q=80"
-  },
-  {
-    id: "evt-13",
-    type: "task",
-    time: "Jun 26, 2025 3:05 PM",
-    title: "Task completed",
-    description: "Initial site walk completed and safety checklist cleared.",
-    taskName: "Initial Site Walk"
-  },
-  {
-    id: "evt-14",
-    type: "status",
-    time: "Jun 26, 2025 1:18 PM",
-    title: "Material delivery scheduled",
-    description: "Framing package scheduled for delivery on July 2 at 9:00 AM."
-  }
-]);
-
 const filteredEvents = computed(() => {
-  if (activeFilter.value === "all") return events.value;
-  return events.value.filter((event) => event.type === activeFilter.value);
+  const list = timelineEvents.value.length ? timelineEvents.value : [];
+  if (activeFilter.value === "all") return list;
+  return list.filter((event) => event.type === activeFilter.value);
 });
 
 const currentFilterLabel = computed(() => {
