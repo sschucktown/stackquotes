@@ -111,6 +111,12 @@ const router = createRouter({
       meta: { public: true, allowAuthenticated: true },
     },
     {
+      path: "/prototype/contractor/timeline",
+      name: "ContractorProjectTimelinePrototype",
+      component: () => import("@/prototype/contractor/ProjectTimeline.vue"),
+      meta: { public: true, allowAuthenticated: true },
+    },
+    {
       path: "/prototype/task",
       name: "ContractorTaskPagePrototype",
       component: () => import("@/prototype/task/TaskPage.vue"),
