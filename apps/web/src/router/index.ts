@@ -135,6 +135,12 @@ const router = createRouter({
       meta: { public: true, allowAuthenticated: true },
     },
     {
+      path: "/prototype/contractor/individual-job",
+      name: "ContractorIndividualJobViewPrototype",
+      component: () => import("@/prototype/contractor/IndividualJobView.vue"),
+      meta: { public: true, allowAuthenticated: true },
+    },
+    {
       path: "/prototype/contractor/messaging",
       name: "ContractorMessagingInboxPrototype",
       component: () => import("@/prototype/contractor/MessagingInbox.vue"),
