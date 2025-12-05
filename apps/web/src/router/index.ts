@@ -123,6 +123,12 @@ const router = createRouter({
       meta: { public: true, allowAuthenticated: true },
     },
     {
+      path: "/prototype/contractor/files",
+      name: "ContractorFilesManagerPrototype",
+      component: () => import("@/prototype/contractor/files/FilesManagerPage.vue"),
+      meta: { public: true, allowAuthenticated: true },
+    },
+    {
       path: "/login",
       name: "login",
       component: () => import("@/pages/auth/LoginPage.vue"),

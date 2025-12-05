@@ -142,29 +142,39 @@
         </button>
       </section>
 
-      <!-- Files -->
-      <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div class="mb-4 flex items-center justify-between">
-          <h3 class="text-base font-semibold text-slate-900">Files &amp; Photos</h3>
-          <span class="text-xs text-slate-500">4 items</span>
+      <!-- Files & Photos -->
+      <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:p-6">
+        <div class="mb-3 flex items-center justify-between">
+          <h2 class="text-lg font-semibold text-slate-900">Files &amp; Photos</h2>
+          <button @click="showAddFile = true" class="text-sm font-medium text-blue-600 hover:underline">
+            Add File
+          </button>
         </div>
-        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+
+        <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <div
-            v-for="file in files"
-            :key="file.name"
-            class="flex flex-col items-start gap-2 rounded-xl border border-slate-200 bg-slate-50 p-4 shadow-inner"
+            v-for="file in previewFiles"
+            :key="file.id"
+            @click="openViewer(file)"
+            class="aspect-square cursor-pointer overflow-hidden rounded-lg border border-slate-200 bg-slate-100"
           >
-            <div
-              class="flex h-28 w-full items-center justify-center rounded-lg border border-dashed border-slate-300 bg-gradient-to-br from-slate-100 to-slate-200 text-slate-500"
-            >
-              <svg class="h-8 w-8" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m-7-7h14" />
-              </svg>
+            <img
+              v-if="file.type === 'image'"
+              :src="file.url"
+              class="h-full w-full object-cover"
+            />
+            <div v-else class="flex h-full w-full items-center justify-center text-sm font-semibold text-slate-500">
+              {{ file.type.toUpperCase() }}
             </div>
-            <p class="text-sm font-medium text-slate-900">{{ file.name }}</p>
-            <p class="text-xs text-slate-500">{{ file.type }}</p>
           </div>
         </div>
+
+        <button
+          class="mt-4 text-sm font-medium text-slate-600 underline transition hover:text-slate-800"
+          @click="goToFilesManager"
+        >
+          View All Files →
+        </button>
       </section>
 
       <!-- Messages -->
@@ -217,35 +227,71 @@
         </div>
       </section>
     </main>
+
+    <AddFileModal v-if="showAddFile" @close="showAddFile = false" @add="handleAddFile" />
+
+    <ImageViewerModal
+      v-if="showViewer"
+      :file="viewerFile"
+      @close="showViewer = false"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
+import { ref } from "vue";
+import { useRouter } from "vue-router";
+import AddFileModal from "@/prototype/contractor/files/AddFileModal.vue";
+import ImageViewerModal from "@/prototype/contractor/files/ImageViewerModal.vue";
+
+const router = useRouter();
+
 const timeline = [
-  { title: 'Proposal sent', meta: 'Nov 28' },
-  { title: 'Client viewed', meta: 'Nov 28' },
-  { title: 'Proposal accepted', meta: 'Nov 29' },
-  { title: 'Deposit received', meta: 'Nov 29 - $2,400' },
-  { title: 'Visit scheduled', meta: 'Dec 3, 3PM' },
-  { title: 'Note added', meta: 'Site has old joists' },
+  { title: "Proposal sent", meta: "Nov 28" },
+  { title: "Client viewed", meta: "Nov 28" },
+  { title: "Proposal accepted", meta: "Nov 29" },
+  { title: "Deposit received", meta: "Nov 29 - $2,400" },
+  { title: "Visit scheduled", meta: "Dec 3, 3PM" },
+  { title: "Note added", meta: "Site has old joists" }
 ];
 
 const tasks = [
-  'Perform site measurements',
-  'Photograph existing deck',
-  'Identify hazards or obstructions',
+  "Perform site measurements",
+  "Photograph existing deck",
+  "Identify hazards or obstructions"
 ];
 
-const files = [
-  { name: 'deck_before.jpg', type: 'Image' },
-  { name: 'notes.png', type: 'Image' },
-  { name: 'measurement.pdf', type: 'Document' },
-  { name: 'site_walk.mp4', type: 'Video' },
-];
+const previewFiles = ref([
+  { id: 1, url: "https://source.unsplash.com/random/400x400?deck", type: "image" },
+  { id: 2, url: "https://source.unsplash.com/random/400x400?measurement", type: "image" },
+  { id: 3, url: "https://source.unsplash.com/random/400x400?notes", type: "image" },
+  { id: 4, url: "https://placehold.co/400x400?text=PDF", type: "pdf" }
+]);
 
 const messages = [
-  { title: 'Sarah Thompson (Deck)', preview: 'Quick question about materials', time: '2h ago' },
-  { title: 'Mike Robertson (Patio)', preview: 'Did you get the photos?', time: '4h ago' },
-  { title: 'Auto message', preview: 'Proposal follow-up pending', time: 'Yesterday' },
+  { title: "Sarah Thompson (Deck)", preview: "Quick question about materials", time: "2h ago" },
+  { title: "Mike Robertson (Patio)", preview: "Did you get the photos?", time: "4h ago" },
+  { title: "Auto message", preview: "Proposal follow-up pending", time: "Yesterday" }
 ];
+
+const showAddFile = ref(false);
+const showViewer = ref(false);
+const viewerFile = ref<{ id: number; url: string; type: string } | null>(null);
+
+const openViewer = (file: { id: number; url: string; type: string }) => {
+  viewerFile.value = file;
+  showViewer.value = true;
+};
+
+const goToFilesManager = () => {
+  router.push("/prototype/contractor/files?jobId=demo-job");
+};
+
+const handleAddFile = (file: { name: string; type: string; thumbnail: string }) => {
+  previewFiles.value = [
+    { id: Date.now(), url: file.thumbnail, type: file.type === "document" ? "pdf" : file.type },
+    ...previewFiles.value
+  ];
+  showAddFile.value = false;
+};
 </script>
