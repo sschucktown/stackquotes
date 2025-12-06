@@ -19,7 +19,7 @@
     "test": "turbo run test",
     "typecheck": "turbo run typecheck",
     "seed:test": "tsx scripts/seed_test_data.ts",
-    "vercel-build": "pnpm turbo run build --filter=@stackquotes/web --verbose"
+    "vercel-build": "pnpm turbo run build --filter=@stackquotes/web --verbosity=debug"
   },
   "devDependencies": {
     "tsup": "^8.5.0",
