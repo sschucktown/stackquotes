@@ -117,7 +117,7 @@
         <div class="relative pl-5">
           <div class="absolute left-2 top-3 bottom-3 w-px bg-slate-200"></div>
           <div class="space-y-4">
-            <div v-for="item in previewTimeline" :key="item.id" class="relative flex gap-4">
+            <div v-for="item in previewEvents" :key="item.id" class="relative flex gap-4">
               <div class="absolute left-[-1px] top-1.5 h-3 w-3 rounded-full bg-blue-500 shadow"></div>
               <div class="pl-5">
                 <p class="text-sm font-semibold text-slate-900">{{ item.title }}</p>
@@ -186,12 +186,12 @@
         </div>
         <div class="space-y-3">
           <div
-            v-for="message in messages"
-            :key="message.title"
+            v-for="message in previewMessages"
+            :key="message.name"
             class="flex items-start justify-between rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 shadow-inner"
           >
             <div>
-              <p class="text-sm font-semibold text-slate-900">{{ message.title }}</p>
+              <p class="text-sm font-semibold text-slate-900">{{ message.name }} ({{ message.project }})</p>
               <p class="text-sm text-slate-600">{{ message.preview }}</p>
             </div>
             <span class="text-xs text-slate-500">{{ message.time }}</span>
@@ -245,17 +245,11 @@ import { computed, ref } from "vue";
 import PaymentActivity from "./PaymentActivity.vue";
 import FullMessagingInbox from "./FullMessagingInbox.vue";
 import FilesManager from "./FilesManager.vue";
-import { timelineEvents } from "./usePrototypeEvents";
+import { messageThreads, timelineEvents } from "./usePrototypeEvents";
 
 const showPayments = ref(false);
 const showInbox = ref(false);
 const showFiles = ref(false);
-
-const timeline = [
-  { title: "Deposit received", meta: "Jun 27, 4:12 PM" },
-  { title: "Visit scheduled", meta: "Jun 27, 3:05 PM" },
-  { title: "Note added", meta: "Jun 27, 10:03 AM" }
-];
 
 const tasks = [
   "Perform site measurements",
@@ -269,13 +263,17 @@ const previewFiles = [
   { id: 3, url: "https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&fit=crop&w=400&q=80", type: "image" }
 ];
 
-const messages = [
-  { title: "Sarah Thompson (Deck)", preview: "Quick question about materials", time: "2h ago" },
-  { title: "Mike Robertson (Patio)", preview: "Did you get the photos?", time: "4h ago" },
-  { title: "Auto message", preview: "Proposal follow-up pending", time: "Yesterday" }
-];
-
-const previewTimeline = computed(() => timelineEvents.value.slice(0, 3));
+const previewEvents = computed(() => timelineEvents.value.slice(0, 3));
+const previewMessages = computed(() =>
+  messageThreads.value
+    .map((thread) => ({
+      name: thread.clientName,
+      project: thread.jobName,
+      preview: thread.lastMessage,
+      time: thread.lastUpdated
+    }))
+    .slice(0, 3)
+);
 
 function openPayments() {
   showPayments.value = true;

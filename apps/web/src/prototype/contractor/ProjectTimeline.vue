@@ -174,8 +174,8 @@
                 </div>
               </div>
 
-              <div v-if="event.description || event.messagePreview" class="mt-3 text-sm text-slate-700">
-                <p>{{ event.description ?? event.messagePreview }}</p>
+              <div v-if="event.description || event.messagePreview || event.text" class="mt-3 text-sm text-slate-700">
+                <p>{{ event.description ?? event.messagePreview ?? event.text }}</p>
               </div>
 
               <div v-if="event.amount && event.type === 'payment'" class="mt-3 inline-flex items-center gap-2 rounded-xl bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-700">
@@ -282,6 +282,7 @@ import { computed, ref } from "vue";
 import ImageViewerModal from "@/prototype/contractor/files/ImageViewerModal.vue";
 import { timelineEvents } from "./usePrototypeEvents";
 
+const events = timelineEvents;
 const activeFilter = ref<"all" | "task" | "file" | "note" | "message" | "payment" | "status">("all");
 const showViewer = ref(false);
 const viewerSrc = ref("");
@@ -320,7 +321,7 @@ function openViewer(src?: string) {
 }
 
 const filteredEvents = computed(() => {
-  const list = timelineEvents.value.length ? timelineEvents.value : [];
+  const list = events.value.length ? [...events.value] : [];
   if (activeFilter.value === "all") return list;
   return list.filter((event) => event.type === activeFilter.value);
 });
