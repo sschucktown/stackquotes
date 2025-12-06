@@ -156,18 +156,22 @@
                       <path d="M12 7v5l3 3" />
                     </svg>
                   </div>
-                  <div class="space-y-1">
-                    <div class="flex flex-wrap items-center gap-2">
-                      <p class="text-sm font-semibold text-slate-900">{{ event.title }}</p>
-                      <span
-                        class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-semibold"
-                        :class="typeStyles[event.type]?.badge ?? 'border-slate-200 bg-slate-100 text-slate-700'"
-                      >
-                        {{ typeLabels[event.type] ?? 'Event' }}
-                      </span>
+                    <div class="space-y-1">
+                      <div class="flex flex-wrap items-center gap-2">
+                        <p class="text-sm font-semibold text-slate-900">{{ event.title }}</p>
+                        <span
+                          v-if="event.type === 'message' && event.unread"
+                          class="h-2 w-2 rounded-full bg-purple-400"
+                        ></span>
+                        <span
+                          class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-semibold"
+                          :class="typeStyles[event.type]?.badge ?? 'border-slate-200 bg-slate-100 text-slate-700'"
+                        >
+                          {{ typeLabels[event.type] ?? 'Event' }}
+                        </span>
+                      </div>
+                      <p class="text-xs text-slate-500">{{ event.time }}</p>
                     </div>
-                    <p class="text-xs text-slate-500">{{ event.time }}</p>
-                  </div>
                 </div>
                 <div class="hidden rounded-full bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-500 sm:block">
                   {{ event.type === 'payment' && event.amount ? event.amount : 'Timeline' }}
@@ -280,6 +284,7 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import ImageViewerModal from "@/prototype/contractor/files/ImageViewerModal.vue";
+import { messageStore } from "@/prototype/stores/messages";
 import { timelineEvents } from "./usePrototypeEvents";
 
 const events = timelineEvents;
@@ -320,8 +325,22 @@ function openViewer(src?: string) {
   showViewer.value = true;
 }
 
+const enhancedEvents = computed(() => {
+  return (events.value.length ? [...events.value] : []).map((event) => {
+    if (event.type !== "message") return { ...event, unread: false };
+
+    const matchedThread = messageStore.threads.find(
+      (thread) =>
+        thread.id === event.threadId ||
+        thread.participant.toLowerCase() === (event.from || "").toLowerCase()
+    );
+
+    return { ...event, unread: matchedThread?.unread ?? false };
+  });
+});
+
 const filteredEvents = computed(() => {
-  const list = events.value.length ? [...events.value] : [];
+  const list = enhancedEvents.value;
   if (activeFilter.value === "all") return list;
   return list.filter((event) => event.type === activeFilter.value);
 });

@@ -55,16 +55,16 @@
                 <div class="flex items-center justify-between gap-2">
                   <div class="flex items-center gap-2">
                     <p :class="['text-sm font-semibold', thread.unread ? 'text-slate-900' : 'text-slate-800']">
-                      {{ thread.name }}
+                      {{ thread.participant }}
                     </p>
                     <span class="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600">
-                      {{ thread.job }}
+                      {{ thread.jobType }}
                     </span>
                   </div>
-                  <span class="text-xs text-slate-500">{{ thread.time }}</span>
+                  <span class="text-xs text-slate-500">{{ thread.lastMessageTime }}</span>
                 </div>
                 <p :class="['text-sm text-slate-600', thread.unread ? 'font-semibold text-slate-800' : '']">
-                  {{ thread.preview }}
+                  {{ thread.lastMessage }}
                 </p>
               </div>
               <div v-if="thread.unread" class="flex h-full items-center">
@@ -93,7 +93,7 @@
               </div>
               <div class="space-y-0.5">
                 <div class="flex items-center gap-2">
-                  <p class="text-sm font-semibold text-slate-900">{{ selectedThread?.name }}</p>
+                  <p class="text-sm font-semibold text-slate-900">{{ selectedThread?.participant }}</p>
                   <span class="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600">
                     Maple St Deck
                   </span>
@@ -194,29 +194,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from "vue";
-
-type Thread = {
-  id: string;
-  name: string;
-  initials: string;
-  job: string;
-  preview: string;
-  time: string;
-  unread: boolean;
-  channel: "sms" | "email" | "internal";
-};
-
-type Message = {
-  id: string;
-  sender: "customer" | "contractor";
-  text: string;
-  time: string;
-  attachment?: {
-    type: "image" | "pdf";
-    url?: string;
-    name?: string;
-  };
-};
+import { messageStore } from "@/prototype/stores/messages";
 
 const filters = [
   { value: "all", label: "All" },
@@ -226,111 +204,45 @@ const filters = [
   { value: "internal", label: "Internal Notes" }
 ] as const;
 
-const channelLabels: Record<Thread["channel"], string> = {
+const channelLabels: Record<"sms" | "email" | "internal", string> = {
   sms: "SMS Thread",
   email: "Email Thread",
   internal: "Internal Thread"
 };
 
-const threads = ref<Thread[]>([
-  {
-    id: "sarah",
-    name: "Sarah Thompson",
-    initials: "ST",
-    job: "Deck",
-    preview: "Quick question about materials.",
-    time: "2h ago",
-    unread: true,
-    channel: "sms"
-  },
-  {
-    id: "mike",
-    name: "Mike Robertson",
-    initials: "MR",
-    job: "Patio",
-    preview: "Did you get the photos?",
-    time: "4h ago",
-    unread: false,
-    channel: "sms"
-  },
-  {
-    id: "crew",
-    name: "Crew Chat",
-    initials: "CC",
-    job: "Team",
-    preview: "Material staged by side gate.",
-    time: "Yesterday",
-    unread: false,
-    channel: "internal"
-  },
-  {
-    id: "auto",
-    name: "Auto Messages",
-    initials: "AM",
-    job: "System",
-    preview: "Proposal follow-up pending",
-    time: "Yesterday",
-    unread: false,
-    channel: "email"
-  }
-]);
-
-const messages: Record<string, Message[]> = {
-  sarah: [
-    { id: "m1", sender: "customer", text: "Hey! Just checking if you got the updated measurements?", time: "9:12 AM" },
-    { id: "m2", sender: "contractor", text: "Yep, reviewing now!", time: "9:18 AM" },
-    { id: "m3", sender: "customer", text: "Awesome - also wondering about stain options.", time: "9:20 AM" },
-    { id: "m4", sender: "contractor", text: "Got it. I'll send photos in a bit.", time: "9:24 AM" },
-    {
-      id: "m5",
-      sender: "contractor",
-      text: "Here are two stain colors that match your sample.",
-      time: "9:42 AM",
-      attachment: {
-        type: "image",
-        url: "https://images.unsplash.com/photo-1505693415763-3ed5e04ba4cd?auto=format&fit=crop&w=600&q=80"
-      }
-    }
-  ],
-  mike: [
-    { id: "m6", sender: "customer", text: "Did you get the photos from this morning?", time: "8:02 AM" },
-    {
-      id: "m7",
-      sender: "contractor",
-      text: "Yes, downloading now. We will add to the file set.",
-      time: "8:06 AM",
-      attachment: { type: "pdf", name: "Patio-measurements.pdf" }
-    }
-  ],
-  crew: [
-    { id: "m8", sender: "contractor", text: "Material staged by side gate. Need to tarp if rain tonight.", time: "Yesterday 6:40 PM" },
-    { id: "m9", sender: "contractor", text: "Reminder: safety checklist before demo.", time: "Yesterday 7:10 PM" }
-  ],
-  auto: [
-    { id: "m10", sender: "contractor", text: "Proposal follow-up pending. Client viewed once.", time: "Yesterday 5:55 PM" }
-  ]
-};
+const threads = computed(() =>
+  messageStore.threads.map((thread) => ({
+    ...thread,
+    channel: thread.jobType === "Team" ? "internal" : "sms"
+  }))
+);
 
 const activeFilter = ref<typeof filters[number]["value"]>("all");
-const selectedThreadId = ref<string>("sarah");
+const selectedThreadId = ref<string>(threads.value[0]?.id ?? "");
 const draft = ref("");
 const showThreadsOnMobile = ref(true);
 
 const filteredThreads = computed(() => {
-  if (activeFilter.value === "all") return threads.value;
-  if (activeFilter.value === "unread") return threads.value.filter((thread) => thread.unread);
-  return threads.value.filter((thread) => thread.channel === activeFilter.value);
+  let list = threads.value;
+  if (activeFilter.value === "unread") {
+    list = list.filter((thread) => thread.unread);
+  } else if (activeFilter.value !== "all") {
+    list = list.filter((thread) => thread.channel === activeFilter.value);
+  }
+  return list;
 });
 
 const selectedThread = computed(() => threads.value.find((thread) => thread.id === selectedThreadId.value));
 
 const activeMessages = computed(() => {
   const id = selectedThreadId.value;
-  return messages[id] ?? [];
+  const found = messageStore.threads.find((thread) => thread.id === id);
+  return found?.messages ?? [];
 });
 
 const selectThread = (id: string) => {
   selectedThreadId.value = id;
+  messageStore.markThreadRead(id);
   showThreadsOnMobile.value = false;
 };
 </script>

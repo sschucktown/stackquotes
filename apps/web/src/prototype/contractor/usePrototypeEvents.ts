@@ -4,6 +4,7 @@ export type PrototypeTimelineEvent = {
   id: string;
   type: string;
   title: string;
+  threadId?: string;
   meta?: string;
   description?: string;
   text?: string;
@@ -66,6 +67,7 @@ export const timelineEvents = ref<PrototypeTimelineEvent[]>([
     title: "Client Message",
     text: "Thanks for the update!",
     from: "Sarah Thompson",
+    threadId: "sarah-thompson",
     time: "Jun 27, 9:45 AM",
     icon: "MessageCircle"
   }

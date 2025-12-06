@@ -91,8 +91,11 @@
                 </div>
                 <div class="flex-1 space-y-1">
                   <div class="flex flex-wrap items-center gap-2">
-                    <p class="text-sm font-semibold text-slate-900">
-                      {{ thread.name }}
+                    <p
+                      class="text-sm font-semibold"
+                      :class="thread.unread ? 'text-slate-900' : 'text-slate-800'"
+                    >
+                      {{ thread.participant }}
                     </p>
                     <span
                       class="rounded-full border px-2 py-0.5 text-[11px] font-semibold"
@@ -104,20 +107,20 @@
                   </div>
                   <p
                     class="line-clamp-1 text-sm text-slate-700"
-                    :class="thread.unread ? 'font-semibold text-slate-900' : ''"
+                    :class="thread.unread ? 'font-semibold text-slate-900' : 'text-slate-500'"
                   >
                     {{ thread.lastMessage }}
                   </p>
                   <div class="flex items-center gap-2 text-xs text-slate-500">
-                    <span>{{ thread.time }}</span>
+                    <span>{{ thread.lastMessageTime }}</span>
                     <span class="h-1.5 w-1.5 rounded-full bg-slate-200"></span>
-                    <span class="text-slate-600">{{ thread.category === 'team' ? 'Team' : 'Client' }}</span>
+                    <span class="text-slate-600">{{ thread.jobType === 'Team' ? 'Team' : 'Client' }}</span>
                   </div>
                 </div>
                 <div class="flex flex-col items-end gap-2">
                   <span v-if="thread.unread" class="h-2.5 w-2.5 rounded-full bg-blue-500 shadow-[0_0_0_4px_rgba(191,215,255,0.5)]"></span>
                   <span class="rounded-full bg-slate-50 px-2 py-0.5 text-[10px] font-semibold text-slate-600 shadow-inner">
-                    {{ thread.time }}
+                    {{ thread.lastMessageTime }}
                   </span>
                 </div>
               </button>
@@ -152,7 +155,7 @@
                 </div>
                 <div class="space-y-0.5">
                   <div class="flex flex-wrap items-center gap-2">
-                    <p class="text-base font-semibold text-slate-900">{{ selectedThread?.name }}</p>
+                    <p class="text-base font-semibold text-slate-900">{{ selectedThread?.participant }}</p>
                     <span class="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-semibold text-slate-700 shadow-inner">
                       {{ selectedThread?.project }}
                     </span>
@@ -267,25 +270,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useRoute } from "vue-router";
-
-type Thread = {
-  id: string;
-  name: string;
-  initials: string;
-  project: string;
-  jobType: string;
-  lastMessage: string;
-  time: string;
-  unread: boolean;
-  category: "client" | "team";
-};
-
-type Message = {
-  id: string;
-  sender: "client" | "contractor" | "team";
-  text: string;
-  time: string;
-};
+import { messageStore } from "@/prototype/stores/messages";
 
 const filters = [
   { value: "all", label: "All" },
@@ -294,60 +279,6 @@ const filters = [
 ] as const;
 
 const route = useRoute();
-
-const threads = ref<Thread[]>([
-  {
-    id: "sarah-thompson",
-    name: "Sarah Thompson",
-    initials: "ST",
-    project: "Maple St Deck",
-    jobType: "Deck",
-    lastMessage: "Quick question about materials.",
-    time: "2h ago",
-    unread: true,
-    category: "client",
-  },
-  {
-    id: "mike-robertson",
-    name: "Mike Robertson",
-    initials: "MR",
-    project: "Lakeview Patio",
-    jobType: "Patio",
-    lastMessage: "Did you get the photos?",
-    time: "4h ago",
-    unread: false,
-    category: "client",
-  },
-  {
-    id: "crew-chat",
-    name: "Crew Chat",
-    initials: "CC",
-    project: "Team Thread",
-    jobType: "Team",
-    lastMessage: "Material staged by side gate.",
-    time: "Yesterday",
-    unread: false,
-    category: "team",
-  },
-]);
-
-const messages: Record<string, Message[]> = {
-  "sarah-thompson": [
-    { id: "m1", sender: "client", text: "Hi Jordan, can you confirm the composite color options?", time: "9:04 AM" },
-    { id: "m2", sender: "contractor", text: "Yes! We can show you samples during the visit.", time: "9:06 AM" },
-    { id: "m3", sender: "client", text: "Great, thank you!", time: "9:09 AM" },
-  ],
-  "mike-robertson": [
-    { id: "m4", sender: "client", text: "Hi Jordan, can you confirm the composite color options?", time: "8:40 AM" },
-    { id: "m5", sender: "contractor", text: "Yes! We can show you samples during the visit.", time: "8:44 AM" },
-    { id: "m6", sender: "client", text: "Great, thank you!", time: "8:45 AM" },
-  ],
-  "crew-chat": [
-    { id: "m7", sender: "team", text: "Hi Jordan, can you confirm the composite color options?", time: "Yesterday 6:30 PM" },
-    { id: "m8", sender: "contractor", text: "Yes! We can show you samples during the visit.", time: "Yesterday 6:42 PM" },
-    { id: "m9", sender: "team", text: "Great, thank you!", time: "Yesterday 6:44 PM" },
-  ],
-};
 
 const activeFilter = ref<typeof filters[number]["value"]>("all");
 const search = ref("");
@@ -359,19 +290,19 @@ const showSyncing = ref(false);
 const selectedThreadEl = ref<HTMLElement | null>(null);
 
 const filteredThreads = computed(() => {
-  let list = threads.value;
+  let list = messageStore.threads;
 
   if (activeFilter.value === "clients") {
-    list = list.filter((thread) => thread.category === "client");
+    list = list.filter((thread) => thread.jobType !== "Team");
   } else if (activeFilter.value === "team") {
-    list = list.filter((thread) => thread.category === "team");
+    list = list.filter((thread) => thread.jobType === "Team");
   }
 
   if (search.value.trim()) {
     const query = search.value.toLowerCase();
     list = list.filter(
       (thread) =>
-        thread.name.toLowerCase().includes(query) ||
+        thread.participant.toLowerCase().includes(query) ||
         thread.project.toLowerCase().includes(query) ||
         thread.lastMessage.toLowerCase().includes(query)
     );
@@ -381,13 +312,14 @@ const filteredThreads = computed(() => {
 });
 
 const selectedThread = computed(() => {
-  if (!selectedThreadId.value && threads.value.length) return threads.value[0];
-  return threads.value.find((thread) => thread.id === selectedThreadId.value);
+  if (!selectedThreadId.value && messageStore.threads.length) return messageStore.threads[0];
+  return messageStore.threads.find((thread) => thread.id === selectedThreadId.value);
 });
 
 const activeMessages = computed(() => {
-  const key = selectedThreadId.value || threads.value[0]?.id || "";
-  return messages[key] || [];
+  const key = selectedThreadId.value || messageStore.threads[0]?.id || "";
+  const found = messageStore.threads.find((thread) => thread.id === key);
+  return found?.messages || [];
 });
 
 const showList = computed(() => mobileView.value === "list" || isDesktop.value);
@@ -408,14 +340,14 @@ const setThreadRef = (el: Element | null, id: string) => {
 };
 
 const selectThread = (id: string, fromRoute = false) => {
-  const exists = threads.value.some((thread) => thread.id === id);
-  const fallback = threads.value[0]?.id ?? null;
+  const exists = messageStore.threads.some((thread) => thread.id === id);
+  const fallback = messageStore.threads[0]?.id ?? null;
   const targetId = exists ? id : fallback;
   selectedThreadId.value = targetId;
   if (!targetId) return;
 
-  const thread = threads.value.find((item) => item.id === targetId);
-  if (thread) thread.unread = false;
+  messageStore.markThreadRead(targetId);
+  const thread = messageStore.threads.find((item) => item.id === targetId);
   if (!isDesktop.value) mobileView.value = "chat";
 
   nextTick(() => {
@@ -431,8 +363,8 @@ const selectThread = (id: string, fromRoute = false) => {
 };
 
 const markAsRead = () => {
-  const thread = threads.value.find((item) => item.id === selectedThreadId.value);
-  if (thread) thread.unread = false;
+  if (!selectedThreadId.value) return;
+  messageStore.markThreadRead(selectedThreadId.value);
 };
 
 const updateIsDesktop = () => {
@@ -447,7 +379,7 @@ onMounted(() => {
   }
 
   const initialFromRoute = typeof route.query.threadId === "string" ? route.query.threadId : Array.isArray(route.query.threadId) ? route.query.threadId[0] : null;
-  selectThread(initialFromRoute || threads.value[0]?.id || "", Boolean(initialFromRoute));
+  selectThread(initialFromRoute || messageStore.threads[0]?.id || "", Boolean(initialFromRoute));
 });
 
 onBeforeUnmount(() => {

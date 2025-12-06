@@ -193,8 +193,16 @@
             @click="openThread(message.threadId)"
           >
             <div>
-              <p class="text-sm font-semibold text-slate-900">{{ message.name }} ({{ message.project }})</p>
-              <p class="text-sm text-slate-600">{{ message.preview }}</p>
+              <div class="flex items-center gap-2">
+                <p class="text-sm font-semibold text-slate-900">{{ message.name }} ({{ message.project }})</p>
+                <span v-if="message.unread" class="inline-block h-2 w-2 rounded-full bg-blue-500"></span>
+              </div>
+              <p
+                class="text-sm"
+                :class="message.unread ? 'font-semibold text-slate-900' : 'text-slate-600'"
+              >
+                {{ message.preview }}
+              </p>
             </div>
             <span class="text-xs text-slate-500">{{ message.time }}</span>
           </button>
@@ -245,10 +253,11 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { useRouter } from "vue-router";
+import { messageStore } from "@/prototype/stores/messages";
 import PaymentActivity from "./PaymentActivity.vue";
 import FullMessagingInbox from "./FullMessagingInbox.vue";
 import FilesManager from "./FilesManager.vue";
-import { messageThreads, timelineEvents } from "./usePrototypeEvents";
+import { timelineEvents } from "./usePrototypeEvents";
 
 const router = useRouter();
 const showPayments = ref(false);
@@ -269,15 +278,14 @@ const previewFiles = [
 
 const previewEvents = computed(() => timelineEvents.value.slice(0, 3));
 const previewMessages = computed(() =>
-  messageThreads.value
-    .map((thread) => ({
-      name: thread.clientName,
-      project: thread.jobName,
-      preview: thread.lastMessage,
-      time: thread.lastUpdated,
-      threadId: thread.id
-    }))
-    .slice(0, 3)
+  messageStore.threads.slice(0, 3).map((thread) => ({
+    name: thread.participant,
+    project: thread.project,
+    preview: thread.lastMessage,
+    time: thread.lastMessageTime,
+    threadId: thread.id,
+    unread: thread.unread
+  }))
 );
 
 function openPayments() {
@@ -293,6 +301,7 @@ function openFiles() {
 }
 
 function openThread(id: string) {
+  messageStore.markThreadRead(id);
   router.push({ path: "/prototype/contractor/messages", query: { threadId: id } });
 }
 </script>
