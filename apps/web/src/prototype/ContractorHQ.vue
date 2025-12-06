@@ -144,6 +144,18 @@
     <div class="hq-fab">
       <ProposalCommentsFab proposal-id="demo-proposal" contractor-name="Jordan Deckworks" />
     </div>
+
+    <NewMessageToast />
+
+    <div class="fixed bottom-4 left-4 z-40 text-[11px] text-slate-500">
+      <button
+        type="button"
+        class="rounded-full border border-slate-300 bg-white/80 px-3 py-1 shadow-sm transition hover:bg-slate-50"
+        @click="messageStore.simulateRandomIncoming()"
+      >
+        🔁 Trigger demo message
+      </button>
+    </div>
   </div>
 </template>
 
@@ -154,6 +166,9 @@ import HQMessages from "@/components/HQ/HQMessages.vue";
 import HQQuickActions from "@/components/HQ/HQQuickActions.vue";
 import ProposalCommentsFab from "@/components/proposals/ProposalCommentsFab.vue";
 import JobMode from "@/prototype/contractor/JobMode.vue";
+import NewMessageToast from "@/prototype/components/NewMessageToast.vue";
+import { useMockMessageChannel } from "@/prototype/composables/useMockMessageChannel";
+import { messageStore } from "@/prototype/stores/messages";
 import { ref } from "vue";
 
 type JobStatus = "In Progress" | "Scheduled" | "Pending" | "Needs Visit";
@@ -226,6 +241,7 @@ const messages = [
 ];
 
 const isJobMode = ref(false);
+useMockMessageChannel({ auto: true });
 </script>
 
 <style scoped>

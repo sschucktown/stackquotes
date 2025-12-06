@@ -7,6 +7,7 @@ export type Message = {
   time: string;
   unread: boolean;
   timelineLinked?: boolean;
+  createdAt?: string;
 };
 
 export type Thread = {
@@ -19,10 +20,21 @@ export type Thread = {
   unread: boolean;
   lastMessage: string;
   lastMessageTime: string;
+  lastMessageAt?: string;
   messages: Message[];
 };
 
+function relativeFromIso(iso?: string) {
+  if (!iso) return "Just now";
+  const diff = Date.now() - new Date(iso).getTime();
+  if (diff < 60_000) return "Just now";
+  if (diff < 3_600_000) return `${Math.max(1, Math.round(diff / 60_000))}m ago`;
+  if (diff < 86_400_000) return `${Math.max(1, Math.round(diff / 3_600_000))}h ago`;
+  return "Yesterday";
+}
+
 export const messageStore = reactive({
+  activeThreadId: "sarah-thompson",
   threads: [
     {
       id: "sarah-thompson",
@@ -124,6 +136,61 @@ export const messageStore = reactive({
     thread.unread = false;
     thread.messages.forEach((msg) => {
       msg.unread = false;
+    });
+  },
+
+  pushIncomingMessage(payload: { threadId: string; text: string; createdAt?: string }) {
+    const thread = this.threads.find((t) => t.id === payload.threadId);
+    if (!thread) return;
+
+    const timestamp = payload.createdAt ?? new Date().toISOString();
+    const msg: Message = {
+      id: `msg-${Date.now()}`,
+      sender: "client",
+      text: payload.text,
+      time: "Just now",
+      unread: true,
+      createdAt: timestamp
+    };
+
+    thread.messages.push(msg);
+    thread.lastMessage = msg.text;
+    thread.lastMessageAt = timestamp;
+    thread.lastMessageTime = relativeFromIso(timestamp);
+    thread.unread = true;
+
+    const idx = this.threads.indexOf(thread);
+    if (idx > 0) {
+      this.threads.splice(idx, 1);
+      this.threads.unshift(thread);
+    }
+
+    if (typeof window !== "undefined" && (window as any).__sqShowMessageToast) {
+      (window as any).__sqShowMessageToast({
+        participant: thread.participant,
+        job: thread.project,
+        text: msg.text
+      });
+    }
+  },
+
+  simulateRandomIncoming() {
+    const candidates = this.threads;
+    if (!candidates.length) return;
+    const idx = Math.floor(Math.random() * candidates.length);
+    const thread = candidates[idx];
+
+    const canned = [
+      "Just checking in on the stain options.",
+      "We’re good for tomorrow’s visit.",
+      "Can we add lighting to the quote?",
+      "Quick question about railing styles."
+    ];
+    const text = canned[Math.floor(Math.random() * canned.length)];
+
+    this.pushIncomingMessage({
+      threadId: thread.id,
+      text
     });
   }
 });
