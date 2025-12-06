@@ -18,8 +18,8 @@
     "lint": "turbo run lint",
     "test": "turbo run test",
     "typecheck": "turbo run typecheck",
-    "vercel-build": "turbo run build",
-    "seed:test": "tsx scripts/seed_test_data.ts"
+    "seed:test": "tsx scripts/seed_test_data.ts",
+    "vercel-build": "pnpm turbo run build --filter=@stackquotes/web --verbose"
   },
   "devDependencies": {
     "tsup": "^8.5.0",
