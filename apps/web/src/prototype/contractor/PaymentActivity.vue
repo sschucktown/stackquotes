@@ -121,7 +121,11 @@
               >
                 {{ filter.label }}
               </button>
-              <div v-if="justSynced" class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 shadow-inner">
+
+              <div
+                v-if="justSynced"
+                class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 shadow-inner"
+              >
                 ✓ Synced to Timeline
               </div>
             </div>
@@ -129,11 +133,13 @@
 
           <div class="relative pl-6">
             <div class="absolute top-2 bottom-2 left-3 w-px bg-slate-200"></div>
+
             <div v-for="event in filteredEvents" :key="event.id" class="relative mb-6 last:mb-0">
               <div
                 class="absolute -left-1 top-2 h-3 w-3 rounded-full shadow-sm"
                 :class="dotClass(event.category)"
               ></div>
+
               <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition duration-150 hover:-translate-y-0.5 hover:shadow-md">
                 <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                   <div class="flex items-start gap-3">
@@ -147,12 +153,11 @@
                           {{ event.type }}
                         </span>
                       </div>
-                      <div class="flex items-center gap-2 text-xs text-slate-500">
-                        <span>{{ event.time }}</span>
-                      </div>
+                      <p class="text-xs text-slate-500">{{ event.time }}</p>
                     </div>
                   </div>
-                  <div class="flex flex-col items-end gap-2 sm:items-end">
+
+                  <div class="flex flex-col items-end gap-2">
                     <p class="text-sm font-semibold text-slate-900">{{ event.amount }}</p>
                     <span
                       class="inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
@@ -162,7 +167,9 @@
                     </span>
                   </div>
                 </div>
+
                 <p class="mt-3 text-sm text-slate-700">{{ event.description }}</p>
+
                 <div class="mt-3 flex flex-wrap gap-2">
                   <button
                     class="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 shadow-inner transition hover:-translate-y-0.5 hover:bg-blue-100"
@@ -170,12 +177,14 @@
                   >
                     Mark Deposit Received
                   </button>
+
                   <button
                     class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-slate-50"
                     @click="triggerSync(event.amount, 'Payment Succeeded')"
                   >
                     Payment Succeeded
                   </button>
+
                   <button
                     class="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700 shadow-inner transition hover:-translate-y-0.5 hover:bg-amber-100"
                     @click="triggerSync(event.amount, 'Offline Payment Recorded')"
@@ -299,7 +308,6 @@ const events = ref<PaymentEvent[]>([
 
 const activeFilter = ref<typeof filters[number]["value"]>("all");
 const justSynced = ref(false);
-const justSynced = ref(false);
 
 const filteredEvents = computed(() => {
   if (activeFilter.value === "all") return events.value;
@@ -320,27 +328,10 @@ const triggerSync = (amount = "$2,400", title = "Payment Received") => {
     method: "Card .... 4242",
     meta: "Payment"
   });
-  justSynced.value = true;
-  setTimeout(() => {
-    justSynced.value = false;
-  }, 1200);
-};
 
-function syncTimeline(amount = "$2,400") {
-  addTimelineEvent({
-    id: `sync-${Date.now()}`,
-    type: "payment",
-    title: "Payment Received",
-    amount,
-    description: "Synced from Payment Activity (prototype)",
-    time: "Just now",
-    method: "Card •••• 4242"
-  });
   justSynced.value = true;
-  setTimeout(() => {
-    justSynced.value = false;
-  }, 1200);
-}
+  setTimeout(() => (justSynced.value = false), 1200);
+};
 
 const dotClass = (category: PaymentEvent["category"]) => {
   if (category === "deposit" || category === "link") return "bg-blue-500";
@@ -363,64 +354,144 @@ const iconFor = (category: PaymentEvent["category"]) => {
   if (category === "deposit" || category === "payout") {
     return {
       render() {
-        return h("svg", { xmlns: "http://www.w3.org/2000/svg", viewBox: "0 0 24 24", class: "h-5 w-5", fill: "none", stroke: "currentColor", "stroke-width": 1.8, "stroke-linecap": "round", "stroke-linejoin": "round" }, [
-          h("rect", { x: 2, y: 5, width: 20, height: 14, rx: 2 }),
-          h("path", { d: "M2 10h20" }),
-          h("path", { d: "M6 15h2" }),
-          h("path", { d: "M10 15h2" })
-        ]);
+        return h(
+          "svg",
+          {
+            xmlns: "http://www.w3.org/2000/svg",
+            viewBox: "0 0 24 24",
+            class: "h-5 w-5",
+            fill: "none",
+            stroke: "currentColor",
+            "stroke-width": 1.8,
+            "stroke-linecap": "round",
+            "stroke-linejoin": "round"
+          },
+          [
+            h("rect", { x: 2, y: 5, width: 20, height: 14, rx: 2 }),
+            h("path", { d: "M2 10h20" }),
+            h("path", { d: "M6 15h2" }),
+            h("path", { d: "M10 15h2" })
+          ]
+        );
       }
     };
   }
+
   if (category === "link") {
     return {
       render() {
-        return h("svg", { xmlns: "http://www.w3.org/2000/svg", viewBox: "0 0 24 24", class: "h-5 w-5", fill: "none", stroke: "currentColor", "stroke-width": 1.8, "stroke-linecap": "round", "stroke-linejoin": "round" }, [
-          h("path", { d: "M10 13a5 5 0 0 1 0-7l1.17-1.17a4 4 0 0 1 5.66 5.66L16 11" }),
-          h("path", { d: "M14 11a5 5 0 0 1 0 7l-1.17 1.17a4 4 0 1 1-5.66-5.66L8 13" })
-        ]);
+        return h(
+          "svg",
+          {
+            xmlns: "http://www.w3.org/2000/svg",
+            viewBox: "0 0 24 24",
+            class: "h-5 w-5",
+            fill: "none",
+            stroke: "currentColor",
+            "stroke-width": 1.8,
+            "stroke-linecap": "round",
+            "stroke-linejoin": "round"
+          },
+          [
+            h("path", { d: "M10 13a5 5 0 0 1 0-7l1.17-1.17a4 4 0 0 1 5.66 5.66L16 11" }),
+            h("path", { d: "M14 11a5 5 0 0 1 0 7l-1.17 1.17a4 4 0 1 1-5.66-5.66L8 13" })
+          ]
+        );
       }
     };
   }
+
   if (category === "reminder") {
     return {
       render() {
-        return h("svg", { xmlns: "http://www.w3.org/2000/svg", viewBox: "0 0 24 24", class: "h-5 w-5", fill: "none", stroke: "currentColor", "stroke-width": 1.8, "stroke-linecap": "round", "stroke-linejoin": "round" }, [
-          h("circle", { cx: 12, cy: 12, r: 8 }),
-          h("path", { d: "M12 8v4l2.5 2.5" })
-        ]);
+        return h(
+          "svg",
+          {
+            xmlns: "http://www.w3.org/2000/svg",
+            viewBox: "0 0 24 24",
+            class: "h-5 w-5",
+            fill: "none",
+            stroke: "currentColor",
+            "stroke-width": 1.8,
+            "stroke-linecap": "round",
+            "stroke-linejoin": "round"
+          },
+          [
+            h("circle", { cx: 12, cy: 12, r: 8 }),
+            h("path", { d: "M12 8v4l2.5 2.5" })
+          ]
+        );
       }
     };
   }
+
   if (category === "refund") {
     return {
       render() {
-        return h("svg", { xmlns: "http://www.w3.org/2000/svg", viewBox: "0 0 24 24", class: "h-5 w-5", fill: "none", stroke: "currentColor", "stroke-width": 1.8, "stroke-linecap": "round", "stroke-linejoin": "round" }, [
-          h("path", { d: "M3 12a9 9 0 1 0 9-9" }),
-          h("path", { d: "M3 12h9" }),
-          h("path", { d: "m3 12 3 3" }),
-          h("path", { d: "m3 12 3-3" })
-        ]);
+        return h(
+          "svg",
+          {
+            xmlns: "http://www.w3.org/2000/svg",
+            viewBox: "0 0 24 24",
+            class: "h-5 w-5",
+            fill: "none",
+            stroke: "currentColor",
+            "stroke-width": 1.8,
+            "stroke-linecap": "round",
+            "stroke-linejoin": "round"
+          },
+          [
+            h("path", { d: "M3 12a9 9 0 1 0 9-9" }),
+            h("path", { d: "M3 12h9" }),
+            h("path", { d: "m3 12 3 3" }),
+            h("path", { d: "m3 12 3-3" })
+          ]
+        );
       }
     };
   }
+
   if (category === "failed") {
     return {
       render() {
-        return h("svg", { xmlns: "http://www.w3.org/2000/svg", viewBox: "0 0 24 24", class: "h-5 w-5", fill: "none", stroke: "currentColor", "stroke-width": 1.8, "stroke-linecap": "round", "stroke-linejoin": "round" }, [
-          h("path", { d: "M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" }),
-          h("path", { d: "M12 9v4" }),
-          h("path", { d: "M12 17h.01" })
-        ]);
+        return h(
+          "svg",
+          {
+            xmlns: "http://www.w3.org/2000/svg",
+            viewBox: "0 0 24 24",
+            class: "h-5 w-5",
+            fill: "none",
+            stroke: "currentColor",
+            "stroke-width": 1.8,
+            "stroke-linecap": "round",
+            "stroke-linejoin": "round"
+          },
+          [
+            h("path", { d: "M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" }),
+            h("path", { d: "M12 9v4" }),
+            h("path", { d: "M12 17h.01" })
+          ]
+        );
       }
     };
   }
+
   return {
     render() {
-      return h("svg", { xmlns: "http://www.w3.org/2000/svg", viewBox: "0 0 24 24", class: "h-5 w-5", fill: "none", stroke: "currentColor", "stroke-width": 1.8, "stroke-linecap": "round", "stroke-linejoin": "round" }, [
-        h("circle", { cx: 12, cy: 12, r: 9 }),
-        h("path", { d: "M12 7v5l3 3" })
-      ]);
+      return h(
+        "svg",
+        {
+          xmlns: "http://www.w3.org/2000/svg",
+          viewBox: "0 0 24 24",
+          class: "h-5 w-5",
+          fill: "none",
+          stroke: "currentColor",
+          "stroke-width": 1.8,
+          "stroke-linecap": "round",
+          "stroke-linejoin": "round"
+        },
+        [h("circle", { cx: 12, cy: 12, r: 9 }), h("path", { d: "M12 7v5l3 3" })]
+      );
     }
   };
 };
