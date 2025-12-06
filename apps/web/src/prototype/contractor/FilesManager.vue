@@ -1,134 +1,224 @@
 <template>
   <div class="min-h-screen bg-slate-50 text-slate-900">
-    <div class="mx-auto flex max-w-5xl flex-col gap-5 px-4 py-6 sm:px-6 lg:px-8">
+    <div class="mx-auto flex max-w-5xl flex-col gap-4 px-4 py-6 sm:px-6 lg:px-8">
       <header class="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-5">
         <div class="flex items-center gap-3">
           <button
             class="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-700 shadow-inner transition hover:bg-slate-200"
-            @click="emit('close')"
+            @click="$emit('close')"
           >
             <span class="text-lg leading-none">&larr;</span>
             <span>Back</span>
           </button>
           <div>
-            <p class="text-xs uppercase tracking-[0.08em] text-slate-500">Files</p>
-            <h1 class="text-lg font-semibold text-slate-900">Files &amp; Photos</h1>
+            <p class="text-xs uppercase tracking-[0.08em] text-slate-500">Files &amp; Photos</p>
+            <h1 class="text-xl font-semibold text-slate-900">Maple St Deck</h1>
           </div>
         </div>
         <div class="flex flex-wrap items-center gap-2">
-          <button class="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-sm font-semibold text-blue-700 shadow-inner transition hover:bg-blue-100" @click="showAddFile = true">
+          <button
+            class="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-semibold transition"
+            :class="mode === 'job' ? 'border-blue-200 bg-blue-50 text-blue-700 shadow-inner' : 'border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50'"
+            @click="setMode('job')"
+          >
+            Job
+          </button>
+          <button
+            class="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-semibold transition"
+            :class="mode === 'task' ? 'border-blue-200 bg-blue-50 text-blue-700 shadow-inner' : 'border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50'"
+            @click="setMode('task')"
+          >
+            Tasks
+          </button>
+          <button
+            class="inline-flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-md transition hover:bg-blue-700"
+            @click="showAdd = true"
+          >
             Add File
           </button>
-          <button class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50">
-            Open Folder
+          <button
+            class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+          >
+            Open Job Folder
           </button>
         </div>
       </header>
 
-      <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Viewing Files For</p>
-            <div class="flex flex-wrap items-center gap-2">
-              <button
-                class="rounded-full border px-3 py-1 text-sm font-semibold transition"
-                :class="activeContext === 'job' ? 'border-blue-200 bg-blue-50 text-blue-700 shadow-inner' : 'border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200'"
-                @click="activeContext = 'job'"
-              >
-                Job: Maple St Deck
-              </button>
-              <button
-                class="rounded-full border px-3 py-1 text-sm font-semibold transition"
-                :class="activeContext === 'task' ? 'border-emerald-200 bg-emerald-50 text-emerald-700 shadow-inner' : 'border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200'"
-                @click="activeContext = 'task'"
-              >
-                Tasks
-              </button>
+          <div class="flex flex-wrap items-center gap-2">
+            <div v-if="mode === 'task'" class="flex items-center gap-2">
+              <span class="text-xs font-semibold text-slate-600">Task</span>
               <select
-                v-if="activeContext === 'task'"
                 v-model="selectedTask"
-                class="rounded-full border border-slate-200 bg-white px-3 py-1 text-sm font-semibold text-slate-700 shadow-sm focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                class="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-slate-800 shadow-inner focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-200"
               >
-                <option value="Task A">Task A: Measurements</option>
-                <option value="Task B">Task B: Demo</option>
-                <option value="Task C">Task C: Footings</option>
+                <option value="task-measurements">Measurements</option>
+                <option value="task-demo">Demo / Tear-out</option>
+                <option value="task-footings">Footings</option>
               </select>
             </div>
-          </div>
-          <div class="flex items-center gap-2">
-            <input
-              type="text"
-              placeholder="Search files (prototype)"
-              class="w-48 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 shadow-inner focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-200"
-            />
-          </div>
-        </div>
-      </section>
 
-      <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-          <div
-            v-for="file in files"
-            :key="file.id"
-            class="group flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-slate-50 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-          >
-            <div
-              class="relative h-32 w-full cursor-pointer bg-slate-100"
-              @click="openViewer(file)"
-            >
-              <img v-if="file.type === 'image'" :src="file.url" class="h-full w-full object-cover" />
-              <div v-else class="flex h-full w-full items-center justify-center text-sm font-semibold text-slate-500">
-                {{ file.type.toUpperCase() }}
-              </div>
-              <div class="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-900/10 to-transparent opacity-0 transition duration-200 group-hover:opacity-100"></div>
+            <div class="flex items-center gap-2 overflow-x-auto">
+              <button
+                v-for="filter in filters"
+                :key="filter.value"
+                class="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-semibold transition"
+                :class="activeFilter === filter.value ? 'border-blue-200 bg-blue-50 text-blue-700 shadow-inner' : 'border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50'"
+                @click="activeFilter = filter.value"
+              >
+                {{ filter.label }}
+              </button>
             </div>
-            <div class="flex items-center justify-between px-3 py-2 text-sm font-semibold text-slate-800">
-              <span class="truncate">{{ file.name }}</span>
-              <span class="text-xs text-slate-500">{{ file.size }}</span>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+            <span class="rounded-full bg-slate-100 px-3 py-1 font-semibold text-slate-700 shadow-inner">
+              {{ filteredFiles.length }} file(s)
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="space-y-4">
+        <div
+          v-for="group in groupedFiles"
+          :key="group.folder || 'none'"
+          class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5"
+        >
+          <div class="mb-3 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <p class="text-sm font-semibold text-slate-900">{{ group.folder || "Ungrouped" }}</p>
+              <span class="text-xs text-slate-500">{{ group.files.length }} file(s)</span>
+            </div>
+            <button class="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm">
+              … 
+            </button>
+          </div>
+
+          <div class="grid gap-3 md:grid-cols-2">
+            <div
+              v-for="file in group.files"
+              :key="file.id"
+              class="flex items-start gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+            >
+              <div
+                class="flex h-14 w-14 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-sm font-semibold text-slate-700"
+              >
+                <template v-if="file.kind === 'image'">
+                  <img :src="file.thumbUrl || file.url" :alt="file.name" class="h-full w-full rounded-lg object-cover" />
+                </template>
+                <template v-else-if="file.kind === 'document'">
+                  PDF
+                </template>
+                <template v-else-if="file.kind === 'video'">
+                  ▶
+                </template>
+                <template v-else>
+                  File
+                </template>
+              </div>
+
+              <div class="flex-1 space-y-1">
+                <div class="flex items-center justify-between gap-2">
+                  <p class="text-sm font-semibold text-slate-900 truncate">{{ file.name }}</p>
+                  <button
+                    class="text-xs font-semibold text-blue-600 underline-offset-4 hover:underline"
+                    @click="openViewer(file)"
+                  >
+                    View
+                  </button>
+                </div>
+                <p class="text-xs text-slate-500">
+                  {{ file.uploadedBy }} • {{ file.uploadedAt }} • {{ file.sizeLabel }}
+                </p>
+                <p v-if="file.note" class="text-xs text-slate-600">Note: {{ file.note }}</p>
+                <div class="flex items-center gap-2 pt-1">
+                  <button
+                    class="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+                    @click="editNote(file)"
+                  >
+                    Note
+                  </button>
+                  <button class="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50">
+                    …
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      </section>
+      </div>
     </div>
 
-    <ImageViewerModal
-      v-if="showViewer"
-      :show="showViewer"
-      :src="viewerSrc"
-      @close="showViewer = false"
-    />
-
-    <AddFileModal :show="showAddFile" @close="showAddFile = false" />
+    <AddFileModal v-if="showAdd" @close="showAdd = false" />
+    <ImageViewerModal v-if="viewerFile" :file="viewerFile" @close="viewerFile = null" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
-import ImageViewerModal from "./ImageViewerModal.vue";
+import { computed, reactive, ref, watch } from "vue";
+import { filesStore, jobFiles, jobLevelFiles, taskLevelFiles, setFileContext, type PrototypeFile } from "@/prototype/stores/files";
 import AddFileModal from "./AddFileModal.vue";
+import ImageViewerModal from "./ImageViewerModal.vue";
 
 const emit = defineEmits<{
   (e: "close"): void;
 }>();
 
-const activeContext = ref<"job" | "task">("job");
-const selectedTask = ref("Task A");
+const filters = [
+  { label: "All", value: "all" },
+  { label: "Images", value: "image" },
+  { label: "Documents", value: "document" },
+  { label: "Video", value: "video" },
+] as const;
 
-const files = ref([
-  { id: 1, name: "Ledger-closeup.jpg", type: "image", url: "https://images.unsplash.com/photo-1505691938895-1758d7feb511?auto=format&fit=crop&w=600&q=80", size: "1.2 MB" },
-  { id: 2, name: "Joists-angled.jpg", type: "image", url: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=600&q=80", size: "1.6 MB" },
-  { id: 3, name: "Stair-sketch.pdf", type: "pdf", url: "", size: "0.4 MB" },
-  { id: 4, name: "Material-list.pdf", type: "pdf", url: "", size: "0.3 MB" }
-]);
+const mode = ref<"job" | "task">("job");
+const activeFilter = ref<typeof filters[number]["value"]>("all");
+const selectedTask = ref<string>("task-measurements");
+const showAdd = ref(false);
+const viewerFile = ref<PrototypeFile | null>(null);
 
-const showViewer = ref(false);
-const viewerSrc = ref("");
-const showAddFile = ref(false);
-
-function openViewer(file: { url?: string }) {
-  if (file.url) {
-    viewerSrc.value = file.url;
-    showViewer.value = true;
+watch(mode, (val) => {
+  if (val === "job") {
+    setFileContext(filesStore.selectedJobId ?? "maple-st-deck", null);
+  } else {
+    setFileContext(filesStore.selectedJobId ?? "maple-st-deck", selectedTask.value);
   }
+});
+
+watch(selectedTask, (val) => {
+  if (mode.value === "task") {
+    setFileContext(filesStore.selectedJobId ?? "maple-st-deck", val);
+  }
+});
+
+const filteredFiles = computed(() => {
+  const base = mode.value === "job" ? jobLevelFiles.value : taskLevelFiles.value;
+  if (activeFilter.value === "all") return base;
+  return base.filter((file) => file.kind === activeFilter.value);
+});
+
+const groupedFiles = computed(() => {
+  const groups: Record<string, PrototypeFile[]> = {};
+  filteredFiles.value.forEach((file) => {
+    const key = file.folder || "Ungrouped";
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(file);
+  });
+  return Object.entries(groups).map(([folder, files]) => ({ folder, files }));
+});
+
+function setMode(val: "job" | "task") {
+  mode.value = val;
+}
+
+function openViewer(file: PrototypeFile) {
+  viewerFile.value = file;
+}
+
+function editNote(file: PrototypeFile) {
+  const note = window.prompt("Add note for prototype only", file.note || "");
+  if (note !== null) file.note = note || undefined;
 }
 </script>

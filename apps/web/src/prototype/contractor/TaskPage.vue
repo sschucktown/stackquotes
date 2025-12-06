@@ -56,27 +56,34 @@
 
       <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <div class="mb-3 flex items-center justify-between">
-          <h3 class="text-base font-semibold text-slate-900">Photos</h3>
+          <h3 class="text-base font-semibold text-slate-900">Task Files</h3>
           <button
             class="rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 shadow-inner transition hover:bg-blue-100"
-            @click="showAddFileModal = true"
+            @click="openTaskFiles"
           >
-            Add Photo
+            Manage Task Files ->
           </button>
         </div>
         <div class="grid gap-3 sm:grid-cols-3">
           <div
-            v-for="photo in photos"
-            :key="photo.src"
-            class="group relative overflow-hidden rounded-xl border border-slate-100 bg-slate-100"
-            @click="() => { viewerSrc = photo.src; showViewer = true; }"
+            v-for="file in previewTaskFiles"
+            :key="file.id"
+            class="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 shadow-inner"
           >
-            <img :src="photo.src" alt="" class="h-28 w-full object-cover transition duration-200 group-hover:brightness-90" />
-            <div class="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-900/10 to-transparent"></div>
+            <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100 text-xs font-semibold text-slate-700">
+              <span v-if="file.kind === 'image'">IMG</span>
+              <span v-else-if="file.kind === 'document'">DOC</span>
+              <span v-else-if="file.kind === 'video'">VID</span>
+              <span v-else>FILE</span>
+            </div>
+            <div class="space-y-0.5">
+              <p class="text-sm font-semibold text-slate-900 line-clamp-1">{{ file.name }}</p>
+              <p class="text-xs text-slate-500 line-clamp-1">{{ file.uploadedBy }} • {{ file.uploadedAt }}</p>
+            </div>
           </div>
           <div
             class="flex cursor-pointer items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50 p-6 text-slate-400 transition hover:-translate-y-0.5 hover:bg-slate-100"
-            @click="showAddFileModal = true"
+            @click="openTaskFiles"
           >
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
               <path d="M12 5v14" />
@@ -159,17 +166,6 @@
       </div>
     </div>
 
-    <ImageViewerModal
-      :show="showViewer"
-      :src="viewerSrc"
-      @close="showViewer = false"
-    />
-
-    <AddFileModal
-      :show="showAddFileModal"
-      @close="showAddFileModal = false"
-    />
-
     <Transition name="modal">
       <div
         v-if="showNoteModal"
@@ -217,13 +213,17 @@
         </div>
       </div>
     </Transition>
+
+    <Transition name="modal">
+      <FilesManager v-if="showFilesManager" @close="showFilesManager = false" />
+    </Transition>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue";
-import AddFileModal from "@/prototype/contractor/AddFileModal.vue";
-import ImageViewerModal from "@/prototype/contractor/ImageViewerModal.vue";
+import { computed, onMounted, ref } from "vue";
+import FilesManager from "./FilesManager.vue";
+import { setFileContext, taskLevelFiles } from "@/prototype/stores/files";
 
 const status = ref<"pending" | "in-progress" | "done">("pending");
 
@@ -234,12 +234,6 @@ const subtasks = [
   "Identify obstructions",
   "Photograph measurements",
   "Confirm stair layout"
-];
-
-const photos = [
-  { src: "https://source.unsplash.com/random/400x300?construction" },
-  { src: "https://source.unsplash.com/random/400x300?measuring" },
-  { src: "https://source.unsplash.com/random/400x300?wood" },
 ];
 
 const notes = [
@@ -254,10 +248,10 @@ const timeline = [
   { title: "Task assigned", meta: "Yesterday" },
 ];
 
-const showViewer = ref(false);
-const viewerSrc = ref("");
-const showAddFileModal = ref(false);
 const showNoteModal = ref(false);
+const showFilesManager = ref(false);
+const currentTaskId = "task-measurements";
+const previewTaskFiles = computed(() => taskLevelFiles.value.slice(0, 3));
 
 const statusLabel = computed(() => {
   if (status.value === "done") return "Done";
@@ -274,6 +268,15 @@ const statusBadge = computed(() => {
 const toggleComplete = () => {
   status.value = status.value === "done" ? "pending" : "done";
 };
+
+function openTaskFiles() {
+  setFileContext("maple-st-deck", currentTaskId);
+  showFilesManager.value = true;
+}
+
+onMounted(() => {
+  setFileContext("maple-st-deck", currentTaskId);
+});
 </script>
 
 <style scoped>

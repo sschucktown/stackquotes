@@ -1,72 +1,90 @@
 <template>
-  <div v-if="show">
-    <div class="fixed inset-0 z-40 bg-black/70 backdrop-blur-sm" @click="handleClose"></div>
-
-    <button
-      class="fixed right-4 top-4 z-50 rounded-full bg-white/20 p-2 text-white backdrop-blur transition hover:bg-white/30"
-      @click="handleClose"
+  <Transition name="fade">
+    <div
+      v-if="file"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 px-4 py-6 backdrop-blur"
     >
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-        <path d="m18 6-12 12" />
-        <path d="m6 6 12 12" />
-      </svg>
-    </button>
+      <div class="w-full max-w-5xl rounded-2xl bg-white shadow-2xl ring-1 ring-slate-200">
+        <div class="flex items-center justify-between border-b border-slate-200 px-4 py-3 sm:px-6">
+          <div>
+            <p class="text-sm font-semibold text-slate-900">{{ file.name }}</p>
+            <p class="text-xs text-slate-500">{{ file.uploadedBy }} • {{ file.uploadedAt }} • {{ file.sizeLabel }}</p>
+          </div>
+          <button
+            class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+            @click="$emit('close')"
+          >
+            Close
+          </button>
+        </div>
 
-    <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <img
-        :src="imageSrc"
-        :style="{ transform: `scale(${zoom})` }"
-        class="max-h-[90vh] max-w-[90vw] rounded-xl shadow-2xl transition-transform duration-300"
-        alt="Preview"
-      />
-    </div>
+        <div class="max-h-[75vh] overflow-auto px-4 py-6 sm:px-6">
+          <div v-if="file.kind === 'image'" class="flex justify-center">
+            <img :src="file.url" :alt="file.name" class="max-h-[70vh] rounded-xl shadow" />
+          </div>
+          <div
+            v-else-if="file.kind === 'document'"
+            class="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50 px-6 py-10 text-center text-slate-600"
+          >
+            <div class="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50 text-blue-700">
+              <span class="text-sm font-semibold">PDF</span>
+            </div>
+            <p class="text-sm font-semibold text-slate-900">{{ file.name }}</p>
+            <p class="text-xs text-slate-500">Preview not available in prototype.</p>
+          </div>
+          <div
+            v-else-if="file.kind === 'video'"
+            class="rounded-xl border border-slate-200 bg-slate-50 p-4 shadow-inner"
+          >
+            <div class="mb-3 flex items-center gap-2">
+              <div class="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 text-blue-700">
+                ▶
+              </div>
+              <div>
+                <p class="text-sm font-semibold text-slate-900">{{ file.name }}</p>
+                <p class="text-xs text-slate-500">Prototype video placeholder</p>
+              </div>
+            </div>
+            <div class="aspect-video rounded-xl bg-slate-900/60"></div>
+          </div>
+          <div v-else class="rounded-xl border border-slate-200 bg-slate-50 p-6 text-center text-sm text-slate-600">
+            Preview not available for this file type.
+          </div>
 
-    <div class="fixed inset-x-0 bottom-6 z-50 flex justify-center gap-4">
-      <button class="rounded-full bg-white/10 px-4 py-2 text-white transition hover:bg-white/20" @click="zoomOut">
-        -
-      </button>
-      <button class="rounded-full bg-white/10 px-4 py-2 text-white transition hover:bg-white/20" @click="zoomIn">
-        +
-      </button>
+          <div class="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 shadow-inner">
+            <div class="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+              <span class="rounded-full bg-slate-100 px-2 py-0.5 font-semibold">Uploaded by {{ file.uploadedBy }}</span>
+              <span>•</span>
+              <span>{{ file.uploadedAt }}</span>
+              <span v-if="file.folder">• Folder: {{ file.folder }}</span>
+            </div>
+            <p v-if="file.note" class="mt-2 text-sm text-slate-700">Note: {{ file.note }}</p>
+          </div>
+        </div>
+      </div>
     </div>
-  </div>
+  </Transition>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from "vue";
+import type { PrototypeFile } from "@/prototype/stores/files";
 
-const props = defineProps<{
-  show: boolean;
-  src?: string;
-  onClose?: () => void;
+defineProps<{
+  file: PrototypeFile | null;
 }>();
 
-const emit = defineEmits<{
+defineEmits<{
   (e: "close"): void;
 }>();
-
-const zoom = ref(1);
-
-const imageSrc = computed(() => props.src || "https://via.placeholder.com/800x600?text=Preview");
-
-const handleClose = () => {
-  emit("close");
-  props.onClose?.();
-  zoom.value = 1;
-};
-
-const handleEscape = (e: KeyboardEvent) => {
-  if (e.key === "Escape") handleClose();
-};
-
-const zoomOut = () => {
-  zoom.value = Math.max(0.5, +(zoom.value - 0.1).toFixed(2));
-};
-
-const zoomIn = () => {
-  zoom.value = Math.min(2.5, +(zoom.value + 0.1).toFixed(2));
-};
-
-onMounted(() => window.addEventListener("keydown", handleEscape));
-onUnmounted(() => window.removeEventListener("keydown", handleEscape));
 </script>
+
+<style scoped>
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.15s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+</style>

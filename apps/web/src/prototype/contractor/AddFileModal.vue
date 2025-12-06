@@ -1,93 +1,99 @@
 <template>
-  <Transition name="modal">
-    <div
-      v-if="show"
-      class="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/50 px-3 pb-3 md:items-center md:px-4 md:pb-0"
-    >
-      <div class="w-full max-w-md transform rounded-t-3xl bg-white shadow-2xl transition md:rounded-2xl">
-        <div class="flex items-start justify-between border-b border-slate-200 px-5 py-4">
+  <Transition name="fade">
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 px-4 py-6">
+      <div class="w-full max-w-2xl rounded-2xl bg-white shadow-2xl ring-1 ring-slate-200">
+        <div class="flex items-center justify-between border-b border-slate-200 px-4 py-3 sm:px-5">
           <div>
-            <p class="text-sm font-semibold uppercase tracking-wide text-slate-500">Add File</p>
-            <h3 class="text-lg font-semibold text-slate-900">New Upload</h3>
+            <p class="text-xs uppercase tracking-[0.08em] text-slate-500">Prototype</p>
+            <h2 class="text-lg font-semibold text-slate-900">Add File</h2>
           </div>
-          <button class="rounded-full p-2 text-slate-500 transition hover:bg-slate-100" @click="handleClose">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <path d="m18 6-12 12" />
-              <path d="m6 6 12 12" />
-            </svg>
+          <button
+            class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+            @click="$emit('close')"
+          >
+            Cancel
           </button>
         </div>
 
-        <div class="space-y-5 px-5 py-5">
-          <div
-            class="flex h-40 cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-gradient-to-br from-slate-50 via-white to-slate-100 text-slate-600 transition hover:-translate-y-0.5 hover:border-slate-400 hover:shadow-inner"
-          >
-            <div class="flex flex-col items-center gap-2 text-center">
-              <div class="rounded-full bg-white px-4 py-2 text-lg shadow-inner">+</div>
-              <p class="text-sm font-semibold">Drag a file here or click to select</p>
+        <div class="space-y-4 px-4 py-4 sm:px-5">
+          <div class="grid gap-3 sm:grid-cols-2">
+            <div class="space-y-1">
+              <label class="text-xs font-semibold text-slate-600">File name</label>
+              <input
+                v-model="name"
+                type="text"
+                class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 shadow-inner focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                placeholder="Measurements.pdf"
+              />
             </div>
-          </div>
-
-          <div class="space-y-2">
-            <p class="text-xs font-semibold uppercase tracking-wide text-slate-600">File Type</p>
-            <div class="flex flex-wrap items-center gap-2">
-              <button
-                v-for="option in typeOptions"
-                :key="option.value"
-                class="rounded-full border px-4 py-2 text-sm font-semibold transition"
-                :class="selectedType === option.value ? option.active : option.inactive"
-                @click="selectedType = option.value"
+            <div class="space-y-1">
+              <label class="text-xs font-semibold text-slate-600">File type</label>
+              <select
+                v-model="kind"
+                class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-inner focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-200"
               >
-                {{ option.label }}
-              </button>
+                <option value="image">Image</option>
+                <option value="document">Document</option>
+                <option value="video">Video</option>
+                <option value="other">Other</option>
+              </select>
             </div>
           </div>
 
-          <div class="space-y-2">
-            <p class="text-xs font-semibold uppercase tracking-wide text-slate-600">Preview</p>
-            <div class="flex h-32 items-center justify-center rounded-xl border border-slate-200 shadow-inner" :class="previewClass">
-              <template v-if="selectedType === 'image'">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M21 15V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14c0 1.1.9 2 2 2h12" />
-                  <path d="m21 15-3.5-3.5a2 2 0 0 0-2.9 0L9 18" />
-                  <path d="m17 18 2 2 4-4" />
-                  <circle cx="9" cy="9" r="2" />
-                </svg>
-              </template>
-              <template v-else-if="selectedType === 'video'">
-                <div class="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/80 text-violet-600 shadow-lg ring-2 ring-violet-100">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-8 w-8" fill="currentColor">
-                    <path d="m9 7 8 5-8 5V7Z" />
-                  </svg>
-                </div>
-              </template>
-              <template v-else>
-                <div class="flex h-16 w-12 items-center justify-center rounded-xl bg-white/85 text-slate-700 shadow-inner ring-1 ring-slate-200">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M7 3h7l4 4v14H7z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M14 3v4h4" />
-                  </svg>
-                </div>
-              </template>
+          <div class="grid gap-3 sm:grid-cols-2">
+            <div class="space-y-1">
+              <label class="text-xs font-semibold text-slate-600">Folder (optional)</label>
+              <input
+                v-model="folder"
+                type="text"
+                class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 shadow-inner focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                placeholder="Measurements"
+              />
+            </div>
+            <div class="space-y-1">
+              <label class="text-xs font-semibold text-slate-600">Size label</label>
+              <input
+                v-model="sizeLabel"
+                type="text"
+                class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 shadow-inner focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                placeholder="2.4 MB"
+              />
             </div>
           </div>
 
-          <div class="space-y-2">
-            <label class="text-xs font-semibold uppercase tracking-wide text-slate-600" for="filename">Filename</label>
-            <input
-              id="filename"
-              v-model="filename"
-              type="text"
-              class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 shadow-inner focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-200"
-            />
+          <div class="space-y-1">
+            <label class="text-xs font-semibold text-slate-600">Note (optional)</label>
+            <textarea
+              v-model="note"
+              rows="3"
+              class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 shadow-inner focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-200"
+              placeholder="Add a quick note about this file..."
+            ></textarea>
           </div>
 
-          <div class="flex items-center justify-end gap-3 pt-2">
-            <button class="rounded-full px-4 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-100" @click="handleClose">
+          <div
+            class="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center"
+          >
+            <div class="flex h-12 w-12 items-center justify-center rounded-full bg-blue-50 text-blue-700">
+              ⬆
+            </div>
+            <p class="mt-2 text-sm font-semibold text-slate-900">Drop file here or click to simulate upload</p>
+            <p class="text-xs text-slate-500">Prototype only — no real upload</p>
+          </div>
+
+          <div class="flex flex-wrap items-center justify-end gap-2">
+            <button
+              class="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+              @click="$emit('close')"
+            >
               Cancel
             </button>
-            <button class="rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-md transition hover:-translate-y-0.5 hover:bg-blue-700" @click="handleClose">
-              Add File
+            <button
+              class="rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-md transition hover:bg-blue-700 disabled:opacity-60"
+              :disabled="!name"
+              @click="submit"
+            >
+              Add File (Prototype)
             </button>
           </div>
         </div>
@@ -97,63 +103,40 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue";
-
-type FileType = "image" | "video" | "document";
-
-const props = defineProps<{
-  show: boolean;
-  onClose?: () => void;
-}>();
+import { ref } from "vue";
+import type { FileKind } from "@/prototype/stores/files";
+import { addMockFile } from "@/prototype/stores/files";
 
 const emit = defineEmits<{
   (e: "close"): void;
 }>();
 
-const selectedType = ref<FileType>("image");
-const filename = ref("new_file");
+const name = ref("");
+const kind = ref<FileKind>("document");
+const folder = ref("");
+const sizeLabel = ref("");
+const note = ref("");
 
-const typeOptions = [
-  {
-    label: "Image",
-    value: "image" as FileType,
-    active: "bg-blue-600 text-white shadow-md border border-blue-600",
-    inactive: "border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200"
-  },
-  {
-    label: "Video",
-    value: "video" as FileType,
-    active: "bg-violet-600 text-white shadow-md border border-violet-600",
-    inactive: "border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200"
-  },
-  {
-    label: "Document",
-    value: "document" as FileType,
-    active: "bg-slate-800 text-white shadow-md border border-slate-800",
-    inactive: "border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200"
-  }
-];
-
-const previewClass = computed(() => {
-  if (selectedType.value === "video") return "bg-violet-900/80 text-white";
-  if (selectedType.value === "document") return "bg-slate-100 text-slate-700";
-  return "bg-slate-200 text-slate-600";
-});
-
-const handleClose = () => {
+function submit() {
+  if (!name.value) return;
+  addMockFile({
+    name: name.value,
+    kind: kind.value,
+    folder: folder.value || undefined,
+    sizeLabel: sizeLabel.value || undefined,
+    note: note.value || undefined,
+  });
   emit("close");
-  props.onClose?.();
-};
+}
 </script>
 
 <style scoped>
-.modal-enter-active,
-.modal-leave-active {
-  transition: opacity 0.2s ease, transform 0.2s ease;
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.15s ease;
 }
-.modal-enter-from,
-.modal-leave-to {
+.fade-enter-from,
+.fade-leave-to {
   opacity: 0;
-  transform: translateY(12px) scale(0.98);
 }
 </style>

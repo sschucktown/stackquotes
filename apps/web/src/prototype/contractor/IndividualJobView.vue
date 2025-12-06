@@ -163,12 +163,12 @@
             class="aspect-square overflow-hidden rounded-lg border border-slate-200 bg-slate-100"
           >
             <img
-              v-if="file.type === 'image'"
-              :src="file.url"
+              v-if="file.kind === 'image'"
+              :src="file.thumbUrl || file.url"
               class="h-full w-full object-cover"
             />
             <div v-else class="flex h-full w-full items-center justify-center text-sm font-semibold text-slate-500">
-              {{ file.type.toUpperCase() }}
+              {{ file.kind.toUpperCase() }}
             </div>
           </div>
         </div>
@@ -245,7 +245,7 @@
       <FullMessagingInbox v-if="showInbox" @close="showInbox = false" />
     </Transition>
     <Transition name="fade">
-      <FilesManager v-if="showFiles" @close="showFiles = false" />
+      <FilesManager v-if="showFilesManager" @close="showFilesManager = false" />
     </Transition>
   </div>
 </template>
@@ -257,12 +257,13 @@ import { messageStore } from "@/prototype/stores/messages";
 import PaymentActivity from "./PaymentActivity.vue";
 import FullMessagingInbox from "./FullMessagingInbox.vue";
 import FilesManager from "./FilesManager.vue";
+import { jobLevelFiles, setFileContext } from "@/prototype/stores/files";
 import { timelineEvents } from "./usePrototypeEvents";
 
 const router = useRouter();
 const showPayments = ref(false);
 const showInbox = ref(false);
-const showFiles = ref(false);
+const showFilesManager = ref(false);
 
 const tasks = [
   "Perform site measurements",
@@ -270,11 +271,7 @@ const tasks = [
   "Identify hazards or obstructions"
 ];
 
-const previewFiles = [
-  { id: 1, url: "https://images.unsplash.com/photo-1505691938895-1758d7feb511?auto=format&fit=crop&w=400&q=80", type: "image" },
-  { id: 2, url: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=400&q=80", type: "image" },
-  { id: 3, url: "https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&fit=crop&w=400&q=80", type: "image" }
-];
+const previewFiles = computed(() => jobLevelFiles.value.slice(0, 4));
 
 const previewEvents = computed(() => timelineEvents.value.slice(0, 3));
 const previewMessages = computed(() =>
@@ -297,12 +294,17 @@ function openInbox() {
 }
 
 function openFiles() {
-  showFiles.value = true;
+  openFilesManager();
 }
 
 function openThread(id: string) {
   messageStore.markThreadRead(id);
   router.push({ path: "/prototype/contractor/messages", query: { threadId: id } });
+}
+
+function openFilesManager(taskId: string | null = null) {
+  setFileContext("maple-st-deck", taskId);
+  showFilesManager.value = true;
 }
 </script>
 
