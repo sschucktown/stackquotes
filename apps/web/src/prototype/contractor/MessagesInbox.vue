@@ -80,7 +80,8 @@
                 v-for="thread in filteredThreads"
                 :key="thread.id"
                 class="group relative flex w-full items-start gap-3 rounded-2xl border border-transparent bg-white px-3 py-3 text-left transition duration-150 hover:-translate-y-0.5 hover:border-blue-100 hover:shadow-lg"
-                :class="thread.id === selectedThreadId ? 'border-l-4 border-blue-500/90 bg-blue-50/60 shadow-lg' : 'shadow-sm'"
+                :class="thread.id === selectedThreadId ? 'border-2 border-blue-200 bg-blue-50 shadow-lg' : 'shadow-sm'"
+                :ref="(el) => setThreadRef(el, thread.id)"
                 @click="selectThread(thread.id)"
               >
                 <div
@@ -166,6 +167,12 @@
                 </div>
               </div>
               <div class="flex flex-wrap items-center gap-2">
+                <span
+                  v-if="showSyncing"
+                  class="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700 shadow-inner"
+                >
+                  Prototype syncing...
+                </span>
                 <button
                   class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-slate-50"
                   @click="markAsRead"
@@ -258,7 +265,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { useRoute } from "vue-router";
 
 type Thread = {
   id: string;
@@ -285,9 +293,11 @@ const filters = [
   { value: "team", label: "Team" },
 ] as const;
 
+const route = useRoute();
+
 const threads = ref<Thread[]>([
   {
-    id: "sarah",
+    id: "sarah-thompson",
     name: "Sarah Thompson",
     initials: "ST",
     project: "Maple St Deck",
@@ -298,7 +308,7 @@ const threads = ref<Thread[]>([
     category: "client",
   },
   {
-    id: "mike",
+    id: "mike-robertson",
     name: "Mike Robertson",
     initials: "MR",
     project: "Lakeview Patio",
@@ -309,7 +319,7 @@ const threads = ref<Thread[]>([
     category: "client",
   },
   {
-    id: "crew",
+    id: "crew-chat",
     name: "Crew Chat",
     initials: "CC",
     project: "Team Thread",
@@ -322,17 +332,17 @@ const threads = ref<Thread[]>([
 ]);
 
 const messages: Record<string, Message[]> = {
-  sarah: [
+  "sarah-thompson": [
     { id: "m1", sender: "client", text: "Hi Jordan, can you confirm the composite color options?", time: "9:04 AM" },
     { id: "m2", sender: "contractor", text: "Yes! We can show you samples during the visit.", time: "9:06 AM" },
     { id: "m3", sender: "client", text: "Great, thank you!", time: "9:09 AM" },
   ],
-  mike: [
+  "mike-robertson": [
     { id: "m4", sender: "client", text: "Hi Jordan, can you confirm the composite color options?", time: "8:40 AM" },
     { id: "m5", sender: "contractor", text: "Yes! We can show you samples during the visit.", time: "8:44 AM" },
     { id: "m6", sender: "client", text: "Great, thank you!", time: "8:45 AM" },
   ],
-  crew: [
+  "crew-chat": [
     { id: "m7", sender: "team", text: "Hi Jordan, can you confirm the composite color options?", time: "Yesterday 6:30 PM" },
     { id: "m8", sender: "contractor", text: "Yes! We can show you samples during the visit.", time: "Yesterday 6:42 PM" },
     { id: "m9", sender: "team", text: "Great, thank you!", time: "Yesterday 6:44 PM" },
@@ -341,10 +351,12 @@ const messages: Record<string, Message[]> = {
 
 const activeFilter = ref<typeof filters[number]["value"]>("all");
 const search = ref("");
-const selectedThreadId = ref(threads.value[0]?.id ?? "");
+const selectedThreadId = ref<string | null>(null);
 const draft = ref("");
 const mobileView = ref<"list" | "chat">("list");
 const isDesktop = ref(typeof window !== "undefined" ? window.innerWidth >= 768 : true);
+const showSyncing = ref(false);
+const selectedThreadEl = ref<HTMLElement | null>(null);
 
 const filteredThreads = computed(() => {
   let list = threads.value;
@@ -368,11 +380,15 @@ const filteredThreads = computed(() => {
   return list;
 });
 
-const selectedThread = computed(() =>
-  threads.value.find((thread) => thread.id === selectedThreadId.value)
-);
+const selectedThread = computed(() => {
+  if (!selectedThreadId.value && threads.value.length) return threads.value[0];
+  return threads.value.find((thread) => thread.id === selectedThreadId.value);
+});
 
-const activeMessages = computed(() => messages[selectedThreadId.value] || []);
+const activeMessages = computed(() => {
+  const key = selectedThreadId.value || threads.value[0]?.id || "";
+  return messages[key] || [];
+});
 
 const showList = computed(() => mobileView.value === "list" || isDesktop.value);
 const showChat = computed(() => mobileView.value === "chat" || isDesktop.value);
@@ -385,11 +401,33 @@ const badgeClass = (jobType: string) => {
   return "border-slate-200 bg-slate-50 text-slate-700";
 };
 
-const selectThread = (id: string) => {
-  selectedThreadId.value = id;
-  mobileView.value = "chat";
-  const thread = threads.value.find((item) => item.id === id);
+const setThreadRef = (el: Element | null, id: string) => {
+  if (id === selectedThreadId.value) {
+    selectedThreadEl.value = el as HTMLElement | null;
+  }
+};
+
+const selectThread = (id: string, fromRoute = false) => {
+  const exists = threads.value.some((thread) => thread.id === id);
+  const fallback = threads.value[0]?.id ?? null;
+  const targetId = exists ? id : fallback;
+  selectedThreadId.value = targetId;
+  if (!targetId) return;
+
+  const thread = threads.value.find((item) => item.id === targetId);
   if (thread) thread.unread = false;
+  if (!isDesktop.value) mobileView.value = "chat";
+
+  nextTick(() => {
+    if (selectedThreadEl.value) {
+      selectedThreadEl.value.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+  });
+
+  if (fromRoute) {
+    showSyncing.value = true;
+    setTimeout(() => (showSyncing.value = false), 1200);
+  }
 };
 
 const markAsRead = () => {
@@ -407,6 +445,9 @@ onMounted(() => {
   if (typeof window !== "undefined") {
     window.addEventListener("resize", updateIsDesktop);
   }
+
+  const initialFromRoute = typeof route.query.threadId === "string" ? route.query.threadId : Array.isArray(route.query.threadId) ? route.query.threadId[0] : null;
+  selectThread(initialFromRoute || threads.value[0]?.id || "", Boolean(initialFromRoute));
 });
 
 onBeforeUnmount(() => {
@@ -414,4 +455,14 @@ onBeforeUnmount(() => {
     window.removeEventListener("resize", updateIsDesktop);
   }
 });
+
+watch(
+  () => route.query.threadId,
+  (newId) => {
+    const normalized = typeof newId === "string" ? newId : Array.isArray(newId) ? newId[0] : null;
+    if (normalized) {
+      selectThread(normalized, true);
+    }
+  }
+);
 </script>

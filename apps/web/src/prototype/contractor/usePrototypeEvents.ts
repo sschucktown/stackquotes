@@ -73,7 +73,7 @@ export const timelineEvents = ref<PrototypeTimelineEvent[]>([
 
 export const messageThreads = ref<PrototypeMessageThread[]>([
   {
-    id: "sarah",
+    id: "sarah-thompson",
     clientName: "Sarah Thompson",
     clientInitials: "ST",
     jobName: "Deck",
@@ -87,7 +87,7 @@ export const messageThreads = ref<PrototypeMessageThread[]>([
     ]
   },
   {
-    id: "mike",
+    id: "mike-robertson",
     clientName: "Mike Robertson",
     clientInitials: "MR",
     jobName: "Patio",
@@ -99,7 +99,7 @@ export const messageThreads = ref<PrototypeMessageThread[]>([
     ]
   },
   {
-    id: "crew",
+    id: "crew-chat",
     clientName: "Crew Chat",
     clientInitials: "CC",
     jobName: "Team",
@@ -111,7 +111,7 @@ export const messageThreads = ref<PrototypeMessageThread[]>([
     ]
   },
   {
-    id: "auto",
+    id: "auto-messages",
     clientName: "Auto Messages",
     clientInitials: "AM",
     jobName: "System",

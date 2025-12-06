@@ -185,17 +185,19 @@
           </button>
         </div>
         <div class="space-y-3">
-          <div
+          <button
             v-for="message in previewMessages"
             :key="message.name"
-            class="flex items-start justify-between rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 shadow-inner"
+            type="button"
+            class="flex w-full items-start justify-between rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-left shadow-inner transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50"
+            @click="openThread(message.threadId)"
           >
             <div>
               <p class="text-sm font-semibold text-slate-900">{{ message.name }} ({{ message.project }})</p>
               <p class="text-sm text-slate-600">{{ message.preview }}</p>
             </div>
             <span class="text-xs text-slate-500">{{ message.time }}</span>
-          </div>
+          </button>
         </div>
       </section>
 
@@ -242,11 +244,13 @@
 
 <script setup lang="ts">
 import { computed, ref } from "vue";
+import { useRouter } from "vue-router";
 import PaymentActivity from "./PaymentActivity.vue";
 import FullMessagingInbox from "./FullMessagingInbox.vue";
 import FilesManager from "./FilesManager.vue";
 import { messageThreads, timelineEvents } from "./usePrototypeEvents";
 
+const router = useRouter();
 const showPayments = ref(false);
 const showInbox = ref(false);
 const showFiles = ref(false);
@@ -270,7 +274,8 @@ const previewMessages = computed(() =>
       name: thread.clientName,
       project: thread.jobName,
       preview: thread.lastMessage,
-      time: thread.lastUpdated
+      time: thread.lastUpdated,
+      threadId: thread.id
     }))
     .slice(0, 3)
 );
@@ -280,11 +285,15 @@ function openPayments() {
 }
 
 function openInbox() {
-  showInbox.value = true;
+  router.push({ path: "/prototype/contractor/messages" });
 }
 
 function openFiles() {
   showFiles.value = true;
+}
+
+function openThread(id: string) {
+  router.push({ path: "/prototype/contractor/messages", query: { threadId: id } });
 }
 </script>
 
