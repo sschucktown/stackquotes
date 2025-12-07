@@ -25,7 +25,7 @@
               <path d="M6 8a6 6 0 1 1 12 0v5l1.5 1.5c.3.3.1.8-.3.8H4.8c-.4 0-.6-.5-.3-.8L6 13V8Z" />
             </svg>
           </button>
-          <button class="rounded-full p-2 text-slate-600 transition hover:bg-slate-100">
+          <button class="rounded-full p-2 text-slate-600 transition hover:bg-slate-100" @click="showSettings = true">
             <span class="sr-only">Settings</span>
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
               <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" />
@@ -145,6 +145,7 @@
       <ProposalCommentsFab proposal-id="demo-proposal" contractor-name="Jordan Deckworks" />
     </div>
 
+    <SettingsDrawer v-if="showSettings" @close="showSettings = false" />
     <NewMessageToast />
 
     <div class="fixed bottom-4 left-4 z-40 text-[11px] text-slate-500">
@@ -165,6 +166,7 @@ import HQJobRow from "@/components/HQ/HQJobRow.vue";
 import HQMessages from "@/components/HQ/HQMessages.vue";
 import HQQuickActions from "@/components/HQ/HQQuickActions.vue";
 import ProposalCommentsFab from "@/components/proposals/ProposalCommentsFab.vue";
+import SettingsDrawer from "@/components/Settings/SettingsDrawer.vue";
 import JobMode from "@/prototype/contractor/JobMode.vue";
 import NewMessageToast from "@/prototype/components/NewMessageToast.vue";
 import { useMockMessageChannel } from "@/prototype/composables/useMockMessageChannel";
@@ -240,6 +242,7 @@ const messages = [
   { name: "Julia Perez", project: "Fence Repair", preview: "We're good for tomorrow!", time: "6h ago", initials: "JP", jobType: "Fence", delay: "90ms" },
 ];
 
+const showSettings = ref(false);
 const isJobMode = ref(false);
 useMockMessageChannel({ auto: true });
 </script>
