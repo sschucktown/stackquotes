@@ -1,6 +1,6 @@
 <template>
-  <div class="min-h-screen bg-slate-50">
-    <div class="mx-auto max-w-5xl px-4 py-12">
+  <div class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50">
+    <div class="mx-auto max-w-5xl px-4 py-10 sm:py-12">
       <div class="space-y-6">
         <header class="text-center">
           <p class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">Proposal template</p>
@@ -8,7 +8,7 @@
           <p class="text-sm text-slate-600">Static mock of your SmartProposal layout.</p>
         </header>
 
-        <section class="space-y-6 rounded-3xl border border-slate-200 bg-white p-8 shadow-xl">
+        <section class="space-y-6 rounded-3xl border border-slate-200 bg-white/95 p-8 shadow-xl">
           <div class="grid gap-4 md:grid-cols-3">
             <article
               v-for="option in options"
@@ -29,6 +29,13 @@
                   <span>{{ detail }}</span>
                 </li>
               </ul>
+              <button
+                class="mt-4 inline-flex w-full items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-800 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-50"
+                type="button"
+                @click="openScope(option.label)"
+              >
+                Expand scope
+              </button>
             </article>
           </div>
 
@@ -56,6 +63,12 @@
             </div>
           </div>
         </section>
+        <ScopeModal
+          :visible="Boolean(activeScope)"
+          :option-label="activeScope || ''"
+          :option-data="activeScope ? scopeDetails[activeScope] : fallbackScope"
+          @close="closeScope"
+        />
       </div>
     </div>
   </div>
@@ -65,6 +78,7 @@
 import { computed, onBeforeUnmount, ref } from "vue";
 import { useRouter } from "vue-router";
 import { useOnboardingPrototypeStore } from "@/stores/onboardingPrototype";
+import ScopeModal from "./ScopeModal.vue";
 
 const router = useRouter();
 const store = useOnboardingPrototypeStore();
@@ -72,6 +86,7 @@ const store = useOnboardingPrototypeStore();
 const options = computed(() => store.proposalOptions);
 const editHint = ref("");
 let editHintTimeout: number | undefined;
+const activeScope = ref<string | null>(null);
 
 const goToClientPreview = () => {
   router.push("/onboarding/client-portal-preview");
@@ -92,4 +107,40 @@ onBeforeUnmount(() => {
     clearTimeout(editHintTimeout);
   }
 });
+
+const scopeDetails: Record<string, { scope: string[]; addons: string[]; exclusions: string[]; photos: string[] }> = {
+  Good: {
+    scope: ["Pressure-treated decking", "Standard railing and posts", "Basic stairs and landing"],
+    addons: ["Stain upgrade", "Additional landing", "Simple lighting"],
+    exclusions: ["Electrical upgrades", "Composite materials", "Permit fees"],
+    photos: ["Lumber deck", "Standard railing", "Stain finish", "Entry steps"],
+  },
+  Better: {
+    scope: ["Composite decking with hidden fasteners", "Upgraded railing package", "Picture-frame borders"],
+    addons: ["Under-rail lighting", "Built-in bench", "Premium stair treads"],
+    exclusions: ["Gazebo/pergola", "Demolition of existing", "Stonework"],
+    photos: ["Composite texture", "Hidden fasteners", "Border detail", "Rail lighting"],
+  },
+  Best: {
+    scope: ["Premium composite with aluminum railing", "Accent lighting package", "Fascia and riser wraps"],
+    addons: ["Pergola framing", "Privacy screen", "Outdoor kitchen rough-in"],
+    exclusions: ["Full landscaping package", "Pool tie-ins", "Structural engineering"],
+    photos: ["Aluminum rail", "LED accents", "Wrapped stairs", "Pergola concept"],
+  },
+};
+
+const fallbackScope = {
+  scope: ["Custom scope", "Selections", "Client walk-through"],
+  addons: ["Add-on 1", "Add-on 2"],
+  exclusions: ["Exclusion sample"],
+  photos: ["Preview A", "Preview B", "Preview C", "Preview D"],
+};
+
+const openScope = (label: string) => {
+  activeScope.value = label;
+};
+
+const closeScope = () => {
+  activeScope.value = null;
+};
 </script>

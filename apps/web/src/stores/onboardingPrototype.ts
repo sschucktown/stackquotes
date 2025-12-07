@@ -24,6 +24,19 @@ export type ProposalOption = {
   accent?: string;
 };
 
+export type UploadedFileMeta = {
+  name: string;
+  size: number;
+  type: string;
+};
+
+export type DashboardProposal = {
+  id: string;
+  name: string;
+  client: string;
+  status: string;
+};
+
 const defaultBusinessInfo = (): BusinessInfo => ({
   businessName: "Palmetto Deck Co.",
   phone: "(843) 555-2184",
@@ -67,14 +80,21 @@ const defaultProposalOptions = (): ProposalOption[] => [
 export const useOnboardingPrototypeStore = defineStore("onboarding-prototype", {
   state: () => ({
     uploadedFileName: "",
+    uploadedFile: { name: "", size: 0, type: "" } as UploadedFileMeta,
     trade: "Deck Builder",
     businessInfo: defaultBusinessInfo(),
     lineItems: defaultLineItems(),
     proposalOptions: defaultProposalOptions(),
+    proposals: [] as DashboardProposal[],
   }),
   actions: {
-    setUploadedFileName(fileName: string) {
-      this.uploadedFileName = fileName;
+    setUploadedFile(file: UploadedFileMeta) {
+      this.uploadedFile = file;
+      this.uploadedFileName = file.name;
+    },
+    clearUploadedFile() {
+      this.uploadedFile = { name: "", size: 0, type: "" };
+      this.uploadedFileName = "";
     },
     setTrade(trade: string) {
       this.trade = trade;
@@ -83,8 +103,12 @@ export const useOnboardingPrototypeStore = defineStore("onboarding-prototype", {
     updateBusinessInfo(payload: Partial<BusinessInfo>) {
       this.businessInfo = { ...this.businessInfo, ...payload };
     },
+    addProposal(proposal: DashboardProposal) {
+      this.proposals = [proposal, ...this.proposals];
+    },
     reset() {
       this.uploadedFileName = "";
+      this.uploadedFile = { name: "", size: 0, type: "" };
       this.trade = "Deck Builder";
       this.businessInfo = defaultBusinessInfo();
       this.lineItems = defaultLineItems();

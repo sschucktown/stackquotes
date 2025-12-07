@@ -1,6 +1,6 @@
 <template>
-  <div class="min-h-screen bg-slate-50">
-    <div class="mx-auto max-w-5xl px-4 py-12">
+  <div class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50">
+    <div class="mx-auto max-w-5xl px-4 py-10 sm:py-12">
       <div class="space-y-6">
         <header class="text-center">
           <p class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">Line item library</p>
@@ -8,7 +8,7 @@
           <p class="text-sm text-slate-600">Scroll the list, then jump to your SmartProposal preview.</p>
         </header>
 
-        <section class="rounded-3xl border border-slate-200 bg-white p-8 shadow-xl">
+        <section class="rounded-3xl border border-slate-200 bg-white/90 p-8 shadow-xl">
           <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div class="flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
               <span class="inline-block h-2 w-2 rounded-full bg-sky-500"></span>

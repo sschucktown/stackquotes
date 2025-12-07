@@ -1,6 +1,6 @@
 <template>
-  <div class="min-h-screen bg-slate-50">
-    <div class="mx-auto max-w-4xl px-4 py-12">
+  <div class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50">
+    <div class="mx-auto max-w-4xl px-4 py-10 sm:py-12">
       <div class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl">
         <div class="grid gap-8 p-8 md:grid-cols-[1.1fr,0.9fr] md:p-10">
           <div class="space-y-4">

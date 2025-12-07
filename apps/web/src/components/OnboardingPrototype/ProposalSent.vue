@@ -1,7 +1,7 @@
 <template>
-  <div class="min-h-screen bg-slate-50">
-    <div class="mx-auto max-w-xl px-4 py-12">
-      <div class="overflow-hidden rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-xl">
+  <div class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50">
+    <div class="mx-auto max-w-xl px-4 py-10 sm:py-12">
+      <div class="overflow-hidden rounded-3xl border border-slate-200 bg-white/90 p-8 text-center shadow-xl backdrop-blur">
         <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
           <svg class="h-7 w-7" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="m5 13 4 4L19 7" />
@@ -44,6 +44,6 @@ const startAnother = () => {
 };
 
 const goToDashboard = () => {
-  router.push("/dashboard");
+  router.push("/onboarding/dashboard");
 };
 </script>

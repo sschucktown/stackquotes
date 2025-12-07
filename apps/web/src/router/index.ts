@@ -201,6 +201,12 @@ const router = createRouter({
       meta: { public: true, allowAuthenticated: true, skipOnboardingGuard: true },
     },
     {
+      path: "/onboarding/dashboard",
+      name: "OnboardingPrototypeDashboard",
+      component: () => import("@/pages/dashboard/index.vue"),
+      meta: { public: true, allowAuthenticated: true, skipOnboardingGuard: true },
+    },
+    {
       path: "/login",
       name: "login",
       component: () => import("@/pages/auth/LoginPage.vue"),

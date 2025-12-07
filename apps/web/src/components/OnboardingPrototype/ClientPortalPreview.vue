@@ -159,21 +159,28 @@
         class="fixed inset-0 z-30 flex items-center justify-center bg-slate-900/50 px-4"
         @click.self="closeModals"
       >
-        <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
-          <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-            {{ showAcceptModal ? "Accept Proposal" : "Pay Deposit" }}
-          </p>
-          <h2 class="mt-2 text-xl font-bold text-slate-900">This is a mock modal</h2>
-          <p class="mt-1 text-sm text-slate-600">In the real app, this would trigger e-signature or Stripe.</p>
-          <div class="mt-5 flex justify-end">
-            <button
-              class="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5"
-              @click="closeModals"
-            >
-              Close
-            </button>
+        <transition name="slide-up">
+          <div v-if="showAcceptModal || showPayModal" class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+              {{ showAcceptModal ? "Accept Proposal" : "Pay Deposit" }}
+            </p>
+            <h2 class="mt-2 text-xl font-bold text-slate-900">
+              {{ showAcceptModal ? "Proposal Accepted" : "Pay Deposit" }}
+            </h2>
+            <p class="mt-1 text-sm text-slate-600">
+              <span v-if="showAcceptModal">Your contractor will be notified.</span>
+              <span v-else>Deposit (30%): {{ deposit }} — Demo only, payment not processed.</span>
+            </p>
+            <div class="mt-5 flex justify-end">
+              <button
+                class="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5"
+                @click="closeModals"
+              >
+                Close
+              </button>
+            </div>
           </div>
-        </div>
+        </transition>
       </div>
     </transition>
   </div>
@@ -209,7 +216,11 @@ const optionScopes: Record<string, string[]> = {
 const defaultOptionScope = ["Custom scope details", "Selections and allowances", "Client-friendly explanations"];
 
 const bestPrice = computed(() => options.value[2]?.price ?? "$16,900");
-const deposit = computed(() => "$" + Math.round((parseFloat(bestPrice.value.replace(/[^0-9.]/g, "")) || 0) * 0.3).toLocaleString());
+const deposit = computed(() => {
+  const numeric = parseFloat(bestPrice.value.replace(/[^0-9.]/g, ""));
+  if (!numeric) return "$5,070";
+  return "$" + Math.round(numeric * 0.3).toLocaleString();
+});
 
 const closeModals = () => {
   showAcceptModal.value = false;
@@ -234,5 +245,14 @@ const toggleScope = (label: string) => {
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+}
+.slide-up-enter-active,
+.slide-up-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.slide-up-enter-from,
+.slide-up-leave-to {
+  opacity: 0;
+  transform: translateY(12px);
 }
 </style>

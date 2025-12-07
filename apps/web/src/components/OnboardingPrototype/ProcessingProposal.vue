@@ -1,13 +1,13 @@
 <template>
   <div class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-sky-50">
-    <div class="mx-auto flex max-w-5xl flex-col gap-8 px-4 py-12">
+    <div class="mx-auto flex max-w-5xl flex-col gap-8 px-4 py-10 sm:py-12">
       <header class="text-center">
         <p class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">Processing</p>
-        <h1 class="mt-2 text-3xl font-bold text-slate-900">We’re rebuilding your proposal</h1>
+        <h1 class="mt-2 text-3xl font-bold text-slate-900 sm:text-4xl">We’re rebuilding your proposal</h1>
         <p class="text-sm text-slate-600">This is a quick animation, then we’ll guess your trade.</p>
       </header>
 
-      <section class="overflow-hidden rounded-3xl border border-slate-200 bg-white/90 p-8 shadow-xl backdrop-blur">
+      <section class="overflow-hidden rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-xl backdrop-blur sm:p-8">
         <div class="space-y-6">
           <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -46,6 +46,22 @@
               ></span>
             </div>
           </div>
+
+          <div class="rounded-2xl border border-slate-200 bg-white/80 p-5 shadow-inner">
+            <p class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">What we’re finding</p>
+            <ul class="mt-3 space-y-2">
+              <transition-group name="slide-fade" tag="div">
+                <li
+                  v-for="finding in visibleFindings"
+                  :key="finding"
+                  class="flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-900 shadow-sm"
+                >
+                  <span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">✓</span>
+                  <span>{{ finding }}</span>
+                </li>
+              </transition-group>
+            </ul>
+          </div>
         </div>
       </section>
     </div>
@@ -71,15 +87,35 @@ const messages = [
 const currentIndex = ref(0);
 const intervalId = ref<number | undefined>(undefined);
 const timeoutId = ref<number | undefined>(undefined);
+const findingsIntervalId = ref<number | undefined>(undefined);
 
 const activeMessage = computed(() => messages[currentIndex.value]);
 const progressWidth = computed(() => `${Math.min(((currentIndex.value + 1) / messages.length) * 100, 100)}%`);
 const displayFileName = computed(() => store.uploadedFileName || "Old_Proposal.pdf");
 
+const findings = [
+  "Found your trade: Deck Builder",
+  "Found 3 pricing items",
+  "Found your payment terms",
+  "Found your business location: Charleston, SC",
+  "Rebuilding your proposal template…",
+];
+const visibleFindings = ref<string[]>([]);
+
 onMounted(() => {
   intervalId.value = window.setInterval(() => {
     currentIndex.value = Math.min(currentIndex.value + 1, messages.length - 1);
   }, 1000);
+
+  findingsIntervalId.value = window.setInterval(() => {
+    const next = findings[visibleFindings.value.length];
+    if (next) {
+      visibleFindings.value = [...visibleFindings.value, next];
+    }
+    if (visibleFindings.value.length === findings.length) {
+      if (findingsIntervalId.value) clearInterval(findingsIntervalId.value);
+    }
+  }, 700);
 
   timeoutId.value = window.setTimeout(() => {
     router.push("/onboarding/trade-detection");
@@ -93,6 +129,9 @@ onBeforeUnmount(() => {
   if (timeoutId.value) {
     clearTimeout(timeoutId.value);
   }
+  if (findingsIntervalId.value) {
+    clearInterval(findingsIntervalId.value);
+  }
 });
 </script>
 
@@ -103,6 +142,19 @@ onBeforeUnmount(() => {
 }
 .fade-enter-from,
 .fade-leave-to {
+  opacity: 0;
+}
+.slide-fade-enter-active {
+  transition: all 0.2s ease;
+}
+.slide-fade-enter-from {
+  opacity: 0;
+  transform: translateY(8px);
+}
+.slide-fade-leave-active {
+  transition: all 0.15s ease;
+}
+.slide-fade-leave-to {
   opacity: 0;
 }
 </style>

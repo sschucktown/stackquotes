@@ -1,7 +1,7 @@
 <template>
-  <div class="min-h-screen bg-slate-50">
-    <div class="mx-auto max-w-xl px-4 py-12">
-      <div class="overflow-hidden rounded-3xl border border-slate-200 bg-white p-8 shadow-xl">
+  <div class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50">
+    <div class="mx-auto max-w-xl px-4 py-10 sm:py-12">
+      <div class="overflow-hidden rounded-3xl border border-slate-200 bg-white/90 p-8 shadow-xl backdrop-blur">
         <header class="space-y-1 text-center">
           <p class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">Add first client</p>
           <h1 class="text-3xl font-bold text-slate-900">Send your first proposal</h1>
@@ -38,9 +38,16 @@
             />
           </div>
 
+          <transition name="fade">
+            <p v-if="error" class="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-600">
+              {{ error }}
+            </p>
+          </transition>
+
           <button
             type="submit"
-            class="flex w-full items-center justify-center gap-2 rounded-full bg-emerald-600 px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-emerald-700"
+            class="flex w-full items-center justify-center gap-2 rounded-full bg-emerald-600 px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-emerald-300"
+            :disabled="!isValid"
           >
             Send Proposal →
           </button>
@@ -51,16 +58,48 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import { useRouter } from "vue-router";
+import { useOnboardingPrototypeStore } from "@/stores/onboardingPrototype";
 
 const router = useRouter();
+const store = useOnboardingPrototypeStore();
 
 const clientName = ref("");
 const clientEmail = ref("");
 const projectName = ref("");
+const error = ref("");
+
+const isValid = computed(() => Boolean(clientName.value && clientEmail.value && projectName.value));
+
+const uuid = () =>
+  typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+    ? crypto.randomUUID()
+    : `proposal-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
 
 const sendProposal = () => {
+  if (!isValid.value) {
+    error.value = "Please fill in all fields.";
+    return;
+  }
+  error.value = "";
+  store.addProposal({
+    id: uuid(),
+    name: projectName.value,
+    client: clientName.value,
+    status: "Sent",
+  });
   router.push("/onboarding/sent");
 };
 </script>
+
+<style scoped>
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+</style>

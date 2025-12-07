@@ -1,6 +1,6 @@
 <template>
-  <div class="min-h-screen bg-slate-50">
-    <div class="mx-auto flex max-w-6xl flex-col gap-10 px-4 py-12 lg:px-8">
+  <div class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50">
+    <div class="mx-auto flex max-w-6xl flex-col gap-10 px-4 py-10 lg:px-8">
       <header class="space-y-3 text-center">
         <p class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">Onboarding Prototype</p>
         <h1 class="text-3xl font-bold leading-tight text-slate-900 sm:text-4xl">
@@ -17,7 +17,7 @@
         >
           <div
             class="group relative flex cursor-pointer flex-col items-center justify-center gap-4 rounded-2xl border-2 border-dashed p-10 text-center transition"
-            :class="isDragging ? 'border-sky-400 bg-sky-50/80' : 'border-slate-300 bg-slate-50'"
+            :class="isDragging ? 'border-emerald-400 bg-emerald-50/70' : 'border-slate-300 bg-slate-50'"
             @dragover.prevent="onDragOver"
             @dragleave.prevent="onDragLeave"
             @drop.prevent="onDrop"
@@ -30,7 +30,7 @@
               accept=".pdf,.jpg,.jpeg,.png,.docx"
               @change="onFileChange"
             />
-            <div class="flex h-16 w-16 items-center justify-center rounded-full bg-sky-100 text-sky-700 shadow-inner">
+            <div class="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 shadow-inner">
               <svg class="h-7 w-7" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 16V4m0 12-3.5-3.5M12 16l3.5-3.5" />
                 <path
@@ -47,7 +47,7 @@
               </p>
             </div>
             <div class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition group-hover:scale-[1.01]">
-              <span class="text-sky-600">↥</span>
+              <span class="text-emerald-600">↥</span>
               <span>Choose a file</span>
             </div>
           </div>
@@ -56,6 +56,31 @@
             <p v-if="error" class="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-600">
               {{ error }}
             </p>
+          </transition>
+
+          <transition name="fade">
+            <div
+              v-if="hasFile"
+              class="mt-5 flex items-center justify-between rounded-2xl border border-emerald-100 bg-emerald-50/70 p-4 shadow-inner"
+            >
+              <div class="flex items-center gap-3">
+                <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-white text-lg font-bold text-emerald-700 shadow-sm">
+                  {{ fileIcon }}
+                </div>
+                <div>
+                  <p class="text-sm font-semibold text-slate-900">{{ selectedFileName }}</p>
+                  <p class="text-xs text-slate-600">{{ fileMetaText }}</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-3">
+                <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-emerald-600 text-white shadow-sm">
+                  ✓
+                </span>
+                <button class="text-xs font-semibold text-emerald-700 hover:text-emerald-800" @click.stop="replaceFile">
+                  Replace file
+                </button>
+              </div>
+            </div>
           </transition>
         </section>
 
@@ -101,8 +126,21 @@ const allowedExtensions = ["pdf", "jpg", "jpeg", "png", "docx"];
 const isDragging = ref(false);
 const error = ref("");
 const fileInput = ref<HTMLInputElement | null>(null);
-const selectedFileName = computed(() => store.uploadedFileName || "No file selected yet.");
-
+const selectedFileName = computed(() => store.uploadedFile?.name || store.uploadedFileName || "No file selected yet.");
+const hasFile = computed(() => Boolean(store.uploadedFile?.name));
+const fileIcon = computed(() => {
+  const ext = store.uploadedFile?.type || "";
+  if (ext.includes("pdf")) return "PDF";
+  if (ext.includes("doc")) return "DOC";
+  if (ext.includes("png") || ext.includes("jpg") || ext.includes("jpeg")) return "IMG";
+  return "FILE";
+});
+const fileMetaText = computed(() => {
+  if (!store.uploadedFile?.name) return "Awaiting upload";
+  const sizeMb = (store.uploadedFile.size / (1024 * 1024)).toFixed(2);
+  const ext = store.uploadedFile.name.split(".").pop()?.toUpperCase() ?? "FILE";
+  return `${ext} • ${sizeMb} MB`;
+});
 const triggerInput = () => {
   fileInput.value?.click();
 };
@@ -126,7 +164,11 @@ const handleFile = (file?: File) => {
     return;
   }
   error.value = "";
-  store.setUploadedFileName(file.name);
+  store.setUploadedFile({
+    name: file.name,
+    size: file.size,
+    type: file.type || (file.name.split(".").pop() ?? ""),
+  });
   router.push("/onboarding/processing");
 };
 
@@ -151,6 +193,12 @@ const onDragOver = () => {
 
 const onDragLeave = () => {
   isDragging.value = false;
+};
+
+const replaceFile = () => {
+  store.clearUploadedFile();
+  error.value = "";
+  fileInput.value?.click();
 };
 </script>
 
