@@ -14,15 +14,19 @@
               <span class="inline-block h-2 w-2 rounded-full bg-emerald-500"></span>
               <span>Auto-filled from your upload</span>
             </div>
+
             <div class="flex flex-wrap gap-3">
-              <button
-                v-if="!editing"
-                class="inline-flex items-center justify-center gap-2 rounded-full bg-emerald-600 px-5 py-2 text-sm font-semibold text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-emerald-700"
-                @click="handleLooksGood"
-              >
-                Looks good →
-              </button>
+              <!-- FIXED: v-if / v-else wrapped correctly inside <transition> -->
               <transition name="fade" mode="out-in">
+                <button
+                  v-if="!editing"
+                  key="looks-good"
+                  class="inline-flex items-center justify-center gap-2 rounded-full bg-emerald-600 px-5 py-2 text-sm font-semibold text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-emerald-700"
+                  @click="handleLooksGood"
+                >
+                  Looks good →
+                </button>
+
                 <button
                   v-else
                   key="save"
@@ -32,6 +36,7 @@
                   Save changes →
                 </button>
               </transition>
+
               <button
                 class="inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-2 text-sm font-semibold text-slate-800 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-50"
                 @click="toggleEditing"
@@ -50,6 +55,7 @@
                 class="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-900 shadow-sm transition focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:bg-slate-50"
               />
             </div>
+
             <div class="space-y-2">
               <label class="text-sm font-semibold text-slate-800">Trade</label>
               <input
@@ -58,6 +64,7 @@
                 class="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-900 shadow-sm transition focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:bg-slate-50"
               />
             </div>
+
             <div class="space-y-2">
               <label class="text-sm font-semibold text-slate-800">Phone</label>
               <input
@@ -66,6 +73,7 @@
                 class="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-900 shadow-sm transition focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:bg-slate-50"
               />
             </div>
+
             <div class="space-y-2">
               <label class="text-sm font-semibold text-slate-800">Email</label>
               <input
@@ -74,6 +82,7 @@
                 class="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-900 shadow-sm transition focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:bg-slate-50"
               />
             </div>
+
             <div class="space-y-2">
               <label class="text-sm font-semibold text-slate-800">Service area</label>
               <input
@@ -82,6 +91,7 @@
                 class="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-900 shadow-sm transition focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:bg-slate-50"
               />
             </div>
+
             <div class="space-y-2">
               <label class="text-sm font-semibold text-slate-800">Payment terms</label>
               <input
@@ -90,6 +100,7 @@
                 class="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-900 shadow-sm transition focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:bg-slate-50"
               />
             </div>
+
             <div class="space-y-2 md:col-span-2">
               <label class="text-sm font-semibold text-slate-800">Warranty text</label>
               <textarea
