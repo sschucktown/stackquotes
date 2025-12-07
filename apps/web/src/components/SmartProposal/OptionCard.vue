@@ -9,10 +9,12 @@ const props = defineProps<{
   confidence: string;
   scope: string[];
   onCustomize?: () => void;
+  showAdvanced?: boolean;
 }>();
 
 const emit = defineEmits<{
   (e: "customize"): void;
+  (e: "advanced"): void;
 }>();
 
 const formatCurrency = (value: number) =>
@@ -27,7 +29,9 @@ const formatCurrency = (value: number) =>
     <div class="flex items-start justify-between gap-3">
       <div>
         <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">{{ label }}</p>
-        <p class="text-xs text-slate-500">{{ subtitle }}</p>
+        <p class="text-xs text-slate-500">
+          {{ optionKey === "good" ? "Essential option" : optionKey === "better" ? "Comfort option" : "Premium option" }}
+        </p>
         <transition
           enter-active-class="transition duration-150 ease-out"
           enter-from-class="opacity-0 translate-y-1"
@@ -46,7 +50,7 @@ const formatCurrency = (value: number) =>
       >
         <span
           :key="confidence"
-          class="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700 shadow-inner"
+          class="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700 shadow-inner"
         >
           {{ confidence }}
         </span>
@@ -78,7 +82,15 @@ const formatCurrency = (value: number) =>
         class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
         @click="emit('customize')"
       >
-        Customize
+        Customize this option
+      </button>
+      <button
+        v-if="showAdvanced"
+        type="button"
+        class="ml-auto text-[11px] text-slate-400 underline-offset-4 hover:text-slate-600 hover:underline"
+        @click="emit('advanced')"
+      >
+        Advanced (optional)
       </button>
     </div>
   </div>

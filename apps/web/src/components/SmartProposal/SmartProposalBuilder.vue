@@ -7,8 +7,6 @@ import UpgradeDrawer from "./UpgradeDrawer.vue";
 import { useSmartProposalPrototype, type OptionKey } from "@/stores/smartProposalPrototype";
 
 const router = useRouter();
-const simpleMode = ref(true);
-
 const {
   state,
   applyUpgrade,
@@ -73,6 +71,10 @@ const sendProposal = () => {
 <template>
   <div class="min-h-screen bg-slate-50 text-slate-900">
     <div class="mx-auto flex max-w-5xl flex-col gap-4 px-4 pb-28 pt-6 sm:px-6 lg:px-8">
+      <div class="mb-3 inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-[11px] text-slate-600">
+        <span class="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+        <span>Simple Mode is on. Advanced pricing tools are hidden to keep things easy.</span>
+      </div>
       <header class="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm sm:px-6 sm:py-5">
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div class="flex items-center gap-3">
@@ -89,23 +91,17 @@ const sendProposal = () => {
               <p class="text-sm text-slate-500">We set everything up. You keep it simple.</p>
             </div>
           </div>
-          <div class="flex items-center gap-3">
-            <label class="flex items-center gap-2 text-xs font-semibold text-slate-700">
-              <input v-model="simpleMode" type="checkbox" class="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500" />
-              Simple Mode
-            </label>
-            <span class="rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 shadow-inner">
-              Prototype only
-            </span>
-          </div>
+          <span class="rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 shadow-inner">
+            Prototype only
+          </span>
         </div>
       </header>
 
       <section class="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm sm:px-6 sm:py-5">
         <div class="flex items-start justify-between gap-3">
           <div>
-            <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">1. Confirm Details</p>
-            <h2 class="text-lg font-semibold text-slate-900">We captured the visit notes for you.</h2>
+            <h2 class="text-sm font-semibold text-slate-800 uppercase tracking-wide">1. Confirm details</h2>
+            <p class="text-xs text-slate-500">We pulled this in from your visit so you don’t have to retype anything.</p>
           </div>
           <button
             type="button"
@@ -138,8 +134,8 @@ const sendProposal = () => {
       <section class="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm sm:px-6 sm:py-5">
         <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">2. Review your options</p>
-            <p class="text-sm text-slate-600">Good, Better, Best are already configured. Customize only if needed.</p>
+            <h2 class="text-sm font-semibold text-slate-800 uppercase tracking-wide">2. Review your options</h2>
+            <p class="text-xs text-slate-500">Good, Better, Best are auto-built for you. You can tweak, but you don’t have to.</p>
           </div>
           <div class="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm">
             <span class="text-[11px] uppercase tracking-[0.08em] text-slate-500">Preview option</span>
@@ -182,7 +178,8 @@ const sendProposal = () => {
       </section>
 
       <section class="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm sm:px-6 sm:py-5">
-        <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">3. Client summary</p>
+        <h2 class="text-sm font-semibold text-slate-800 uppercase tracking-wide">3. Client copy</h2>
+        <p class="text-xs text-slate-500">This is what your client will read. We’ll keep it updated unless you change it.</p>
         <SummarySection
           :summary="summaryText"
           :manual="state.summary.manual"
@@ -194,10 +191,17 @@ const sendProposal = () => {
       <section class="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm sm:px-6 sm:py-5">
         <div class="flex items-start justify-between gap-3">
           <div>
-            <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">4. Deposit preview</p>
+            <h2 class="text-sm font-semibold text-slate-800 uppercase tracking-wide">4. Deposit preview</h2>
+            <p class="text-xs text-slate-500">Clients only see the final number here. You can adjust the approach anytime.</p>
             <p class="text-sm text-slate-600">
               Client sees {{ state.deposit.mode === "percent" ? state.deposit.percent + "%" : state.deposit.mode === "flat" ? formatCurrency(state.deposit.flat) : "no" }}
               (~{{ formatCurrency(depositPreview) }}) due at approval.
+            </p>
+            <p class="text-xs text-slate-500">
+              You’re just picking how you like to structure deposits. Clients will only see the final number.
+            </p>
+            <p v-if="state.deposit.mode === 'percent'" class="text-xs text-slate-500">
+              {{ state.deposit.percent }}% of Better is about {{ formatCurrency(depositPreview) }}.
             </p>
           </div>
           <div class="flex items-center gap-2">
@@ -230,7 +234,9 @@ const sendProposal = () => {
         </div>
       </section>
 
-      <p class="text-xs text-slate-500">Everything autosaves. Nothing here affects your QuickQuote. You can’t break the math.</p>
+      <p class="text-[11px] text-slate-500">
+        Everything autosaves. You can’t break the math or send anything by accident.
+      </p>
     </div>
 
     <footer class="fixed bottom-0 left-0 right-0 border-t border-slate-200 bg-white/95 px-4 py-3 shadow-[0_-4px_14px_rgba(15,23,42,0.06)] backdrop-blur sm:px-6 lg:px-8">
@@ -257,6 +263,9 @@ const sendProposal = () => {
           Send Proposal
         </button>
       </div>
+      <p class="mt-2 text-center text-[11px] text-slate-500">
+        You’ll confirm the client and message before anything goes out.
+      </p>
     </footer>
 
     <UpgradeDrawer

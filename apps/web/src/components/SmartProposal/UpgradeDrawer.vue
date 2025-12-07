@@ -32,7 +32,7 @@ const formatCurrency = (value: number) =>
         <div class="flex items-start justify-between gap-3 border-b border-slate-200 px-4 py-4">
           <div>
             <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Customize {{ optionLabel || optionKey }}</p>
-            <p class="text-sm text-slate-600">Toggle upgrades. Pricing updates automatically.</p>
+            <p class="text-xs text-slate-500">Turn upgrades on or off. Pricing and client-facing text update automatically.</p>
             <p class="text-lg font-semibold text-slate-900">{{ formatCurrency(price) }}</p>
           </div>
           <button
@@ -52,7 +52,9 @@ const formatCurrency = (value: number) =>
           >
             <div class="space-y-1">
               <p class="text-sm font-semibold text-slate-900">{{ upgrade.label }}</p>
-              <p class="text-xs text-slate-600">{{ upgrade.desc }}</p>
+              <p class="text-xs text-slate-500">
+                {{ upgrade.desc || "Example: Upgrade to composite decking for less maintenance." }}
+              </p>
             </div>
             <button
               type="button"
