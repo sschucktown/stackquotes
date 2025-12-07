@@ -87,6 +87,10 @@ const router = createRouter({
       redirect: "/prototype/quickquote-client-preview",
     },
     {
+      path: "/app/prototypes/quickquote/templates",
+      redirect: "/prototype/quickquote/templates",
+    },
+    {
       path: "/app/prototypes/hq",
       redirect: "/prototype/hq",
     },
@@ -104,6 +108,12 @@ const router = createRouter({
       path: "/prototype/quickquote",
       name: "QuickQuotePortalPrototypePublic",
       component: () => import("@/prototype/quickquote/QuickQuotePortal.vue"),
+      meta: { public: true, allowAuthenticated: true },
+    },
+    {
+      path: "/prototype/quickquote/templates",
+      name: "QuickQuoteTemplateSelectorPrototypePublic",
+      component: () => import("@/prototype/quickquote/JobTemplateSelector.vue"),
       meta: { public: true, allowAuthenticated: true },
     },
     {
