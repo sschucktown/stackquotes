@@ -141,6 +141,18 @@ const router = createRouter({
       meta: { public: true, allowAuthenticated: true },
     },
     {
+      path: "/prototype/smartproposal/builder",
+      name: "SmartProposalBuilderPrototype",
+      component: () => import("@/prototype/smartproposal/SmartProposalBuilder.vue"),
+      meta: { public: true, allowAuthenticated: true },
+    },
+    {
+      path: "/prototype/smartproposal/client",
+      name: "SmartProposalClientPreview",
+      component: () => import("@/prototype/smartproposal/SmartProposalClientView.vue"),
+      meta: { public: true, allowAuthenticated: true },
+    },
+    {
       path: "/quickquote/:id/preview",
       name: "QuickQuoteClientPreview",
       component: () => import("@/prototype/quickquote/QuickQuoteClientView.vue"),
