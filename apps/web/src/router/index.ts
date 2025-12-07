@@ -95,6 +95,14 @@ const router = createRouter({
       redirect: (to) => `/quickquote/${to.params.id}/preview`,
     },
     {
+      path: "/app/prototypes/visit",
+      redirect: "/prototype/visit",
+    },
+    {
+      path: "/app/prototypes/visit-summary",
+      redirect: "/prototype/visit-summary",
+    },
+    {
       path: "/app/prototypes/hq",
       redirect: "/prototype/hq",
     },
@@ -136,6 +144,18 @@ const router = createRouter({
       path: "/quickquote/:id/preview",
       name: "QuickQuoteClientPreview",
       component: () => import("@/prototype/quickquote/QuickQuoteClientView.vue"),
+      meta: { public: true, allowAuthenticated: true },
+    },
+    {
+      path: "/prototype/visit",
+      name: "VisitModePrototype",
+      component: () => import("@/prototype/visit/VisitMode.vue"),
+      meta: { public: true, allowAuthenticated: true },
+    },
+    {
+      path: "/prototype/visit-summary",
+      name: "VisitSummaryPrototype",
+      component: () => import("@/prototype/visit/VisitSummary.vue"),
       meta: { public: true, allowAuthenticated: true },
     },
     {
