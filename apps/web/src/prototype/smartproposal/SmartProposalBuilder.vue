@@ -1,181 +1,153 @@
 <script setup lang="ts">
-import { computed, reactive, ref, toRef } from "vue";
+import { computed, reactive, ref } from "vue";
 import { useRouter } from "vue-router";
-import AddLineItemModal from "./AddLineItemModal.vue";
-import DepositPreviewCard from "./DepositPreviewCard.vue";
-import OptionCard from "./OptionCard.vue";
-import SummarySection from "./SummarySection.vue";
-import { useOptionTotals } from "./useOptionTotals";
+import AdvancedEditor from "./AdvancedEditor.vue";
+import ProposalCard from "./ProposalCard.vue";
+import UpgradeSelector from "./UpgradeSelector.vue";
+import { buildClientCopy } from "./ClientCopyGenerator";
+import { buildProposalFromTemplate } from "./SummaryGenerator";
 import type { LineItem, OptionKey, ProposalOption } from "./types";
 
 const router = useRouter();
 
-const lead = reactive({
-  name: "Sarah Thompson",
-  email: "sarah.t@example.com",
-  phone: "(415) 555-2109",
+const template = reactive({
+  client: {
+    name: "Sarah Thompson",
+    email: "sarah.t@example.com",
+    phone: "(415) 555-2109",
+  },
   location: "San Mateo, CA",
   jobType: "Deck",
   subtype: "Composite surface",
-  visitNotes: "Walked the yard, confirmed access on north side. Client prefers hidden fasteners.",
+  visitNotes: "Walked the yard, confirmed access on north side. Prefers hidden fasteners.",
   quickQuoteRange: "$18,600 - $22,400",
+  baseScope: ["Structural framing", "Standard rails", "Stairs + landings"],
+  baseLineItems: [
+    { id: "b1", name: "Framing & footings", cost: 4200, price: 7600, desc: "Pressure-treated structure" },
+    { id: "b2", name: "Standard railing", cost: 1100, price: 1800, desc: "Code-compliant rail system" },
+    { id: "b3", name: "Stairs & landings", cost: 900, price: 1600, desc: "Two flights with landings" },
+  ] as LineItem[],
+  upgrades: [
+    {
+      id: "up1",
+      label: "Composite surface",
+      desc: "Low-maintenance boards with hidden fasteners.",
+      appliesTo: ["better", "best"],
+      scopeAdd: ["Composite decking surface", "Hidden fasteners"],
+      lineItems: [
+        { id: "up1a", name: "Composite decking", cost: 1800, price: 3400, desc: "Capped composite boards" },
+        { id: "up1b", name: "Hidden fasteners", cost: 280, price: 640, desc: "Clean finish" },
+      ],
+    },
+    {
+      id: "up2",
+      label: "Aluminum railing",
+      desc: "Sleek black rail for durability.",
+      appliesTo: ["better", "best"],
+      scopeAdd: ["Powder-coated aluminum railing"],
+      lineItems: [{ id: "up2a", name: "Aluminum rail kit", cost: 900, price: 1700, desc: "Black finish" }],
+    },
+    {
+      id: "up3",
+      label: "Lighting package",
+      desc: "Stair + perimeter lights for safety.",
+      appliesTo: ["best"],
+      scopeAdd: ["Integrated stair lighting"],
+      lineItems: [{ id: "up3a", name: "Lighting kit", cost: 320, price: 820, desc: "Warm white LEDs" }],
+    },
+    {
+      id: "up4",
+      label: "Premium glass rail",
+      desc: "Frameless glass for clear views.",
+      appliesTo: ["best"],
+      scopeAdd: ["Frameless glass railing"],
+      lineItems: [{ id: "up4a", name: "Glass panels", cost: 1800, price: 3600, desc: "Tempered glass system" }],
+    },
+  ],
+  deposit: { mode: "percent", percent: 15, flat: 0 },
 });
 
-const options = reactive<Record<OptionKey, ProposalOption>>({
-  good: {
-    label: "Good",
-    items: [
-      { id: "g1", name: "Basic Decking", cost: 2400, price: 4200, desc: "Pressure-treated framing and surface", included: true, category: "structure" },
-      { id: "g2", name: "Standard Railing", cost: 800, price: 1400, desc: "Code-compliant wood railing", included: true, category: "hardware" },
-    ],
-  },
-  better: {
-    label: "Better",
-    items: [
-      { id: "b1", name: "Composite Decking", cost: 3800, price: 6200, desc: "Low-maintenance surface upgrade", included: true, category: "surface" },
-      { id: "b2", name: "Aluminum Railing", cost: 1100, price: 1900, desc: "Powder-coated black rail", included: true, category: "hardware" },
-    ],
-  },
-  best: {
-    label: "Best",
-    items: [
-      { id: "bs1", name: "Premium Composite Decking", cost: 5400, price: 8600, desc: "Luxury capped boards with hidden fasteners", included: true, category: "surface" },
-      { id: "bs2", name: "Glass Railing", cost: 2600, price: 4200, desc: "Frameless glass railing system", included: true, category: "upgrade" },
-    ],
-  },
+const selectedUpgrades = reactive<Record<OptionKey, string[]>>({
+  good: template.upgrades.filter((u) => u.appliesTo?.includes("good")).map((u) => u.id),
+  better: template.upgrades.filter((u) => u.appliesTo?.includes("better")).map((u) => u.id),
+  best: template.upgrades.filter((u) => u.appliesTo?.includes("best")).map((u) => u.id),
 });
 
-const summary = ref(
-  "Here are three tailored options for your project. Each includes the essentials, with upgrades shown in Better and Best."
-);
-const upgradeNotes = reactive([
-  { id: "up1", label: "Composite upgrade", enabled: true },
-  { id: "up2", label: "Railing upgrade", enabled: true },
-  { id: "up3", label: "Footing upgrade", enabled: false },
-]);
+const proposal = computed(() => buildProposalFromTemplate(template, selectedUpgrades));
+const clientCopy = computed(() => buildClientCopy(proposal.value.options));
 
-const depositMode = ref<"percent" | "flat" | "none">("percent");
-const depositPercent = ref(15);
-const depositFlat = ref(1200);
+const upgradeModalOpen = ref(false);
+const activeUpgradeOption = ref<OptionKey | null>(null);
 
-const addModalOpen = ref(false);
+const advancedOpen = ref(false);
+const advancedOption = ref<ProposalOption | null>(null);
+
 const primaryPreviewOption = ref<OptionKey>("better");
 
-const accents: Record<OptionKey, { pill: string; ring: string; text: string; chip: string }> = {
-  good: {
-    pill: "bg-slate-800",
-    ring: "border-slate-200",
-    text: "text-slate-700",
-    chip: "bg-slate-100 text-slate-700",
-  },
-  better: {
-    pill: "bg-blue-600",
-    ring: "border-blue-100",
-    text: "text-blue-700",
-    chip: "bg-blue-50 text-blue-700",
-  },
-  best: {
-    pill: "bg-emerald-600",
-    ring: "border-emerald-100",
-    text: "text-emerald-700",
-    chip: "bg-emerald-50 text-emerald-700",
-  },
+const accents: Record<OptionKey, string> = {
+  good: "bg-slate-800",
+  better: "bg-blue-600",
+  best: "bg-emerald-600",
 };
 
-const optionTotals = {
-  good: useOptionTotals(toRef(options, "good")),
-  better: useOptionTotals(toRef(options, "better")),
-  best: useOptionTotals(toRef(options, "best")),
+const formatCurrency = (value: number) =>
+  value.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+
+const openUpgradeModal = (option: OptionKey) => {
+  activeUpgradeOption.value = option;
+  upgradeModalOpen.value = true;
 };
 
-const regenerateSummary = () => {
-  summary.value =
-    "Here are three tailored options for your project. Good covers the essentials, Better adds durability, and Best unlocks premium finishes with higher protection.";
+const handleToggleUpgrade = (payload: { option: OptionKey; id: string; value: boolean }) => {
+  const list = selectedUpgrades[payload.option];
+  const exists = list.includes(payload.id);
+  if (payload.value && !exists) {
+    list.push(payload.id);
+  }
+  if (!payload.value && exists) {
+    const idx = list.indexOf(payload.id);
+    if (idx >= 0) list.splice(idx, 1);
+  }
 };
 
-const updateLabel = (optionKey: OptionKey, value: string) => {
-  options[optionKey].label = value || options[optionKey].label;
+const openAdvanced = (optionKey: OptionKey) => {
+  const option = proposal.value.options[optionKey];
+  advancedOption.value = {
+    label: option.label,
+    items: option.items,
+  };
+  advancedOpen.value = true;
 };
 
-const updateItem = (optionKey: OptionKey, payload: { id: string; field: keyof LineItem; value: unknown }) => {
-  const target = options[optionKey].items.find((item) => item.id === payload.id);
-  if (!target) return;
-  // @ts-expect-error dynamic assignment
-  target[payload.field] = payload.value as never;
+const closeAdvanced = () => {
+  advancedOpen.value = false;
 };
-
-const toggleItem = (optionKey: OptionKey, payload: { id: string; value: boolean }) => {
-  const target = options[optionKey].items.find((item) => item.id === payload.id);
-  if (!target) return;
-  target.included = payload.value;
-};
-
-const removeItem = (optionKey: OptionKey, id: string) => {
-  const list = options[optionKey].items;
-  const idx = list.findIndex((item) => item.id === id);
-  if (idx >= 0) list.splice(idx, 1);
-};
-
-const handleAddFromModal = (payload: { target: OptionKey | "all"; item: LineItem }) => {
-  const targets: OptionKey[] = payload.target === "all" ? ["good", "better", "best"] : [payload.target];
-  targets.forEach((key) => {
-    const clone: LineItem = {
-      ...payload.item,
-      id: `${key}-${payload.item.id}`,
-      included: true,
-    };
-    options[key].items.push(clone);
-  });
-};
-
-const summaryPayload = computed(() => ({
-  options: (Object.keys(options) as OptionKey[]).map((key) => ({
-    key,
-    label: options[key].label,
-    totalPrice: optionTotals[key].totalPrice.value,
-    items: options[key].items.filter((item) => item.included !== false),
-  })),
-  deposit: {
-    mode: depositMode.value,
-    percent: depositPercent.value,
-    flat: depositFlat.value,
-  },
-  summary: summary.value,
-  upgrades: upgradeNotes.filter((note) => note.enabled).map((note) => note.label),
-}));
-
-const previewBaseAmount = computed(
-  () => optionTotals[primaryPreviewOption.value].totalPrice.value || optionTotals.better.totalPrice.value
-);
 
 const previewClientView = () => {
-  const payload = summaryPayload.value;
+  const payload = {
+    proposal: proposal.value,
+    copy: clientCopy.value,
+    primary: primaryPreviewOption.value,
+  };
   const encoded = encodeURIComponent(JSON.stringify(payload));
   router.push({
     path: "/prototype/smartproposal/client",
-    query: {
-      option: primaryPreviewOption.value,
-      payload: encoded,
-    },
-  });
-};
-
-const sendProposal = () => {
-  console.log("[SmartProposal] prototype send", {
-    summary: summary.value,
-    options: summaryPayload.value.options,
-    deposit: summaryPayload.value.deposit,
+    query: { payload: encoded, option: primaryPreviewOption.value },
   });
 };
 
 const saveDraft = () => {
-  console.log("[SmartProposal] prototype save draft", summaryPayload.value);
+  console.log("[SmartProposal] Save draft (prototype)", { proposal: proposal.value, copy: clientCopy.value });
+};
+
+const sendProposal = () => {
+  console.log("[SmartProposal] Send proposal (prototype)", { proposal: proposal.value, copy: clientCopy.value });
 };
 </script>
 
 <template>
   <div class="min-h-screen bg-slate-50 text-slate-900">
-    <div class="mx-auto flex max-w-6xl flex-col gap-4 px-4 pb-28 pt-6 sm:px-6 lg:px-8">
+    <div class="mx-auto flex max-w-5xl flex-col gap-4 px-4 pb-28 pt-6 sm:px-6 lg:px-8">
       <header
         class="rounded-2xl border border-slate-200/80 bg-white px-4 py-4 shadow-sm transition hover:shadow-md sm:px-6 sm:py-5"
       >
@@ -198,11 +170,15 @@ const saveDraft = () => {
                   Prototype Only
                 </span>
               </div>
-              <p class="text-sm text-slate-500">Build your 3-option proposal. Clients choose what fits best.</p>
+              <p class="text-sm text-slate-500">Simple toggles. We handle the math behind the scenes.</p>
             </div>
           </div>
-          <div class="flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 shadow-inner">
-            Tesla-style Good / Better / Best
+          <div class="flex flex-col items-end gap-1 text-right">
+            <span class="text-sm font-semibold text-slate-900">{{ template.client.name }}</span>
+            <p class="text-xs text-slate-500">{{ template.jobType }} · {{ template.subtype }}</p>
+            <span class="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700 shadow-inner">
+              QuickQuote: {{ template.quickQuoteRange }}
+            </span>
           </div>
         </div>
       </header>
@@ -210,112 +186,108 @@ const saveDraft = () => {
       <section
         class="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm transition hover:shadow-md sm:px-6 sm:py-5"
       >
-        <div class="mb-3 flex items-center justify-between gap-3">
-          <div>
-            <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Lead overview</p>
-            <h2 class="text-lg font-semibold text-slate-900">{{ lead.name }} - {{ lead.jobType }} ({{ lead.subtype }})</h2>
-            <p class="text-xs text-slate-500">Visit notes: {{ lead.visitNotes }}</p>
-          </div>
-          <div class="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700 shadow-inner">
-            QuickQuote: {{ lead.quickQuoteRange }}
-          </div>
-        </div>
-        <div class="grid gap-4 md:grid-cols-2">
+        <div class="grid gap-4 sm:grid-cols-2">
           <div class="space-y-3">
             <div class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm shadow-inner">
               <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Client</p>
-              <p class="text-sm font-semibold text-slate-900">{{ lead.name }}</p>
-              <p class="text-sm text-slate-600">{{ lead.email }}</p>
-              <p class="text-sm text-slate-600">{{ lead.phone }}</p>
+              <p class="text-sm font-semibold text-slate-900">{{ template.client.name }}</p>
+              <p class="text-sm text-slate-600">{{ template.client.email }}</p>
+              <p class="text-sm text-slate-600">{{ template.client.phone }}</p>
             </div>
             <div class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm shadow-inner">
               <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Location</p>
-              <p class="text-sm font-medium text-slate-800">{{ lead.location }}</p>
+              <p class="text-sm font-medium text-slate-800">{{ template.location }}</p>
             </div>
           </div>
           <div class="space-y-3">
             <div class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm shadow-inner">
-              <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Job type</p>
-              <p class="text-sm font-semibold text-slate-900">{{ lead.jobType }} - {{ lead.subtype }}</p>
+              <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Visit notes</p>
+              <p class="text-sm text-slate-700">{{ template.visitNotes }}</p>
             </div>
             <div class="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-2 text-sm shadow-inner">
-              <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Visit notes</p>
-              <p class="text-sm text-slate-700">{{ lead.visitNotes }}</p>
+              <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Base scope</p>
+              <ul class="mt-1 space-y-1 text-sm text-slate-800">
+                <li v-for="item in template.baseScope" :key="item" class="flex items-start gap-2">
+                  <span class="mt-1 h-1.5 w-1.5 rounded-full bg-slate-300"></span>
+                  <span>{{ item }}</span>
+                </li>
+              </ul>
             </div>
           </div>
         </div>
       </section>
 
+      <div class="flex items-center justify-between gap-3">
+        <div class="text-sm text-slate-600">
+          Toggle upgrades per option. Pricing and margins stay hidden unless you open the advanced editor.
+        </div>
+        <div class="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm">
+          <span class="text-[11px] uppercase tracking-[0.08em] text-slate-500">Preview option</span>
+          <div class="flex items-center gap-1">
+            <button
+              v-for="key in ['good','better','best']"
+              :key="key"
+              type="button"
+              class="rounded-full px-2 py-0.5 capitalize transition"
+              :class="primaryPreviewOption === key ? 'bg-slate-900 text-white shadow' : 'bg-white text-slate-700 border border-slate-200'"
+              @click="primaryPreviewOption = key as OptionKey"
+            >
+              {{ key }}
+            </button>
+          </div>
+        </div>
+      </div>
+
       <div class="grid gap-4 lg:grid-cols-3">
-        <OptionCard
+        <ProposalCard
           option-key="good"
-          :option="options.good"
+          :option="proposal.options.good"
           :accent="accents.good"
-          @update:label="(val) => updateLabel('good', val)"
-          @update:item="(payload) => updateItem('good', payload)"
-          @toggle="(payload) => toggleItem('good', payload)"
-          @remove="(id) => removeItem('good', id)"
-          @add-line-item="() => (addModalOpen.value = true)"
+          @edit="openUpgradeModal('good')"
+          @advanced="openAdvanced('good')"
         />
-        <OptionCard
+        <ProposalCard
           option-key="better"
-          :option="options.better"
+          :option="proposal.options.better"
           :accent="accents.better"
-          @update:label="(val) => updateLabel('better', val)"
-          @update:item="(payload) => updateItem('better', payload)"
-          @toggle="(payload) => toggleItem('better', payload)"
-          @remove="(id) => removeItem('better', id)"
-          @add-line-item="() => (addModalOpen.value = true)"
+          @edit="openUpgradeModal('better')"
+          @advanced="openAdvanced('better')"
         />
-        <OptionCard
+        <ProposalCard
           option-key="best"
-          :option="options.best"
+          :option="proposal.options.best"
           :accent="accents.best"
-          @update:label="(val) => updateLabel('best', val)"
-          @update:item="(payload) => updateItem('best', payload)"
-          @toggle="(payload) => toggleItem('best', payload)"
-          @remove="(id) => removeItem('best', id)"
-          @add-line-item="() => (addModalOpen.value = true)"
+          @edit="openUpgradeModal('best')"
+          @advanced="openAdvanced('best')"
         />
       </div>
 
-      <SummarySection
-        :summary="summary"
-        :upgrade-notes="upgradeNotes"
-        @update:summary="(val) => (summary.value = val)"
-        @regenerate="regenerateSummary"
-        @toggle-upgrade="({ id, value }) => { const target = upgradeNotes.find((note) => note.id === id); if (target) target.enabled = value; }"
-      />
-
-      <DepositPreviewCard
-        :deposit-mode="depositMode"
-        :deposit-percent="depositPercent"
-        :deposit-flat="depositFlat"
-        :base-amount="previewBaseAmount"
-      />
+      <section class="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm sm:px-6 sm:py-5">
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Client copy</p>
+            <h3 class="text-lg font-semibold text-slate-900">{{ clientCopy.headline }}</h3>
+            <p class="text-sm text-slate-600">{{ clientCopy.paragraph }}</p>
+          </div>
+          <div class="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700">
+            Deposit preview: {{ formatCurrency(proposal.deposit.amount) }}
+          </div>
+        </div>
+        <ul class="mt-3 space-y-2 text-sm text-slate-800">
+          <li v-for="item in clientCopy.bullets" :key="item" class="flex items-start gap-2">
+            <span class="mt-1 h-1.5 w-1.5 rounded-full bg-slate-300"></span>
+            <span>{{ item }}</span>
+          </li>
+        </ul>
+      </section>
     </div>
 
     <footer
       class="fixed bottom-0 left-0 right-0 border-t border-slate-200 bg-white/95 px-4 py-3 shadow-[0_-4px_14px_rgba(15,23,42,0.06)] backdrop-blur sm:px-6 lg:px-8"
     >
-      <div class="mx-auto flex max-w-6xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div class="flex flex-wrap items-center gap-2 text-xs text-slate-500">
-          <span>Prototype only. No real sends.</span>
-          <div class="flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1">
-            <span class="text-[11px] font-semibold text-slate-700">Preview option</span>
-            <div class="flex items-center gap-1">
-              <button
-                v-for="key in ['good', 'better', 'best']"
-                :key="key"
-                type="button"
-                class="rounded-full px-2 py-0.5 text-xs font-semibold capitalize transition"
-                :class="primaryPreviewOption === key ? 'bg-slate-900 text-white shadow' : 'bg-white text-slate-700 border border-slate-200'"
-                @click="primaryPreviewOption.value = key as OptionKey"
-              >
-                {{ key }}
-              </button>
-            </div>
-          </div>
+      <div class="mx-auto flex max-w-5xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div class="space-y-0.5 text-xs text-slate-500">
+          <p>Prototype only. Pricing and margins are handled automatically.</p>
         </div>
         <div class="flex flex-wrap items-center gap-2">
           <button
@@ -343,6 +315,15 @@ const saveDraft = () => {
       </div>
     </footer>
 
-    <AddLineItemModal :open="addModalOpen" @close="addModalOpen.value = false" @add="handleAddFromModal" />
+    <UpgradeSelector
+      :open="upgradeModalOpen"
+      :option-key="activeUpgradeOption"
+      :upgrades="template.upgrades"
+      :selected="activeUpgradeOption ? selectedUpgrades[activeUpgradeOption] : []"
+      @close="upgradeModalOpen = false"
+      @toggle="handleToggleUpgrade"
+    />
+
+    <AdvancedEditor :open="advancedOpen" :option="advancedOption" @close="closeAdvanced" />
   </div>
 </template>

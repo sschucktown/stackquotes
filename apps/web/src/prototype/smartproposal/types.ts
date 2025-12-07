@@ -13,6 +13,10 @@ export type LineItem = {
 export type ProposalOption = {
   label: string;
   items: LineItem[];
+  price?: number;
+  cost?: number;
+  marginPct?: number;
+  scopeSummary?: string[];
 };
 
 export type OptionTotals = {

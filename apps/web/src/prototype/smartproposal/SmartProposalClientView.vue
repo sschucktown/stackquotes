@@ -1,9 +1,7 @@
 <script setup lang="ts">
-import { computed, reactive, ref } from "vue";
+import { computed, reactive } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import DepositPreviewCard from "./DepositPreviewCard.vue";
-import { useOptionTotals } from "./useOptionTotals";
-import type { LineItem, OptionKey, ProposalOption } from "./types";
+import type { OptionKey } from "./types";
 
 const route = useRoute();
 const router = useRouter();
@@ -19,79 +17,35 @@ const decodePayload = () => {
   }
 };
 
-const fallbackOptions: Record<OptionKey, ProposalOption> = reactive({
-  good: {
-    label: "Good",
-    items: [
-      { id: "g1", name: "Basic Decking", cost: 2400, price: 4200, desc: "", included: true },
-      { id: "g2", name: "Standard Railing", cost: 800, price: 1400, desc: "", included: true },
-    ],
+const fallback = reactive({
+  proposal: {
+    options: {
+      good: { label: "Good", price: 18600, scopeSummary: ["Core framing", "Standard rails"], lineItems: [] },
+      better: { label: "Better", price: 21400, scopeSummary: ["Composite surface", "Aluminum rails"], lineItems: [] },
+      best: { label: "Best", price: 24800, scopeSummary: ["Premium surface", "Glass rail"], lineItems: [] },
+    },
+    deposit: { mode: "percent", percent: 15, amount: 3210 },
+    meta: { clientName: "Client", job: "Project", quickQuoteRange: "$18,600 - $22,400" },
   },
-  better: {
-    label: "Better",
-    items: [
-      { id: "b1", name: "Composite Decking", cost: 3800, price: 6200, desc: "", included: true },
-      { id: "b2", name: "Aluminum Railing", cost: 1100, price: 1900, desc: "", included: true },
-    ],
+  copy: {
+    headline: "Three clear options tailored to your project.",
+    paragraph: "Good covers essentials, Better adds durability, Best delivers premium finishes.",
+    bullets: ["Good includes the essentials.", "Better adds upgrades.", "Best unlocks the premium package."],
   },
-  best: {
-    label: "Best",
-    items: [
-      { id: "bs1", name: "Premium Composite Decking", cost: 5400, price: 8600, desc: "", included: true },
-      { id: "bs2", name: "Glass Railing", cost: 2600, price: 4200, desc: "", included: true },
-    ],
-  },
+  primary: "better",
 });
 
-const decoded = decodePayload();
-const parsedOptions = (() => {
-  if (!decoded?.options) return fallbackOptions;
-  const record: Record<OptionKey, ProposalOption> = {
-    good: { label: "Good", items: [] },
-    better: { label: "Better", items: [] },
-    best: { label: "Best", items: [] },
-  };
-  (decoded.options as { key: OptionKey; label: string; items: LineItem[] }[]).forEach((opt) => {
-    if (record[opt.key]) {
-      record[opt.key].label = opt.label || record[opt.key].label;
-      record[opt.key].items = opt.items ?? [];
-    }
-  });
-  return reactive(record);
-})();
+const decoded = decodePayload() || fallback;
 
 const selectedOption = computed<OptionKey>(
-  () => (["good", "better", "best"] as OptionKey[]).find((key) => route.query.option === key) || "better"
+  () => (["good", "better", "best"] as OptionKey[]).find((key) => route.query.option === key) || decoded.primary || "better"
 );
-
-const summary = computed(
-  () =>
-    decoded?.summary ||
-    "Here are three tailored options for your project. Each includes the essentials, with upgrades shown in Better and Best."
-);
-const upgrades = computed<string[]>(() => decoded?.upgrades || ["Composite upgrade", "Railing upgrade"]);
-const deposit = computed(() => decoded?.deposit || { mode: "percent", percent: 15, flat: 1200 });
-
-const expanded = reactive<Record<OptionKey, boolean>>({
-  good: true,
-  better: true,
-  best: true,
-});
-
-const totals = {
-  good: useOptionTotals(computed(() => parsedOptions.good)),
-  better: useOptionTotals(computed(() => parsedOptions.better)),
-  best: useOptionTotals(computed(() => parsedOptions.best)),
-};
 
 const formatCurrency = (value: number) =>
   value.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 
-const approveProposal = (optionKey: OptionKey) => {
-  console.log("[SmartProposal] client approve prototype", {
-    option: optionKey,
-    total: totals[optionKey].totalPrice.value,
-  });
+const approve = (option: OptionKey) => {
+  console.log("[SmartProposal] Approve prototype", { option, total: decoded.proposal.options[option].price });
 };
 </script>
 
@@ -101,9 +55,9 @@ const approveProposal = (optionKey: OptionKey) => {
       <header class="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm sm:px-6 sm:py-5">
         <div class="flex items-start justify-between gap-4">
           <div>
-            <p class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">SmartProposal Preview</p>
+            <p class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Proposal Preview</p>
             <h1 class="text-xl font-semibold text-slate-900">Choose the option that fits best</h1>
-            <p class="text-sm text-slate-600">Client portal preview</p>
+            <p class="text-sm text-slate-600">{{ decoded.proposal.meta.clientName }} · {{ decoded.proposal.meta.job }}</p>
           </div>
           <div class="flex flex-col items-end gap-1">
             <span class="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 shadow-inner">Prototype only</span>
@@ -119,81 +73,73 @@ const approveProposal = (optionKey: OptionKey) => {
       </header>
 
       <section class="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm sm:px-6 sm:py-5">
-        <div class="flex items-start justify-between gap-3">
-          <div>
-            <p class="text-xs font-semibold uppercase tracking-[0.1em] text-slate-500">Proposal summary</p>
-            <p class="text-sm text-slate-700">{{ summary }}</p>
-            <div class="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-600">
-              <span class="font-semibold text-slate-700">Upgrades highlighted:</span>
-              <span
-                v-for="note in upgrades"
-                :key="note"
-                class="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-700"
-              >
-                {{ note }}
-              </span>
-            </div>
-          </div>
-          <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700 shadow-inner">
-            Selected: {{ selectedOption }}
-          </span>
+        <div class="flex flex-col gap-2">
+          <p class="text-xs font-semibold uppercase tracking-[0.1em] text-slate-500">Overview</p>
+          <h3 class="text-lg font-semibold text-slate-900">{{ decoded.copy.headline }}</h3>
+          <p class="text-sm text-slate-600">{{ decoded.copy.paragraph }}</p>
+          <ul class="mt-2 space-y-1 text-sm text-slate-800">
+            <li v-for="item in decoded.copy.bullets" :key="item" class="flex items-start gap-2">
+              <span class="mt-1 h-1.5 w-1.5 rounded-full bg-slate-300"></span>
+              <span>{{ item }}</span>
+            </li>
+          </ul>
         </div>
       </section>
 
       <div class="grid gap-4 lg:grid-cols-3">
         <div
-          v-for="key in ['good', 'better', 'best']"
+          v-for="key in ['good','better','best']"
           :key="key"
           class="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm transition hover:shadow-md sm:px-5"
         >
           <div class="flex items-start justify-between gap-2">
             <div>
-              <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">{{ key }}</p>
-              <h3 class="text-lg font-semibold text-slate-900">{{ parsedOptions[key as OptionKey].label }}</h3>
-              <p class="text-sm font-medium text-slate-900">{{ formatCurrency(totals[key as OptionKey].totalPrice.value) }}</p>
+              <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">{{ decoded.proposal.options[key as OptionKey].label }}</p>
+              <p class="text-2xl font-bold text-slate-900">{{ formatCurrency(decoded.proposal.options[key as OptionKey].price) }}</p>
               <p class="text-xs text-slate-500">
-                Margin {{ totals[key as OptionKey].marginPct.value }}%
+                Includes: {{ decoded.proposal.options[key as OptionKey].scopeSummary.slice(0, 2).join(", ") }}
               </p>
             </div>
-            <button
-              type="button"
-              class="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700"
-              @click="expanded[key as OptionKey] = !expanded[key as OptionKey]"
+            <span
+              class="rounded-full px-3 py-1 text-xs font-semibold text-white shadow-inner"
+              :class="key === 'good' ? 'bg-slate-800' : key === 'better' ? 'bg-blue-600' : 'bg-emerald-600'"
             >
-              {{ expanded[key as OptionKey] ? "Hide" : "Details" }}
-            </button>
+              {{ key }}
+            </span>
           </div>
-
-          <div v-if="expanded[key as OptionKey]" class="mt-3 space-y-2">
-            <div
-              v-for="item in parsedOptions[key as OptionKey].items"
-              :key="item.id"
-              class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 shadow-inner"
-            >
-              <div class="flex items-center justify-between">
-                <p class="font-semibold">{{ item.name }}</p>
-                <p class="text-sm font-semibold text-slate-900">{{ formatCurrency(Number(item.price) || 0) }}</p>
-              </div>
-              <p v-if="item.desc" class="text-xs text-slate-600">{{ item.desc }}</p>
-            </div>
+          <div class="mt-3 space-y-2 rounded-xl border border-slate-100 bg-slate-50 px-3 py-3 shadow-inner">
+            <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Scope highlights</p>
+            <ul class="space-y-1 text-sm text-slate-800">
+              <li
+                v-for="item in decoded.proposal.options[key as OptionKey].scopeSummary.slice(0, 4)"
+                :key="item"
+                class="flex items-start gap-2"
+              >
+                <span class="mt-1 h-1.5 w-1.5 rounded-full bg-slate-300"></span>
+                <span>{{ item }}</span>
+              </li>
+            </ul>
           </div>
-
           <button
             type="button"
             class="mt-4 inline-flex w-full items-center justify-center rounded-full border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700 shadow-sm transition hover:bg-emerald-100"
-            @click="approveProposal(key as OptionKey)"
+            @click="approve(key as OptionKey)"
           >
-            Approve {{ parsedOptions[key as OptionKey].label }}
+            Approve {{ decoded.proposal.options[key as OptionKey].label }}
           </button>
         </div>
       </div>
 
-      <DepositPreviewCard
-        :deposit-mode="deposit.mode"
-        :deposit-percent="deposit.percent"
-        :deposit-flat="deposit.flat"
-        :base-amount="totals[selectedOption].totalPrice.value"
-      />
+      <section class="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm sm:px-6 sm:py-5">
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Deposit</p>
+            <p class="text-lg font-semibold text-slate-900">{{ decoded.proposal.deposit.mode === "percent" ? decoded.proposal.deposit.percent + "% at approval" : "Flat deposit" }}</p>
+            <p class="text-sm text-slate-600">Estimated deposit: {{ formatCurrency(decoded.proposal.deposit.amount || 0) }}</p>
+          </div>
+          <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700 shadow-inner">Preview</span>
+        </div>
+      </section>
     </div>
   </div>
 </template>
