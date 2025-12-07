@@ -2,7 +2,7 @@
   <transition name="fade">
     <div
       v-if="visible"
-      class="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/50 px-4"
+      class="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/50 px-4 backdrop-blur-sm"
       @click.self="emitClose"
     >
       <transition name="slide-up">
@@ -25,7 +25,7 @@
           <div class="grid gap-6 p-6 md:grid-cols-[1.1fr,0.9fr]">
             <div class="space-y-4">
               <div class="rounded-2xl border border-slate-100 bg-slate-50/80 p-4">
-                <p class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Scope</p>
+                <p class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Included items</p>
                 <ul class="mt-2 space-y-2 text-sm text-slate-700">
                   <li v-for="item in optionData.scope" :key="item" class="flex items-start gap-2">
                     <span class="mt-1 h-2 w-2 rounded-full bg-emerald-500"></span>

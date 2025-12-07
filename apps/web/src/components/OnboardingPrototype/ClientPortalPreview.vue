@@ -119,12 +119,12 @@
 
               <div class="space-y-2 rounded-xl bg-white p-4 shadow-sm">
                 <button
-                  class="flex w-full items-center justify-center gap-2 rounded-full bg-emerald-600 px-4 py-3 text-sm font-semibold text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-emerald-700"
-                  @click="showAcceptModal = true"
-                >
-                  Accept Proposal
-                </button>
-                <button
+                class="flex w-full items-center justify-center gap-2 rounded-full bg-emerald-600 px-4 py-3 text-sm font-semibold text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-emerald-700"
+                @click="showAcceptModal = true"
+              >
+                Accept Proposal
+              </button>
+              <button
                   class="flex w-full items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-900 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-50"
                   @click="showPayModal = true"
                 >
@@ -165,11 +165,11 @@
               {{ showAcceptModal ? "Accept Proposal" : "Pay Deposit" }}
             </p>
             <h2 class="mt-2 text-xl font-bold text-slate-900">
-              {{ showAcceptModal ? "Proposal Accepted" : "Pay Deposit" }}
+              {{ showAcceptModal ? "Proposal accepted (demo mode)" : "Pay Deposit" }}
             </h2>
             <p class="mt-1 text-sm text-slate-600">
               <span v-if="showAcceptModal">Your contractor will be notified.</span>
-              <span v-else>Deposit (30%): {{ deposit }} — Demo only, payment not processed.</span>
+              <span v-else>Deposit (30%): {{ depositDisplay }} — This is a demo (no payment processed).</span>
             </p>
             <div class="mt-5 flex justify-end">
               <button
@@ -216,11 +216,7 @@ const optionScopes: Record<string, string[]> = {
 const defaultOptionScope = ["Custom scope details", "Selections and allowances", "Client-friendly explanations"];
 
 const bestPrice = computed(() => options.value[2]?.price ?? "$16,900");
-const deposit = computed(() => {
-  const numeric = parseFloat(bestPrice.value.replace(/[^0-9.]/g, ""));
-  if (!numeric) return "$5,070";
-  return "$" + Math.round(numeric * 0.3).toLocaleString();
-});
+const depositDisplay = computed(() => "$5,070");
 
 const closeModals = () => {
   showAcceptModal.value = false;

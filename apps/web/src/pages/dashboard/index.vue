@@ -58,6 +58,6 @@ const router = useRouter();
 const proposals = computed(() => store.proposals);
 
 const viewProposal = () => {
-  router.push("/onboarding/client-portal-preview");
+  router.push("/onboarding/clientpreview");
 };
 </script>

@@ -22,13 +22,16 @@
               >
                 Looks good →
               </button>
-              <button
-                v-else
-                class="inline-flex items-center justify-center gap-2 rounded-full bg-emerald-600 px-5 py-2 text-sm font-semibold text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-emerald-700"
-                @click="handleSave"
-              >
-                Save & Continue →
-              </button>
+              <transition name="fade" mode="out-in">
+                <button
+                  v-else
+                  key="save"
+                  class="inline-flex items-center justify-center gap-2 rounded-full bg-emerald-600 px-5 py-2 text-sm font-semibold text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-emerald-700"
+                  @click="handleSave"
+                >
+                  Save changes →
+                </button>
+              </transition>
               <button
                 class="inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-2 text-sm font-semibold text-slate-800 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-50"
                 @click="toggleEditing"
@@ -128,14 +131,14 @@ const toggleEditing = () => {
   }
 };
 
-const handleLooksGood = () => {
-  router.push("/onboarding/line-items");
-};
-
 const handleSave = () => {
   store.updateBusinessInfo({ ...form });
   store.setTrade(form.trade);
   editing.value = false;
+  router.push("/onboarding/line-items");
+};
+
+const handleLooksGood = () => {
   router.push("/onboarding/line-items");
 };
 </script>

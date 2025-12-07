@@ -89,7 +89,7 @@ let editHintTimeout: number | undefined;
 const activeScope = ref<string | null>(null);
 
 const goToClientPreview = () => {
-  router.push("/onboarding/client-portal-preview");
+  router.push("/onboarding/clientpreview");
 };
 
 const handleEditClick = () => {

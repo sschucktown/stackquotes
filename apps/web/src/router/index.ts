@@ -186,6 +186,7 @@ const router = createRouter({
       path: "/onboarding/client-portal-preview",
       name: "OnboardingPrototypeClientPreview",
       component: () => import("@/pages/onboarding/clientpreview.vue"),
+      alias: ["/onboarding/clientpreview"],
       meta: { public: true, allowAuthenticated: true, skipOnboardingGuard: true },
     },
     {

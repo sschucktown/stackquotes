@@ -94,11 +94,11 @@ const progressWidth = computed(() => `${Math.min(((currentIndex.value + 1) / mes
 const displayFileName = computed(() => store.uploadedFileName || "Old_Proposal.pdf");
 
 const findings = [
-  "Found your trade: Deck Builder",
   "Found 3 pricing items",
-  "Found your payment terms",
-  "Found your business location: Charleston, SC",
-  "Rebuilding your proposal template…",
+  "Detected trade: Deck Builder",
+  "Found payment terms",
+  "Extracted business location",
+  "Rebuilding your proposal…",
 ];
 const visibleFindings = ref<string[]>([]);
 
