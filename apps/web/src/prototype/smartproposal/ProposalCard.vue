@@ -9,6 +9,7 @@ const props = defineProps<{
     scopeSummary: string[];
   };
   accent: string;
+  premium?: boolean;
   onEdit?: () => void;
   onAdvanced?: () => void;
 }>();
@@ -23,12 +24,21 @@ const formatCurrency = (value: number) =>
 </script>
 
 <template>
-  <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:shadow-md sm:p-5">
+  <div
+    class="flex h-full flex-col rounded-2xl border border-slate-200 p-4 shadow-sm transition hover:shadow-md sm:p-5"
+    :class="premium ? 'bg-emerald-50/60' : 'bg-white'"
+  >
     <div class="flex items-start justify-between gap-3">
       <div>
         <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">{{ option.label }}</p>
-        <p class="text-2xl font-bold tracking-tight text-slate-900">{{ formatCurrency(option.price) }}</p>
-        <p class="text-sm text-slate-600">Client-facing total</p>
+        <p class="text-xs text-slate-500">
+          {{ optionKey === "good" ? "Essential Option" : optionKey === "better" ? "Comfort Option" : "Premium Option" }}
+        </p>
+        <div class="mt-1 flex items-center gap-2">
+          <p class="text-2xl font-bold tracking-tight text-slate-900">{{ formatCurrency(option.price) }}</p>
+          <span class="text-xs text-slate-400" title="Client-facing price. Internal margins are hidden.">ⓘ</span>
+        </div>
+        <p class="text-xs text-slate-400">Margin locked <span aria-label="Locked" title="Clients never see margin.">🔒</span></p>
       </div>
       <div class="flex flex-col items-end gap-2">
         <span class="rounded-full px-3 py-1 text-xs font-semibold text-white shadow-inner" :class="accent">
@@ -36,7 +46,7 @@ const formatCurrency = (value: number) =>
         </span>
         <button
           type="button"
-          class="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700 transition hover:bg-slate-100"
+          class="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
           @click="emit('edit')"
         >
           Edit options
@@ -60,16 +70,16 @@ const formatCurrency = (value: number) =>
         <div class="h-10 w-10 rounded-xl bg-slate-200/70"></div>
         <div>
           <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Preview</p>
-          <p class="text-sm font-semibold text-slate-800">Photo collage (coming soon)</p>
+          <p class="text-sm font-semibold text-slate-800 leading-relaxed">Photo collage (coming soon)</p>
         </div>
       </div>
       <div class="flex items-center justify-end gap-2 text-xs">
         <button
           type="button"
-          class="rounded-full border border-slate-200 bg-white px-3 py-1.5 font-semibold text-slate-700 transition hover:bg-slate-50"
+          class="text-xs font-semibold text-slate-400 underline-offset-4 hover:text-slate-600"
           @click="emit('advanced')"
         >
-          Show details (advanced)
+          Advanced (optional)
         </button>
       </div>
     </div>

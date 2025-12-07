@@ -217,23 +217,22 @@ const sendProposal = () => {
         </div>
       </section>
 
-      <div class="flex items-center justify-between gap-3">
+      <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div class="text-sm text-slate-600">
           Toggle upgrades per option. Pricing and margins stay hidden unless you open the advanced editor.
         </div>
         <div class="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm">
           <span class="text-[11px] uppercase tracking-[0.08em] text-slate-500">Preview option</span>
           <div class="flex items-center gap-1">
-            <button
+            <span
               v-for="key in ['good','better','best']"
               :key="key"
-              type="button"
-              class="rounded-full px-2 py-0.5 capitalize transition"
-              :class="primaryPreviewOption === key ? 'bg-slate-900 text-white shadow' : 'bg-white text-slate-700 border border-slate-200'"
+              class="cursor-pointer rounded-full px-2 py-0.5 capitalize transition"
+              :class="primaryPreviewOption === key ? 'bg-slate-900 text-white shadow' : 'bg-slate-100 text-slate-700'"
               @click="primaryPreviewOption = key as OptionKey"
             >
               {{ key }}
-            </button>
+            </span>
           </div>
         </div>
       </div>
@@ -257,6 +256,7 @@ const sendProposal = () => {
           option-key="best"
           :option="proposal.options.best"
           :accent="accents.best"
+          premium
           @edit="openUpgradeModal('best')"
           @advanced="openAdvanced('best')"
         />
@@ -266,19 +266,22 @@ const sendProposal = () => {
         <div class="flex items-start justify-between gap-3">
           <div>
             <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Client copy</p>
-            <h3 class="text-lg font-semibold text-slate-900">{{ clientCopy.headline }}</h3>
-            <p class="text-sm text-slate-600">{{ clientCopy.paragraph }}</p>
-          </div>
-          <div class="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700">
-            Deposit preview: {{ formatCurrency(proposal.deposit.amount) }}
+            <h3 class="text-lg font-semibold text-slate-900 leading-relaxed">{{ clientCopy.headline }}</h3>
+            <p class="text-sm leading-relaxed text-slate-600">{{ clientCopy.paragraph }}</p>
+            <p class="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">Auto-generated. You can edit freely.</p>
           </div>
         </div>
-        <ul class="mt-3 space-y-2 text-sm text-slate-800">
+        <ul class="mt-3 space-y-2 text-sm leading-relaxed text-slate-800">
           <li v-for="item in clientCopy.bullets" :key="item" class="flex items-start gap-2">
-            <span class="mt-1 h-1.5 w-1.5 rounded-full bg-slate-300"></span>
+            <span class="mt-1 text-slate-400">•</span>
             <span>{{ item }}</span>
           </li>
         </ul>
+        <div class="mt-4 flex justify-end">
+          <div class="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700">
+            Deposit preview: {{ formatCurrency(proposal.deposit.amount) }} (client sees at approval)
+          </div>
+        </div>
       </section>
     </div>
 
