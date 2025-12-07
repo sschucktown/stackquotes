@@ -137,7 +137,7 @@ const router = createRouter({
     {
       path: "/prototype/quickquote/builder",
       name: "QuickQuoteBuilder",
-      component: () => import("@/components/QuickQuote/QuickQuoteBuilder.vue"),
+      component: () => import("@/components/quickquote/QuickQuoteBuilder.vue"),
       meta: { public: true, allowAuthenticated: true },
     },
     {
