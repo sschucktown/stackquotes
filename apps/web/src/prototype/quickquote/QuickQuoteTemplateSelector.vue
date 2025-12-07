@@ -1,14 +1,16 @@
 <script setup lang="ts">
 import { useRouter } from "vue-router";
-import { SparklesIcon, PlusIcon, CheckCircleIcon } from "@heroicons/vue/24/outline";
+import { SparklesIcon, CheckCircleIcon } from "@heroicons/vue/24/outline";
 
 type Template = {
   id: string;
   title: string;
   description: string;
-  bullets: string[];
+  basePrice: number;
+  costBasis: number;
+  scope: string[];
+  recommendedAddOns: { label: string }[];
   complexity: "Low" | "Medium" | "High";
-  accent: string;
 };
 
 const router = useRouter();
@@ -16,48 +18,58 @@ const router = useRouter();
 const templates: Template[] = [
   {
     id: "deck-12x12-pt",
-    title: "12×12 Pressure-Treated Deck",
-    description: "Starter deck layout with straightforward framing, ideal for quick installs.",
-    bullets: ["Basic stairs and rails", "Standard footings", "Pressure-treated lumber"],
+    title: "12x12 Pressure-Treated Deck",
+    description: "Starter layout with straightforward framing and standard rails.",
+    basePrice: 14800,
+    costBasis: 9500,
+    scope: ["Standard framing", "Basic rails", "Simple stairs"],
+    recommendedAddOns: [{ label: "Composite Upgrade" }, { label: "Lighting Package" }],
     complexity: "Low",
-    accent: "emerald",
   },
   {
     id: "deck-16x20-composite",
-    title: "16×20 Composite Deck",
-    description: "Mid-size composite upgrade with upgraded rails and skirt boards.",
-    bullets: ["Composite surface", "Hidden fasteners", "Upgraded railing package"],
+    title: "16x20 Composite Deck",
+    description: "Composite surface with upgraded rails and skirt boards.",
+    basePrice: 19800,
+    costBasis: 11800,
+    scope: ["Composite surface", "Hidden fasteners", "Upgraded rails"],
+    recommendedAddOns: [{ label: "Premium Rails" }, { label: "Lighting Package" }],
     complexity: "Medium",
-    accent: "blue",
   },
   {
     id: "deck-resurface",
     title: "Deck Resurfacing",
-    description: "Strip and replace boards while keeping the existing frame where viable.",
-    bullets: ["Demo old boards", "Inspect framing", "New surface + rails"],
+    description: "Replace surface and rails while reusing solid framing.",
+    basePrice: 17200,
+    costBasis: 11000,
+    scope: ["Demo old surface", "Inspect framing", "New surface + rails"],
+    recommendedAddOns: [{ label: "Fascia Wrap" }, { label: "Lighting Package" }],
     complexity: "Medium",
-    accent: "amber",
   },
   {
     id: "wrap-around",
     title: "Wrap-Around Deck",
-    description: "Expansive layout with multiple sides and additional footings.",
-    bullets: ["Multi-side layout", "Extra footings", "Premium fascia"],
+    description: "Expanded wrap with extra footings and fascia upgrades.",
+    basePrice: 24800,
+    costBasis: 15500,
+    scope: ["Multi-side layout", "Extra footings", "Premium fascia"],
+    recommendedAddOns: [{ label: "Lighting Package" }, { label: "Premium Rails" }],
     complexity: "High",
-    accent: "rose",
   },
   {
     id: "stair-replacement",
     title: "Stair Replacement",
-    description: "Focused repair scope to swap failing stairs and rails.",
-    bullets: ["New stringers", "Treads + rails", "Safety-focused finish"],
+    description: "Focused repair to replace failing stairs and rails.",
+    basePrice: 8600,
+    costBasis: 5200,
+    scope: ["New stringers", "Treads + rails", "Safety-focused finish"],
+    recommendedAddOns: [{ label: "Lighting Package" }, { label: "Composite Upgrade" }],
     complexity: "Low",
-    accent: "emerald",
   },
 ];
 
 const goToTemplate = (templateId: string) => {
-  router.push({ path: "/prototype/quickquote/builder", query: { template: templateId } });
+  router.push({ name: "QuickQuoteBuilder", query: { template: templateId } });
 };
 </script>
 
@@ -115,9 +127,9 @@ const goToTemplate = (templateId: string) => {
               <CheckCircleIcon class="h-5 w-5 text-emerald-500" />
             </div>
             <ul class="space-y-1 text-sm text-slate-600">
-              <li v-for="bullet in template.bullets" :key="bullet" class="flex items-start gap-2">
+              <li v-for="item in template.scope" :key="item" class="flex items-start gap-2">
                 <span class="mt-1 h-1.5 w-1.5 rounded-full bg-slate-300"></span>
-                <span>{{ bullet }}</span>
+                <span>{{ item }}</span>
               </li>
             </ul>
             <div class="mt-auto flex items-center justify-between gap-3">
@@ -133,42 +145,6 @@ const goToTemplate = (templateId: string) => {
               </span>
               <span class="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 shadow-sm">
                 Use Template
-              </span>
-            </div>
-          </button>
-
-          <button
-            type="button"
-            class="flex h-full flex-col gap-3 rounded-xl border border-dashed border-blue-200 bg-blue-50/50 p-4 text-left shadow-sm transition hover:-translate-y-1 hover:shadow-md"
-            @click="goToTemplate('custom')"
-          >
-            <div class="flex items-start justify-between gap-2">
-              <div>
-                <h3 class="text-base font-semibold text-slate-900">Custom Job</h3>
-                <p class="text-sm text-slate-600">Start with a blank QuickQuote and build your own options.</p>
-              </div>
-              <PlusIcon class="h-5 w-5 text-blue-600" />
-            </div>
-            <ul class="space-y-1 text-sm text-slate-600">
-              <li class="flex items-start gap-2">
-                <span class="mt-1 h-1.5 w-1.5 rounded-full bg-slate-300"></span>
-                <span>Set your own scope</span>
-              </li>
-              <li class="flex items-start gap-2">
-                <span class="mt-1 h-1.5 w-1.5 rounded-full bg-slate-300"></span>
-                <span>Choose Good / Better / Best freely</span>
-              </li>
-              <li class="flex items-start gap-2">
-                <span class="mt-1 h-1.5 w-1.5 rounded-full bg-slate-300"></span>
-                <span>Adjust ranges later in Builder</span>
-              </li>
-            </ul>
-            <div class="mt-auto flex items-center justify-between gap-3">
-              <span class="rounded-full border border-blue-200 bg-white px-3 py-1 text-xs font-semibold text-blue-700 shadow-sm">
-                Flexible
-              </span>
-              <span class="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-600 px-3 py-1 text-xs font-semibold text-white shadow-sm">
-                Build from scratch
               </span>
             </div>
           </button>
