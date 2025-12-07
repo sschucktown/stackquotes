@@ -29,6 +29,20 @@
           <button class="inline-flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-md transition hover:bg-blue-700">
             Send Payment Link
           </button>
+          <button
+            class="rounded-full p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
+            aria-label="Settings"
+            @click="showSettings = true"
+          >
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.757.426 1.757 2.924 0 3.35a1.724 1.724 0 0 0-1.065 2.573c.94 1.543-.827 3.31-2.37 2.37a1.724 1.724 0 0 0-2.572 1.065c-.426 1.757-2.924 1.757-3.35 0a1.724 1.724 0 0 0-2.573-1.065c-1.543.94-3.31-.827-2.37-2.37a1.724 1.724 0 0 0-1.065-2.572c-1.757-.426-1.757-2.924 0-3.35a1.724 1.724 0 0 0 1.065-2.573c-.94-1.543.827-3.31 2.37-2.37.966.589 2.199.167 2.573-1.065Z"
+              />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+            </svg>
+          </button>
         </div>
       </header>
 
@@ -199,6 +213,7 @@
       </main>
     </div>
 
+    <SettingsDrawer v-if="showSettings" @close="showSettings = false" />
     <div class="sticky bottom-0 z-20 border-t border-slate-200 bg-white/95 backdrop-blur">
       <div class="mx-auto flex max-w-5xl flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
         <div class="text-sm font-semibold text-slate-800">Quick Actions</div>
@@ -218,6 +233,7 @@
 <script setup lang="ts">
 import { computed, h, ref } from "vue";
 import { addTimelineEvent } from "./usePrototypeEvents";
+import SettingsDrawer from "@/components/Settings/SettingsDrawer.vue";
 
 const emit = defineEmits<{
   (e: "close"): void;
@@ -239,6 +255,7 @@ type SummaryStat = {
   value: string;
 };
 
+const showSettings = ref(false);
 const summary: SummaryStat[] = [
   { label: "Contract Amount", value: "$19,800" },
   { label: "Paid to Date", value: "$2,400" },

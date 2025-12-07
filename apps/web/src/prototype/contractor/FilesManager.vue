@@ -41,6 +41,20 @@
           >
             Open Job Folder
           </button>
+          <button
+            class="rounded-full p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
+            aria-label="Settings"
+            @click="showSettings = true"
+          >
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.757.426 1.757 2.924 0 3.35a1.724 1.724 0 0 0-1.065 2.573c.94 1.543-.827 3.31-2.37 2.37a1.724 1.724 0 0 0-2.572 1.065c-.426 1.757-2.924 1.757-3.35 0a1.724 1.724 0 0 0-2.573-1.065c-1.543.94-3.31-.827-2.37-2.37a1.724 1.724 0 0 0-1.065-2.572c-1.757-.426-1.757-2.924 0-3.35a1.724 1.724 0 0 0 1.065-2.573c-.94-1.543.827-3.31 2.37-2.37.966.589 2.199.167 2.573-1.065Z"
+              />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+            </svg>
+          </button>
         </div>
       </header>
 
@@ -151,6 +165,7 @@
       </div>
     </div>
 
+    <SettingsDrawer v-if="showSettings" @close="showSettings = false" />
     <AddFileModal v-if="showAdd" @close="showAdd = false" />
     <ImageViewerModal v-if="viewerFile" :file="viewerFile" @close="viewerFile = null" />
   </div>
@@ -161,6 +176,7 @@ import { computed, reactive, ref, watch } from "vue";
 import { filesStore, jobFiles, jobLevelFiles, taskLevelFiles, setFileContext, type PrototypeFile } from "@/prototype/stores/files";
 import AddFileModal from "./AddFileModal.vue";
 import ImageViewerModal from "./ImageViewerModal.vue";
+import SettingsDrawer from "@/components/Settings/SettingsDrawer.vue";
 
 const emit = defineEmits<{
   (e: "close"): void;
@@ -178,6 +194,7 @@ const activeFilter = ref<typeof filters[number]["value"]>("all");
 const selectedTask = ref<string>("task-measurements");
 const showAdd = ref(false);
 const viewerFile = ref<PrototypeFile | null>(null);
+const showSettings = ref(false);
 
 watch(mode, (val) => {
   if (val === "job") {

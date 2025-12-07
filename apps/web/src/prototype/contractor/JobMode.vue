@@ -2,20 +2,38 @@
   <div class="min-h-screen bg-slate-50 text-slate-900">
     <!-- Sticky Header with Back Button -->
     <header class="sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-slate-200/80">
-      <div class="mx-auto flex max-w-4xl items-center gap-3 px-4 py-3">
-        <button
-          type="button"
-          class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50"
-          @click="$emit('exitJobMode')"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <path d="m15 18-6-6 6-6" />
-          </svg>
-          HQ
-        </button>
-        <div>
-          <p class="text-base font-semibold leading-tight">Maple St Deck</p>
-          <p class="text-sm text-slate-500 leading-tight">Today's Visit</p>
+      <div class="mx-auto flex max-w-4xl items-center justify-between gap-3 px-4 py-3">
+        <div class="flex items-center gap-3">
+          <button
+            type="button"
+            class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50"
+            @click="$emit('exitJobMode')"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m15 18-6-6 6-6" />
+            </svg>
+            HQ
+          </button>
+          <div>
+            <p class="text-base font-semibold leading-tight">Maple St Deck</p>
+            <p class="text-sm text-slate-500 leading-tight">Today's Visit</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 text-slate-500">
+          <button
+            class="rounded-full p-2 transition hover:bg-slate-100 hover:text-slate-700"
+            aria-label="Settings"
+            @click="showSettings = true"
+          >
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.757.426 1.757 2.924 0 3.35a1.724 1.724 0 0 0-1.065 2.573c.94 1.543-.827 3.31-2.37 2.37a1.724 1.724 0 0 0-2.572 1.065c-.426 1.757-2.924 1.757-3.35 0a1.724 1.724 0 0 0-2.573-1.065c-1.543.94-3.31-.827-2.37-2.37a1.724 1.724 0 0 0-1.065-2.572c-1.757-.426-1.757-2.924 0-3.35a1.724 1.724 0 0 0 1.065-2.573c-.94-1.543.827-3.31 2.37-2.37.966.589 2.199.167 2.573-1.065Z"
+              />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+            </svg>
+          </button>
         </div>
       </div>
     </header>
@@ -113,6 +131,7 @@
 
     <!-- Floating FAB for Comments -->
     <ProposalCommentsFab proposal-id="demo-proposal" contractor-name="Jordan Deckworks" />
+    <SettingsDrawer v-if="showSettings" @close="showSettings = false" />
 
     <TaskList v-if="showTaskList" @back="showTaskList = false" @openTask="openTaskDetail" />
     <TaskDetail v-if="activeTask" :task="activeTask" @close="activeTask = null" />
@@ -120,9 +139,9 @@
 </template>
 
 <script setup lang="ts">
-import { h } from "vue";
-import { ref } from "vue";
+import { h, ref } from "vue";
 import ProposalCommentsFab from "@/components/proposals/ProposalCommentsFab.vue";
+import SettingsDrawer from "@/components/Settings/SettingsDrawer.vue";
 import TaskDetail from "./TaskDetail.vue";
 import TaskList from "./TaskList.vue";
 
@@ -155,6 +174,7 @@ const jobInfo = {
   scope: ["12' x 20' composite deck", "Standard railing", "New footings"],
 };
 
+const showSettings = ref(false);
 const showTaskList = ref(false);
 const activeTask = ref<null | { id: number; name: string; status: string; hasNotes?: boolean; hasPhotos?: boolean }>(null);
 

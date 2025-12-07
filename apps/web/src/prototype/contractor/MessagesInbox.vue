@@ -35,19 +35,35 @@
               {{ filter.label }}
             </button>
           </div>
-          <div class="relative w-full sm:w-64">
-            <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="11" cy="11" r="7" />
-                <path d="m21 21-4.3-4.3" />
+          <div class="flex w-full items-center gap-2 sm:w-auto sm:justify-end">
+            <div class="relative w-full sm:w-64">
+              <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="11" cy="11" r="7" />
+                  <path d="m21 21-4.3-4.3" />
+                </svg>
+              </span>
+              <input
+                v-model="search"
+                type="text"
+                placeholder="Search threads"
+                class="w-full rounded-full border border-slate-200 bg-white px-10 py-2 text-sm text-slate-800 shadow-inner focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-200"
+              />
+            </div>
+            <button
+              class="rounded-full p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
+              aria-label="Settings"
+              @click="showSettings = true"
+            >
+              <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.757.426 1.757 2.924 0 3.35a1.724 1.724 0 0 0-1.065 2.573c.94 1.543-.827 3.31-2.37 2.37a1.724 1.724 0 0 0-2.572 1.065c-.426 1.757-2.924 1.757-3.35 0a1.724 1.724 0 0 0-2.573-1.065c-1.543.94-3.31-.827-2.37-2.37a1.724 1.724 0 0 0-1.065-2.572c-1.757-.426-1.757-2.924 0-3.35a1.724 1.724 0 0 0 1.065-2.573c-.94-1.543.827-3.31 2.37-2.37.966.589 2.199.167 2.573-1.065Z"
+                />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
               </svg>
-            </span>
-            <input
-              v-model="search"
-              type="text"
-              placeholder="Search threads"
-              class="w-full rounded-full border border-slate-200 bg-white px-10 py-2 text-sm text-slate-800 shadow-inner focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-200"
-            />
+            </button>
           </div>
         </div>
       </div>
@@ -264,12 +280,14 @@
         </transition>
       </div>
     </main>
+    <SettingsDrawer v-if="showSettings" @close="showSettings = false" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useRoute } from "vue-router";
+import SettingsDrawer from "@/components/Settings/SettingsDrawer.vue";
 import { messageStore } from "@/prototype/stores/messages";
 
 const filters = [
@@ -288,6 +306,7 @@ const mobileView = ref<"list" | "chat">("list");
 const isDesktop = ref(typeof window !== "undefined" ? window.innerWidth >= 768 : true);
 const showSyncing = ref(false);
 const selectedThreadEl = ref<HTMLElement | null>(null);
+const showSettings = ref(false);
 
 const filteredThreads = computed(() => {
   let list = messageStore.threads;

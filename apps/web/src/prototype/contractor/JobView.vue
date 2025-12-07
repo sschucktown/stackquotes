@@ -36,6 +36,7 @@
           <button
             class="rounded-full p-2 transition hover:bg-slate-100 hover:text-slate-700"
             aria-label="Settings"
+            @click="showSettings = true"
           >
             <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24">
               <path
@@ -228,6 +229,7 @@
       </section>
     </main>
 
+    <SettingsDrawer v-if="showSettings" @close="showSettings = false" />
     <AddFileModal v-if="showAddFile" @close="showAddFile = false" @add="handleAddFile" />
 
     <ImageViewerModal
@@ -243,9 +245,11 @@ import { ref } from "vue";
 import { useRouter } from "vue-router";
 import AddFileModal from "@/prototype/contractor/files/AddFileModal.vue";
 import ImageViewerModal from "@/prototype/contractor/files/ImageViewerModal.vue";
+import SettingsDrawer from "@/components/Settings/SettingsDrawer.vue";
 
 const router = useRouter();
 
+const showSettings = ref(false);
 const timeline = [
   { title: "Proposal sent", meta: "Nov 28" },
   { title: "Client viewed", meta: "Nov 28" },

@@ -27,7 +27,7 @@
               />
             </svg>
           </button>
-          <button class="p-2 rounded-full hover:bg-slate-100 text-slate-600">
+          <button class="p-2 rounded-full hover:bg-slate-100 text-slate-600" @click="showSettings = true">
             <span class="sr-only">Settings</span>
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-5 w-5">
               <path
@@ -279,13 +279,18 @@
     </main>
 
     <ProposalCommentsFab proposal-id="demo-proposal" contractor-name="Jordan Deckworks" />
+    <SettingsDrawer v-if="showSettings" @close="showSettings = false" />
   </div>
 </template>
 
 <script setup lang="ts">
+import { ref } from "vue";
 import ProposalCommentsFab from "@/components/proposals/ProposalCommentsFab.vue";
+import SettingsDrawer from "@/components/Settings/SettingsDrawer.vue";
 
 type JobStatus = "In Progress" | "Scheduled" | "Pending" | "Needs Visit";
+
+const showSettings = ref(false);
 
 const alerts = [
   { text: "3 new visit requests", tone: "info" },
