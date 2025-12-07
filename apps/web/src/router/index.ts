@@ -143,7 +143,7 @@ const router = createRouter({
     {
       path: "/prototype/smartproposal/builder",
       name: "SmartProposalBuilderPrototype",
-      component: () => import("@/prototype/smartproposal/SmartProposalBuilder.vue"),
+      component: () => import("@/components/SmartProposal/SmartProposalBuilder.vue"),
       meta: { public: true, allowAuthenticated: true },
     },
     {
