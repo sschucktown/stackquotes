@@ -1,8 +1,16 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from "vue";
 import { useRouter } from "vue-router";
-import { CalendarDaysIcon, CheckCircleIcon, ChevronDownIcon } from "@heroicons/vue/24/outline";
+import {
+  CalendarDaysIcon,
+  CheckCircleIcon,
+  ChevronDownIcon,
+  InformationCircleIcon,
+} from "@heroicons/vue/24/outline";
 import { addTimelineEvent } from "@/prototype/contractor/usePrototypeEvents";
+import MiniProfitPulse from "@/components/quickquote/MiniProfitPulse.vue";
+import ConfidenceMeter from "@/components/quickquote/ConfidenceMeter.vue";
+import ClientSummaryBox from "@/components/quickquote/ClientSummaryBox.vue";
 
 type QQOption = {
   id: "good" | "better" | "best";
@@ -58,6 +66,18 @@ const noteVisibility = ref<Record<QQOption["id"], boolean>>({
   best: false,
 });
 
+const costBasis = reactive<Record<QQOption["id"], number>>({
+  good: 9500,
+  better: 11800,
+  best: 14500,
+});
+
+const costTouched = reactive<Record<QQOption["id"], boolean>>({
+  good: false,
+  better: false,
+  best: false,
+});
+
 const optionExpanded = ref<Record<QQOption["id"], boolean>>({
   good: true,
   better: false,
@@ -76,6 +96,7 @@ const depositMode = ref<"none" | "flat" | "percent">("none");
 const flatDeposit = ref(1000);
 const percentDeposit = ref(20);
 const nextVisit = ref("Tomorrow at 3 PM");
+const baseChangePulse = ref(0);
 
 const router = useRouter();
 
@@ -86,6 +107,9 @@ const draftStore = reactive<{
   lastSavedAt: null,
   payload: null,
 });
+
+const clientSummary = ref("");
+const clientSummaryEdited = ref(false);
 
 const logAction = (label: string, payload?: unknown) => {
   console.log("[QuickQuoteBuilder]", label, payload);
@@ -145,6 +169,8 @@ const getFormSnapshot = () => ({
   flatDeposit: flatDeposit.value,
   percentDeposit: percentDeposit.value,
   nextVisit: nextVisit.value,
+  costBasis: { ...costBasis },
+  summary: clientSummary.value,
 });
 
 const saveDraft = () => {
@@ -172,6 +198,21 @@ const sendQuickQuote = () => {
   router.push("/prototype/hq");
 };
 
+const jobType = "Deck - Composite";
+const materials = "your chosen materials";
+
+const generateSummary = () => {
+  const included = options.value.filter((option) => option.include);
+  const goodLow = included.length ? Math.min(...included.map((o) => o.lowEstimate)) : options.value[0].lowEstimate;
+  const bestHigh = included.length ? Math.max(...included.map((o) => o.highEstimate)) : options.value[options.value.length - 1].highEstimate;
+  return (
+    `For your ${jobType}, we've prepared Good, Better, and Best options with a range from ${formatCurrency(goodLow)}-${formatCurrency(bestHigh)}. ` +
+    `These numbers reflect typical projects of this size using ${materials}. ` +
+    "Final price will be confirmed after an on-site visit. " +
+    "We aim to give you a realistic window without overpricing or underpricing."
+  );
+};
+
 watch(
   () => options.value.map((option) => option.basePrice),
   (prices) => {
@@ -184,8 +225,19 @@ watch(
         option.highEstimate = Math.max(0, Math.round(base * 1.07));
       }
     });
+    baseChangePulse.value++;
   },
   { immediate: true }
+);
+
+watch(
+  options,
+  () => {
+    if (!clientSummaryEdited.value) {
+      clientSummary.value = generateSummary();
+    }
+  },
+  { deep: true, immediate: true }
 );
 </script>
 
@@ -301,7 +353,13 @@ watch(
       >
         <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h3 class="text-lg font-semibold text-slate-900">Estimate Options</h3>
+            <div class="flex items-center gap-2">
+              <h3 class="text-lg font-semibold text-slate-900">Estimate Options</h3>
+              <InformationCircleIcon
+                class="h-4 w-4 text-slate-400"
+                title="Material choice - Site conditions - Permit requirements - Labor complexity"
+              />
+            </div>
             <p class="text-sm text-slate-500">Offer simple choices your client can understand.</p>
           </div>
           <span class="text-xs text-slate-500">Confidence hint: quick range, not final scope</span>
@@ -396,6 +454,18 @@ watch(
         </div>
       </section>
 
+      <MiniProfitPulse
+        :options="options"
+        :cost-basis="costBasis"
+        :touched="costTouched"
+        class="transition-all duration-300 ease-out"
+        @update-cost-basis="
+          costBasis[$event.id] = $event.value;
+          costTouched[$event.id] = true;
+          logAction('Cost basis updated', $event);
+        "
+      />
+
       <section
         class="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm transition hover:shadow-md sm:px-6 sm:py-5"
       >
@@ -405,7 +475,13 @@ watch(
           @click="rangesOpen = !rangesOpen"
         >
           <div class="space-y-1">
-            <h3 class="text-lg font-semibold text-slate-900">Adjustments &amp; Ranges</h3>
+            <div class="flex items-center gap-2">
+              <h3 class="text-lg font-semibold text-slate-900">Adjustments &amp; Ranges</h3>
+              <InformationCircleIcon
+                class="h-4 w-4 text-slate-400"
+                title="Material choice - Site conditions - Permit requirements - Labor complexity"
+              />
+            </div>
             <p class="text-sm text-slate-500">Use ranges to give the client a realistic window without overpromising.</p>
           </div>
           <ChevronDownIcon
@@ -487,6 +563,39 @@ watch(
             <div class="mt-1">{{ rangeSummary }}</div>
           </div>
         </div>
+
+        <div class="mt-4 space-y-2">
+          <div class="flex items-center gap-2">
+            <h4 class="text-sm font-semibold text-slate-900">Confidence</h4>
+            <InformationCircleIcon
+              class="h-4 w-4 text-slate-400"
+              title="Tighter ranges increase confidence. Wide ranges reduce confidence."
+            />
+          </div>
+          <div class="space-y-3">
+            <ConfidenceMeter
+              v-for="option in options"
+              :key="option.id"
+              :label="option.label"
+              :low="option.lowEstimate"
+              :high="option.highEstimate"
+              :base="option.basePrice"
+              :pulse-key="baseChangePulse"
+            />
+          </div>
+        </div>
+
+        <ClientSummaryBox
+          class="mt-4"
+          :summary="clientSummary"
+          :manual="clientSummaryEdited"
+          @update:summary="clientSummary = $event"
+          @manual-edit="clientSummaryEdited = true"
+          @regenerate="
+            clientSummaryEdited = false;
+            clientSummary = generateSummary();
+          "
+        />
       </section>
 
       <section
