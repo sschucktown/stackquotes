@@ -1,0 +1,256 @@
+<script setup lang="ts">
+import { computed, reactive, ref, watch } from "vue";
+import OptionCard from "./components/OptionCard.vue";
+import StickySummary from "./components/StickySummary.vue";
+import { optionsData, type ProposalOption, type Upgrade } from "./optionsData";
+
+const selectedOptionId = ref<ProposalOption["id"]>("better");
+const selectedUpgradesByOption = reactive<Record<string, Set<string>>>({});
+const summaryDrawerOpen = ref(false);
+const animatingPrice = ref(false);
+
+const ensureDefaults = (option: ProposalOption) => {
+  if (!selectedUpgradesByOption[option.id]) {
+    selectedUpgradesByOption[option.id] = new Set();
+  }
+  option.upgrades.forEach((upgrade) => {
+    if (upgrade.defaultOn) selectedUpgradesByOption[option.id].add(upgrade.id);
+  });
+};
+
+optionsData.forEach((opt) => ensureDefaults(opt));
+
+const selectedOption = computed<ProposalOption>(() => {
+  return optionsData.find((opt) => opt.id === selectedOptionId.value) || optionsData[0];
+});
+
+const selectedUpgrades = computed<Upgrade[]>(() => {
+  const set = selectedUpgradesByOption[selectedOption.value.id] || new Set<string>();
+  return selectedOption.value.upgrades.filter((u) => set.has(u.id));
+});
+
+const optionTotal = (option: ProposalOption) => {
+  const set = selectedUpgradesByOption[option.id] || new Set<string>();
+  const upgrades = option.upgrades.filter((u) => set.has(u.id));
+  return option.basePrice + upgrades.reduce((sum, u) => sum + (u.priceDelta || 0), 0);
+};
+
+const totalPrice = computed(() => optionTotal(selectedOption.value));
+const todayDue = computed(() => Math.round(totalPrice.value * 0.2));
+const atCompletion = computed(() => Math.max(0, totalPrice.value - todayDue.value));
+
+watch(
+  () => totalPrice.value,
+  () => {
+    animatingPrice.value = true;
+    setTimeout(() => (animatingPrice.value = false), 180);
+  }
+);
+
+const selectOption = (id: string) => {
+  const target = optionsData.find((opt) => opt.id === id);
+  if (!target) return;
+  ensureDefaults(target);
+  selectedOptionId.value = id;
+};
+
+const toggleUpgrade = (optionId: string, upgradeId: string) => {
+  if (!selectedUpgradesByOption[optionId]) selectedUpgradesByOption[optionId] = new Set();
+  const bucket = selectedUpgradesByOption[optionId];
+  if (bucket.has(upgradeId)) bucket.delete(upgradeId);
+  else bucket.add(upgradeId);
+  animatingPrice.value = true;
+  setTimeout(() => (animatingPrice.value = false), 180);
+};
+
+const approve = () => {
+  console.log("[SmartProposal Client] Approve option", {
+    option: selectedOption.value.label,
+    total: totalPrice.value,
+    upgrades: selectedUpgrades.value.map((u) => u.label),
+  });
+};
+
+const askQuestion = () => {
+  console.log("[SmartProposal Client] Ask question", {
+    option: selectedOption.value.label,
+  });
+};
+
+const selectedIds = computed(() => Array.from(selectedUpgradesByOption[selectedOption.value.id] || []));
+</script>
+
+<template>
+  <div class="min-h-screen bg-slate-50 text-slate-900">
+    <div class="mx-auto max-w-6xl px-4 pb-28 pt-6 sm:px-6 lg:px-8">
+      <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:gap-6">
+        <div class="flex-1 space-y-4">
+          <header class="space-y-2">
+            <p class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Proposal for Sarah Thompson</p>
+            <h1 class="text-2xl font-semibold text-slate-900">Your Maple St Deck Proposal</h1>
+            <p class="text-sm text-slate-600">Pick the option that fits best. You can always ask a question before approving.</p>
+          </header>
+
+          <section class="rounded-2xl border border-slate-200 bg-white/90 px-4 py-4 shadow-[0_2px_10px_rgba(0,0,0,0.05)] sm:px-6 sm:py-5">
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Project summary</p>
+                <p class="text-sm font-semibold text-slate-900">Maple St Deck</p>
+                <p class="text-sm text-slate-600">482 Maple St, Seattle, WA</p>
+              </div>
+              <div class="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 shadow-inner">
+                Site visit scheduled - Tomorrow at 3:00 PM
+              </div>
+            </div>
+            <p class="mt-2 text-xs text-slate-500">You'll pay nothing until you pick an option.</p>
+          </section>
+
+          <section class="space-y-3">
+            <div class="flex items-center justify-between">
+              <p class="text-sm font-semibold text-slate-800 uppercase tracking-wide">Choose your option</p>
+              <span class="text-xs text-slate-500">Good / Better / Best</span>
+            </div>
+            <div class="flex flex-col gap-3 lg:flex-row lg:gap-4 lg:overflow-x-auto lg:pb-2 lg:snap-x lg:snap-mandatory">
+              <OptionCard
+                v-for="option in optionsData"
+                :key="option.id"
+                :option="option"
+                :selected="selectedOptionId === option.id"
+                :total-price="optionTotal(option)"
+                :selected-upgrades="Array.from(selectedUpgradesByOption[option.id] || [])"
+                class="lg:snap-center"
+                @select="selectOption"
+                @toggle-upgrade="(id) => toggleUpgrade(option.id, id)"
+              />
+            </div>
+          </section>
+
+          <p class="hidden text-[11px] text-slate-400 lg:block">
+            Prototype only. No real payments or approvals are processed here.
+          </p>
+        </div>
+
+        <aside class="hidden w-full max-w-sm lg:block">
+          <StickySummary
+            :option="selectedOption"
+            :upgrades="selectedUpgrades"
+            :total-price="totalPrice"
+            :today-due="todayDue"
+            :at-completion="atCompletion"
+            @approve="approve"
+            @question="askQuestion"
+          />
+        </aside>
+      </div>
+    </div>
+
+    <!-- Mobile summary bar -->
+    <div class="fixed inset-x-0 bottom-0 z-20 bg-white/95 px-4 py-3 shadow-[0_-8px_30px_rgba(15,23,42,0.12)] backdrop-blur lg:hidden">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">{{ selectedOption.label }}</p>
+          <p class="text-lg font-semibold text-slate-900">{{ totalPrice.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }) }}</p>
+        </div>
+        <button
+          type="button"
+          class="inline-flex items-center gap-2 rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-md transition hover:bg-emerald-700"
+          @click="summaryDrawerOpen = true"
+        >
+          Review & Approve
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile summary drawer -->
+    <Transition name="fade">
+      <div
+        v-if="summaryDrawerOpen"
+        class="fixed inset-0 z-30 flex flex-col bg-slate-900/40 backdrop-blur lg:hidden"
+        @click.self="summaryDrawerOpen = false"
+      >
+        <div class="mt-auto rounded-t-3xl border border-slate-200 bg-white p-5 shadow-2xl">
+          <div class="mb-3 flex items-center justify-between">
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Your selection</p>
+              <p class="text-sm font-semibold text-slate-900">{{ selectedOption.label }} — {{ selectedOption.tagline }}</p>
+            </div>
+            <button
+              type="button"
+              class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700"
+              @click="summaryDrawerOpen = false"
+            >
+              Close
+            </button>
+          </div>
+          <div class="flex items-center justify-between">
+            <Transition name="fade-scale" mode="out-in">
+              <div :key="totalPrice" class="text-2xl font-bold" :class="animatingPrice ? 'text-emerald-600' : 'text-slate-900'">
+                {{ totalPrice.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }) }}
+              </div>
+            </Transition>
+            <div class="text-right text-xs text-slate-500">
+              <p>Due today: {{ todayDue.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }) }}</p>
+              <p>At completion: {{ atCompletion.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }) }}</p>
+            </div>
+          </div>
+          <div class="mt-3 space-y-2">
+            <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Chosen upgrades</p>
+            <div v-if="selectedIds.length" class="flex flex-wrap gap-2">
+              <span
+                v-for="id in selectedIds"
+                :key="id"
+                class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 shadow-inner"
+              >
+                {{ selectedOption.upgrades.find((u) => u.id === id)?.label }}
+              </span>
+            </div>
+            <p v-else class="text-sm text-slate-500">No upgrades added. You can still choose the base option.</p>
+          </div>
+          <div class="mt-4 space-y-2">
+            <button
+              type="button"
+              class="flex w-full items-center justify-center rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-md transition hover:bg-emerald-700"
+              @click="approve"
+            >
+              Approve this option
+            </button>
+            <button
+              type="button"
+              class="flex w-full items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-800 shadow-sm transition hover:bg-slate-50"
+              @click="askQuestion"
+            >
+              Ask a question
+            </button>
+            <p class="text-[11px] text-slate-500">
+              Nothing is final until you sign. Approving here just tells your contractor which option you like.
+            </p>
+          </div>
+        </div>
+      </div>
+    </Transition>
+
+    <p class="mt-6 pb-16 text-center text-[11px] text-slate-400 lg:hidden">
+      Prototype only. No real payments or approvals are processed here.
+    </p>
+  </div>
+</template>
+
+<style scoped>
+.fade-scale-enter-active,
+.fade-scale-leave-active {
+  transition: all 0.18s ease;
+}
+.fade-scale-enter-from,
+.fade-scale-leave-to {
+  opacity: 0;
+  transform: scale(0.96);
+}
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+</style>
