@@ -134,6 +134,17 @@ export interface ProposalDepositConfig {
   value: number;
 }
 
+export type KickoffStatus = "pending" | "sent" | "viewed" | "acknowledged";
+
+export interface KickoffDetails {
+  arrivalWindow: string | null;
+  leadName: string | null;
+  leadPhone: string | null;
+  materialNotes: string | null;
+  accessNotes: string | null;
+  attachments?: string[] | null;
+}
+
 export interface Proposal {
   id: UUID;
   userId: UUID;
@@ -155,6 +166,14 @@ export interface Proposal {
   updatedAt: string;
   acceptedOption?: string | null;
   createdAt: string;
+  kickoffStatus?: KickoffStatus | null;
+  kickoffDetails?: KickoffDetails | null;
+  kickoffSentAt?: string | null;
+  crewArrivalWindow?: string | null;
+  crewLeadName?: string | null;
+  crewLeadPhone?: string | null;
+  materialsDropNotes?: string | null;
+  accessNotes?: string | null;
 }
 
 export interface ContractorProfile {

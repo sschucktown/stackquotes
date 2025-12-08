@@ -17,6 +17,8 @@ import type {
   SubscriptionStatus,
   PaymentRecord,
   PaymentType,
+  KickoffDetails,
+  KickoffStatus,
   UserProjectTemplate,
   UserProposalTemplate,
   UserSettings,
@@ -241,6 +243,14 @@ export interface DatabaseSmartProposalRow {
   deposit_amount: number | null;
   deposit_config: Json | null;
   status: string;
+  kickoff_details: Json | null;
+  kickoff_status: string | null;
+  kickoff_sent_at: string | null;
+  crew_arrival_window: string | null;
+  crew_lead_name: string | null;
+  crew_lead_phone: string | null;
+  materials_drop_notes: string | null;
+  access_notes: string | null;
   public_token: string | null;
   public_token_expires_at: string | null;
   sent_at: string | null;
@@ -321,6 +331,14 @@ export interface ProposalInput {
   sentAt?: string | null;
   paymentLinkUrl?: string | null;
   paymentLinkId?: string | null;
+  kickoffStatus?: KickoffStatus | null;
+  kickoffDetails?: KickoffDetails | null;
+  kickoffSentAt?: string | null;
+  crewArrivalWindow?: string | null;
+  crewLeadName?: string | null;
+  crewLeadPhone?: string | null;
+  materialsDropNotes?: string | null;
+  accessNotes?: string | null;
 }
 
 export interface ProposalStatusUpdateInput {
@@ -335,6 +353,14 @@ export interface ProposalStatusUpdateInput {
   sentAt?: string | null;
   paymentLinkUrl?: string | null;
   paymentLinkId?: string | null;
+  kickoffStatus?: KickoffStatus | null;
+  kickoffDetails?: KickoffDetails | null;
+  kickoffSentAt?: string | null;
+  crewArrivalWindow?: string | null;
+  crewLeadName?: string | null;
+  crewLeadPhone?: string | null;
+  materialsDropNotes?: string | null;
+  accessNotes?: string | null;
 }
 
 export interface ProposalUpdateInput {
@@ -354,6 +380,14 @@ export interface ProposalUpdateInput {
   publicTokenExpiresAt?: string | null;
   paymentLinkUrl?: string | null;
   paymentLinkId?: string | null;
+  kickoffStatus?: KickoffStatus | null;
+  kickoffDetails?: KickoffDetails | null;
+  kickoffSentAt?: string | null;
+  crewArrivalWindow?: string | null;
+  crewLeadName?: string | null;
+  crewLeadPhone?: string | null;
+  materialsDropNotes?: string | null;
+  accessNotes?: string | null;
 }
 
 export interface ContractorProfileInput extends Partial<Omit<ContractorProfile, "userId" | "createdAt" | "updatedAt">> {
@@ -680,6 +714,27 @@ const computeDepositAmount = (
   return Math.round(subtotal * (deposit.value / 100) * 100) / 100;
 };
 
+const parseKickoffDetails = (row: DatabaseSmartProposalRow): KickoffDetails | null => {
+  const details = row.kickoff_details as any;
+  if (!details || typeof details !== "object") {
+    return {
+      arrivalWindow: row.crew_arrival_window ?? null,
+      leadName: row.crew_lead_name ?? null,
+      leadPhone: row.crew_lead_phone ?? null,
+      materialNotes: row.materials_drop_notes ?? null,
+      accessNotes: row.access_notes ?? null,
+    };
+  }
+  return {
+    arrivalWindow: details.arrivalWindow ?? row.crew_arrival_window ?? null,
+    leadName: details.leadName ?? row.crew_lead_name ?? null,
+    leadPhone: details.leadPhone ?? row.crew_lead_phone ?? null,
+    materialNotes: details.materialNotes ?? row.materials_drop_notes ?? null,
+    accessNotes: details.accessNotes ?? row.access_notes ?? null,
+    attachments: Array.isArray(details.attachments) ? details.attachments : null,
+  };
+};
+
 const buildProposalRecord = (row: DatabaseSmartProposalRow): Proposal => {
   const payload = parseSmartProposalPayload(row.line_items);
   const options = payload.options;
@@ -712,6 +767,14 @@ const buildProposalRecord = (row: DatabaseSmartProposalRow): Proposal => {
     acceptedOption: row.accepted_option ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    kickoffStatus: (row.kickoff_status as KickoffStatus | null) ?? null,
+    kickoffDetails: parseKickoffDetails(row),
+    kickoffSentAt: row.kickoff_sent_at ?? null,
+    crewArrivalWindow: row.crew_arrival_window ?? null,
+    crewLeadName: row.crew_lead_name ?? null,
+    crewLeadPhone: row.crew_lead_phone ?? null,
+    materialsDropNotes: row.materials_drop_notes ?? null,
+    accessNotes: row.access_notes ?? null,
   };
 };
 
