@@ -129,5 +129,10 @@ export const useContractorHQPrototype = defineStore("contractorHQPrototype", {
       this.addSystemMessage(job.id, timelineText);
       this.addHQAlert(`Proposal approved for ${jobName}.`);
     },
+    addScheduleProposal(jobId: string, jobName: string) {
+      this.addTimelineEvent(jobId, `Schedule proposed for ${jobName}`);
+      this.addTimelineEvent(jobId, "Awaiting client confirmation");
+      this.addHQAlert(`Client needs to confirm the proposed schedule for ${jobName}`);
+    },
   },
 });

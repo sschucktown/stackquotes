@@ -61,7 +61,7 @@ const handleSubmit = () => {
     optionLabel: optionLabel.value,
     startDate: startDate.value,
     depositDue: collectDeposit.value ? deposit.value : 0,
-    message: message.value?.trim() || null,
+    notes: message.value?.trim() || "",
   };
   emit("submit", payload);
   emit("close");

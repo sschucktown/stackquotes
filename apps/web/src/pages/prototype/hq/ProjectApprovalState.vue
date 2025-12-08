@@ -6,12 +6,18 @@ import { useMessageStore } from "@/stores/messageStore";
 import { useTimelineStore } from "@/stores/timelineStore";
 import { useApprovalEventStore } from "@/stores/approvalEventStore";
 import { useAlertStore } from "@/stores/alertStore";
+import { useSchedulesStore } from "@/stores/schedulesStore";
+import { useContractorHQPrototype } from "@/stores/contractorHQPrototype";
+import { useRouter } from "vue-router";
 
 const schedulingStore = useSchedulingStore();
 const messageStore = useMessageStore();
 const timelineStore = useTimelineStore();
 const approvalEventStore = useApprovalEventStore();
 const alertStore = useAlertStore();
+const schedulesStore = useSchedulesStore();
+const hqStore = useContractorHQPrototype();
+const router = useRouter();
 
 const schedulingOpen = ref(false);
 
@@ -45,18 +51,28 @@ function handleScheduleSubmit(payload: any) {
     projectName: project.projectName,
   });
 
+  schedulesStore.setSchedule(project.id, {
+    startDate: scheduled.startDate,
+    depositDue: scheduled.depositDue,
+    notes: scheduled.notes || "",
+    status: "proposed",
+  });
+
   messageStore.addSystemMessage(project.id, {
     type: "schedule_proposed",
     body: `Proposed start date: ${scheduled.startDate}. Deposit due: ${formatCurrency(scheduled.depositDue)}.`,
   });
 
   timelineStore.addEvent(project.id, "Schedule proposed");
+  timelineStore.addEvent(project.id, "Awaiting client confirmation");
 
   approvalEventStore.markReviewed(approvalEvent.id);
 
   alertStore.addAlert(`Schedule proposed for ${project.clientName} — awaiting client confirmation`, "info");
+  hqStore.addScheduleProposal(project.id, project.projectName);
 
   schedulingOpen.value = false;
+  router.push("/prototype/job-view");
 }
 </script>
 
