@@ -1,10 +1,12 @@
 <script setup lang="ts">
+import { computed } from "vue";
 import { CalendarDaysIcon, ClipboardDocumentCheckIcon } from "@heroicons/vue/24/outline";
 
 const props = defineProps<{
   price: number;
   deposit: number;
   startDate: string;
+  depositPaid?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -13,6 +15,11 @@ const emit = defineEmits<{
 
 const currency = (value: number) =>
   value.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+
+const depositStatus = computed(() => (props.depositPaid ? "Paid" : "Due at scheduling"));
+const depositBadgeClass = computed(() =>
+  props.depositPaid ? "bg-emerald-50 text-emerald-700 border border-emerald-100" : "bg-slate-100 text-slate-600 border border-slate-200"
+);
 </script>
 
 <template>
@@ -32,7 +39,14 @@ const currency = (value: number) =>
       </div>
       <div class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
         <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Deposit</p>
-        <p class="text-sm font-semibold text-emerald-700">{{ currency(props.deposit) }}</p>
+        <div class="flex items-center justify-between gap-2">
+          <p class="text-sm font-semibold" :class="props.depositPaid ? 'text-emerald-700' : 'text-slate-900'">
+            {{ currency(props.deposit) }}
+          </p>
+          <span class="inline-flex items-center rounded-full px-3 py-1 text-[11px] font-semibold" :class="depositBadgeClass">
+            {{ depositStatus }}
+          </span>
+        </div>
       </div>
       <div class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
         <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Start date</p>

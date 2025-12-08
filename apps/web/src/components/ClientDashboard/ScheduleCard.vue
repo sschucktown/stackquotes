@@ -5,6 +5,7 @@ import { CalendarDaysIcon, CheckCircleIcon } from "@heroicons/vue/24/outline";
 const props = defineProps<{
   proposedDate: string;
   confirmedDate: string | null;
+  depositPaid?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -30,7 +31,7 @@ const formatDate = (value: string | null) => {
 const statusSteps = computed(() => [
   { label: "Proposal approved", complete: true },
   { label: "Schedule confirmed", complete: hasConfirmed.value },
-  { label: "Deposit ready at scheduling", complete: true },
+  { label: props.depositPaid ? "Deposit already collected" : "Deposit ready at scheduling", complete: props.depositPaid || hasConfirmed.value },
 ]);
 </script>
 
@@ -74,6 +75,7 @@ const statusSteps = computed(() => [
         />
         <span>{{ item.label }}</span>
       </div>
+      <p v-if="props.depositPaid" class="text-xs font-semibold text-emerald-700">Deposit already collected.</p>
     </div>
 
     <div class="mt-4 grid gap-2 sm:grid-cols-2">

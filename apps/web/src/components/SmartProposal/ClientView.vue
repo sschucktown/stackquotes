@@ -2,16 +2,20 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import SignaturePad from "signature_pad";
+import { CheckIcon } from "@heroicons/vue/24/outline";
 import ProposalCard from "./ProposalCard.vue";
 import SummaryPanel from "./SummaryPanel.vue";
 import StickyTrimSelector from "./StickyTrimSelector.vue";
 import AskQuestionModal from "./AskQuestionModal.vue";
 import { useContractorHQPrototype } from "@/stores/contractorHQPrototype";
+import { usePrototypePaymentStore } from "@/stores/prototypePaymentStore";
 
 const route = useRoute();
 const router = useRouter();
 const hq = useContractorHQPrototype();
+const paymentStore = usePrototypePaymentStore();
 const JOB_ID = "job-maple";
+const paymentIds = [JOB_ID, "p-001"];
 
 // Decode payload with fallback
 let decoded: any = null;
@@ -96,6 +100,9 @@ const signatureCanvas = ref<HTMLCanvasElement | null>(null);
 const signatureEmpty = ref(true);
 let toastTimer: number | null = null;
 const questionOpen = ref(false);
+const paymentOpen = ref(false);
+const paymentProcessing = ref(false);
+const paymentSuccess = ref(false);
 const questionOptionLabel = computed(() => current.value?.label || "An option");
 
 const showToast = (message: string) => {
@@ -136,8 +143,10 @@ async function finalizeSignature() {
   signatureEmpty.value = true;
   showToast("Approval captured");
   setTimeout(() => {
-    router.push({ path: "/prototype/smartproposal/signed", query: { option: selected.value } });
-  }, 900);
+    paymentProcessing.value = false;
+    paymentSuccess.value = false;
+    paymentOpen.value = true;
+  }, 600);
 }
 
 onBeforeUnmount(() => {
@@ -151,6 +160,28 @@ const handleQuestionClick = () => {
 const handleQuestionSubmit = (text: string) => {
   if (!text?.trim()) return;
   showToast("Question sent");
+};
+
+const proceedToSuccess = (paid: boolean) => {
+  paymentOpen.value = false;
+  paymentProcessing.value = false;
+  paymentSuccess.value = false;
+  router.push({ path: "/prototype/smartproposal/signed", query: { option: selected.value, paid: paid ? "1" : "0" } });
+};
+
+const handlePayLater = () => {
+  paymentStore.markPaid(paymentIds, false);
+  proceedToSuccess(false);
+};
+
+const handlePayNow = () => {
+  paymentProcessing.value = true;
+  paymentStore.markPaid(paymentIds, true);
+  setTimeout(() => {
+    paymentProcessing.value = false;
+    paymentSuccess.value = true;
+    setTimeout(() => proceedToSuccess(true), 800);
+  }, 650);
 };
 </script>
 
@@ -265,6 +296,69 @@ const handleQuestionSubmit = (text: string) => {
               </button>
             </div>
           </div>
+        </div>
+      </div>
+    </Transition>
+
+    <Transition name="fade">
+      <div v-if="paymentOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/30 backdrop-blur-sm px-4">
+        <div class="w-full max-w-lg rounded-2xl border border-slate-200 bg-white/95 p-5 shadow-2xl">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <p class="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Payment</p>
+              <h2 class="text-xl font-semibold text-slate-900">Secure your project with a deposit</h2>
+              <p class="text-sm text-slate-600">Prototype only. No real charges are processed.</p>
+            </div>
+            <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">Preview</span>
+          </div>
+
+          <div class="mt-4 space-y-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Option</p>
+                <p class="text-sm font-semibold text-slate-900">{{ current?.label || "Selected option" }}</p>
+              </div>
+              <p class="text-lg font-bold text-slate-900">{{ formatCurrency(current?.price || 0) }}</p>
+            </div>
+            <div class="flex items-center justify-between rounded-lg border border-emerald-100 bg-white px-3 py-2">
+              <div>
+                <p class="text-[11px] font-semibold uppercase tracking-[0.08em] text-emerald-700">Deposit</p>
+                <p class="text-sm text-slate-700">{{ depositPercent }}% of total</p>
+              </div>
+              <p class="text-lg font-semibold text-emerald-700">{{ formatCurrency(depositAmount) }}</p>
+            </div>
+          </div>
+
+          <div
+            v-if="paymentSuccess"
+            class="mt-4 flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700"
+          >
+            <CheckIcon class="h-5 w-5" />
+            <span>Payment successful. Redirecting…</span>
+          </div>
+
+          <div class="mt-5 grid gap-3 sm:grid-cols-2">
+            <button
+              type="button"
+              class="inline-flex w-full items-center justify-center rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-70"
+              :disabled="paymentProcessing || paymentSuccess"
+              @click="handlePayNow"
+            >
+              <span v-if="paymentProcessing">Processing…</span>
+              <span v-else>Pay deposit now</span>
+            </button>
+            <button
+              type="button"
+              class="inline-flex w-full items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-70"
+              :disabled="paymentProcessing"
+              @click="handlePayLater"
+            >
+              I'll pay later
+            </button>
+          </div>
+          <p class="mt-2 text-[11px] text-slate-500">
+            We'll mark the deposit as paid/unpaid inside your project tracker for the prototype views.
+          </p>
         </div>
       </div>
     </Transition>

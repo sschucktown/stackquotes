@@ -5,9 +5,12 @@ import { CheckIcon } from "@heroicons/vue/24/outline";
 import ScheduleTimeline from "@/components/schedule/ScheduleTimeline.vue";
 import MotionFadeIn from "@/components/schedule/MotionFadeIn.vue";
 import { useRouter } from "vue-router";
+import { usePrototypePaymentStore } from "@/stores/prototypePaymentStore";
 
 const scheduleStore = useClientSchedulePrototype();
 const router = useRouter();
+const paymentStore = usePrototypePaymentStore();
+const jobId = "job-maple";
 
 const formattedDate = computed(() => {
   const d = scheduleStore.proposedDate ? new Date(scheduleStore.proposedDate) : null;
@@ -17,6 +20,13 @@ const formattedDate = computed(() => {
 
 const currency = (value: number | null) =>
   (value || 0).toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+
+const depositPaid = computed(() => paymentStore.isPaid(jobId));
+const timelineSteps = computed(() => [
+  "Schedule proposed",
+  "Schedule confirmed",
+  depositPaid.value ? "Deposit already collected" : "Deposit due at scheduling",
+]);
 </script>
 
 <template>
@@ -35,11 +45,24 @@ const currency = (value: number | null) =>
         </div>
         <div class="mt-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
           <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Deposit</p>
-          <p class="text-lg font-semibold text-emerald-700">{{ currency(scheduleStore.depositDue) }}</p>
+          <div class="flex items-center justify-between gap-3">
+            <p class="text-lg font-semibold" :class="depositPaid ? 'text-emerald-700' : 'text-slate-900'">
+              {{ currency(scheduleStore.depositDue) }}
+            </p>
+            <span
+              class="inline-flex items-center rounded-full px-3 py-1 text-[11px] font-semibold"
+              :class="depositPaid ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 'bg-slate-100 text-slate-600 border border-slate-200'"
+            >
+              {{ depositPaid ? "Paid" : "Due at scheduling" }}
+            </span>
+          </div>
+          <p class="text-xs text-slate-500">
+            {{ depositPaid ? "Already collected when you approved." : "Due at scheduling before work begins." }}
+          </p>
         </div>
 
         <div class="mt-6">
-          <ScheduleTimeline />
+          <ScheduleTimeline :steps="timelineSteps" />
         </div>
 
         <div class="mt-6 flex justify-center">

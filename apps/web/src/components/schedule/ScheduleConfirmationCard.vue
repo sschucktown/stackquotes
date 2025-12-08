@@ -8,6 +8,7 @@ const props = defineProps<{
   proposedDate: string;
   depositDue: number;
   contractorMessage?: string | null;
+  depositPaid?: boolean;
 }>();
 
 const formattedDate = computed(() => {
@@ -23,6 +24,12 @@ const formattedDate = computed(() => {
 
 const currency = (value: number) =>
   value.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+
+const timelineSteps = computed(() => [
+  "Schedule proposed",
+  "Awaiting your confirmation",
+  props.depositPaid ? "Deposit already collected" : "Deposit due at scheduling",
+]);
 </script>
 
 <template>
@@ -44,9 +51,11 @@ const currency = (value: number) =>
       </div>
 
       <div class="mt-5 rounded-xl border border-slate-200 bg-slate-50 px-4 py-4">
-        <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Deposit at scheduling</p>
-        <p class="text-2xl font-bold text-emerald-700">{{ currency(depositDue) }}</p>
-        <p class="text-sm text-slate-600">Due once you confirm your date.</p>
+        <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Deposit</p>
+        <p class="text-2xl font-bold" :class="props.depositPaid ? 'text-emerald-700' : 'text-slate-900'">{{ currency(depositDue) }}</p>
+        <p class="text-sm text-slate-600">
+          {{ props.depositPaid ? "Already collected when you approved." : "Due once you confirm your date." }}
+        </p>
       </div>
 
       <div
@@ -58,7 +67,7 @@ const currency = (value: number) =>
       </div>
 
       <div class="mt-6">
-        <ScheduleTimeline />
+        <ScheduleTimeline :steps="timelineSteps" />
       </div>
     </div>
   </MotionFadeIn>

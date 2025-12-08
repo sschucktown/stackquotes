@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import { ChevronRightIcon } from "@heroicons/vue/24/outline";
 import SendKickoffModal from "@/components/Kickoff/SendKickoffModal.vue";
+import { usePrototypePaymentStore } from "@/stores/prototypePaymentStore";
 
 type Status =
   | "awaiting-approval"
@@ -28,6 +29,7 @@ interface ProjectRow {
 }
 
 const router = useRouter();
+const paymentStore = usePrototypePaymentStore();
 
 const projects = ref<ProjectRow[]>([
   {
@@ -261,6 +263,12 @@ const handleKickoffSent = (payload: { arrivalWindow: string; leadName: string; l
   projects.value = [...projects.value];
   kickoffModalOpen.value = false;
 };
+
+const depositLabel = (row: ProjectRow) => (paymentStore.isPaid(row.id) ? "Deposit paid" : "Deposit pending");
+const depositClass = (row: ProjectRow) =>
+  paymentStore.isPaid(row.id)
+    ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
+    : "bg-slate-100 text-slate-600 border border-slate-200";
 </script>
 
 <template>
@@ -348,14 +356,20 @@ const handleKickoffSent = (payload: { arrivalWindow: string; leadName: string; l
               </div>
 
               <div class="flex flex-col items-start gap-2 sm:items-end">
-                <div class="flex flex-wrap items-center gap-3 text-sm text-slate-700">
-                  <span class="font-semibold text-slate-900">{{ formatCurrency(row.price) }}</span>
-                  <span v-if="row.deposit" class="text-slate-500">Deposit {{ formatCurrency(row.deposit) }}</span>
-                  <span
-                    v-if="row.approvedAt && row.status === 'approved'"
-                    class="text-xs font-semibold text-slate-500"
-                  >
-                    {{ row.approvedAt }}
+              <div class="flex flex-wrap items-center gap-3 text-sm text-slate-700">
+                <span class="font-semibold text-slate-900">{{ formatCurrency(row.price) }}</span>
+                <span v-if="row.deposit" class="text-slate-500">Deposit {{ formatCurrency(row.deposit) }}</span>
+                <span
+                  class="inline-flex items-center rounded-full px-3 py-1 text-[11px] font-semibold"
+                  :class="depositClass(row)"
+                >
+                  {{ depositLabel(row) }}
+                </span>
+                <span
+                  v-if="row.approvedAt && row.status === 'approved'"
+                  class="text-xs font-semibold text-slate-500"
+                >
+                  {{ row.approvedAt }}
                   </span>
                 </div>
                 <div class="flex flex-wrap items-center gap-3 text-sm text-slate-600">

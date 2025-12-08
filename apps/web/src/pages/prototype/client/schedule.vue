@@ -5,10 +5,14 @@ import ScheduleConfirmationCard from "@/components/schedule/ScheduleConfirmation
 import ScheduleActions from "@/components/schedule/ScheduleActions.vue";
 import EmptyScheduleState from "@/components/schedule/EmptyScheduleState.vue";
 import MotionFadeIn from "@/components/schedule/MotionFadeIn.vue";
+import { usePrototypePaymentStore } from "@/stores/prototypePaymentStore";
 
 const scheduleStore = useClientSchedulePrototype();
+const paymentStore = usePrototypePaymentStore();
+const jobId = "job-maple";
 
 const hasProposal = computed(() => Boolean(scheduleStore.proposedDate));
+const depositPaid = computed(() => paymentStore.isPaid(jobId));
 
 const handleConfirm = () => scheduleStore.confirmSchedule();
 const handleRequestChange = () => scheduleStore.requestNewDate();
@@ -23,6 +27,7 @@ const handleRequestChange = () => scheduleStore.requestNewDate();
             :proposed-date="scheduleStore.proposedDate || ''"
             :deposit-due="scheduleStore.depositDue || 0"
             :contractor-message="scheduleStore.contractorMessage || ''"
+            :deposit-paid="depositPaid"
           />
           <MotionFadeIn class="mt-4">
             <ScheduleActions

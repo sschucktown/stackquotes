@@ -1,11 +1,14 @@
 <script setup lang="ts">
+import { computed } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { CalendarDaysIcon } from "@heroicons/vue/24/outline";
 import MotionFadeIn from "@/components/schedule/MotionFadeIn.vue";
+import { usePrototypePaymentStore } from "@/stores/prototypePaymentStore";
 
 const router = useRouter();
 const route = useRoute();
-const jobId = route.query.jobId || "job-maple";
+const paymentStore = usePrototypePaymentStore();
+const jobId = (route.query.jobId as string) || "job-maple";
 
 const contractPacket = {
   client: {
@@ -46,6 +49,18 @@ const formatCurrency = (value: number) =>
 const download = () => {
   console.log("[ContractPacket] download", { jobId });
 };
+
+const depositPaid = computed(() => paymentStore.isPaid(jobId));
+const terms = computed(() => [
+  depositPaid.value ? "Deposit already collected to lock in the date." : "Deposit is due at scheduling to lock in the date.",
+  contractPacket.terms[1],
+  contractPacket.terms[2],
+]);
+const nextSteps = computed(() => {
+  const steps = [...contractPacket.nextSteps];
+  steps[0] = depositPaid.value ? "We'll email your receipt and confirm the deposit is applied." : contractPacket.nextSteps[0];
+  return steps;
+});
 </script>
 
 <template>
@@ -92,9 +107,23 @@ const download = () => {
               <p class="text-2xl font-bold text-slate-900">{{ formatCurrency(contractPacket.selection.price) }}</p>
             </div>
             <div class="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-              <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Deposit at scheduling</p>
-              <p class="text-lg font-semibold text-emerald-700">{{ formatCurrency(contractPacket.selection.deposit) }}</p>
-              <p class="text-xs text-slate-500">Due once your schedule is locked in.</p>
+              <div class="flex items-center justify-between gap-3">
+                <div>
+                  <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Deposit</p>
+                  <p class="text-lg font-semibold" :class="depositPaid ? 'text-emerald-700' : 'text-slate-900'">
+                    {{ formatCurrency(contractPacket.selection.deposit) }}
+                  </p>
+                </div>
+                <span
+                  class="inline-flex items-center rounded-full px-3 py-1 text-[11px] font-semibold"
+                  :class="depositPaid ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 'bg-slate-100 text-slate-600 border border-slate-200'"
+                >
+                  {{ depositPaid ? "Paid" : "Due at scheduling" }}
+                </span>
+              </div>
+              <p class="text-xs text-slate-500">
+                {{ depositPaid ? "Marked as collected in this prototype." : "Due once your schedule is locked in." }}
+              </p>
             </div>
           </section>
         </MotionFadeIn>
@@ -142,8 +171,8 @@ const download = () => {
                 <span>You confirmed this date</span>
               </li>
               <li class="flex items-center gap-2">
-                <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
-                <span>Deposit due at scheduling</span>
+                <span :class="depositPaid ? 'h-2 w-2 rounded-full bg-emerald-500' : 'h-2 w-2 rounded-full bg-slate-300'"></span>
+                <span>{{ depositPaid ? "Deposit already collected" : "Deposit due at scheduling" }}</span>
               </li>
             </ul>
           </section>
@@ -156,7 +185,7 @@ const download = () => {
               <p class="text-sm text-slate-600">Friendly summary for clarity. Not legal advice.</p>
             </div>
             <ul class="space-y-2 text-sm text-slate-800">
-              <li v-for="item in contractPacket.terms" :key="item" class="flex items-start gap-2">
+              <li v-for="item in terms" :key="item" class="flex items-start gap-2">
                 <span class="mt-[7px] h-2 w-2 rounded-full bg-slate-300"></span>
                 <span>{{ item }}</span>
               </li>
@@ -168,7 +197,7 @@ const download = () => {
           <section class="space-y-3 rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm sm:px-6 sm:py-5">
             <p class="text-xs font-semibold uppercase tracking-[0.1em] text-slate-500">What happens next</p>
             <ol class="list-decimal space-y-2 pl-5 text-sm text-slate-800">
-              <li v-for="item in contractPacket.nextSteps" :key="item">{{ item }}</li>
+              <li v-for="item in nextSteps" :key="item">{{ item }}</li>
             </ol>
           </section>
         </MotionFadeIn>

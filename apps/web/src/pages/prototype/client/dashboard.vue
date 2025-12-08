@@ -9,6 +9,7 @@ import SelectionCard from "@/components/ClientDashboard/SelectionCard.vue";
 import ScheduleCard from "@/components/ClientDashboard/ScheduleCard.vue";
 import ChecklistCard from "@/components/ClientDashboard/ChecklistCard.vue";
 import ContractPacketCard from "@/components/ClientDashboard/ContractPacketCard.vue";
+import { usePrototypePaymentStore } from "@/stores/prototypePaymentStore";
 
 type ChecklistItem = {
   label: string;
@@ -27,6 +28,8 @@ type DashboardPayload = {
 
 const route = useRoute();
 const router = useRouter();
+const paymentStore = usePrototypePaymentStore();
+const jobId = (route.query.jobId as string) || "job-maple";
 
 const fallbackData = {
   project: { name: "Maple St Deck", location: "Seattle, WA" },
@@ -71,6 +74,7 @@ const data = computed(() => ({
 }));
 
 const scheduleConfirmed = computed(() => Boolean(data.value.confirmedDate));
+const depositPaid = computed(() => paymentStore.isPaid(jobId));
 
 const formatDate = (value: string | null) => {
   if (!value) return "";
@@ -142,6 +146,7 @@ const handleOpenContractPacket = () => withPayload("/prototype/client/contract-p
           <ScheduleCard
             :proposed-date="data.proposedDate"
             :confirmed-date="data.confirmedDate"
+            :deposit-paid="depositPaid"
             @confirm="handleConfirmSchedule"
             @request-change="handleRequestChange"
             @add-to-calendar="handleAddToCalendar"
@@ -160,6 +165,7 @@ const handleOpenContractPacket = () => withPayload("/prototype/client/contract-p
             :price="data.price"
             :deposit="data.deposit"
             :start-date="formattedStartDate"
+            :deposit-paid="depositPaid"
             @download="handleOpenContractPacket"
           />
         </MotionFadeIn>
