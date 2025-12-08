@@ -89,6 +89,37 @@
           <HQQuickActions />
         </section>
 
+        <section class="rounded-2xl border border-slate-200/70 bg-white p-4 shadow-sm transition hover:shadow-md md:p-6">
+          <div class="mb-3 flex items-center justify-between">
+            <div>
+              <h2 class="text-lg font-semibold">Kickoff status</h2>
+              <p class="text-sm text-slate-500">Packet sent, viewed, confirmation, and access in one spot.</p>
+            </div>
+            <span class="inline-flex items-center rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700 shadow-inner">
+              Contractor HQ
+            </span>
+          </div>
+          <div class="grid gap-3 sm:grid-cols-2">
+            <div
+              v-for="flag in kickoffStatusFlags"
+              :key="flag.label"
+              class="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 shadow-inner"
+            >
+              <div>
+                <p class="text-sm font-semibold text-slate-900">{{ flag.label }}</p>
+                <p class="text-xs text-slate-500">{{ flag.detail }}</p>
+              </div>
+              <span
+                class="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold"
+                :class="flag.value ? 'border border-emerald-200 bg-emerald-50 text-emerald-700' : 'border border-slate-200 bg-white text-slate-600'"
+              >
+                <span class="h-2 w-2 rounded-full" :class="flag.value ? 'bg-emerald-500' : 'bg-slate-300'"></span>
+                {{ flag.value ? 'Yes' : 'Pending' }}
+              </span>
+            </div>
+          </div>
+        </section>
+
         <!-- Performance Snapshot -->
         <section class="rounded-2xl border border-slate-200/70 bg-white p-4 shadow-sm transition hover:shadow-md md:p-6">
           <div class="mb-3 flex items-center justify-between">
@@ -171,7 +202,8 @@ import JobMode from "@/prototype/contractor/JobMode.vue";
 import NewMessageToast from "@/prototype/components/NewMessageToast.vue";
 import { useMockMessageChannel } from "@/prototype/composables/useMockMessageChannel";
 import { messageStore } from "@/prototype/stores/messages";
-import { ref } from "vue";
+import { computed, ref } from "vue";
+import { useContractorHQPrototype } from "@/stores/contractorHQPrototype";
 
 type JobStatus = "In Progress" | "Scheduled" | "Pending" | "Needs Visit";
 type TradeType = "deck" | "fence" | "patio";
@@ -241,6 +273,25 @@ const messages = [
   { name: "Mike Robertson", project: "Lakeview Patio", preview: "Did you get the photos?", time: "4h ago", initials: "MR", jobType: "Patio", unread: true, delay: "60ms" },
   { name: "Julia Perez", project: "Fence Repair", preview: "We're good for tomorrow!", time: "6h ago", initials: "JP", jobType: "Fence", delay: "90ms" },
 ];
+
+const hqStore = useContractorHQPrototype();
+const kickoffJob = computed(() => hqStore.getJob());
+const kickoffState = computed(() => kickoffJob.value?.kickoff || {});
+const kickoffStatusFlags = computed(() => [
+  { label: "Packet Sent?", value: Boolean(kickoffState.value.packetSentAt), detail: formatTime(kickoffState.value.packetSentAt) },
+  { label: "Viewed?", value: Boolean(kickoffState.value.packetViewedAt), detail: formatTime(kickoffState.value.packetViewedAt) },
+  { label: "Client Confirmed?", value: Boolean(kickoffState.value.clientConfirmed), detail: kickoffState.value.clientConfirmed ? "Client tapped ready" : "Awaiting confirmation" },
+  { label: "Access Instructions Submitted?", value: Boolean(kickoffState.value.clientSubmittedAccess), detail: kickoffState.value.clientSubmittedAccess ? "Access shared" : "Needs access notes" },
+  { label: "Material Drop Confirmed?", value: Boolean(kickoffState.value.materialDrop), detail: kickoffState.value.materialDrop ? "Drop spot noted" : "Pending" },
+  { label: "Schedule Confirmed?", value: ["In Progress", "Scheduled"].includes(kickoffJob.value?.status || ""), detail: kickoffJob.value?.status || "Pending" },
+]);
+
+function formatTime(value?: string | null) {
+  if (!value) return "Not yet";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return value;
+  return d.toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+}
 
 const showSettings = ref(false);
 const isJobMode = ref(false);

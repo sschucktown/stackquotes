@@ -166,6 +166,43 @@ const router = createRouter({
       meta: { public: true, allowAuthenticated: true },
     },
     {
+      path: "/prototype/kickoff/builder",
+      name: "KickoffBuilderPrototype",
+      component: () => import("@/components/Kickoff/KickoffBuilder.vue"),
+      meta: { public: true, allowAuthenticated: true },
+    },
+    {
+      path: "/prototype/kickoff/packet",
+      name: "KickoffPacketPrototype",
+      component: () => import("@/components/Kickoff/KickoffPacket.vue"),
+      meta: { public: true, allowAuthenticated: true },
+    },
+    {
+      path: "/prototype/kickoff/message",
+      name: "KickoffMessageLightbox",
+      component: () => import("@/components/Messaging/MessageLightbox.vue"),
+      props: (route) => ({ open: true, jobId: (route.query.job as string) || undefined, actor: "contractor" }),
+      meta: { public: true, allowAuthenticated: true },
+    },
+    {
+      path: "/prototype/client/kickoff",
+      name: "ClientKickoffDashboardPrototype",
+      component: () => import("@/components/Kickoff/ClientKickoffDashboard.vue"),
+      meta: { public: true, allowAuthenticated: true },
+    },
+    {
+      path: "/prototype/client/kickoff/confirm",
+      name: "ClientKickoffConfirmPrototype",
+      component: () => import("@/components/Kickoff/KickoffSuccess.vue"),
+      meta: { public: true, allowAuthenticated: true },
+    },
+    {
+      path: "/prototype/client/kickoff/access",
+      name: "ClientKickoffAccessPrototype",
+      component: () => import("@/components/Kickoff/ClientAccessForm.vue"),
+      meta: { public: true, allowAuthenticated: true },
+    },
+    {
       path: "/prototype/client/schedule-preview",
       name: "ClientSchedulePreview",
       component: () => import("@/pages/prototype/client/schedule.vue"),
