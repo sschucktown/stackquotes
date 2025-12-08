@@ -29,6 +29,12 @@ const state = reactive({
   simpleMode: true,
   visitNotes: "Walked the yard, confirmed access on north side. Hidden fasteners preferred.",
   baseScope,
+  hasImportedFromQuickQuote: false,
+  importMeta: {
+    lead: { name: "", email: "", phone: "", location: "", job: "" },
+    templateName: "",
+    estimates: { low: 0, high: 0, total: 0 },
+  },
   options: {
     good: {
       label: "Good",
@@ -135,6 +141,66 @@ const depositPreview = computed(() => {
   return 0;
 });
 
+const hydrateFromQuickQuote = (payload: any) => {
+  if (!payload) return;
+
+  state.hasImportedFromQuickQuote = true;
+  state.importMeta.lead = {
+    name: payload.lead?.name || "",
+    email: payload.lead?.email || "",
+    phone: payload.lead?.phone || "",
+    location: payload.lead?.location || "",
+    job:
+      payload.lead?.jobType && payload.lead?.subtype
+        ? `${payload.lead.jobType} - ${payload.lead.subtype}`
+        : payload.lead?.jobType || "",
+  };
+  state.importMeta.templateName = payload.templateName || "";
+  state.importMeta.estimates = {
+    low: payload.lowEstimate || 0,
+    high: payload.highEstimate || 0,
+    total: payload.totalPrice || 0,
+  };
+
+  if (payload.scope?.length) {
+    state.baseScope = [...payload.scope];
+  }
+
+  (["good", "better", "best"] as OptionKey[]).forEach((key) => {
+    state.options[key].upgrades.forEach((upgrade) => {
+      upgrade.active = false;
+    });
+    state.options[key].scope = [...state.baseScope];
+  });
+
+  if (payload.lowEstimate) {
+    state.options.good.basePrice = payload.lowEstimate;
+    state.options.good.price = payload.lowEstimate;
+  }
+  if (payload.totalPrice) {
+    state.options.better.basePrice = payload.totalPrice;
+    state.options.better.price = payload.totalPrice;
+  }
+  if (payload.highEstimate) {
+    state.options.best.basePrice = payload.highEstimate;
+    state.options.best.price = payload.highEstimate;
+  }
+
+  (["good", "better", "best"] as OptionKey[]).forEach((key) => autoGenerateScopeSnapshot(key));
+
+  if (payload.depositMode) {
+    setDepositMode(payload.depositMode);
+  }
+  if (payload.depositMode === "flat") {
+    setDepositFlat(payload.flatDeposit || 0);
+  } else if (payload.depositMode === "percent") {
+    setDepositPercent(payload.percentDeposit || 0);
+  }
+
+  state.summary.manual = false;
+  autoGenerateSummary();
+};
+
 // initialize prices and scopes
 (["good", "better", "best"] as OptionKey[]).forEach((key) => refreshOptionPrice(key));
 
@@ -149,4 +215,5 @@ export const useSmartProposalPrototype = () => ({
   setDepositFlat,
   summaryComputed,
   depositPreview,
+  hydrateFromQuickQuote,
 });
