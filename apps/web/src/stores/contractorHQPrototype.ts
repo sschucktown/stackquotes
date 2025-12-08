@@ -120,5 +120,14 @@ export const useContractorHQPrototype = defineStore("contractorHQPrototype", {
         text,
       });
     },
+    addProposalApprovalEvent(jobId: string, option: string) {
+      const job = this.jobs.find((j) => j.id === jobId) || this.jobs[0];
+      const jobName = job?.name ?? "Job";
+      const optionText = option ? option.charAt(0).toUpperCase() + option.slice(1) : "Selected";
+      const timelineText = `Client approved the ${optionText} option.`;
+      this.addTimelineEvent(job.id, timelineText);
+      this.addSystemMessage(job.id, timelineText);
+      this.addHQAlert(`Proposal approved for ${jobName}.`);
+    },
   },
 });

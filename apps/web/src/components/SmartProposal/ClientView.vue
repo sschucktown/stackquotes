@@ -5,11 +5,13 @@ import SignaturePad from "signature_pad";
 import ProposalCard from "./ProposalCard.vue";
 import SummaryPanel from "./SummaryPanel.vue";
 import StickyTrimSelector from "./StickyTrimSelector.vue";
+import AskQuestionModal from "./AskQuestionModal.vue";
 import { useContractorHQPrototype } from "@/stores/contractorHQPrototype";
 
 const route = useRoute();
 const router = useRouter();
 const hq = useContractorHQPrototype();
+const JOB_ID = "job-maple";
 
 // Decode payload with fallback
 let decoded: any = null;
@@ -93,6 +95,8 @@ const signaturePad = ref<SignaturePad | null>(null);
 const signatureCanvas = ref<HTMLCanvasElement | null>(null);
 const signatureEmpty = ref(true);
 let toastTimer: number | null = null;
+const questionOpen = ref(false);
+const questionOptionLabel = computed(() => current.value?.label || "An option");
 
 const showToast = (message: string) => {
   successOpen.value = true;
@@ -127,19 +131,27 @@ async function finalizeSignature() {
     return;
   }
   signaturePad.value.toDataURL("image/png"); // prototype only
-  hq.addTimelineEvent("job-maple", "Client signed and approved proposal.");
-  hq.addSystemMessage("job-maple", "Client signature received. Visit next steps to schedule the job.");
+  hq.addProposalApprovalEvent(JOB_ID, selected.value);
   signatureOpen.value = false;
   signatureEmpty.value = true;
   showToast("Approval captured");
   setTimeout(() => {
-    router.push("/prototype/smartproposal/signed");
+    router.push({ path: "/prototype/smartproposal/signed", query: { option: selected.value } });
   }, 900);
 }
 
 onBeforeUnmount(() => {
   if (toastTimer) clearTimeout(toastTimer);
 });
+
+const handleQuestionClick = () => {
+  questionOpen.value = true;
+};
+
+const handleQuestionSubmit = (text: string) => {
+  if (!text?.trim()) return;
+  showToast("Question sent");
+};
 </script>
 
 <template>
@@ -202,7 +214,7 @@ onBeforeUnmount(() => {
         :deposit-amount="depositAmount"
         :currency="formatCurrency"
         @approve="openSignature"
-        @question="() => {}"
+        @question="handleQuestionClick"
       />
     </div>
 
@@ -271,6 +283,13 @@ onBeforeUnmount(() => {
         </div>
       </div>
     </Transition>
+
+    <AskQuestionModal
+      :open="questionOpen"
+      :option-label="questionOptionLabel"
+      :on-close="() => (questionOpen.value = false)"
+      :on-submit="(text: string) => handleQuestionSubmit(text)"
+    />
   </div>
 </template>
 
