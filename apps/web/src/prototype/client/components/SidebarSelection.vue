@@ -7,6 +7,7 @@ const props = defineProps<{
   totalPrice: number;
   todayDue: number;
   atCompletion: number;
+  highlight?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -16,15 +17,22 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <div class="sticky top-20 rounded-2xl border border-slate-200 bg-white/90 p-5 shadow-[0_2px_16px_rgba(0,0,0,0.06)]">
+  <div
+    class="rounded-2xl border border-slate-200 bg-white/90 p-5 shadow-[0_2px_16px_rgba(0,0,0,0.06)] transition-all duration-300"
+    :class="highlight ? 'ring-2 ring-emerald-300' : ''"
+  >
     <p class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Your selection</p>
     <div class="mt-2 flex items-center justify-between">
       <div>
         <p class="text-sm font-semibold text-slate-900">{{ option.label }}</p>
         <p class="text-xs text-slate-600">{{ option.tagline }}</p>
       </div>
-      <Transition name="fade-scale" mode="out-in">
-        <div :key="props.totalPrice" class="text-2xl font-bold text-emerald-600">
+      <Transition name="fade-price" mode="out-in">
+        <div
+          :key="props.totalPrice"
+          class="text-2xl font-bold text-emerald-600"
+          aria-live="polite"
+        >
           {{ props.totalPrice.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }) }}
         </div>
       </Transition>
@@ -96,13 +104,13 @@ const emit = defineEmits<{
 </template>
 
 <style scoped>
-.fade-scale-enter-active,
-.fade-scale-leave-active {
-  transition: all 0.18s ease;
+.fade-price-enter-active,
+.fade-price-leave-active {
+  transition: all 0.2s ease;
 }
-.fade-scale-enter-from,
-.fade-scale-leave-to {
+.fade-price-enter-from,
+.fade-price-leave-to {
   opacity: 0;
-  transform: scale(0.96);
+  transform: translateY(4px);
 }
 </style>

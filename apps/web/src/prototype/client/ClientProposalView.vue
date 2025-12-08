@@ -1,13 +1,18 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from "vue";
+import { onBeforeUnmount, onMounted, ref } from "vue";
 import OptionCard from "./components/OptionCard.vue";
-import StickySummary from "./components/StickySummary.vue";
+import SidebarSelection from "./components/SidebarSelection.vue";
+import StickyHeader from "./components/StickyHeader.vue";
 import { optionsData, type ProposalOption, type Upgrade } from "./optionsData";
 
 const selectedOptionId = ref<ProposalOption["id"]>("better");
 const selectedUpgradesByOption = reactive<Record<string, Set<string>>>({});
 const summaryDrawerOpen = ref(false);
 const animatingPrice = ref(false);
+const summaryRef = ref<HTMLElement | null>(null);
+const showStickyHeader = ref(false);
+const summaryGlow = ref(false);
 
 const ensureDefaults = (option: ProposalOption) => {
   if (!selectedUpgradesByOption[option.id]) {
@@ -52,6 +57,7 @@ const selectOption = (id: string) => {
   if (!target) return;
   ensureDefaults(target);
   selectedOptionId.value = id;
+  focusSummary();
 };
 
 const toggleUpgrade = (optionId: string, upgradeId: string) => {
@@ -78,16 +84,47 @@ const askQuestion = () => {
 };
 
 const selectedIds = computed(() => Array.from(selectedUpgradesByOption[selectedOption.value.id] || []));
+
+const scrollHandler = () => {
+  if (typeof window === "undefined") return;
+  showStickyHeader.value = window.scrollY > 280;
+};
+
+onMounted(() => {
+  if (typeof window !== "undefined") {
+    window.addEventListener("scroll", scrollHandler, { passive: true });
+  }
+});
+
+onBeforeUnmount(() => {
+  if (typeof window !== "undefined") {
+    window.removeEventListener("scroll", scrollHandler);
+  }
+});
+
+const focusSummary = () => {
+  summaryGlow.value = true;
+  if (summaryRef.value) {
+    summaryRef.value.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+  setTimeout(() => (summaryGlow.value = false), 600);
+};
 </script>
 
 <template>
   <div class="min-h-screen overflow-x-hidden bg-slate-50 text-slate-900">
-    <div class="mx-auto w-full max-w-[1440px] px-4 pb-28 pt-6 sm:px-5 lg:px-6">
+    <StickyHeader
+      :show="showStickyHeader"
+      :option-label="selectedOption.label"
+      :price="totalPrice.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })"
+      @approve="approve"
+    />
+    <div class="mx-auto w-full max-w-screen-xl px-4 pb-28 pt-6 sm:px-4 lg:px-2 xl:px-4 2xl:px-8">
       <!-- Tesla-style responsive layout:
            - xl+: cards + fixed-width summary sidebar
            - lg (1024-1279): 2-column cards, summary below + mini sticky footer
-           - <lg: snap-scrolling cards + mobile summary drawer -->
-      <div class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px] xl:items-start">
+           - <lg: stacked cards + mobile summary drawer -->
+      <div class="grid gap-6 lg:gap-8 xl:grid-cols-[minmax(0,1fr)_320px] xl:items-start">
         <div class="space-y-4">
           <header class="space-y-2">
             <p class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Proposal for Sarah Thompson</p>
@@ -114,9 +151,7 @@ const selectedIds = computed(() => Array.from(selectedUpgradesByOption[selectedO
               <p class="text-sm font-semibold text-slate-800 uppercase tracking-wide">Choose your option</p>
               <span class="text-xs text-slate-500">Good / Better / Best</span>
             </div>
-            <div
-              class="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory lg:grid lg:grid-cols-2 lg:gap-4 lg:overflow-visible xl:grid-cols-3 xl:pb-0"
-            >
+            <div class="grid gap-6 lg:gap-8 lg:grid-cols-2 xl:grid-cols-3">
               <OptionCard
                 v-for="option in optionsData"
                 :key="option.id"
@@ -124,7 +159,6 @@ const selectedIds = computed(() => Array.from(selectedUpgradesByOption[selectedO
                 :selected="selectedOptionId === option.id"
                 :total-price="optionTotal(option)"
                 :selected-upgrades="Array.from(selectedUpgradesByOption[option.id] || [])"
-                class="snap-center lg:snap-start"
                 @select="selectOption"
                 @toggle-upgrade="(id) => toggleUpgrade(option.id, id)"
               />
@@ -133,12 +167,13 @@ const selectedIds = computed(() => Array.from(selectedUpgradesByOption[selectedO
 
           <!-- Inline summary for Desktop M (1024-1279) -->
           <div class="hidden lg:block xl:hidden">
-            <StickySummary
+            <SidebarSelection
               :option="selectedOption"
               :upgrades="selectedUpgrades"
               :total-price="totalPrice"
               :today-due="todayDue"
               :at-completion="atCompletion"
+              :highlight="summaryGlow"
               @approve="approve"
               @question="askQuestion"
             />
@@ -149,13 +184,14 @@ const selectedIds = computed(() => Array.from(selectedUpgradesByOption[selectedO
           </p>
         </div>
 
-        <aside class="hidden w-full min-w-[280px] max-w-[340px] xl:block">
-          <StickySummary
+        <aside ref="summaryRef" class="hidden w-full min-w-[300px] max-w-[340px] xl:sticky xl:top-6 xl:block">
+          <SidebarSelection
             :option="selectedOption"
             :upgrades="selectedUpgrades"
             :total-price="totalPrice"
             :today-due="todayDue"
             :at-completion="atCompletion"
+            :highlight="summaryGlow"
             @approve="approve"
             @question="askQuestion"
           />
