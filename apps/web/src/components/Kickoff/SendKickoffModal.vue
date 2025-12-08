@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { ref, watch, computed } from "vue";
 import { PhoneIcon, UserIcon, TruckIcon, KeyIcon, PaperClipIcon } from "@heroicons/vue/24/outline";
 import KickoffModalField from "./KickoffModalField.vue";
@@ -138,7 +138,7 @@ const handleSend = async () => {
               @click="handleClose"
               aria-label="Close"
             >
-              ✕
+              �
             </button>
           </div>
 
@@ -170,7 +170,7 @@ const handleSend = async () => {
                   v-model="arrivalWindow"
                   type="text"
                   class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 shadow-inner focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-100"
-                  placeholder="8:00–10:00 AM"
+                  placeholder="e.g. 8:00–10:00 AM"
                 />
                 <TruckIcon class="absolute right-3 top-2.5 h-5 w-5 text-slate-400" />
               </div>
@@ -294,3 +294,10 @@ const handleSend = async () => {
   animation-delay: 0.05s;
 }
 </style>
+
+
+
+
+
+
+
