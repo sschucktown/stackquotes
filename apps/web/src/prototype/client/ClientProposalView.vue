@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from "vue";
-import { onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, reactive, ref, watch, onBeforeUnmount, onMounted } from "vue";
 import OptionCard from "./components/OptionCard.vue";
 import SidebarSelection from "./components/SidebarSelection.vue";
 import StickyHeader from "./components/StickyHeader.vue";
@@ -112,35 +111,45 @@ const focusSummary = () => {
 </script>
 
 <template>
-  <div class="min-h-screen overflow-x-hidden bg-slate-50 text-slate-900">
+  <div class="relative min-h-screen overflow-x-hidden bg-gradient-to-b from-slate-50 via-white to-slate-100 text-slate-900">
     <StickyHeader
       :show="showStickyHeader"
       :option-label="selectedOption.label"
       :price="totalPrice.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })"
       @approve="approve"
     />
-    <div class="mx-auto w-full max-w-screen-xl px-4 pb-28 pt-6 sm:px-4 lg:px-2 xl:px-4 2xl:px-8">
+    <div class="mx-auto w-full max-w-screen-2xl px-4 pb-32 pt-8 sm:px-6 lg:px-8 xl:px-10">
       <!-- Tesla-style responsive layout:
            - xl+: cards + fixed-width summary sidebar
            - lg (1024-1279): 2-column cards, summary below + mini sticky footer
            - <lg: stacked cards + mobile summary drawer -->
-      <div class="grid gap-6 lg:gap-8 xl:grid-cols-[minmax(0,1fr)_320px] xl:items-start">
-        <div class="space-y-4">
-          <header class="space-y-2">
+      <div class="grid gap-6 lg:gap-8 xl:grid-cols-[minmax(0,1fr)_320px] 2xl:grid-cols-[minmax(0,1fr)_340px] xl:items-start">
+        <div class="space-y-5">
+          <header
+            class="space-y-3 rounded-3xl border border-slate-200/70 bg-white/80 px-5 py-5 shadow-[0_18px_60px_rgba(15,23,42,0.08)] backdrop-blur"
+          >
             <p class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Proposal for Sarah Thompson</p>
             <h1 class="text-2xl font-semibold text-slate-900">Your Maple St Deck Proposal</h1>
             <p class="text-sm text-slate-600">Pick the option that fits best. You can always ask a question before approving.</p>
+            <div class="flex flex-wrap items-center gap-2 text-[11px] font-semibold text-slate-600">
+              <span class="rounded-full border border-slate-200 bg-slate-100 px-3 py-1">Tesla-style client portal</span>
+              <span class="rounded-full border border-emerald-200/70 bg-emerald-50 px-3 py-1 text-emerald-700">Zero-pressure approval</span>
+              <span class="rounded-full border border-blue-200/70 bg-blue-50 px-3 py-1 text-blue-700">Site visit: Tomorrow at 3:00 PM</span>
+            </div>
           </header>
 
-          <section class="rounded-2xl border border-slate-200 bg-white/90 px-4 py-4 shadow-[0_2px_10px_rgba(0,0,0,0.05)] sm:px-6 sm:py-5">
+          <section class="rounded-3xl border border-slate-200 bg-white/90 px-5 py-5 shadow-[0_10px_35px_rgba(15,23,42,0.08)] sm:px-6 sm:py-6">
             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Project summary</p>
                 <p class="text-sm font-semibold text-slate-900">Maple St Deck</p>
                 <p class="text-sm text-slate-600">482 Maple St, Seattle, WA</p>
               </div>
-              <div class="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 shadow-inner">
-                Site visit scheduled - Tomorrow at 3:00 PM
+              <div class="flex flex-wrap gap-2 text-xs font-semibold text-slate-600">
+                <span class="rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-blue-700 shadow-inner">
+                  Site visit scheduled - Tomorrow at 3:00 PM
+                </span>
+                <span class="rounded-full border border-slate-200 bg-white px-3 py-1 shadow-inner">Transparent pricing</span>
               </div>
             </div>
             <p class="mt-2 text-xs text-slate-500">You'll pay nothing until you pick an option.</p>
@@ -151,7 +160,7 @@ const focusSummary = () => {
               <p class="text-sm font-semibold text-slate-800 uppercase tracking-wide">Choose your option</p>
               <span class="text-xs text-slate-500">Good / Better / Best</span>
             </div>
-            <div class="grid gap-6 lg:gap-8 lg:grid-cols-2 xl:grid-cols-3">
+            <div class="grid gap-6 lg:gap-8 lg:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3">
               <OptionCard
                 v-for="option in optionsData"
                 :key="option.id"
@@ -184,7 +193,7 @@ const focusSummary = () => {
           </p>
         </div>
 
-        <aside ref="summaryRef" class="hidden w-full min-w-[300px] max-w-[340px] xl:sticky xl:top-6 xl:block">
+        <aside ref="summaryRef" class="hidden w-full min-w-[300px] max-w-[320px] xl:sticky xl:top-8 xl:block 2xl:max-w-[340px]">
           <SidebarSelection
             :option="selectedOption"
             :upgrades="selectedUpgrades"

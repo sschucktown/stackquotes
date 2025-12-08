@@ -18,8 +18,8 @@ const emit = defineEmits<{
 
 <template>
   <div
-    class="rounded-2xl border border-slate-200 bg-white/90 p-5 shadow-[0_2px_16px_rgba(0,0,0,0.06)] transition-all duration-300"
-    :class="highlight ? 'ring-2 ring-emerald-300' : ''"
+    class="rounded-2xl border border-slate-200 bg-white/90 p-5 shadow-[0_2px_16px_rgba(0,0,0,0.06)] transition-all duration-300 will-change-transform"
+    :class="highlight ? 'translate-y-[-2px] ring-2 ring-emerald-300 shadow-[0_18px_50px_rgba(16,185,129,0.22)]' : ''"
   >
     <p class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Your selection</p>
     <div class="mt-2 flex items-center justify-between">

@@ -41,12 +41,13 @@ const toggleDetails = () => {
 
 <template>
   <article
-    class="relative flex min-w-[280px] max-w-[360px] flex-col gap-3 rounded-2xl border bg-white px-4 py-4 transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-lg lg:min-w-[340px] xl:max-w-[380px] 2xl:max-w-[400px]"
+    class="relative flex min-w-[280px] max-w-[360px] flex-col gap-3 rounded-2xl border bg-white px-4 py-4 transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-lg lg:min-w-[320px] xl:max-w-[380px] 2xl:max-w-[400px]"
     :class="cardClasses"
     @click="emit('select', option.id)"
     tabindex="0"
     role="button"
-    @keyup.enter.space="emit('select', option.id)"
+    @keyup.enter="emit('select', option.id)"
+    @keyup.space.prevent="emit('select', option.id)"
   >
     <div class="flex items-start justify-between gap-3">
       <div class="space-y-1">
