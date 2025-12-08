@@ -228,6 +228,13 @@ const sendQuickQuote = () => {
           >
             Send QuickQuote
           </button>
+          <button
+            type="button"
+            class="inline-flex items-center gap-2 rounded-full border border-slate-900 bg-slate-900 px-4 py-1.5 text-sm font-semibold text-white shadow-md transition hover:bg-black"
+            @click="router.push('/prototype/quickquote/finish')"
+          >
+            Next → Build Full Proposal
+          </button>
         </div>
       </div>
     </footer>

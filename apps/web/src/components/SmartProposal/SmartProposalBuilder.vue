@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, onMounted, reactive, ref } from "vue";
 import { useRouter } from "vue-router";
 import OptionCard from "./OptionCard.vue";
 import SummarySection from "./SummarySection.vue";
 import UpgradeDrawer from "./UpgradeDrawer.vue";
 import { useSmartProposalPrototype, type OptionKey } from "@/stores/smartProposalPrototype";
+import { useQuickQuotePrototype } from "@/stores/quickQuotePrototype";
 
 const router = useRouter();
 const {
@@ -16,6 +17,7 @@ const {
   setDepositFlat,
   depositPreview,
 } = useSmartProposalPrototype();
+const { exportForProposal } = useQuickQuotePrototype();
 
 const editNotesOpen = ref(false);
 const tempNotes = ref(state.visitNotes);
@@ -24,6 +26,27 @@ const drawerOpen = ref(false);
 const drawerOption = ref<OptionKey | null>(null);
 
 const summaryText = computed(() => state.summary.text);
+
+const proposal = reactive({
+  lead: {
+    name: "",
+    email: "",
+    phone: "",
+    location: "",
+    job: "",
+  },
+  scope: [] as string[],
+  basePrice: 0,
+  addOns: [] as unknown[],
+  estimateLow: 0,
+  estimateHigh: 0,
+  estimateTotal: 0,
+  depositMode: "none" as "none" | "flat" | "percent",
+  depositConfig: {
+    flat: 0,
+    percent: 0,
+  },
+});
 
 const openDrawer = (option: OptionKey) => {
   drawerOption.value = option;
@@ -52,6 +75,12 @@ const regenerateSummary = () => {
 const formatCurrency = (value: number) =>
   value.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 
+const quickQuoteRange = computed(() =>
+  proposal.estimateLow && proposal.estimateHigh
+    ? `${formatCurrency(proposal.estimateLow)} - ${formatCurrency(proposal.estimateHigh)}`
+    : ""
+);
+
 const previewClientView = () => {
   router.push({
     path: "/prototype/smartproposal/client",
@@ -66,6 +95,59 @@ const saveDraft = () => {
 const sendProposal = () => {
   console.log("[SmartProposal] send proposal prototype", state);
 };
+
+onMounted(() => {
+  const payload = exportForProposal?.();
+  if (!payload) return;
+
+  Object.assign(proposal.lead, {
+    name: payload.lead?.name ?? "",
+    email: payload.lead?.email ?? "",
+    phone: payload.lead?.phone ?? "",
+    location: payload.lead?.location ?? "",
+    job: payload.lead?.jobType && payload.lead?.subtype ? `${payload.lead.jobType} - ${payload.lead.subtype}` : payload.lead?.jobType,
+  });
+  proposal.scope = [...(payload.scope || [])];
+  proposal.basePrice = payload.basePrice || 0;
+  proposal.addOns = payload.addOns || [];
+  proposal.estimateLow = payload.lowEstimate || 0;
+  proposal.estimateHigh = payload.highEstimate || 0;
+  proposal.estimateTotal = payload.totalPrice || 0;
+  proposal.depositMode = payload.depositMode || "none";
+  proposal.depositConfig.flat = payload.flatDeposit || 0;
+  proposal.depositConfig.percent = payload.percentDeposit || 0;
+
+  if (proposal.scope.length) {
+    state.baseScope = [...proposal.scope];
+    (["good", "better", "best"] as OptionKey[]).forEach((key) => autoGenerateScopeSnapshot(key));
+  }
+
+  (["good", "better", "best"] as OptionKey[]).forEach((key) => {
+    state.options[key].upgrades.forEach((upgrade) => {
+      upgrade.active = false;
+    });
+  });
+
+  if (proposal.estimateLow) {
+    state.options.good.basePrice = proposal.estimateLow;
+    state.options.good.price = proposal.estimateLow;
+  }
+  if (proposal.estimateTotal) {
+    state.options.better.basePrice = proposal.estimateTotal;
+    state.options.better.price = proposal.estimateTotal;
+  }
+  if (proposal.estimateHigh) {
+    state.options.best.basePrice = proposal.estimateHigh;
+    state.options.best.price = proposal.estimateHigh;
+  }
+
+  setDepositMode(proposal.depositMode as typeof state.deposit.mode);
+  if (proposal.depositMode === "flat") {
+    setDepositFlat(proposal.depositConfig.flat);
+  } else if (proposal.depositMode === "percent") {
+    setDepositPercent(proposal.depositConfig.percent);
+  }
+});
 </script>
 
 <template>

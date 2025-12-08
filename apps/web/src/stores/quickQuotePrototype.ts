@@ -1,4 +1,5 @@
-import { reactive } from "vue";
+import { reactive, toRef } from "vue";
+import { useQuickQuoteCalculator } from "@/components/quickquote/logic/useQuickQuoteCalculator";
 
 export type QuickQuoteAddOn = {
   id: string;
@@ -118,6 +119,8 @@ const state = reactive({
   percentDeposit: 20,
 });
 
+const calculator = useQuickQuoteCalculator(toRef(state, "basePrice"), toRef(state, "baseCost"), toRef(state, "addOns"));
+
 function applyTemplate(templateId?: string) {
   const match = templateList.find((t) => t.id === templateId);
   if (!match) return;
@@ -149,6 +152,23 @@ function updateAddOn(id: string, field: "enabled" | "price" | "cost" | "notes", 
   }
 }
 
+function exportForProposal() {
+  return {
+    lead: { ...state.lead },
+    templateName: state.templateName,
+    scope: [...state.scope],
+    basePrice: state.basePrice,
+    baseCost: state.baseCost,
+    addOns: state.addOns.map((item) => ({ ...item })),
+    lowEstimate: calculator.lowEstimate.value,
+    highEstimate: calculator.highEstimate.value,
+    totalPrice: calculator.totalPrice.value,
+    depositMode: state.depositMode,
+    flatDeposit: state.flatDeposit,
+    percentDeposit: state.percentDeposit,
+  };
+}
+
 export function useQuickQuotePrototype() {
   return {
     state,
@@ -157,5 +177,6 @@ export function useQuickQuotePrototype() {
     setBasePrice,
     setBaseCost,
     updateAddOn,
+    exportForProposal,
   };
 }
