@@ -190,6 +190,18 @@ const router = createRouter({
       meta: { public: true, allowAuthenticated: true },
     },
     {
+      path: "/prototype/client/contract-packet",
+      name: "ClientContractPacket",
+      component: () => import("@/pages/prototype/client/contract-packet.vue"),
+      meta: { public: true, allowAuthenticated: true },
+    },
+    {
+      path: "/prototype/client/pre-construction",
+      name: "ClientPreConstruction",
+      component: () => import("@/pages/prototype/client/pre-construction.vue"),
+      meta: { public: true, allowAuthenticated: true },
+    },
+    {
       path: "/prototype/hq/approval-state",
       name: "ProjectApprovalState",
       component: () => import("@/pages/prototype/hq/ProjectApprovalState.vue"),
