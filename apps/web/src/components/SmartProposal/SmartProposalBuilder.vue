@@ -9,6 +9,16 @@ import { useQuickQuotePrototype } from "@/stores/quickQuotePrototype";
 import { useContractorHQPrototype } from "@/stores/contractorHQPrototype";
 import { useProposalPrototype } from "@/stores/proposalPrototype";
 
+function encodePayload(obj: any): string | null {
+  try {
+    const json = JSON.stringify(obj);
+    return encodeURIComponent(json);
+  } catch (e) {
+    console.warn("[SmartProposal] Failed to encode payload:", e);
+    return null;
+  }
+}
+
 const route = useRoute();
 const router = useRouter();
 const {
@@ -69,9 +79,20 @@ const formatCurrency = (value: number) =>
   value.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 
 const previewClientView = () => {
+  const payload = {
+    proposal: proposal.value,
+    copy: clientCopy.value,
+    primary: primaryPreviewOption.value,
+  };
+
+  const encoded = encodePayload(payload);
+
   router.push({
     path: "/prototype/smartproposal/client",
-    query: { option: "better" },
+    query: {
+      ...(encoded ? { payload: encoded } : {}),
+      option: primaryPreviewOption.value,
+    },
   });
 };
 
