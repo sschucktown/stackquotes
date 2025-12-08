@@ -196,6 +196,12 @@ const router = createRouter({
       meta: { public: true, allowAuthenticated: true },
     },
     {
+      path: "/prototype/client/dashboard",
+      name: "ClientDashboardOverview",
+      component: () => import("@/pages/prototype/client/dashboard.vue"),
+      meta: { public: true, allowAuthenticated: true },
+    },
+    {
       path: "/prototype/client/pre-construction",
       name: "ClientPreConstruction",
       component: () => import("@/pages/prototype/client/pre-construction.vue"),
