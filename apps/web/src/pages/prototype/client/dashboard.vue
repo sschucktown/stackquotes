@@ -1,4 +1,6 @@
 <script setup lang="ts">
+// TODO: Replace mock data with Supabase project payload
+// const { data: project } = await supabase...
 import { computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import MotionFadeIn from "@/components/schedule/MotionFadeIn.vue";
@@ -37,8 +39,8 @@ const fallbackData = {
     { label: "Confirm yard and gate access for crew", complete: false },
     { label: "Mark sprinklers, buried lines, or obstacles", complete: false },
     { label: "Plan parking or material staging area", complete: false },
-    { label: "Give nearby neighbors a quick heads up", complete: false },
-    { label: "Plan for pets or kids during build days", complete: false },
+    { label: "Give neighbors a heads up", complete: false },
+    { label: "Plan for kids & pets on build days", complete: false },
   ],
 };
 
@@ -107,6 +109,23 @@ const handleOpenContractPacket = () => withPayload("/prototype/client/contract-p
           :project-location="data.project.location"
           :confirmed="scheduleConfirmed"
         />
+      </MotionFadeIn>
+
+      <MotionFadeIn>
+        <div class="mt-3 mb-6 flex items-center gap-4">
+          <div class="flex items-center gap-2">
+            <span class="h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
+            <span class="text-xs font-semibold text-slate-700">Proposal approved</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="h-2.5 w-2.5 rounded-full bg-blue-500"></span>
+            <span class="text-xs font-semibold text-slate-700">Schedule pending</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="h-2.5 w-2.5 rounded-full bg-slate-300"></span>
+            <span class="text-xs font-semibold text-slate-500">Kickoff pending</span>
+          </div>
+        </div>
       </MotionFadeIn>
 
       <div class="mt-6 space-y-4">

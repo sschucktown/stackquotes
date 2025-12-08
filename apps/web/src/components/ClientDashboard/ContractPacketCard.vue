@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { CalendarDaysIcon, DocumentArrowDownIcon } from "@heroicons/vue/24/outline";
+import { CalendarDaysIcon, ClipboardDocumentCheckIcon } from "@heroicons/vue/24/outline";
 
 const props = defineProps<{
   price: number;
@@ -22,10 +22,10 @@ const currency = (value: number) =>
         <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Contract packet</p>
         <p class="text-sm text-slate-600">Your confirmed scope, price, and deposit.</p>
       </div>
-      <DocumentArrowDownIcon class="h-6 w-6 text-slate-700" />
+      <ClipboardDocumentCheckIcon class="h-6 w-6 text-slate-700" />
     </div>
 
-    <div class="mt-4 grid gap-3 sm:grid-cols-3">
+    <div class="mt-4 grid gap-4 sm:grid-cols-3">
       <div class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
         <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Price</p>
         <p class="text-sm font-semibold text-slate-900">{{ currency(props.price) }}</p>
@@ -46,7 +46,7 @@ const currency = (value: number) =>
     <div class="mt-4 flex justify-end">
       <button
         type="button"
-        class="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow transition hover:bg-slate-800"
+        class="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow transition-all duration-150 hover:bg-slate-800 hover:shadow-md"
         @click="emit('download')"
       >
         Download contract packet PDF

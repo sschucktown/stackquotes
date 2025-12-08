@@ -36,14 +36,14 @@ const statusSteps = computed(() => [
 
 <template>
   <section class="rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
-    <div class="flex items-center justify-between gap-3">
+    <div class="flex items-center gap-3">
+      <CalendarDaysIcon class="h-6 w-6 text-slate-700" />
       <div>
         <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Schedule</p>
         <p class="text-sm text-slate-600">
           {{ hasConfirmed ? "You locked in a date with your contractor." : "Proposed start date pending your confirmation." }}
         </p>
       </div>
-      <CalendarDaysIcon class="h-6 w-6 text-slate-700" />
     </div>
 
     <div class="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
@@ -52,6 +52,12 @@ const statusSteps = computed(() => [
       </p>
       <p class="text-lg font-semibold text-slate-900">
         {{ hasConfirmed ? formatDate(props.confirmedDate) : formatDate(props.proposedDate) }}
+      </p>
+      <p
+        v-if="!hasConfirmed"
+        class="mt-2 inline-flex items-center rounded-lg bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700"
+      >
+        Next: Confirm your start date to lock your spot.
       </p>
       <p v-if="!hasConfirmed" class="text-xs text-slate-500">Hold expires after you confirm or request a change.</p>
     </div>
@@ -74,7 +80,7 @@ const statusSteps = computed(() => [
       <button
         v-if="!hasConfirmed"
         type="button"
-        class="w-full rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow transition hover:bg-emerald-700"
+        class="w-full rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow transition-all duration-150 hover:bg-emerald-700 hover:shadow-md"
         @click="emit('confirm')"
       >
         Confirm &amp; lock
@@ -82,7 +88,7 @@ const statusSteps = computed(() => [
       <button
         v-if="!hasConfirmed"
         type="button"
-        class="w-full rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 shadow-sm transition hover:bg-slate-50"
+        class="w-full rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 shadow-sm transition-all duration-150 hover:bg-slate-50 hover:shadow-md"
         @click="emit('requestChange')"
       >
         Request a different date
@@ -90,7 +96,7 @@ const statusSteps = computed(() => [
       <button
         v-else
         type="button"
-        class="w-full rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow transition hover:bg-slate-800 sm:col-span-2"
+        class="w-full rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow transition-all duration-150 hover:bg-slate-800 hover:shadow-md sm:col-span-2"
         @click="emit('addToCalendar')"
       >
         Add to calendar

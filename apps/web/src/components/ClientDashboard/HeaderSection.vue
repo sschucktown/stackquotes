@@ -20,7 +20,8 @@ const statusClass = computed(() =>
     <div>
       <p class="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Client dashboard</p>
       <h1 class="text-2xl font-semibold text-slate-900">Your Project Dashboard</h1>
-      <p class="mt-1 text-sm text-slate-600">{{ projectName }} · {{ projectLocation }}</p>
+      <p class="mt-1 text-sm text-slate-500">Everything about your project, in one place.</p>
+      <p class="text-xs text-slate-400">{{ projectName }} • {{ projectLocation }}</p>
     </div>
     <span
       class="rounded-full border px-3 py-1 text-xs font-semibold shadow-inner"

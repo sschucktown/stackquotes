@@ -19,7 +19,7 @@ const completedCount = computed(() => props.items.filter((item) => item.complete
 const progressPercent = computed(() =>
   props.items.length ? Math.min(100, Math.round((completedCount.value / props.items.length) * 100)) : 0
 );
-const preview = computed(() => props.items.slice(0, 3));
+const preview = computed(() => props.items.slice(0, 5));
 </script>
 
 <template>
@@ -41,9 +41,10 @@ const preview = computed(() => props.items.slice(0, 3));
 
     <ul class="mt-3 space-y-2">
       <li
-        v-for="item in preview"
+        v-for="(item, index) in preview"
         :key="item.label"
         class="flex items-start gap-2 rounded-xl bg-slate-50 px-3 py-2"
+        :class="index >= 3 ? 'pointer-events-none opacity-50' : ''"
       >
         <CheckCircleIcon
           class="mt-[1px] h-5 w-5"
