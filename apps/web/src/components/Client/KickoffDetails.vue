@@ -84,7 +84,7 @@ onMounted(async () => {
       </Transition>
 
       <TransitionGroup name="stagger" tag="div" class="mt-6 space-y-4">
-        <KickoffDetailCard title="Crew arrival">
+        <KickoffDetailCard title="Crew arrival" class="stagger-item" style="--stagger: 0">
           <div class="space-y-3 text-sm text-slate-800">
             <div class="flex items-center gap-2">
               <TruckIcon class="h-5 w-5 text-slate-500" />
@@ -103,7 +103,7 @@ onMounted(async () => {
           </div>
         </KickoffDetailCard>
 
-        <KickoffDetailCard title="Pre-construction checklist">
+        <KickoffDetailCard title="Pre-construction checklist" class="stagger-item" style="--stagger: 1">
           <div class="flex items-center justify-between gap-3">
             <p class="text-sm font-semibold text-slate-900">{{ progress }} of {{ checklist.length }} done</p>
             <div class="h-2 w-36 rounded-full bg-slate-100">
@@ -121,7 +121,7 @@ onMounted(async () => {
               <span>{{ item.label }}</span>
               <span
                 class="grid h-6 w-6 place-items-center rounded-full border transition-transform duration-140"
-                :class="item.done ? 'border-emerald-500 bg-emerald-50 text-emerald-600 scale-105' : 'border-slate-300 bg-white text-slate-400'"
+                :class="item.done ? 'border-emerald-500 bg-emerald-50 text-emerald-600 check-bounce' : 'border-slate-300 bg-white text-slate-400'"
               >
                 <span v-if="item.done">✓</span>
               </span>
@@ -132,6 +132,8 @@ onMounted(async () => {
         <KickoffDetailCard
           v-if="hasNotes"
           title="Materials & Access Notes"
+          class="stagger-item"
+          style="--stagger: 2"
         >
           <div class="space-y-2 text-sm text-slate-700">
             <div v-if="payload.materialNotes" class="rounded-xl bg-slate-50 px-3 py-2">
@@ -145,7 +147,7 @@ onMounted(async () => {
           </div>
         </KickoffDetailCard>
 
-        <KickoffDetailCard title="What happens next">
+        <KickoffDetailCard title="What happens next" class="stagger-item" style="--stagger: 3">
           <ul class="list-disc space-y-1 pl-5 text-sm text-slate-700">
             <li>You’ll receive a reminder before the start date.</li>
             <li>Crew will arrive in the provided window.</li>
@@ -183,7 +185,22 @@ onMounted(async () => {
   opacity: 0;
   transform: translateY(10px);
 }
-.stagger-enter-active > * {
-  transition-delay: 35ms;
+.stagger-item {
+  transition: all 0.25s ease-out;
+  transition-delay: calc(var(--stagger, 0) * 35ms);
+}
+.check-bounce {
+  animation: check-bounce 140ms ease-out;
+}
+@keyframes check-bounce {
+  0% {
+    transform: scale(0.85);
+  }
+  60% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 </style>

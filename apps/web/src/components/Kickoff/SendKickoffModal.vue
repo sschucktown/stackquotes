@@ -138,7 +138,7 @@ const handleSend = async () => {
               @click="handleClose"
               aria-label="Close"
             >
-              �
+              ×
             </button>
           </div>
 
@@ -294,6 +294,10 @@ const handleSend = async () => {
   animation-delay: 0.05s;
 }
 </style>
+
+
+
+
 
 
 
