@@ -166,6 +166,18 @@ const router = createRouter({
       meta: { public: true, allowAuthenticated: true },
     },
     {
+      path: "/prototype/client/schedule-preview",
+      name: "ClientSchedulePreview",
+      component: () => import("@/pages/prototype/client/SchedulePreview.vue"),
+      meta: { public: true, allowAuthenticated: true },
+    },
+    {
+      path: "/prototype/hq/approval-state",
+      name: "ProjectApprovalState",
+      component: () => import("@/pages/prototype/hq/ProjectApprovalState.vue"),
+      meta: { public: true, allowAuthenticated: true },
+    },
+    {
       path: "/prototype/proposal/demo",
       name: "SmartProposalClientDemo",
       component: () => import("@/prototype/client/ClientProposalView.vue"),
