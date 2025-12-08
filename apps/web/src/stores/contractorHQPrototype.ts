@@ -1,4 +1,4 @@
-import { defineStore } from "pinia";
+﻿import { defineStore } from "pinia";
 import { reactive } from "vue";
 import { messageStore } from "@/prototype/stores/messages";
 import { timelineEvents } from "@/prototype/contractor/usePrototypeEvents";
@@ -200,7 +200,9 @@ export const useContractorHQPrototype = defineStore("contractorHQPrototype", {
       if (!job) return;
       if (!job.kickoff) job.kickoff = defaultKickoff();
       job.kickoff.packetSentAt = new Date().toISOString();
+      job.kickoff.packetViewedAt = null;
       job.kickoff.clientConfirmed = false;
+      job.kickoff.clientSubmittedAccess = false;
     },
     markKickoffPacketViewed(jobId?: string) {
       const job = this.getJob(jobId);
