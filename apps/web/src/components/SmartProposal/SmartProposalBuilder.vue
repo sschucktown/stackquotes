@@ -35,6 +35,44 @@ const { exportForProposal } = useQuickQuotePrototype();
 const hqStore = useContractorHQPrototype();
 const proposalStore = useProposalPrototype();
 
+const primaryPreviewOption = ref<OptionKey>("better");
+const clientCopy = computed(() => ({
+  summary: state.summary.text,
+  notes: state.visitNotes,
+}));
+
+const proposal = computed(() => ({
+  client: { name: state.importMeta.lead.name || "Client" },
+  project: state.importMeta.lead.job || "Project",
+  address: state.importMeta.lead.location || "Location",
+  options: {
+    good: {
+      label: state.options.good.label,
+      subtitle: state.options.good.subtitle,
+      price: state.options.good.price,
+      highlights: state.options.good.scope || [],
+      image: "/proposal-demo/deck1.jpg",
+    },
+    better: {
+      label: state.options.better.label,
+      subtitle: state.options.better.subtitle,
+      price: state.options.better.price,
+      highlights: state.options.better.scope || [],
+      image: "/proposal-demo/deck2.jpg",
+    },
+    best: {
+      label: state.options.best.label,
+      subtitle: state.options.best.subtitle,
+      price: state.options.best.price,
+      highlights: state.options.best.scope || [],
+      image: "/proposal-demo/deck3.jpg",
+    },
+  },
+  deposit: {
+    percent: state.deposit.mode === "percent" ? state.deposit.percent : undefined,
+  },
+}));
+
 const isImportingFromQuickQuote = ref(false);
 const showImportOverlay = ref(false);
 const importStep = ref(1);
