@@ -1,89 +1,115 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import { CheckIcon } from "@heroicons/vue/24/outline";
 
-const route = useRoute();
 const router = useRouter();
+const route = useRoute();
 
 const option = computed(() => {
   const value = String(route.query.option || "").toLowerCase();
-  if (["good", "better", "best"].includes(value)) return value;
-  return "better";
+  return ["good", "better", "best"].includes(value) ? value : "better";
 });
 
 const optionLabel = computed(() => {
-  const map: Record<string, string> = {
-    good: "Good",
-    better: "Better",
-    best: "Best",
-  };
+  const map: Record<string, string> = { good: "Good", better: "Better", best: "Best" };
   return map[option.value] ?? "Selected";
 });
 
+const formattedDate = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(new Date());
+const formattedTime = new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit" }).format(new Date());
+
 const handleReturn = () => router.push("/prototype/smartproposal/client");
 const handleClose = () => {
-  if (typeof window !== "undefined") {
-    window.close();
-  }
+  if (typeof window !== "undefined") window.close();
 };
 </script>
 
 <template>
-  <main class="flex min-h-screen items-center justify-center bg-slate-50 px-6 py-14 text-slate-900">
-    <div class="w-full max-w-lg rounded-3xl border border-slate-200 bg-white px-7 py-8 shadow-lg">
-      <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 shadow-inner">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-        </svg>
-      </div>
-      <h1 class="mt-5 text-center text-2xl font-semibold">Thanks! We’ve received your approval.</h1>
-      <p class="mt-2 text-center text-sm text-slate-600">Your contractor will confirm next steps shortly.</p>
-      <p class="mt-3 text-center text-sm font-semibold text-emerald-700">Chosen option: {{ optionLabel }}</p>
+  <main class="flex min-h-screen items-center justify-center bg-slate-50 px-6 py-12 text-slate-900">
+    <transition name="card">
+      <div
+        class="w-full max-w-[480px] rounded-3xl border border-slate-200 bg-white px-6 py-6 shadow-xl sm:px-8 sm:py-8"
+        key="card"
+      >
+        <transition name="check">
+          <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50" key="check">
+            <CheckIcon class="h-8 w-8 text-emerald-600" />
+          </div>
+        </transition>
 
-      <ol class="mt-6 space-y-3 text-sm text-slate-800">
-        <li class="flex items-start gap-3">
-          <span class="mt-[6px] h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
-          <div>
-            <p class="font-semibold text-slate-900">Approval received</p>
-            <p class="text-[13px] text-slate-600">We’ve locked in your selection ({{ optionLabel }}).</p>
-          </div>
-        </li>
-        <li class="flex items-start gap-3">
-          <span class="mt-[6px] h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
-          <div>
-            <p class="font-semibold text-slate-900">Contractor reviews details</p>
-            <p class="text-[13px] text-slate-600">Your contractor will double-check scope and scheduling.</p>
-          </div>
-        </li>
-        <li class="flex items-start gap-3">
-          <span class="mt-[6px] h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
-          <div>
-            <p class="font-semibold text-slate-900">Schedule &amp; deposit confirmation</p>
-            <p class="text-[13px] text-slate-600">You’ll confirm dates and deposit to lock the job.</p>
-          </div>
-        </li>
-      </ol>
+        <h1 class="mt-4 text-center text-xl font-semibold text-slate-900">Thanks! We’ve received your approval.</h1>
+        <p class="mt-1 text-center text-sm text-slate-600">Your contractor will follow up shortly with next steps.</p>
 
-      <div class="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
-        <button
-          class="inline-flex flex-1 items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-900 shadow-sm transition-all duration-200 ease-out hover:-translate-y-[1px] hover:bg-slate-50"
-          @click="handleReturn"
-        >
-          Return to proposal
-        </button>
-        <button
-          class="inline-flex flex-1 items-center justify-center rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-md transition-all duration-200 ease-out hover:-translate-y-[1px] hover:bg-emerald-700"
-          @click="handleClose"
-        >
-          Close window
-        </button>
+        <div class="mx-auto mt-4 w-fit rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
+          {{ optionLabel.toUpperCase() }} OPTION SELECTED
+        </div>
+
+        <ul class="mt-6 space-y-4 text-sm text-slate-700">
+          <li class="flex items-start gap-3">
+            <div class="mt-1 h-2 w-2 rounded-full bg-emerald-500"></div>
+            <div>
+              <p class="font-semibold text-slate-900">Approval received</p>
+              <p class="text-sm text-slate-600">We've locked in your selection ({{ optionLabel }}).</p>
+            </div>
+          </li>
+          <li class="flex items-start gap-3">
+            <div class="mt-1 h-2 w-2 rounded-full bg-emerald-500"></div>
+            <div>
+              <p class="font-semibold text-slate-900">Contractor reviews details</p>
+              <p class="text-sm text-slate-600">Your contractor will double-check scope and scheduling.</p>
+            </div>
+          </li>
+          <li class="flex items-start gap-3">
+            <div class="mt-1 h-2 w-2 rounded-full bg-emerald-500"></div>
+            <div>
+              <p class="font-semibold text-slate-900">Schedule &amp; deposit confirmation</p>
+              <p class="text-sm text-slate-600">You’ll confirm dates and deposit to lock in the job.</p>
+            </div>
+          </li>
+        </ul>
+
+        <div class="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+          <button
+            class="rounded-full border border-slate-300 bg-white px-5 py-2 text-sm font-semibold text-slate-700 transition-all duration-200 ease-out hover:-translate-y-[1px] hover:bg-slate-50"
+            @click="handleReturn"
+          >
+            Return to proposal
+          </button>
+          <button
+            class="rounded-full bg-emerald-600 px-6 py-2 text-sm font-semibold text-white shadow transition-all duration-200 ease-out hover:-translate-y-[1px] hover:bg-emerald-700"
+            @click="handleClose"
+          >
+            Close window
+          </button>
+        </div>
+
+        <p class="mt-4 text-center text-xs text-slate-400">Approved on {{ formattedDate }} at {{ formattedTime }}</p>
       </div>
-    </div>
+    </transition>
   </main>
 </template>
 
 <style scoped>
-main {
-  font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+.card-enter-active {
+  transition: opacity 220ms ease-out, transform 220ms ease-out;
+}
+.card-enter-from {
+  opacity: 0;
+  transform: translateY(12px);
+}
+.card-enter-to {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.check-enter-active {
+  transition: transform 180ms ease-out;
+}
+.check-enter-from {
+  transform: scale(0.9);
+}
+.check-enter-to {
+  transform: scale(1);
 }
 </style>
