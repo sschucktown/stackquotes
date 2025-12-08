@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, nextTick, ref } from "vue";
 import { useRoute } from "vue-router";
+import SignaturePad from "signature_pad";
 import { useContractorHQPrototype } from "@/stores/contractorHQPrototype";
 
 const route = useRoute();
@@ -95,14 +96,43 @@ const markImageLoaded = (key: string) => {
   }, 150);
 };
 
-const approveSelection = () => {
-  const chosen = current.value;
-  if (!chosen) return;
+const signatureOpen = ref(false);
+const successOpen = ref(false);
+const signaturePad = ref<SignaturePad | null>(null);
+const signatureCanvas = ref<HTMLCanvasElement | null>(null);
 
-  hq.addTimelineEvent("job-maple", `Client selected: ${chosen.label}`);
-  hq.addSystemMessage("job-maple", `Client approved the ${chosen.label} option.`);
-  alert(`Approved: ${chosen.label}`);
-};
+function openSignature() {
+  signatureOpen.value = true;
+  nextTick(() => {
+    if (signatureCanvas.value) {
+      signaturePad.value = new SignaturePad(signatureCanvas.value, {
+        backgroundColor: "white",
+        penColor: "black",
+      });
+    }
+  });
+}
+
+function clearSignature() {
+  signaturePad.value?.clear();
+}
+
+function finalizeSignature() {
+  if (!signaturePad.value || signaturePad.value.isEmpty()) {
+    alert("Please provide a signature.");
+    return;
+  }
+
+  const signatureData = signaturePad.value.toDataURL("image/png");
+  console.log("[Prototype] Signature captured (base64, truncated):", signatureData.slice(0, 64), "...");
+
+  // Prototype: inject into HQ
+  hq.addTimelineEvent("job-maple", "Client signed and approved proposal.");
+  hq.addSystemMessage("job-maple", "Client signature received. Visit next steps to schedule the job.");
+
+  signatureOpen.value = false;
+  successOpen.value = true;
+}
 </script>
 
 <template>
@@ -217,10 +247,10 @@ const approveSelection = () => {
         </div>
 
         <button
-          class="w-full mt-5 rounded-full bg-emerald-600 text-white font-semibold py-2 text-sm shadow hover:bg-emerald-700 transition"
-          @click="approveSelection"
+          class="w-full rounded-full bg-emerald-600 text-white font-semibold py-2 text-sm shadow hover:bg-emerald-700 transition"
+          @click="openSignature"
         >
-          Approve this option
+          Approve & Sign
         </button>
 
         <button
@@ -234,6 +264,72 @@ const approveSelection = () => {
         </p>
       </aside>
     </div>
+
+    <Transition name="fade">
+      <div
+        v-if="signatureOpen"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-white/90 backdrop-blur px-4"
+      >
+        <div class="relative w-full max-w-md rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl">
+          <h2 class="mb-2 text-lg font-semibold text-slate-900">Sign to Approve</h2>
+          <p class="mb-3 text-sm text-slate-600">
+            Your signature confirms you agree to move forward with this option.
+          </p>
+
+          <canvas
+            ref="signatureCanvas"
+            class="h-48 w-full rounded-xl border border-slate-300 bg-white"
+          ></canvas>
+
+          <div class="mt-3 flex justify-between">
+            <button
+              class="rounded-full border border-slate-300 bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-700"
+              @click="clearSignature"
+            >
+              Clear
+            </button>
+            <button
+              class="rounded-full bg-emerald-600 px-4 py-1 text-sm font-semibold text-white shadow hover:bg-emerald-700"
+              @click="finalizeSignature"
+            >
+              Finalize Approval
+            </button>
+          </div>
+
+          <button
+            class="absolute right-4 top-4 text-slate-400 hover:text-slate-600"
+            @click="signatureOpen = false"
+          >
+            ✕
+          </button>
+        </div>
+      </div>
+    </Transition>
+
+    <Transition name="fade">
+      <div
+        v-if="successOpen"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-white/90 backdrop-blur px-4 text-center"
+      >
+        <div class="flex w-full max-w-sm flex-col items-center gap-4">
+          <div class="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <h2 class="text-xl font-semibold text-slate-900">You're all set!</h2>
+          <p class="text-sm text-slate-600">
+            We've let your contractor know. They'll reach out with next steps.
+          </p>
+          <button
+            class="mt-2 rounded-full bg-slate-900 px-6 py-2 text-sm font-semibold text-white shadow hover:bg-slate-800"
+            @click="successOpen = false"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </Transition>
   </div>
 </template>
 
@@ -268,5 +364,13 @@ const approveSelection = () => {
   100% {
     background-position: -200% 0;
   }
+}
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>
