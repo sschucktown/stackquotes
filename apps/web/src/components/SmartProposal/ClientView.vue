@@ -334,7 +334,7 @@ const handlePayNow = () => {
             class="mt-4 flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700"
           >
             <CheckIcon class="h-5 w-5" />
-            <span>Payment successful. Redirecting…</span>
+            <span>Payment successful. Redirecting...</span>
           </div>
 
           <div class="mt-5 grid gap-3 sm:grid-cols-2">
@@ -344,7 +344,7 @@ const handlePayNow = () => {
               :disabled="paymentProcessing || paymentSuccess"
               @click="handlePayNow"
             >
-              <span v-if="paymentProcessing">Processing…</span>
+              <span v-if="paymentProcessing">Processing...</span>
               <span v-else>Pay deposit now</span>
             </button>
             <button
@@ -369,11 +369,11 @@ const handlePayNow = () => {
         class="fixed inset-x-0 top-4 z-50 mx-auto flex max-w-sm items-center gap-3 rounded-xl border border-emerald-200 bg-white/95 px-4 py-3 text-sm font-semibold text-emerald-800 shadow-lg backdrop-blur"
       >
         <div class="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
-          ✓
+          <CheckIcon class="h-4 w-4" />
         </div>
         <div class="flex-1">
           <p class="leading-tight">Approval captured</p>
-          <p class="text-[12px] font-normal text-emerald-700/80">Redirecting to confirmation…</p>
+          <p class="text-[12px] font-normal text-emerald-700/80">Redirecting to confirmation...</p>
         </div>
       </div>
     </Transition>
