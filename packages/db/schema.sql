@@ -149,6 +149,7 @@ create table if not exists public.smart_proposals (
   kickoff_details jsonb,
   kickoff_status text not null default 'pending',
   kickoff_sent_at timestamptz,
+  kickoff_viewed_at timestamptz,
   crew_arrival_window text,
   crew_lead_name text,
   crew_lead_phone text,

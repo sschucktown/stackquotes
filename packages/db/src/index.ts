@@ -246,6 +246,7 @@ export interface DatabaseSmartProposalRow {
   kickoff_details: Json | null;
   kickoff_status: string | null;
   kickoff_sent_at: string | null;
+  kickoff_viewed_at: string | null;
   crew_arrival_window: string | null;
   crew_lead_name: string | null;
   crew_lead_phone: string | null;
@@ -334,6 +335,7 @@ export interface ProposalInput {
   kickoffStatus?: KickoffStatus | null;
   kickoffDetails?: KickoffDetails | null;
   kickoffSentAt?: string | null;
+  kickoffViewedAt?: string | null;
   crewArrivalWindow?: string | null;
   crewLeadName?: string | null;
   crewLeadPhone?: string | null;
@@ -356,6 +358,7 @@ export interface ProposalStatusUpdateInput {
   kickoffStatus?: KickoffStatus | null;
   kickoffDetails?: KickoffDetails | null;
   kickoffSentAt?: string | null;
+  kickoffViewedAt?: string | null;
   crewArrivalWindow?: string | null;
   crewLeadName?: string | null;
   crewLeadPhone?: string | null;
@@ -770,6 +773,7 @@ const buildProposalRecord = (row: DatabaseSmartProposalRow): Proposal => {
     kickoffStatus: (row.kickoff_status as KickoffStatus | null) ?? null,
     kickoffDetails: parseKickoffDetails(row),
     kickoffSentAt: row.kickoff_sent_at ?? null,
+    kickoffViewedAt: row.kickoff_viewed_at ?? null,
     crewArrivalWindow: row.crew_arrival_window ?? null,
     crewLeadName: row.crew_lead_name ?? null,
     crewLeadPhone: row.crew_lead_phone ?? null,
@@ -1370,6 +1374,7 @@ export async function createProposalRecord(
     kickoff_status: input.kickoffStatus ?? "pending",
     kickoff_details: input.kickoffDetails ? toJson(input.kickoffDetails) : null,
     kickoff_sent_at: input.kickoffSentAt ?? null,
+    kickoff_viewed_at: input.kickoffViewedAt ?? null,
     crew_arrival_window: input.crewArrivalWindow ?? null,
     crew_lead_name: input.crewLeadName ?? null,
     crew_lead_phone: input.crewLeadPhone ?? null,
@@ -1439,6 +1444,12 @@ export async function updateProposalRecord(
   }
   if (input.kickoffSentAt !== undefined) {
     updatePayload.kickoff_sent_at = input.kickoffSentAt ?? null;
+  }
+  if (input.kickoffViewedAt !== undefined) {
+    updatePayload.kickoff_viewed_at = input.kickoffViewedAt ?? null;
+  }
+  if (input.kickoffViewedAt !== undefined) {
+    updatePayload.kickoff_viewed_at = input.kickoffViewedAt ?? null;
   }
   if (input.crewArrivalWindow !== undefined) {
     updatePayload.crew_arrival_window = input.crewArrivalWindow ?? null;

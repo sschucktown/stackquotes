@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, watch, computed } from "vue";
-import { PhoneIcon, UserIcon, TruckIcon, KeyIcon } from "@heroicons/vue/24/outline";
+import { PhoneIcon, UserIcon, TruckIcon, KeyIcon, PaperClipIcon } from "@heroicons/vue/24/outline";
 import KickoffModalField from "./KickoffModalField.vue";
 import { apiFetch } from "@/lib/http";
 
@@ -54,6 +54,16 @@ watch(
 const formatCurrency = (value: number | null | undefined) =>
   (value ?? 0).toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 
+const maskPhone = (value: string): string => {
+  const digits = value.replace(/\D/g, "").slice(0, 10);
+  const parts = [];
+  if (digits.length > 0) parts.push("(" + digits.slice(0, Math.min(3, digits.length)));
+  if (digits.length >= 4) parts[0] = "(" + digits.slice(0, 3) + ")";
+  if (digits.length >= 4) parts.push(" " + digits.slice(3, Math.min(6, digits.length)));
+  if (digits.length >= 7) parts.push("-" + digits.slice(6, 10));
+  return parts.join("");
+};
+
 const handleClose = () => emit("close");
 
 const validate = () => {
@@ -96,9 +106,15 @@ const handleSend = async () => {
   }
   emit("sent", payload);
   emit("close");
-  setTimeout(() => {
-    alert("Kickoff details sent to client");
-  }, 10);
+  if (typeof window !== "undefined" && (window as any).__sqShowMessageToast) {
+    (window as any).__sqShowMessageToast({
+      participant: props.project?.clientName || "Client",
+      job: props.project?.projectName || "Project",
+      text: "Kickoff packet sent to client.",
+    });
+  } else {
+    alert("Kickoff packet sent to client.");
+  }
 };
 </script>
 
@@ -127,7 +143,7 @@ const handleSend = async () => {
           </div>
 
           <div class="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-            <div class="flex flex-wrap items-center gap-4">
+            <div class="grid gap-3 sm:grid-cols-3">
               <div>
                 <p class="text-xs uppercase tracking-[0.08em] text-slate-500">Client</p>
                 <p class="text-sm font-semibold text-slate-900">{{ project?.clientName }}</p>
@@ -179,6 +195,7 @@ const handleSend = async () => {
                     type="tel"
                     class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 shadow-inner focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-100"
                     placeholder="(555) 123-4567"
+                    @input="leadPhone = maskPhone((($event.target as HTMLInputElement)?.value) || '')"
                   />
                   <PhoneIcon class="absolute right-3 top-2.5 h-5 w-5 text-slate-400" />
                 </div>
@@ -207,7 +224,10 @@ const handleSend = async () => {
             </KickoffModalField>
 
             <div class="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-              Optional attachments (coming soon). Include site photos or permits here.
+              <div class="flex items-center gap-2 opacity-0 animate-fade-in">
+                <PaperClipIcon class="h-5 w-5 text-slate-500" />
+                <span>Attachment uploads coming soon. Include site photos or permits here.</span>
+              </div>
             </div>
 
             <p v-if="error" class="text-sm font-semibold text-amber-700">{{ error }}</p>
@@ -236,7 +256,7 @@ const handleSend = async () => {
 
 <style scoped>
 .modal-enter-active {
-  transition: opacity 180ms ease-out, transform 180ms ease-out;
+  transition: opacity 180ms cubic-bezier(0.16, 1, 0.3, 1), transform 180ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 .modal-leave-active {
   transition: opacity 150ms ease-in, transform 150ms ease-in;
@@ -244,12 +264,12 @@ const handleSend = async () => {
 .modal-enter-from,
 .modal-leave-to {
   opacity: 0;
-  transform: translateY(12px);
+  transform: translateY(12px) scale(0.96);
 }
 .modal-leave-from,
 .modal-enter-to {
   opacity: 1;
-  transform: translateY(0);
+  transform: translateY(0) scale(1);
 }
 .card-enter-active,
 .card-leave-active {
@@ -259,5 +279,18 @@ const handleSend = async () => {
 .card-leave-to {
   opacity: 0;
   transform: translateY(8px);
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.animate-fade-in {
+  animation: fade-in 0.25s ease-out forwards;
+  animation-delay: 0.05s;
 }
 </style>

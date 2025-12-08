@@ -59,9 +59,10 @@ kickoffRouter.post("/viewed", async (c) => {
     return c.json({ error: parsed.error.message }, 400);
   }
   const supabase = getServiceClient();
+  const now = new Date().toISOString();
   const { data, error } = await supabase
     .from("smart_proposals")
-    .update({ kickoff_status: "viewed" })
+    .update({ kickoff_status: "viewed", kickoff_viewed_at: now })
     .eq("id", parsed.data.proposalId)
     .select("*")
     .maybeSingle();

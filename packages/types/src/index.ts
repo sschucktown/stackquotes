@@ -169,6 +169,7 @@ export interface Proposal {
   kickoffStatus?: KickoffStatus | null;
   kickoffDetails?: KickoffDetails | null;
   kickoffSentAt?: string | null;
+  kickoffViewedAt?: string | null;
   crewArrivalWindow?: string | null;
   crewLeadName?: string | null;
   crewLeadPhone?: string | null;
