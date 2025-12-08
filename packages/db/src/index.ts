@@ -1367,6 +1367,14 @@ export async function createProposalRecord(
     deposit_amount: depositAmount,
     deposit_config: input.depositConfig ? toJson(input.depositConfig) : null,
     status: input.status ?? "draft",
+    kickoff_status: input.kickoffStatus ?? "pending",
+    kickoff_details: input.kickoffDetails ? toJson(input.kickoffDetails) : null,
+    kickoff_sent_at: input.kickoffSentAt ?? null,
+    crew_arrival_window: input.crewArrivalWindow ?? null,
+    crew_lead_name: input.crewLeadName ?? null,
+    crew_lead_phone: input.crewLeadPhone ?? null,
+    materials_drop_notes: input.materialsDropNotes ?? null,
+    access_notes: input.accessNotes ?? null,
     public_token: input.publicToken ?? null,
     public_token_expires_at: input.publicTokenExpiresAt ?? null,
     sent_at: input.sentAt ?? null,
@@ -1422,6 +1430,30 @@ export async function updateProposalRecord(
   }
   if (input.paymentLinkId !== undefined) {
     updatePayload.payment_link_id = input.paymentLinkId ?? null;
+  }
+  if (input.kickoffStatus !== undefined) {
+    updatePayload.kickoff_status = input.kickoffStatus ?? null;
+  }
+  if (input.kickoffDetails !== undefined) {
+    updatePayload.kickoff_details = input.kickoffDetails ? toJson(input.kickoffDetails) : null;
+  }
+  if (input.kickoffSentAt !== undefined) {
+    updatePayload.kickoff_sent_at = input.kickoffSentAt ?? null;
+  }
+  if (input.crewArrivalWindow !== undefined) {
+    updatePayload.crew_arrival_window = input.crewArrivalWindow ?? null;
+  }
+  if (input.crewLeadName !== undefined) {
+    updatePayload.crew_lead_name = input.crewLeadName ?? null;
+  }
+  if (input.crewLeadPhone !== undefined) {
+    updatePayload.crew_lead_phone = input.crewLeadPhone ?? null;
+  }
+  if (input.materialsDropNotes !== undefined) {
+    updatePayload.materials_drop_notes = input.materialsDropNotes ?? null;
+  }
+  if (input.accessNotes !== undefined) {
+    updatePayload.access_notes = input.accessNotes ?? null;
   }
 
   let depositHandledViaOptions = false;
@@ -1571,6 +1603,30 @@ export async function updateProposalStatus(
   }
   if (input.sentAt !== undefined) {
     updatePayload.sent_at = input.sentAt ?? null;
+  }
+  if (input.kickoffStatus !== undefined) {
+    updatePayload.kickoff_status = input.kickoffStatus ?? null;
+  }
+  if (input.kickoffDetails !== undefined) {
+    updatePayload.kickoff_details = input.kickoffDetails ? toJson(input.kickoffDetails) : null;
+  }
+  if (input.kickoffSentAt !== undefined) {
+    updatePayload.kickoff_sent_at = input.kickoffSentAt ?? null;
+  }
+  if (input.crewArrivalWindow !== undefined) {
+    updatePayload.crew_arrival_window = input.crewArrivalWindow ?? null;
+  }
+  if (input.crewLeadName !== undefined) {
+    updatePayload.crew_lead_name = input.crewLeadName ?? null;
+  }
+  if (input.crewLeadPhone !== undefined) {
+    updatePayload.crew_lead_phone = input.crewLeadPhone ?? null;
+  }
+  if (input.materialsDropNotes !== undefined) {
+    updatePayload.materials_drop_notes = input.materialsDropNotes ?? null;
+  }
+  if (input.accessNotes !== undefined) {
+    updatePayload.access_notes = input.accessNotes ?? null;
   }
 
   const { data, error } = await client

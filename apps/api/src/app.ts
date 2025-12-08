@@ -18,6 +18,7 @@ import { billingRouter } from "./routes/billing.js";
 import { onboardingRouter } from "./routes/onboarding/index.js";
 import { dashboardRouter } from "./routes/dashboard.js";
 import { smartProposalsRouter } from "./routes/smartproposals/index.js";
+import { kickoffRouter } from "./routes/kickoff.js";
 
 import * as dotenv from "dotenv";
 import { fileURLToPath } from "url";
@@ -107,6 +108,7 @@ export const createApp = () => {
   app.route("/api/onboarding", onboardingRouter);
   app.route("/api/dashboard", dashboardRouter);
   app.route("/api/smartproposals", smartProposalsRouter);
+  app.route("/api/kickoff", kickoffRouter);
 
   return app;
 };

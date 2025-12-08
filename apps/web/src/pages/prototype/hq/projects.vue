@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import { ChevronRightIcon } from "@heroicons/vue/24/outline";
+import SendKickoffModal from "@/components/Kickoff/SendKickoffModal.vue";
 
 type Status =
   | "awaiting-approval"
@@ -23,11 +24,12 @@ interface ProjectRow {
   approvedAt?: string;
   message?: string;
   sentAgo?: string;
+  kickoffStatus?: "pending" | "sent" | "viewed";
 }
 
 const router = useRouter();
 
-const projects: ProjectRow[] = [
+const projects = ref<ProjectRow[]>([
   {
     id: "p-001",
     client: "Sarah Thompson",
@@ -92,6 +94,7 @@ const projects: ProjectRow[] = [
     status: "ready",
     startDate: "2026-01-05",
     sentAgo: "Scheduled 6 days ago",
+    kickoffStatus: "pending",
   },
   {
     id: "p-007",
@@ -103,8 +106,9 @@ const projects: ProjectRow[] = [
     status: "approved",
     approvedAt: "Approved today",
     sentAgo: "Signed today",
+    kickoffStatus: "sent",
   },
-];
+]);
 
 const sections = [
   { key: "awaiting-approval" as Status, title: "Awaiting client approval", subtitle: "Proposals sent and awaiting sign-off" },
@@ -148,12 +152,18 @@ const formatDate = (value?: string) => {
 const grouped = computed(() => {
   return sections.map((section) => ({
     ...section,
-    rows: projects.filter((p) => p.status === section.key),
+    rows: projects.value.filter((p) => p.status === section.key),
   }));
 });
 
-const badgeClass = (status: Status) => {
-  switch (status) {
+const badgeClass = (row: ProjectRow) => {
+  if (row.status === "ready") {
+    if (row.kickoffStatus === "sent" || row.kickoffStatus === "viewed") {
+      return "bg-emerald-50 text-emerald-700 border border-emerald-100";
+    }
+    return "bg-slate-50 text-slate-700 border border-slate-200";
+  }
+  switch (row.status) {
     case "awaiting-approval":
       return "bg-amber-50 text-amber-700 border border-amber-100";
     case "approved":
@@ -162,15 +172,18 @@ const badgeClass = (status: Status) => {
       return "bg-purple-50 text-purple-700 border border-purple-100";
     case "scheduled":
       return "bg-emerald-50 text-emerald-700 border border-emerald-100";
-    case "ready":
-      return "bg-emerald-50 text-emerald-700 border border-emerald-100";
     default:
       return "bg-slate-50 text-slate-700 border border-slate-100";
   }
 };
 
-const badgeLabel = (status: Status) => {
-  switch (status) {
+const badgeLabel = (row: ProjectRow) => {
+  if (row.status === "ready") {
+    if (row.kickoffStatus === "viewed") return "Client viewed";
+    if (row.kickoffStatus === "sent") return "Kickoff sent";
+    return "Kickoff pending";
+  }
+  switch (row.status) {
     case "awaiting-approval":
       return "Awaiting approval";
     case "approved":
@@ -179,13 +192,17 @@ const badgeLabel = (status: Status) => {
       return "Awaiting client confirmation";
     case "scheduled":
       return "Scheduled";
-    case "ready":
-      return "Kickoff pending";
+    default:
+      return "";
   }
 };
 
-const ctaLabel = (status: Status) => {
-  switch (status) {
+const ctaLabel = (row: ProjectRow) => {
+  if (row.status === "ready") {
+    if (row.kickoffStatus === "pending" || !row.kickoffStatus) return "Send kickoff details";
+    return "View kickoff details";
+  }
+  switch (row.status) {
     case "awaiting-approval":
       return "View proposal";
     case "approved":
@@ -194,8 +211,8 @@ const ctaLabel = (status: Status) => {
       return "View status";
     case "scheduled":
       return "View details";
-    case "ready":
-      return "Send kickoff details";
+    default:
+      return "View details";
   }
 };
 
@@ -218,8 +235,12 @@ const handleCTA = (row: ProjectRow) => {
       router.push("/prototype/client/contract-packet");
       break;
     case "ready":
-      console.log("[HQ] Send kickoff details", row.id);
-      router.push("/prototype/client/pre-construction");
+      if (row.kickoffStatus === "pending" || !row.kickoffStatus) {
+        activeKickoffRow.value = row;
+        kickoffModalOpen.value = true;
+      } else {
+        router.push(`/client/project/${row.id}/kickoff`);
+      }
       break;
   }
 };
@@ -230,6 +251,15 @@ const handleChevron = (row: ProjectRow) => {
 
 const toggleSection = (key: Status) => {
   openSections.value[key] = !openSections.value[key];
+};
+
+const kickoffModalOpen = ref(false);
+const activeKickoffRow = ref<ProjectRow | null>(null);
+const handleKickoffSent = (payload: { arrivalWindow: string; leadName: string; leadPhone: string; materialNotes: string; accessNotes: string }) => {
+  if (!activeKickoffRow.value) return;
+  activeKickoffRow.value.kickoffStatus = "sent";
+  projects.value = [...projects.value];
+  kickoffModalOpen.value = false;
 };
 </script>
 
@@ -302,9 +332,9 @@ const toggleSection = (key: Status) => {
                   <p class="text-sm text-slate-700">{{ row.project }}</p>
                   <span
                     class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold"
-                    :class="badgeClass(row.status)"
+                    :class="badgeClass(row)"
                   >
-                    {{ badgeLabel(row.status) }}
+                    {{ badgeLabel(row) }}
                   </span>
                 </div>
                 <p class="text-sm text-slate-500">
@@ -334,10 +364,10 @@ const toggleSection = (key: Status) => {
                 </div>
                 <button
                   class="inline-flex items-center justify-center rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
-                  :class="row.status === 'approved' ? 'bg-emerald-600 hover:bg-emerald-700' : ''"
+                  :class="row.status === 'approved' ? 'bg-emerald-600 hover:bg-emerald-700' : row.status === 'ready' && row.kickoffStatus === 'pending' ? 'bg-emerald-600 hover:bg-emerald-700' : ''"
                   @click="handleCTA(row)"
                 >
-                  {{ ctaLabel(row.status) }}
+                  {{ ctaLabel(row) }}
                 </button>
               </div>
             </div>
@@ -358,5 +388,19 @@ const toggleSection = (key: Status) => {
         </div>
       </section>
     </div>
+
+    <SendKickoffModal
+      :open="kickoffModalOpen"
+      :project="activeKickoffRow ? {
+        proposalId: activeKickoffRow.id,
+        clientName: activeKickoffRow.client,
+        projectName: activeKickoffRow.project,
+        startDate: activeKickoffRow.startDate || activeKickoffRow.proposedDate,
+        price: activeKickoffRow.price,
+        deposit: activeKickoffRow.deposit
+      } : null"
+      @close="kickoffModalOpen = false"
+      @sent="handleKickoffSent"
+    />
   </main>
 </template>

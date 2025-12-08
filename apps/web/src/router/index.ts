@@ -220,6 +220,12 @@ const router = createRouter({
       meta: { public: true, allowAuthenticated: true },
     },
     {
+      path: "/client/project/:id/kickoff",
+      name: "ClientKickoffDetails",
+      component: () => import("@/components/Client/KickoffDetails.vue"),
+      meta: { public: true, allowAuthenticated: true },
+    },
+    {
       path: "/prototype/proposal/demo",
       name: "SmartProposalClientDemo",
       component: () => import("@/prototype/client/ClientProposalView.vue"),
