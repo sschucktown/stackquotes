@@ -1,12 +1,15 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from "vue";
-import { useRouter } from "vue-router";
+import { computed, onBeforeUnmount, onMounted, ref } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import OptionCard from "./OptionCard.vue";
 import SummarySection from "./SummarySection.vue";
 import UpgradeDrawer from "./UpgradeDrawer.vue";
 import { useSmartProposalPrototype, type OptionKey } from "@/stores/smartProposalPrototype";
 import { useQuickQuotePrototype } from "@/stores/quickQuotePrototype";
+import { useContractorHQPrototype } from "@/stores/contractorHQPrototype";
+import { useProposalPrototype } from "@/stores/proposalPrototype";
 
+const route = useRoute();
 const router = useRouter();
 const {
   state,
@@ -16,8 +19,19 @@ const {
   setDepositPercent,
   setDepositFlat,
   depositPreview,
+  hydrateFromQuickQuote,
 } = useSmartProposalPrototype();
 const { exportForProposal } = useQuickQuotePrototype();
+const hqStore = useContractorHQPrototype();
+const proposalStore = useProposalPrototype();
+
+const isImportingFromQuickQuote = ref(false);
+const showImportOverlay = ref(false);
+const importStep = ref(1);
+const highlightOptions = ref(false);
+const showImportBanner = ref(false);
+const timers: number[] = [];
+const overlayStorageKey = "stackquotes:smartproposal:imported";
 
 const editNotesOpen = ref(false);
 const tempNotes = ref(state.visitNotes);
@@ -26,27 +40,6 @@ const drawerOpen = ref(false);
 const drawerOption = ref<OptionKey | null>(null);
 
 const summaryText = computed(() => state.summary.text);
-
-const proposal = reactive({
-  lead: {
-    name: "",
-    email: "",
-    phone: "",
-    location: "",
-    job: "",
-  },
-  scope: [] as string[],
-  basePrice: 0,
-  addOns: [] as unknown[],
-  estimateLow: 0,
-  estimateHigh: 0,
-  estimateTotal: 0,
-  depositMode: "none" as "none" | "flat" | "percent",
-  depositConfig: {
-    flat: 0,
-    percent: 0,
-  },
-});
 
 const openDrawer = (option: OptionKey) => {
   drawerOption.value = option;
@@ -75,12 +68,6 @@ const regenerateSummary = () => {
 const formatCurrency = (value: number) =>
   value.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 
-const quickQuoteRange = computed(() =>
-  proposal.estimateLow && proposal.estimateHigh
-    ? `${formatCurrency(proposal.estimateLow)} - ${formatCurrency(proposal.estimateHigh)}`
-    : ""
-);
-
 const previewClientView = () => {
   router.push({
     path: "/prototype/smartproposal/client",
@@ -89,65 +76,126 @@ const previewClientView = () => {
 };
 
 const saveDraft = () => {
-  console.log("[SmartProposal] save draft prototype", state);
+  handleSaveDraft();
 };
 
 const sendProposal = () => {
   console.log("[SmartProposal] send proposal prototype", state);
 };
 
+const runImportAnimation = () => {
+  isImportingFromQuickQuote.value = true;
+  showImportOverlay.value = true;
+  importStep.value = 1;
+  timers.push(
+    window.setTimeout(() => {
+      importStep.value = 2;
+    }, 550)
+  );
+  timers.push(
+    window.setTimeout(() => {
+      importStep.value = 3;
+    }, 1150)
+  );
+  timers.push(
+    window.setTimeout(() => {
+      showImportOverlay.value = false;
+      showImportBanner.value = true;
+      highlightOptions.value = true;
+      timers.push(
+        window.setTimeout(() => {
+          highlightOptions.value = false;
+        }, 1200)
+      );
+    }, 1850)
+  );
+};
+
 onMounted(() => {
-  const payload = exportForProposal?.();
-  if (!payload) return;
+  const fromQuickQuote = route.query.from === "quickquote";
+  const hasSeenOverlay = (() => {
+    try {
+      return sessionStorage.getItem(overlayStorageKey) === "1";
+    } catch {
+      return false;
+    }
+  })();
 
-  Object.assign(proposal.lead, {
-    name: payload.lead?.name ?? "",
-    email: payload.lead?.email ?? "",
-    phone: payload.lead?.phone ?? "",
-    location: payload.lead?.location ?? "",
-    job: payload.lead?.jobType && payload.lead?.subtype ? `${payload.lead.jobType} - ${payload.lead.subtype}` : payload.lead?.jobType,
-  });
-  proposal.scope = [...(payload.scope || [])];
-  proposal.basePrice = payload.basePrice || 0;
-  proposal.addOns = payload.addOns || [];
-  proposal.estimateLow = payload.lowEstimate || 0;
-  proposal.estimateHigh = payload.highEstimate || 0;
-  proposal.estimateTotal = payload.totalPrice || 0;
-  proposal.depositMode = payload.depositMode || "none";
-  proposal.depositConfig.flat = payload.flatDeposit || 0;
-  proposal.depositConfig.percent = payload.percentDeposit || 0;
-
-  if (proposal.scope.length) {
-    state.baseScope = [...proposal.scope];
-    (["good", "better", "best"] as OptionKey[]).forEach((key) => autoGenerateScopeSnapshot(key));
-  }
-
-  (["good", "better", "best"] as OptionKey[]).forEach((key) => {
-    state.options[key].upgrades.forEach((upgrade) => {
-      upgrade.active = false;
-    });
-  });
-
-  if (proposal.estimateLow) {
-    state.options.good.basePrice = proposal.estimateLow;
-    state.options.good.price = proposal.estimateLow;
-  }
-  if (proposal.estimateTotal) {
-    state.options.better.basePrice = proposal.estimateTotal;
-    state.options.better.price = proposal.estimateTotal;
-  }
-  if (proposal.estimateHigh) {
-    state.options.best.basePrice = proposal.estimateHigh;
-    state.options.best.price = proposal.estimateHigh;
-  }
-
-  setDepositMode(proposal.depositMode as typeof state.deposit.mode);
-  if (proposal.depositMode === "flat") {
-    setDepositFlat(proposal.depositConfig.flat);
-  } else if (proposal.depositMode === "percent") {
-    setDepositPercent(proposal.depositConfig.percent);
+  if (fromQuickQuote) {
+    const payload = exportForProposal?.();
+    hydrateFromQuickQuote?.(payload);
+    showImportBanner.value = true;
+    if (!hasSeenOverlay) {
+      runImportAnimation();
+      try {
+        sessionStorage.setItem(overlayStorageKey, "1");
+      } catch {
+        // ignore
+      }
+    } else {
+      highlightOptions.value = true;
+      timers.push(
+        window.setTimeout(() => {
+          highlightOptions.value = false;
+        }, 900)
+      );
+    }
+  } else if (state.hasImportedFromQuickQuote) {
+    showImportBanner.value = true;
   }
 });
+
+onBeforeUnmount(() => {
+  timers.forEach((id) => clearTimeout(id));
+});
+
+const buildSmartProposalPayload = () => {
+  const job = hqStore.getJob(typeof route.query.job === "string" ? route.query.job : undefined);
+  const options = {
+    good: {
+      label: state.options.good.label,
+      price: state.options.good.price,
+      scope: state.options.good.scope,
+    },
+    better: {
+      label: state.options.better.label,
+      price: state.options.better.price,
+      scope: state.options.better.scope,
+    },
+    best: {
+      label: state.options.best.label,
+      price: state.options.best.price,
+      scope: state.options.best.scope,
+    },
+  };
+
+  return {
+    jobId: job?.id ?? "job-maple",
+    jobName: job?.name ?? "Maple St Deck",
+    lead: state.importMeta?.lead ?? {},
+    scope: state.baseScope,
+    options,
+    totals: {
+      low: options.good.price,
+      high: options.best.price,
+      total: options.better.price,
+    },
+    deposit: {
+      mode: state.deposit.mode,
+      amount: depositPreview.value,
+    },
+  };
+};
+
+function handleSaveDraft() {
+  const exportData = buildSmartProposalPayload();
+  proposalStore.createDraftFromSmartProposal(exportData);
+  hqStore.attachProposalDraft(exportData.jobId, proposalStore.draft);
+  hqStore.addTimelineEvent(exportData.jobId, "Proposal Draft Created");
+  hqStore.addSystemMessage(exportData.jobId, `Your proposal draft for ${exportData.jobName} is ready to send.`);
+  hqStore.addHQAlert(`Proposal draft created for ${exportData.jobName}`);
+  router.push("/prototype/hq");
+}
 </script>
 
 <template>
@@ -178,12 +226,21 @@ onMounted(() => {
           </span>
         </div>
       </header>
+      <Transition name="fade-slide-down">
+        <div
+          v-if="showImportBanner"
+          class="mb-1 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] text-slate-600 shadow-sm"
+        >
+          <span class="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+          <span>We imported this from your QuickQuote. You don't need to redo anything.</span>
+        </div>
+      </Transition>
 
       <section class="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm sm:px-6 sm:py-5">
         <div class="flex items-start justify-between gap-3">
           <div>
             <h2 class="text-sm font-semibold text-slate-800 uppercase tracking-wide">1. Confirm details</h2>
-            <p class="text-xs text-slate-500">We pulled this in from your visit so you don’t have to retype anything.</p>
+            <p class="text-xs text-slate-500">We pulled this in from your visit so you don't have to retype anything.</p>
           </div>
           <button
             type="button"
@@ -217,7 +274,7 @@ onMounted(() => {
         <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 class="text-sm font-semibold text-slate-800 uppercase tracking-wide">2. Review your options</h2>
-            <p class="text-xs text-slate-500">Good, Better, Best are auto-built for you. You can tweak, but you don’t have to.</p>
+            <p class="text-xs text-slate-500">Good, Better, Best are auto-built for you. You can tweak, but you don't have to.</p>
           </div>
           <div class="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm">
             <span class="text-[11px] uppercase tracking-[0.08em] text-slate-500">Preview option</span>
@@ -228,7 +285,10 @@ onMounted(() => {
             </div>
           </div>
         </div>
-        <div class="mt-4 grid gap-4 lg:grid-cols-3">
+        <div
+          class="mt-4 grid gap-4 rounded-xl lg:grid-cols-3"
+          :class="highlightOptions ? 'ring-2 ring-emerald-200 ring-offset-2 ring-offset-slate-50 transition' : ''"
+        >
           <OptionCard
             option-key="good"
             :label="state.options.good.label"
@@ -261,7 +321,7 @@ onMounted(() => {
 
       <section class="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm sm:px-6 sm:py-5">
         <h2 class="text-sm font-semibold text-slate-800 uppercase tracking-wide">3. Client copy</h2>
-        <p class="text-xs text-slate-500">This is what your client will read. We’ll keep it updated unless you change it.</p>
+        <p class="text-xs text-slate-500">This is what your client will read. We'll keep it updated unless you change it.</p>
         <SummarySection
           :summary="summaryText"
           :manual="state.summary.manual"
@@ -280,7 +340,7 @@ onMounted(() => {
               (~{{ formatCurrency(depositPreview) }}) due at approval.
             </p>
             <p class="text-xs text-slate-500">
-              You’re just picking how you like to structure deposits. Clients will only see the final number.
+              You're just picking how you like to structure deposits. Clients will only see the final number.
             </p>
             <p v-if="state.deposit.mode === 'percent'" class="text-xs text-slate-500">
               {{ state.deposit.percent }}% of Better is about {{ formatCurrency(depositPreview) }}.
@@ -317,7 +377,7 @@ onMounted(() => {
       </section>
 
       <p class="text-[11px] text-slate-500">
-        Everything autosaves. You can’t break the math or send anything by accident.
+        Everything autosaves. You can't break the math or send anything by accident.
       </p>
     </div>
 
@@ -346,7 +406,7 @@ onMounted(() => {
         </button>
       </div>
       <p class="mt-2 text-center text-[11px] text-slate-500">
-        You’ll confirm the client and message before anything goes out.
+        You'll confirm the client and message before anything goes out.
       </p>
     </footer>
 
@@ -359,6 +419,33 @@ onMounted(() => {
       @close="closeDrawer"
       @toggle="handleToggleUpgrade"
     />
+
+    <Transition name="fade">
+      <div
+        v-if="showImportOverlay"
+        class="fixed inset-0 z-40 flex items-center justify-center bg-white/80 backdrop-blur"
+      >
+        <div class="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-xl">
+          <p class="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Building your SmartProposal</p>
+          <h2 class="mb-4 text-lg font-semibold text-slate-900">Turning your QuickQuote into a full proposal...</h2>
+          <ol class="space-y-3 text-sm text-slate-700">
+            <li class="flex items-center gap-2">
+              <span class="h-5 w-5 rounded-full" :class="importStep >= 1 ? 'bg-emerald-500' : 'bg-slate-200'"></span>
+              <span>Pulling in your QuickQuote numbers</span>
+            </li>
+            <li class="flex items-center gap-2">
+              <span class="h-5 w-5 rounded-full" :class="importStep >= 2 ? 'bg-emerald-500' : 'bg-slate-200'"></span>
+              <span>Building Good / Better / Best options</span>
+            </li>
+            <li class="flex items-center gap-2">
+              <span class="h-5 w-5 rounded-full" :class="importStep >= 3 ? 'bg-emerald-500' : 'bg-slate-200'"></span>
+              <span>Writing client-friendly summary</span>
+            </li>
+          </ol>
+          <p class="mt-4 text-xs text-slate-500">This is a prototype. We're just simulating the magic.</p>
+        </div>
+      </div>
+    </Transition>
 
     <Transition
       enter-active-class="transition duration-150 ease-out"
@@ -412,3 +499,34 @@ onMounted(() => {
     </Transition>
   </div>
 </template>
+
+<style scoped>
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.18s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+.fade-slide-down-enter-active,
+.fade-slide-down-leave-active {
+  transition: all 0.18s ease-out;
+}
+.fade-slide-down-enter-from {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+.fade-slide-down-enter-to {
+  opacity: 1;
+  transform: translateY(0);
+}
+.fade-slide-down-leave-from {
+  opacity: 1;
+  transform: translateY(0);
+}
+.fade-slide-down-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+</style>

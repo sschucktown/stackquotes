@@ -57,26 +57,14 @@
             </svg>
           </div>
         </div>
-        <div class="flex gap-3 overflow-x-auto pb-1">
-          <article
-            v-for="alert in alerts"
-            :key="alert.text"
-            class="min-w-[180px] rounded-xl px-3 py-3 flex items-start gap-3 border border-transparent shadow-sm"
-            :class="alert.tone === 'warn'
-              ? 'bg-yellow-50 text-amber-800'
-              : 'bg-blue-50 text-sky-800'"
+        <div class="flex flex-col gap-2">
+          <div
+            v-for="alert in hqAlerts"
+            :key="alert.id"
+            class="rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-2 text-emerald-700 text-sm shadow-sm"
           >
-            <div
-              class="h-10 w-10 rounded-full bg-white/70 text-current grid place-items-center border border-current/10"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-5 w-5">
-                <path :fill="alert.tone === 'warn' ? '#b45309' : '#0369a1'" d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm1 5v6h-2V7h2Zm0 8v2h-2v-2h2Z" />
-              </svg>
-            </div>
-            <div class="flex-1 text-sm font-medium leading-snug">
-              {{ alert.text }}
-            </div>
-          </article>
+            {{ alert.text }}
+          </div>
         </div>
       </section>
 
@@ -95,7 +83,7 @@
             <div class="grid gap-2">
               <article
                 v-for="job in todayJobs"
-                :key="job.name"
+                :key="job.id"
                 class="flex items-center justify-between rounded-xl border border-slate-200 hover:border-sky-200 bg-slate-50/80 hover:bg-white transition-colors px-3 py-3"
               >
                 <div class="flex items-start gap-3">
@@ -113,6 +101,12 @@
                       <span class="text-xs px-2 py-0.5 rounded-full bg-sky-50 text-sky-700 border border-sky-100">
                         {{ job.type }}
                       </span>
+                      <span
+                        v-if="job.proposalDraft"
+                        class="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700"
+                      >
+                        Proposal Draft
+                      </span>
                     </div>
                     <p class="text-sm text-slate-500">{{ job.detail }}</p>
                     <div
@@ -124,10 +118,20 @@
                     </div>
                   </div>
                 </div>
-                <div class="text-slate-400">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-5 w-5">
-                    <path fill="currentColor" d="m9 18 6-6-6-6v12Z" />
-                  </svg>
+                <div class="flex items-center gap-2">
+                  <button
+                    v-if="job.proposalDraft"
+                    type="button"
+                    class="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 shadow-inner transition hover:-translate-y-0.5"
+                    @click="openProposal(job.id)"
+                  >
+                    Open Proposal
+                  </button>
+                  <div class="text-slate-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-5 w-5">
+                      <path fill="currentColor" d="m9 18 6-6-6-6v12Z" />
+                    </svg>
+                  </div>
                 </div>
               </article>
             </div>
@@ -137,7 +141,7 @@
             <div class="grid gap-2">
               <article
                 v-for="job in inProgressJobs"
-                :key="job.name"
+                :key="job.id"
                 class="flex items-center justify-between rounded-xl border border-slate-200 hover:border-sky-200 bg-white transition-colors px-3 py-3 shadow-sm"
               >
                 <div class="flex items-start gap-3">
@@ -155,6 +159,12 @@
                       <span class="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
                         {{ job.type }}
                       </span>
+                      <span
+                        v-if="job.proposalDraft"
+                        class="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700"
+                      >
+                        Proposal Draft
+                      </span>
                     </div>
                     <p class="text-sm text-slate-500">{{ job.detail }}</p>
                     <div
@@ -166,10 +176,20 @@
                     </div>
                   </div>
                 </div>
-                <div class="text-slate-400">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-5 w-5">
-                    <path fill="currentColor" d="m9 18 6-6-6-6v12Z" />
-                  </svg>
+                <div class="flex items-center gap-2">
+                  <button
+                    v-if="job.proposalDraft"
+                    type="button"
+                    class="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 shadow-inner transition hover:-translate-y-0.5"
+                    @click="openProposal(job.id)"
+                  >
+                    Open Proposal
+                  </button>
+                  <div class="text-slate-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-5 w-5">
+                      <path fill="currentColor" d="m9 18 6-6-6-6v12Z" />
+                    </svg>
+                  </div>
                 </div>
               </article>
             </div>
@@ -284,32 +304,22 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { computed, ref } from "vue";
+import { useRouter } from "vue-router";
 import ProposalCommentsFab from "@/components/proposals/ProposalCommentsFab.vue";
 import SettingsDrawer from "@/components/Settings/SettingsDrawer.vue";
+import { useContractorHQPrototype } from "@/stores/contractorHQPrototype";
 
 type JobStatus = "In Progress" | "Scheduled" | "Pending" | "Needs Visit";
 
+const router = useRouter();
 const showSettings = ref(false);
+const hqStore = useContractorHQPrototype();
 
-const alerts = [
-  { text: "3 new visit requests", tone: "info" },
-  { text: "Proposal accepted - Maple St Deck", tone: "info" },
-  { text: "Payment received - $2,400", tone: "info" },
-  { text: "CO awaiting approval - Kitchen Remodel", tone: "warn" },
-  { text: "2 unanswered client messages", tone: "warn" },
-];
-
-const todayJobs = [
-  { name: "Maple St Deck", type: "Deck", status: "Needs Visit" as JobStatus, detail: "Site Visit at 3PM" },
-  { name: "Baker Ave Fence", type: "Fence", status: "Pending" as JobStatus, detail: "Proposal Follow-Up" },
-];
-
-const inProgressJobs = [
-  { name: "Lakeview Patio Build", type: "Patio", status: "In Progress" as JobStatus, detail: "Active crew on-site" },
-  { name: "Riverside Gate Repair", type: "Fence", status: "Scheduled" as JobStatus, detail: "Starts tomorrow" },
-  { name: "Willow Oaks Deck Demo", type: "Deck", status: "Pending" as JobStatus, detail: "Pending approval" },
-];
+const hqAlerts = computed(() => hqStore.hqAlerts);
+const jobs = computed(() => hqStore.jobs);
+const todayJobs = computed(() => jobs.value.filter((job) => job.status === "Needs Visit" || job.status === "Pending"));
+const inProgressJobs = computed(() => jobs.value.filter((job) => job.status === "In Progress" || job.status === "Scheduled"));
 
 const quickActions = [
   { label: "New Quote", tint: "#0ea5e9" },
@@ -343,5 +353,9 @@ const dotClasses: Record<JobStatus, string> = {
   Scheduled: "bg-blue-500",
   Pending: "bg-amber-500",
   "Needs Visit": "bg-slate-500",
+};
+
+const openProposal = (jobId: string) => {
+  router.push({ path: "/prototype/smartproposal", query: { job: jobId } });
 };
 </script>
