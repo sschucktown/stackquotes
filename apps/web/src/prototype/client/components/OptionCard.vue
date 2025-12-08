@@ -30,7 +30,7 @@ watch(
 
 const cardClasses = computed(() =>
   props.selected
-    ? "border-emerald-500 ring-2 ring-emerald-200 scale-[1.02] shadow-[0_2px_16px_rgba(16,185,129,0.15)]"
+    ? "border-emerald-500 ring-2 ring-emerald-400 scale-[1.02] shadow-xl transition-all duration-500 ease-out"
     : "border-slate-200 shadow-[0_2px_10px_rgba(0,0,0,0.05)]"
 );
 
