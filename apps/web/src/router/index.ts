@@ -168,7 +168,25 @@ const router = createRouter({
     {
       path: "/prototype/client/schedule-preview",
       name: "ClientSchedulePreview",
-      component: () => import("@/pages/prototype/client/SchedulePreview.vue"),
+      component: () => import("@/pages/prototype/client/schedule.vue"),
+      meta: { public: true, allowAuthenticated: true },
+    },
+    {
+      path: "/prototype/client/schedule",
+      name: "ClientSchedule",
+      component: () => import("@/pages/prototype/client/schedule.vue"),
+      meta: { public: true, allowAuthenticated: true },
+    },
+    {
+      path: "/prototype/client/schedule/confirmed",
+      name: "ClientScheduleConfirmed",
+      component: () => import("@/pages/prototype/client/schedule/confirmed.vue"),
+      meta: { public: true, allowAuthenticated: true },
+    },
+    {
+      path: "/prototype/client/schedule/requested-change",
+      name: "ClientScheduleRequestedChange",
+      component: () => import("@/pages/prototype/client/schedule/requested-change.vue"),
       meta: { public: true, allowAuthenticated: true },
     },
     {

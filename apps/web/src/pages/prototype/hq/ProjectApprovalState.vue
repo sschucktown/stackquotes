@@ -8,6 +8,7 @@ import { useApprovalEventStore } from "@/stores/approvalEventStore";
 import { useAlertStore } from "@/stores/alertStore";
 import { useSchedulesStore } from "@/stores/schedulesStore";
 import { useContractorHQPrototype } from "@/stores/contractorHQPrototype";
+import { useClientSchedulePrototype } from "@/stores/useClientSchedulePrototype";
 import { useRouter } from "vue-router";
 
 const schedulingStore = useSchedulingStore();
@@ -17,6 +18,7 @@ const approvalEventStore = useApprovalEventStore();
 const alertStore = useAlertStore();
 const schedulesStore = useSchedulesStore();
 const hqStore = useContractorHQPrototype();
+const clientScheduleStore = useClientSchedulePrototype();
 const router = useRouter();
 
 const schedulingOpen = ref(false);
@@ -56,6 +58,11 @@ function handleScheduleSubmit(payload: any) {
     depositDue: scheduled.depositDue,
     notes: scheduled.notes || "",
     status: "proposed",
+  });
+  clientScheduleStore.setProposal({
+    proposedDate: scheduled.startDate,
+    depositDue: scheduled.depositDue,
+    contractorMessage: scheduled.notes || "",
   });
 
   messageStore.addSystemMessage(project.id, {
