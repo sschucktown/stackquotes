@@ -81,10 +81,14 @@ const selectedIds = computed(() => Array.from(selectedUpgradesByOption[selectedO
 </script>
 
 <template>
-  <div class="min-h-screen bg-slate-50 text-slate-900">
-    <div class="mx-auto max-w-6xl px-4 pb-28 pt-6 sm:px-6 lg:px-8">
-      <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:gap-6">
-        <div class="flex-1 space-y-4">
+  <div class="min-h-screen overflow-x-hidden bg-slate-50 text-slate-900">
+    <div class="mx-auto w-full max-w-[1440px] px-4 pb-28 pt-6 sm:px-5 lg:px-6">
+      <!-- Tesla-style responsive layout:
+           - xl+: cards + fixed-width summary sidebar
+           - lg (1024-1279): 2-column cards, summary below + mini sticky footer
+           - <lg: snap-scrolling cards + mobile summary drawer -->
+      <div class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px] xl:items-start">
+        <div class="space-y-4">
           <header class="space-y-2">
             <p class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Proposal for Sarah Thompson</p>
             <h1 class="text-2xl font-semibold text-slate-900">Your Maple St Deck Proposal</h1>
@@ -110,7 +114,9 @@ const selectedIds = computed(() => Array.from(selectedUpgradesByOption[selectedO
               <p class="text-sm font-semibold text-slate-800 uppercase tracking-wide">Choose your option</p>
               <span class="text-xs text-slate-500">Good / Better / Best</span>
             </div>
-            <div class="flex flex-col gap-3 lg:flex-row lg:gap-4 lg:overflow-x-auto lg:pb-2 lg:snap-x lg:snap-mandatory">
+            <div
+              class="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory lg:grid lg:grid-cols-2 lg:gap-4 lg:overflow-visible xl:grid-cols-3 xl:pb-0"
+            >
               <OptionCard
                 v-for="option in optionsData"
                 :key="option.id"
@@ -118,19 +124,32 @@ const selectedIds = computed(() => Array.from(selectedUpgradesByOption[selectedO
                 :selected="selectedOptionId === option.id"
                 :total-price="optionTotal(option)"
                 :selected-upgrades="Array.from(selectedUpgradesByOption[option.id] || [])"
-                class="lg:snap-center"
+                class="snap-center lg:snap-start"
                 @select="selectOption"
                 @toggle-upgrade="(id) => toggleUpgrade(option.id, id)"
               />
             </div>
           </section>
 
+          <!-- Inline summary for Desktop M (1024-1279) -->
+          <div class="hidden lg:block xl:hidden">
+            <StickySummary
+              :option="selectedOption"
+              :upgrades="selectedUpgrades"
+              :total-price="totalPrice"
+              :today-due="todayDue"
+              :at-completion="atCompletion"
+              @approve="approve"
+              @question="askQuestion"
+            />
+          </div>
+
           <p class="hidden text-[11px] text-slate-400 lg:block">
             Prototype only. No real payments or approvals are processed here.
           </p>
         </div>
 
-        <aside class="hidden w-full max-w-sm lg:block">
+        <aside class="hidden w-full min-w-[280px] max-w-[340px] xl:block">
           <StickySummary
             :option="selectedOption"
             :upgrades="selectedUpgrades"
@@ -161,6 +180,31 @@ const selectedIds = computed(() => Array.from(selectedUpgradesByOption[selectedO
       </div>
     </div>
 
+    <!-- Desktop M (lg) mini summary bar -->
+    <div
+      class="fixed inset-x-0 bottom-0 z-20 hidden bg-white/95 px-5 py-3 shadow-[0_-8px_30px_rgba(15,23,42,0.12)] backdrop-blur lg:flex xl:hidden"
+    >
+      <div class="flex w-full items-center justify-between">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">{{ selectedOption.label }}</p>
+          <p class="text-lg font-semibold text-slate-900">{{ totalPrice.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }) }}</p>
+        </div>
+        <div class="flex items-center gap-3 text-xs text-slate-500">
+          <div class="text-right">
+            <p>Due today: {{ todayDue.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }) }}</p>
+            <p>At completion: {{ atCompletion.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }) }}</p>
+          </div>
+          <button
+            type="button"
+            class="inline-flex items-center gap-2 rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-md transition hover:bg-emerald-700"
+            @click="approve"
+          >
+            Approve
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Mobile summary drawer -->
     <Transition name="fade">
       <div
@@ -172,7 +216,7 @@ const selectedIds = computed(() => Array.from(selectedUpgradesByOption[selectedO
           <div class="mb-3 flex items-center justify-between">
             <div>
               <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Your selection</p>
-              <p class="text-sm font-semibold text-slate-900">{{ selectedOption.label }} — {{ selectedOption.tagline }}</p>
+              <p class="text-sm font-semibold text-slate-900">{{ selectedOption.label }} - {{ selectedOption.tagline }}</p>
             </div>
             <button
               type="button"

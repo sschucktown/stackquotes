@@ -41,7 +41,7 @@ const toggleDetails = () => {
 
 <template>
   <article
-    class="relative flex min-w-[320px] flex-col gap-3 rounded-2xl border bg-white px-4 py-4 transition-all duration-300 ease-out lg:min-w-[380px]"
+    class="relative flex min-w-[280px] flex-col gap-3 rounded-2xl border bg-white px-4 py-4 transition-all duration-300 ease-out lg:min-w-[340px]"
     :class="cardClasses"
     @click="emit('select', option.id)"
   >
