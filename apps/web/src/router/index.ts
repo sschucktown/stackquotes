@@ -160,6 +160,12 @@ const router = createRouter({
       meta: { public: true, allowAuthenticated: true },
     },
     {
+      path: "/prototype/proposal/demo",
+      name: "SmartProposalClientDemo",
+      component: () => import("@/prototype/client/SmartProposalClient.vue"),
+      meta: { public: true, allowAuthenticated: true },
+    },
+    {
       path: "/quickquote/:id/preview",
       name: "QuickQuoteClientPreview",
       component: () => import("@/prototype/quickquote/QuickQuoteClientView.vue"),
