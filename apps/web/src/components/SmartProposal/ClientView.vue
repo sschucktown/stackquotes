@@ -1,8 +1,13 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
+import { useRoute, useRouter } from "vue-router";
+
 import SummaryPanel from "./SummaryPanel.vue";
 import SignatureModal from "./SignatureModal.vue";
 
+// --------------------------------------------------
+// Props
+// --------------------------------------------------
 const props = defineProps<{
   proposal: {
     id: string;
@@ -16,10 +21,22 @@ const props = defineProps<{
   };
 }>();
 
-// -----------------------------
+// --------------------------------------------------
+// Router utilities
+// --------------------------------------------------
+const route = useRoute();
+const router = useRouter();
+
+// proposalId comes from prototype route or props
+const proposalId =
+  (route.query.proposal as string) ||
+  props.proposal.id ||
+  "demo-proposal";
+
+// --------------------------------------------------
 // Client selection
-// -----------------------------
-const selected = ref<typeof props.proposal.options[0] | null>(null);
+// --------------------------------------------------
+const selected = ref(props.proposal.options[0] ?? null);
 
 const depositAmount = computed(() => {
   if (!selected.value) return 0;
@@ -34,27 +51,31 @@ const currency = (value: number) =>
     maximumFractionDigits: 0,
   }).format(value);
 
-// -----------------------------
-// Signature modal control
-// -----------------------------
-const showSignature = ref(false);
+// --------------------------------------------------
+// Signature modal
+// --------------------------------------------------
+const signatureOpen = ref(false);
 
 const handleApprove = () => {
   if (!selected.value) return;
-  showSignature.value = true;
+  signatureOpen.value = true;
 };
 
-const handleSigned = () => {
-  showSignature.value = false;
+const handleSignedSuccess = () => {
+  signatureOpen.value = false;
 
-  // Redirect to the signed confirmation prototype
-  window.location.href = "/prototype/smartproposal/signed";
+  router.push({
+    path: "/prototype/smartproposal/signed",
+    query: { proposal: proposalId },
+  });
 };
 </script>
 
 <template>
   <div class="mx-auto max-w-4xl p-4 pb-24 lg:flex lg:gap-8">
-    <!-- Options -->
+    <!-- ========================= -->
+    <!-- Option Selection Column -->
+    <!-- ========================= -->
     <div class="flex-1 space-y-4">
       <h1 class="text-2xl font-bold text-slate-900 mb-4">Choose Your Option</h1>
 
@@ -73,9 +94,11 @@ const handleSigned = () => {
           <p class="text-lg font-semibold text-slate-900">
             {{ option.label }}
           </p>
+
           <p class="text-sm text-slate-600">
             {{ option.subtitle }}
           </p>
+
           <p class="mt-2 text-xl font-bold text-slate-900">
             {{ currency(option.price) }}
           </p>
@@ -83,7 +106,9 @@ const handleSigned = () => {
       </div>
     </div>
 
+    <!-- ========================= -->
     <!-- Summary Panel -->
+    <!-- ========================= -->
     <SummaryPanel
       class="mt-6 lg:mt-0"
       :selected="selected || undefined"
@@ -94,13 +119,15 @@ const handleSigned = () => {
       @question="() => alert('Ask question flow coming soon!')"
     />
 
+    <!-- ========================= -->
     <!-- Signature Modal -->
+    <!-- ========================= -->
     <SignatureModal
-      :open="showSignature"
-      :proposalId="proposal.id"
-      :acceptedOption="selected?.label || ''"
-      @close="showSignature = false"
-      @signed="handleSigned"
+      :open="signatureOpen"
+      :proposal-id="proposalId"
+      :accepted-option="selected?.key || ''"
+      :on-close="() => (signatureOpen = false)"
+      :on-success="handleSignedSuccess"
     />
   </div>
 </template>
