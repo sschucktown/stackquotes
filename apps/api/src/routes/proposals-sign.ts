@@ -4,32 +4,23 @@ import { getServiceClient } from "../lib/supabase.js";
 
 export const proposalsSignRouter = new Hono();
 
-const signBodySchema = z.object({
+const bodySchema = z.object({
   proposalId: z.string().uuid(),
-  optionKey: z.string().min(1),
-  signatureData: z.string().min(1), // base64 data URL
+  optionKey: z.string(),
+  signatureData: z.string(), // base64 PNG from SignaturePad
 });
 
 proposalsSignRouter.post("/sign", async (c) => {
   const supabase = getServiceClient();
+  const json = await c.req.json();
 
-  let body: unknown;
-  try {
-    body = await c.req.json();
-  } catch (err) {
-    console.error("[proposals/sign] invalid JSON body", err);
-    return c.json({ error: "Invalid JSON body" }, 400);
+  const parsed = bodySchema.safeParse(json);
+  if (!parsed.success) {
+    return c.json({ error: parsed.error.flatten() }, 400);
   }
 
-  const parseResult = signBodySchema.safeParse(body);
-  if (!parseResult.success) {
-    console.error("[proposals/sign] validation failed", parseResult.error.flatten());
-    return c.json({ error: "Invalid payload", details: parseResult.error.flatten() }, 400);
-  }
+  const { proposalId, optionKey, signatureData } = parsed.data;
 
-  const { proposalId, optionKey, signatureData } = parseResult.data;
-
-  // Update the smart_proposals row
   const { error } = await supabase
     .from("smart_proposals")
     .update({
@@ -42,9 +33,9 @@ proposalsSignRouter.post("/sign", async (c) => {
     .single();
 
   if (error) {
-    console.error("[proposals/sign] supabase update failed", error);
-    return c.json({ error: "Failed to save signature" }, 500);
+    console.error("Signature update error:", error);
+    return c.json({ error: error.message }, 500);
   }
 
-  return c.json({ success: true });
+  return c.json({ ok: true });
 });
