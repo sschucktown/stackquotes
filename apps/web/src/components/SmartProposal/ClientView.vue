@@ -58,12 +58,18 @@ const fallback = {
 const data = decoded?.proposal || fallback;
 const selected = ref<string>((decoded?.primary as string) || "better");
 
+// Proposal id for persistence (if this view is attached to a real proposal)
+const proposalId = computed<string | null>(() => {
+  const fromQuery = typeof route.query.proposalId === "string" ? route.query.proposalId : null;
+  const fromPayload = typeof decoded?.proposal?.id === "string" ? decoded.proposal.id : null;
+  return fromQuery ?? fromPayload ?? null;
+});
+
 const formatCurrency = (value: number) =>
   value.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 
 const safeImage = (src?: string) => (src && typeof src === "string" ? src : "");
 
-// Options
 const optionList = computed(() => [
   { key: "good", ...data.options.good },
   { key: "better", ...data.options.better },
@@ -71,12 +77,8 @@ const optionList = computed(() => [
 ]);
 
 const current = computed(() => optionList.value.find((o) => o.key === selected.value));
-const depositPercent = computed(
-  () => decoded?.proposal?.deposit?.percent ?? decoded?.proposal?.depositPercent ?? 15,
-);
-const depositAmount = computed(() =>
-  Math.round((current.value?.price || 0) * (depositPercent.value / 100)),
-);
+const depositPercent = computed(() => decoded?.proposal?.deposit?.percent ?? decoded?.proposal?.depositPercent ?? 15);
+const depositAmount = computed(() => Math.round((current.value?.price || 0) * (depositPercent.value / 100)));
 
 // Sticky trim selector
 const showTrimSelector = ref(false);
@@ -97,7 +99,7 @@ const chooseOption = (key: string) => {
   scrollToTrim(key);
 };
 
-// Signature flow
+// Signature + approval flow
 const signatureOpen = ref(false);
 const successOpen = ref(false);
 const signaturePad = ref<SignaturePad | null>(null);
@@ -148,16 +150,39 @@ async function finalizeSignature() {
     return;
   }
 
-  // ✅ Capture signature as data URL
+  // Capture signature as data URL
   const signatureData = signaturePad.value.toDataURL("image/png");
 
-  // For now, just log + keep prototype behavior.
-  // Later you can send `signatureData` to your API/Supabase.
-  console.info("[SmartProposal] Captured signature", {
-    length: signatureData.length,
-    preview: signatureData.slice(0, 48) + "…",
-  });
+  // If we have a real proposal id, persist to backend
+  if (proposalId.value) {
+    try {
+      const res = await fetch("/api/proposals/sign", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          proposalId: proposalId.value,
+          optionKey: selected.value,
+          signatureData,
+        }),
+      });
 
+      if (!res.ok) {
+        console.error("[SmartProposal] /api/proposals/sign failed", res.status);
+        // Non-blocking: still continue prototype behavior
+      } else {
+        console.info("[SmartProposal] Signature persisted for proposal", proposalId.value);
+      }
+    } catch (err) {
+      console.error("[SmartProposal] Error calling /api/proposals/sign", err);
+      // Non-blocking: still continue prototype behavior
+    }
+  } else {
+    console.info("[SmartProposal] No proposalId found; running in prototype-only mode.");
+  }
+
+  // Prototype: still notify HQ store so the rest of the prototype flow works
   hq.addProposalApprovalEvent(JOB_ID, selected.value);
 
   signatureOpen.value = false;
@@ -276,7 +301,6 @@ const handlePayNow = () => {
       />
     </div>
 
-    <!-- Signature Modal -->
     <Transition name="fade">
       <div
         v-if="signatureOpen"
@@ -286,9 +310,7 @@ const handlePayNow = () => {
           <div class="flex items-start justify-between gap-3">
             <div>
               <h2 class="text-lg font-semibold text-slate-900">Approve &amp; sign</h2>
-              <p class="text-sm text-slate-600">
-                Your signature confirms you're ready to move forward.
-              </p>
+              <p class="text-sm text-slate-600">Your signature confirms you're ready to move forward.</p>
             </div>
             <button
               class="rounded-full p-1 text-slate-400 transition-all duration-200 ease-out hover:bg-slate-100 hover:text-slate-600"
@@ -333,7 +355,6 @@ const handlePayNow = () => {
       </div>
     </Transition>
 
-    <!-- Payment Modal -->
     <Transition name="fade">
       <div
         v-if="paymentOpen"
@@ -346,33 +367,23 @@ const handlePayNow = () => {
               <h2 class="text-xl font-semibold text-slate-900">Secure your project with a deposit</h2>
               <p class="text-sm text-slate-600">Prototype only. No real charges are processed.</p>
             </div>
-            <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
-              Preview
-            </span>
+            <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">Preview</span>
           </div>
 
           <div class="mt-4 space-y-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
             <div class="flex items-center justify-between">
               <div>
                 <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Option</p>
-                <p class="text-sm font-semibold text-slate-900">
-                  {{ current?.label || "Selected option" }}
-                </p>
+                <p class="text-sm font-semibold text-slate-900">{{ current?.label || "Selected option" }}</p>
               </div>
-              <p class="text-lg font-bold text-slate-900">
-                {{ formatCurrency(current?.price || 0) }}
-              </p>
+              <p class="text-lg font-bold text-slate-900">{{ formatCurrency(current?.price || 0) }}</p>
             </div>
             <div class="flex items-center justify-between rounded-lg border border-emerald-100 bg-white px-3 py-2">
               <div>
-                <p class="text-[11px] font-semibold uppercase tracking-[0.08em] text-emerald-700">
-                  Deposit
-                </p>
+                <p class="text-[11px] font-semibold uppercase tracking-[0.08em] text-emerald-700">Deposit</p>
                 <p class="text-sm text-slate-700">{{ depositPercent }}% of total</p>
               </div>
-              <p class="text-lg font-semibold text-emerald-700">
-                {{ formatCurrency(depositAmount) }}
-              </p>
+              <p class="text-lg font-semibold text-emerald-700">{{ formatCurrency(depositAmount) }}</p>
             </div>
           </div>
 
@@ -410,7 +421,6 @@ const handlePayNow = () => {
       </div>
     </Transition>
 
-    <!-- Toast -->
     <Transition name="fade">
       <div
         v-if="successOpen"
@@ -426,7 +436,6 @@ const handlePayNow = () => {
       </div>
     </Transition>
 
-    <!-- Ask Question Modal -->
     <AskQuestionModal
       :open="questionOpen"
       :option-label="questionOptionLabel"
