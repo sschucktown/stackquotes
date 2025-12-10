@@ -1,42 +1,76 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { ref, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
 import SummaryPanel from "./SummaryPanel.vue";
 import SignatureModal from "./SignatureModal.vue";
 
+/* ---------------------------------------------------
+   1. Fallback Demo Proposal (for prototype routes)
+--------------------------------------------------- */
+const demoProposal = {
+  id: "demo-proposal",
+  deposit_percent: 15,
+  options: [
+    {
+      key: "good",
+      label: "Good",
+      subtitle: "Reliable materials",
+      price: 14800,
+    },
+    {
+      key: "better",
+      label: "Better",
+      subtitle: "Improved durability & look",
+      price: 18600,
+    },
+    {
+      key: "best",
+      label: "Best",
+      subtitle: "Top-tier finish & materials",
+      price: 23800,
+    },
+  ],
+};
+
+/* ---------------------------------------------------
+   2. Props (optional, because prototypes load standalone)
+--------------------------------------------------- */
 const props = defineProps<{
-  proposal: {
+  proposal?: {
     id: string;
+    deposit_percent: number;
     options: Array<{
       key: string;
       label: string;
       subtitle?: string;
       price: number;
     }>;
-    deposit_percent: number;
   };
 }>();
 
+// Always guarantee a usable proposal
+const proposal = props.proposal ?? demoProposal;
+
+/* ---------------------------------------------------
+   3. Router utilities
+--------------------------------------------------- */
 const route = useRoute();
 const router = useRouter();
 
+// Handle incoming ?proposal=123
 const proposalId =
   (route.query.proposal as string) ||
-  props.proposal.id ||
+  proposal.id ||
   "demo-proposal";
 
-// ---------------------------
-// Selection + Pricing
-// ---------------------------
-const selected = ref(props.proposal.options[0] ?? null);
+/* ---------------------------------------------------
+   4. Option Selection
+--------------------------------------------------- */
+const selected = ref(proposal.options[0]);
 
 const depositAmount = computed(() => {
-  if (!selected.value) return 0;
-  return (
-    (selected.value.price * props.proposal.deposit_percent) /
-    100
-  );
+  return (selected.value.price * proposal.deposit_percent) / 100;
 });
 
 const currency = (value: number) =>
@@ -46,13 +80,12 @@ const currency = (value: number) =>
     maximumFractionDigits: 0,
   }).format(value);
 
-// ---------------------------
-// Signature Modal
-// ---------------------------
+/* ---------------------------------------------------
+   5. Signature Modal
+--------------------------------------------------- */
 const signatureOpen = ref(false);
 
 const handleApprove = () => {
-  if (!selected.value) return;
   signatureOpen.value = true;
 };
 
@@ -62,14 +95,8 @@ const handleSignedSuccess = (payload: {
 }) => {
   signatureOpen.value = false;
 
-  const finalProposalId = payload.proposalId || proposalId;
-
-  const query: Record<string, string> = {
-    proposal: finalProposalId,
-  };
-  if (payload.jobId) {
-    query.job = payload.jobId;
-  }
+  const query: Record<string, string> = { proposal: payload.proposalId };
+  if (payload.jobId) query.job = payload.jobId;
 
   router.push({
     path: "/prototype/smartproposal/signed",
@@ -78,18 +105,18 @@ const handleSignedSuccess = (payload: {
 };
 
 const handleQuestion = () => {
-  // Simple placeholder for now
   alert("Ask a question flow coming soon!");
 };
 </script>
 
 <template>
   <div class="mx-auto max-w-4xl p-4 pb-24 lg:flex lg:gap-8">
-    <!-- Options -->
+
+    <!-- ========================= -->
+    <!-- Option Selection Column -->
+    <!-- ========================= -->
     <div class="flex-1 space-y-4">
-      <h1 class="mb-4 text-2xl font-bold text-slate-900">
-        Choose Your Option
-      </h1>
+      <h1 class="text-2xl font-bold text-slate-900 mb-4">Choose Your Option</h1>
 
       <div class="grid gap-4 sm:grid-cols-2">
         <button
@@ -99,16 +126,18 @@ const handleQuestion = () => {
           :class="[
             selected?.key === option.key
               ? 'border-emerald-600 ring-2 ring-emerald-500'
-              : 'border-slate-200',
+              : 'border-slate-200'
           ]"
           @click="selected = option"
         >
           <p class="text-lg font-semibold text-slate-900">
             {{ option.label }}
           </p>
+
           <p class="text-sm text-slate-600">
-            {{ option.subtitle || "Balanced finish and materials" }}
+            {{ option.subtitle }}
           </p>
+
           <p class="mt-2 text-xl font-bold text-slate-900">
             {{ currency(option.price) }}
           </p>
@@ -116,7 +145,9 @@ const handleQuestion = () => {
       </div>
     </div>
 
-    <!-- Summary Panel -->
+    <!-- ========================= -->
+    <!-- Summary Panel (right side) -->
+    <!-- ========================= -->
     <SummaryPanel
       class="mt-6 lg:mt-0"
       :selected="selected || undefined"
@@ -127,12 +158,14 @@ const handleQuestion = () => {
       @question="handleQuestion"
     />
 
+    <!-- ========================= -->
     <!-- Signature Modal -->
+    <!-- ========================= -->
     <SignatureModal
       :open="signatureOpen"
       :proposal-id="proposalId"
       :accepted-option="selected?.key || ''"
-      :on-close="() => (signatureOpen.value = false)"
+      :on-close="() => (signatureOpen = false)"
       :on-success="handleSignedSuccess"
     />
   </div>
