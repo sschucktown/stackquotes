@@ -1,14 +1,15 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
+import { computed, ref } from "vue";
 import { useRouter } from "vue-router";
 import { ChevronRightIcon } from "@heroicons/vue/24/outline";
+
 import SendKickoffModal from "@/components/Kickoff/SendKickoffModal.vue";
 import ProjectsOverviewDrawer from "@/prototype/hq/components/ProjectsOverviewDrawer.vue";
 import { usePrototypePaymentStore } from "@/stores/prototypePaymentStore";
 
-// --------------------------------------------------
-// Types
-// --------------------------------------------------
+// -------------------------------------------------------------
+// TYPES
+// -------------------------------------------------------------
 type Status =
   | "awaiting-approval"
   | "approved"
@@ -24,15 +25,16 @@ interface ProjectRow {
   price: number;
   deposit: number;
   status: Status;
-  approvedAtISO?: string;      // ⭐ NEW
-  approvedAtText?: string;     // computed fallback
+  approvedAtISO?: string;
   proposedDateISO?: string;
   startDateISO?: string;
   kickoffStatus?: "pending" | "sent" | "viewed";
   message?: string;
 }
 
-// Utility
+// -------------------------------------------------------------
+// HELPERS
+// -------------------------------------------------------------
 const formatCurrency = (value: number) =>
   value.toLocaleString("en-US", {
     style: "currency",
@@ -49,9 +51,12 @@ const formatDate = (iso?: string) => {
   });
 };
 
-// --------------------------------------------------
-// DATA — Realistic ISO timestamps
-// --------------------------------------------------
+const router = useRouter();
+const paymentStore = usePrototypePaymentStore();
+
+// -------------------------------------------------------------
+// SAMPLE PROJECTS
+// -------------------------------------------------------------
 const projects = ref<ProjectRow[]>([
   {
     id: "p-001",
@@ -61,7 +66,6 @@ const projects = ref<ProjectRow[]>([
     price: 23800,
     deposit: 3570,
     status: "awaiting-approval",
-    approvedAtISO: undefined,
   },
   {
     id: "p-002",
@@ -122,14 +126,14 @@ const projects = ref<ProjectRow[]>([
     price: 28500,
     deposit: 4275,
     status: "approved",
-    approvedAtISO: new Date().toISOString(), // approved today
+    approvedAtISO: new Date().toISOString(),
     kickoffStatus: "sent",
   },
 ]);
 
-// --------------------------------------------------
-// Sections
-// --------------------------------------------------
+// -------------------------------------------------------------
+// SECTIONS
+// -------------------------------------------------------------
 const sections = [
   { key: "awaiting-approval", title: "Awaiting client approval", subtitle: "Proposals sent and awaiting sign-off" },
   { key: "approved", title: "Approved → Needs Scheduling", subtitle: "Signed deals waiting for a start date" },
@@ -138,9 +142,6 @@ const sections = [
   { key: "ready", title: "Ready to start", subtitle: "Everything is confirmed; prep kickoff" },
 ] as const;
 
-// --------------------------------------------------
-// Expand All (desktop)
-// --------------------------------------------------
 const openSections = ref<Record<Status, boolean>>({
   "awaiting-approval": true,
   approved: true,
@@ -149,9 +150,7 @@ const openSections = ref<Record<Status, boolean>>({
   ready: true,
 });
 
-// --------------------------------------------------
-// Grouped data
-// --------------------------------------------------
+// Grouped rows
 const grouped = computed(() =>
   sections.map((s) => ({
     ...s,
@@ -159,9 +158,9 @@ const grouped = computed(() =>
   }))
 );
 
-// --------------------------------------------------
-// Drawer Logic
-// --------------------------------------------------
+// -------------------------------------------------------------
+// DRAWER LOGIC
+// -------------------------------------------------------------
 const drawerOpen = ref(false);
 const drawerJob = ref<any>(null);
 
@@ -173,8 +172,8 @@ const openDrawer = (row: ProjectRow) => {
     status: row.status,
     approved_option: row.option,
     deposit_amount: row.deposit,
-    signature_image: undefined, // populated once SmartProposal stores signatures
     approved_at: row.approvedAtISO,
+    signature_image: undefined, // future-proof
   };
   drawerOpen.value = true;
 };
@@ -184,22 +183,23 @@ const closeDrawer = () => {
   drawerJob.value = null;
 };
 
-// --------------------------------------------------
-// Event Handlers
-// --------------------------------------------------
-const router = useRouter();
-const paymentStore = usePrototypePaymentStore();
-
+// -------------------------------------------------------------
+// CTA HANDLING
+// -------------------------------------------------------------
 const handleCTA = (row: ProjectRow) => {
   switch (row.status) {
     case "awaiting-approval":
       return router.push("/prototype/smartproposal/client");
+
     case "approved":
       return router.push("/prototype/hq/approval-state");
+
     case "awaiting-client":
       return router.push("/prototype/client/dashboard");
+
     case "scheduled":
       return router.push("/prototype/client/contract-packet");
+
     case "ready":
       return openDrawer(row);
   }
@@ -211,19 +211,17 @@ const handleCTA = (row: ProjectRow) => {
     <div class="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
       <header class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
-            Contractor HQ
-          </p>
-          <h1 class="text-2xl font-semibold text-slate-900">
-            Projects Overview
-          </h1>
+          <p class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Contractor HQ</p>
+          <h1 class="text-2xl font-semibold text-slate-900">Projects Overview</h1>
         </div>
         <span class="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
           Prototype Only
         </span>
       </header>
 
-      <!-- Sections -->
+      <!-- ---------------------------------------------------------
+      SECTIONS
+      --------------------------------------------------------- -->
       <section
         v-for="section in grouped"
         :key="section.key"
@@ -235,12 +233,8 @@ const handleCTA = (row: ProjectRow) => {
           @click="openSections[section.key] = !openSections[section.key]"
         >
           <div>
-            <p class="text-[11px] uppercase font-semibold tracking-[0.12em] text-slate-500">
-              {{ section.title }}
-            </p>
-            <p class="text-sm text-slate-500">
-              {{ section.subtitle }}
-            </p>
+            <p class="text-[11px] uppercase font-semibold tracking-[0.12em] text-slate-500">{{ section.title }}</p>
+            <p class="text-sm text-slate-500">{{ section.subtitle }}</p>
           </div>
 
           <span class="ml-4 inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-600">
@@ -251,22 +245,15 @@ const handleCTA = (row: ProjectRow) => {
           </span>
         </button>
 
+        <!-- Rows -->
         <div v-if="openSections[section.key]" class="divide-y divide-slate-100/80">
-          <div
-            v-if="!section.rows.length"
-            class="px-4 py-6 sm:px-6"
-          >
+          <div v-if="!section.rows.length" class="px-4 py-6 sm:px-6">
             <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-              <p class="text-sm font-semibold text-slate-800">
-                No projects in this stage
-              </p>
-              <p class="text-sm text-slate-500">
-                They'll appear here once clients progress.
-              </p>
+              <p class="text-sm font-semibold text-slate-800">No projects in this stage</p>
+              <p class="text-sm text-slate-500">They'll appear here once clients progress.</p>
             </div>
           </div>
 
-          <!-- Project Row -->
           <div
             v-for="row in section.rows"
             :key="row.id"
@@ -274,16 +261,12 @@ const handleCTA = (row: ProjectRow) => {
           >
             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div class="flex flex-col gap-1">
+                <!-- Client + Project -->
                 <div class="flex flex-wrap items-center gap-2">
-                  <p class="text-sm font-semibold text-slate-900">
-                    {{ row.client }}
-                  </p>
+                  <p class="text-sm font-semibold text-slate-900">{{ row.client }}</p>
                   <span class="text-sm text-slate-500">·</span>
-                  <p class="text-sm text-slate-700">
-                    {{ row.project }}
-                  </p>
+                  <p class="text-sm text-slate-700">{{ row.project }}</p>
 
-                  <!-- Status Badge -->
                   <span
                     class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold"
                     :class="
@@ -305,44 +288,27 @@ const handleCTA = (row: ProjectRow) => {
                 <!-- Option -->
                 <p class="text-sm text-slate-500">
                   {{ row.option }}
-                  <span
-                    v-if="row.approvedAtISO"
-                    class="text-slate-400"
-                  >
+                  <span v-if="row.approvedAtISO" class="text-slate-400">
                     · {{ formatDate(row.approvedAtISO) }}
                   </span>
                 </p>
 
                 <!-- Optional message -->
-                <p
-                  v-if="row.message"
-                  class="text-sm text-slate-500"
-                >
-                  {{ row.message.length > 90 ? row.message.slice(0, 90) + "..." : row.message }}
+                <p v-if="row.message" class="text-sm text-slate-500">
+                  {{ row.message.length > 90 ? row.message.slice(0, 90) + '...' : row.message }}
                 </p>
               </div>
 
               <!-- Right Column -->
               <div class="flex flex-col items-start gap-2 sm:items-end">
                 <div class="flex flex-wrap items-center gap-3 text-sm text-slate-700">
-                  <span class="font-semibold text-slate-900">
-                    {{ formatCurrency(row.price) }}
-                  </span>
-
-                  <span class="text-slate-500">
-                    Deposit {{ formatCurrency(row.deposit) }}
-                  </span>
+                  <span class="font-semibold text-slate-900">{{ formatCurrency(row.price) }}</span>
+                  <span class="text-slate-500">Deposit {{ formatCurrency(row.deposit) }}</span>
                 </div>
 
-                <!-- Dates -->
                 <div class="flex flex-wrap items-center gap-3 text-sm text-slate-600">
-                  <span v-if="row.proposedDateISO">
-                    Proposed {{ formatDate(row.proposedDateISO) }}
-                  </span>
-
-                  <span v-if="row.startDateISO">
-                    Start {{ formatDate(row.startDateISO) }}
-                  </span>
+                  <span v-if="row.proposedDateISO">Proposed {{ formatDate(row.proposedDateISO) }}</span>
+                  <span v-if="row.startDateISO">Start {{ formatDate(row.startDateISO) }}</span>
                 </div>
 
                 <!-- CTA -->
@@ -356,18 +322,29 @@ const handleCTA = (row: ProjectRow) => {
                   @click="handleCTA(row)"
                 >
                   {{
-                    row.status === "awaiting-approval"
-                      ? "View proposal"
-                      : row.status === "approved"
-                      ? "Schedule project"
-                      : row.status === "awaiting-client"
-                      ? "View status"
-                      : row.status === "scheduled"
-                      ? "View details"
-                      : "Open"
+                    row.status === 'awaiting-approval'
+                      ? 'View proposal'
+                      : row.status === 'approved'
+                      ? 'Schedule project'
+                      : row.status === 'awaiting-client'
+                      ? 'View status'
+                      : row.status === 'scheduled'
+                      ? 'View details'
+                      : 'Open'
                   }}
                 </button>
               </div>
+            </div>
+
+            <!-- Chevron -->
+            <div class="mt-3 flex items-center justify-between text-sm text-slate-600 sm:mt-2">
+              <span></span>
+              <button
+                class="inline-flex items-center text-xs font-semibold text-slate-500 transition hover:text-slate-700"
+                @click="openDrawer(row)"
+              >
+                <ChevronRightIcon class="h-4 w-4" />
+              </button>
             </div>
           </div>
         </div>
@@ -384,7 +361,7 @@ const handleCTA = (row: ProjectRow) => {
       @payments="(id) => router.push('/payments')"
     />
 
-    <!-- Kickoff -->
+    <!-- Kickoff Modal (unused in this version) -->
     <SendKickoffModal
       :open="false"
       :project="null"
