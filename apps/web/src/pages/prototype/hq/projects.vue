@@ -1,15 +1,16 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { useRouter } from "vue-router";
-import { ChevronRightIcon } from "@heroicons/vue/24/outline";
 
-import SendKickoffModal from "@/components/Kickoff/SendKickoffModal.vue";
+import { ChevronRightIcon } from "@heroicons/vue/24/outline";
+import ScheduleProjectModal from "@/prototype/hq/components/ScheduleProjectModal.vue";
 import ProjectsOverviewDrawer from "@/prototype/hq/components/ProjectsOverviewDrawer.vue";
+import SendKickoffModal from "@/components/Kickoff/SendKickoffModal.vue";
 import { usePrototypePaymentStore } from "@/stores/prototypePaymentStore";
 
-// -------------------------------------------------------------
-// TYPES
-// -------------------------------------------------------------
+/* ---------------------------------------------------
+   Types
+--------------------------------------------------- */
 type Status =
   | "awaiting-approval"
   | "approved"
@@ -32,9 +33,15 @@ interface ProjectRow {
   message?: string;
 }
 
-// -------------------------------------------------------------
-// HELPERS
-// -------------------------------------------------------------
+/* ---------------------------------------------------
+   Router + Stores
+--------------------------------------------------- */
+const router = useRouter();
+const paymentStore = usePrototypePaymentStore();
+
+/* ---------------------------------------------------
+   Utilities
+--------------------------------------------------- */
 const formatCurrency = (value: number) =>
   value.toLocaleString("en-US", {
     style: "currency",
@@ -51,12 +58,9 @@ const formatDate = (iso?: string) => {
   });
 };
 
-const router = useRouter();
-const paymentStore = usePrototypePaymentStore();
-
-// -------------------------------------------------------------
-// SAMPLE PROJECTS
-// -------------------------------------------------------------
+/* ---------------------------------------------------
+   Sample Data (Prototype)
+--------------------------------------------------- */
 const projects = ref<ProjectRow[]>([
   {
     id: "p-001",
@@ -68,15 +72,6 @@ const projects = ref<ProjectRow[]>([
     status: "awaiting-approval",
   },
   {
-    id: "p-002",
-    client: "Aaron Patel",
-    project: "Lakeview Fence",
-    option: "Option not selected yet",
-    price: 18600,
-    deposit: 2790,
-    status: "awaiting-approval",
-  },
-  {
     id: "p-003",
     client: "Julia Reyes",
     project: "Pine Ave Deck",
@@ -85,17 +80,6 @@ const projects = ref<ProjectRow[]>([
     deposit: 2460,
     status: "approved",
     approvedAtISO: "2025-12-07T14:22:00Z",
-  },
-  {
-    id: "p-004",
-    client: "Marcus Lee",
-    project: "Cedar Patio Cover",
-    option: "Best",
-    price: 31200,
-    deposit: 4680,
-    status: "awaiting-client",
-    proposedDateISO: "2025-12-12T00:00:00Z",
-    message: "We can hold this week if you confirm by Friday.",
   },
   {
     id: "p-005",
@@ -118,28 +102,17 @@ const projects = ref<ProjectRow[]>([
     startDateISO: "2026-01-05T00:00:00Z",
     kickoffStatus: "pending",
   },
-  {
-    id: "p-007",
-    client: "Priya Das",
-    project: "Evergreen Deck Refresh",
-    option: "Best",
-    price: 28500,
-    deposit: 4275,
-    status: "approved",
-    approvedAtISO: new Date().toISOString(),
-    kickoffStatus: "sent",
-  },
 ]);
 
-// -------------------------------------------------------------
-// SECTIONS
-// -------------------------------------------------------------
+/* ---------------------------------------------------
+   Section Grouping
+--------------------------------------------------- */
 const sections = [
-  { key: "awaiting-approval", title: "Awaiting client approval", subtitle: "Proposals sent and awaiting sign-off" },
-  { key: "approved", title: "Approved → Needs Scheduling", subtitle: "Signed deals waiting for a start date" },
-  { key: "awaiting-client", title: "Client reviewing schedule", subtitle: "You proposed a date; waiting on client" },
-  { key: "scheduled", title: "Scheduled", subtitle: "Dates locked with deposit due at scheduling" },
-  { key: "ready", title: "Ready to start", subtitle: "Everything is confirmed; prep kickoff" },
+  { key: "awaiting-approval", title: "Awaiting client approval" },
+  { key: "approved", title: "Approved → Needs Scheduling" },
+  { key: "awaiting-client", title: "Client reviewing schedule" },
+  { key: "scheduled", title: "Scheduled" },
+  { key: "ready", title: "Ready to start" },
 ] as const;
 
 const openSections = ref<Record<Status, boolean>>({
@@ -150,7 +123,6 @@ const openSections = ref<Record<Status, boolean>>({
   ready: true,
 });
 
-// Grouped rows
 const grouped = computed(() =>
   sections.map((s) => ({
     ...s,
@@ -158,9 +130,9 @@ const grouped = computed(() =>
   }))
 );
 
-// -------------------------------------------------------------
-// DRAWER LOGIC
-// -------------------------------------------------------------
+/* ---------------------------------------------------
+   Drawer State
+--------------------------------------------------- */
 const drawerOpen = ref(false);
 const drawerJob = ref<any>(null);
 
@@ -173,7 +145,6 @@ const openDrawer = (row: ProjectRow) => {
     approved_option: row.option,
     deposit_amount: row.deposit,
     approved_at: row.approvedAtISO,
-    signature_image: undefined, // future-proof
   };
   drawerOpen.value = true;
 };
@@ -183,23 +154,50 @@ const closeDrawer = () => {
   drawerJob.value = null;
 };
 
-// -------------------------------------------------------------
-// CTA HANDLING
-// -------------------------------------------------------------
+/* ---------------------------------------------------
+   Scheduling Modal State
+--------------------------------------------------- */
+const scheduleModalOpen = ref(false);
+const scheduleJob = ref<ProjectRow | null>(null);
+
+const openScheduleModal = (row: ProjectRow) => {
+  scheduleJob.value = row;
+  scheduleModalOpen.value = true;
+};
+
+const handleScheduleSubmit = (payload: { start: string; end?: string }) => {
+  if (!scheduleJob.value) return;
+
+  // Prototype update
+  scheduleJob.value.startDateISO = payload.start;
+  scheduleJob.value.status = "scheduled";
+
+  // Navigate to confirmation screen
+  router.push({
+    path: "/prototype/hq/schedule/confirm",
+    query: {
+      job: scheduleJob.value.id,
+      start: payload.start,
+      end: payload.end ?? "",
+    },
+  });
+
+  scheduleModalOpen.value = false;
+};
+
+/* ---------------------------------------------------
+   CTA Logic
+--------------------------------------------------- */
 const handleCTA = (row: ProjectRow) => {
   switch (row.status) {
     case "awaiting-approval":
       return router.push("/prototype/smartproposal/client");
-
     case "approved":
-      return router.push("/prototype/hq/approval-state");
-
+      return openScheduleModal(row); // ← scheduling!
     case "awaiting-client":
       return router.push("/prototype/client/dashboard");
-
     case "scheduled":
-      return router.push("/prototype/client/contract-packet");
-
+      return openDrawer(row);
     case "ready":
       return openDrawer(row);
   }
@@ -209,9 +207,11 @@ const handleCTA = (row: ProjectRow) => {
 <template>
   <main class="min-h-screen bg-white text-slate-900">
     <div class="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
-      <header class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <header class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Contractor HQ</p>
+          <p class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+            Contractor HQ
+          </p>
           <h1 class="text-2xl font-semibold text-slate-900">Projects Overview</h1>
         </div>
         <span class="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
@@ -219,13 +219,11 @@ const handleCTA = (row: ProjectRow) => {
         </span>
       </header>
 
-      <!-- ---------------------------------------------------------
-      SECTIONS
-      --------------------------------------------------------- -->
+      <!-- Sections -->
       <section
         v-for="section in grouped"
         :key="section.key"
-        class="mt-8 border border-slate-200/70 bg-white shadow-sm sm:rounded-2xl"
+        class="mt-8 border border-slate-200 bg-white shadow-sm sm:rounded-2xl"
       >
         <button
           type="button"
@@ -233,8 +231,9 @@ const handleCTA = (row: ProjectRow) => {
           @click="openSections[section.key] = !openSections[section.key]"
         >
           <div>
-            <p class="text-[11px] uppercase font-semibold tracking-[0.12em] text-slate-500">{{ section.title }}</p>
-            <p class="text-sm text-slate-500">{{ section.subtitle }}</p>
+            <p class="text-[11px] uppercase font-semibold tracking-[0.12em] text-slate-500">
+              {{ section.title }}
+            </p>
           </div>
 
           <span class="ml-4 inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-600">
@@ -245,106 +244,54 @@ const handleCTA = (row: ProjectRow) => {
           </span>
         </button>
 
-        <!-- Rows -->
-        <div v-if="openSections[section.key]" class="divide-y divide-slate-100/80">
-          <div v-if="!section.rows.length" class="px-4 py-6 sm:px-6">
-            <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-              <p class="text-sm font-semibold text-slate-800">No projects in this stage</p>
-              <p class="text-sm text-slate-500">They'll appear here once clients progress.</p>
-            </div>
-          </div>
-
+        <div v-if="openSections[section.key]" class="divide-y divide-slate-100">
           <div
             v-for="row in section.rows"
             :key="row.id"
-            class="group px-4 py-4 transition hover:bg-slate-50 sm:px-6"
+            class="px-4 py-4 hover:bg-slate-50 sm:px-6 cursor-pointer"
           >
-            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div class="flex flex-col gap-1">
-                <!-- Client + Project -->
-                <div class="flex flex-wrap items-center gap-2">
+            <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <!-- Left -->
+              <div>
+                <div class="flex items-center gap-2">
                   <p class="text-sm font-semibold text-slate-900">{{ row.client }}</p>
-                  <span class="text-sm text-slate-500">·</span>
+                  <span class="text-slate-500">·</span>
                   <p class="text-sm text-slate-700">{{ row.project }}</p>
-
-                  <span
-                    class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold"
-                    :class="
-                      row.status === 'approved'
-                        ? 'bg-blue-50 text-blue-700'
-                        : row.status === 'awaiting-client'
-                        ? 'bg-purple-50 text-purple-700'
-                        : row.status === 'scheduled'
-                        ? 'bg-emerald-50 text-emerald-700'
-                        : row.status === 'ready'
-                        ? 'bg-emerald-50 text-emerald-700'
-                        : 'bg-amber-50 text-amber-700'
-                    "
-                  >
-                    {{ row.status }}
-                  </span>
                 </div>
 
-                <!-- Option -->
                 <p class="text-sm text-slate-500">
                   {{ row.option }}
                   <span v-if="row.approvedAtISO" class="text-slate-400">
                     · {{ formatDate(row.approvedAtISO) }}
                   </span>
                 </p>
-
-                <!-- Optional message -->
-                <p v-if="row.message" class="text-sm text-slate-500">
-                  {{ row.message.length > 90 ? row.message.slice(0, 90) + '...' : row.message }}
-                </p>
               </div>
 
-              <!-- Right Column -->
-              <div class="flex flex-col items-start gap-2 sm:items-end">
-                <div class="flex flex-wrap items-center gap-3 text-sm text-slate-700">
-                  <span class="font-semibold text-slate-900">{{ formatCurrency(row.price) }}</span>
-                  <span class="text-slate-500">Deposit {{ formatCurrency(row.deposit) }}</span>
-                </div>
+              <!-- Right -->
+              <div class="flex flex-col items-start sm:items-end gap-2">
+                <span class="font-semibold text-slate-900">
+                  {{ formatCurrency(row.price) }}
+                </span>
 
-                <div class="flex flex-wrap items-center gap-3 text-sm text-slate-600">
-                  <span v-if="row.proposedDateISO">Proposed {{ formatDate(row.proposedDateISO) }}</span>
-                  <span v-if="row.startDateISO">Start {{ formatDate(row.startDateISO) }}</span>
-                </div>
-
-                <!-- CTA -->
                 <button
-                  class="inline-flex items-center justify-center rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
+                  class="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-slate-800 transition"
                   :class="{
                     'bg-emerald-600 hover:bg-emerald-700':
-                      row.status === 'approved' ||
-                      (row.status === 'ready' && row.kickoffStatus === 'pending')
+                      row.status === 'approved'
                   }"
-                  @click="handleCTA(row)"
+                  @click.stop="handleCTA(row)"
                 >
                   {{
-                    row.status === 'awaiting-approval'
-                      ? 'View proposal'
-                      : row.status === 'approved'
-                      ? 'Schedule project'
-                      : row.status === 'awaiting-client'
-                      ? 'View status'
-                      : row.status === 'scheduled'
-                      ? 'View details'
-                      : 'Open'
+                    row.status === "awaiting-approval"
+                      ? "View proposal"
+                      : row.status === "approved"
+                      ? "Schedule project"
+                      : row.status === "scheduled"
+                      ? "View details"
+                      : "View"
                   }}
                 </button>
               </div>
-            </div>
-
-            <!-- Chevron -->
-            <div class="mt-3 flex items-center justify-between text-sm text-slate-600 sm:mt-2">
-              <span></span>
-              <button
-                class="inline-flex items-center text-xs font-semibold text-slate-500 transition hover:text-slate-700"
-                @click="openDrawer(row)"
-              >
-                <ChevronRightIcon class="h-4 w-4" />
-              </button>
             </div>
           </div>
         </div>
@@ -356,12 +303,17 @@ const handleCTA = (row: ProjectRow) => {
       :open="drawerOpen"
       :job="drawerJob"
       :onClose="closeDrawer"
-      @schedule="(id) => router.push('/prototype/hq/approval-state')"
-      @openProposal="(id) => router.push('/prototype/smartproposal/client')"
-      @payments="(id) => router.push('/payments')"
     />
 
-    <!-- Kickoff Modal (unused in this version) -->
-    
+    <!-- Scheduling Modal -->
+    <ScheduleProjectModal
+      :open="scheduleModalOpen"
+      :job="scheduleJob"
+      @close="scheduleModalOpen = false"
+      @submit="handleScheduleSubmit"
+    />
+
+    <!-- Kickoff Modal (future) -->
+    <SendKickoffModal :open="false" :project="null" />
   </main>
 </template>

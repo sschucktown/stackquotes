@@ -257,6 +257,13 @@ const router = createRouter({
       meta: { public: true, allowAuthenticated: true },
     },
     {
+      path: "/prototype/hq/schedule/confirm",
+      name: "ScheduleConfirmPrototype",
+      component: () => import("@/prototype/hq/schedule/ScheduleConfirm.vue"),
+      meta: { public: true, allowAuthenticated: true }
+    },
+
+    {
       path: "/client/project/:id/kickoff",
       name: "ClientKickoffDetails",
       component: () => import("@/components/Client/KickoffDetails.vue"),
