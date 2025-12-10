@@ -1,265 +1,192 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref, watch } from "vue";
+import { ref } from "vue";
 
 const props = defineProps<{
   open: boolean;
   proposalId: string;
   acceptedOption: string;
   onClose: () => void;
-  onSuccess: (payload: { proposalId: string; jobId?: string | null }) => void;
+  onSuccess: (jobId: string) => void;
 }>();
 
-const isSubmitting = ref(false);
-const errorMessage = ref<string | null>(null);
-const signerName = ref("");
-
-const canvasRef = ref<HTMLCanvasElement | null>(null);
+// --------------------------------------------------
+// State
+// --------------------------------------------------
+const signing = ref(false);
+const signatureData = ref<string | null>(null);
+let canvasEl: HTMLCanvasElement | null = null;
 let ctx: CanvasRenderingContext2D | null = null;
+
 let drawing = false;
+let lastX = 0;
+let lastY = 0;
 
-const initCanvas = () => {
-  const canvas = canvasRef.value;
+// --------------------------------------------------
+// Canvas Setup
+// --------------------------------------------------
+const initCanvas = (canvas: HTMLCanvasElement | null) => {
   if (!canvas) return;
-  const dpr = window.devicePixelRatio || 1;
-  const rect = canvas.getBoundingClientRect();
-  canvas.width = rect.width * dpr;
-  canvas.height = rect.height * dpr;
+  canvasEl = canvas;
   ctx = canvas.getContext("2d");
-  if (ctx) {
-    ctx.scale(dpr, dpr);
-    ctx.lineWidth = 2;
-    ctx.lineCap = "round";
-    ctx.strokeStyle = "#0f172a";
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, rect.width, rect.height);
-  }
-};
-
-const clearCanvas = () => {
-  const canvas = canvasRef.value;
-  if (!canvas || !ctx) return;
-  const rect = canvas.getBoundingClientRect();
-  ctx.fillStyle = "#ffffff";
-  ctx.fillRect(0, 0, rect.width, rect.height);
-};
-
-const getPos = (evt: MouseEvent | TouchEvent) => {
-  const canvas = canvasRef.value;
-  if (!canvas) return { x: 0, y: 0 };
-  const rect = canvas.getBoundingClientRect();
-  if (evt instanceof MouseEvent) {
-    return { x: evt.clientX - rect.left, y: evt.clientY - rect.top };
-  }
-  const touch = evt.touches[0] || evt.changedTouches[0];
-  return { x: touch.clientX - rect.left, y: touch.clientY - rect.top };
-};
-
-const handlePointerDown = (evt: MouseEvent | TouchEvent) => {
   if (!ctx) return;
-  drawing = true;
-  const { x, y } = getPos(evt);
-  ctx.beginPath();
-  ctx.moveTo(x, y);
+
+  ctx.lineWidth = 3;
+  ctx.lineCap = "round";
+  ctx.strokeStyle = "#111827";
 };
 
-const handlePointerMove = (evt: MouseEvent | TouchEvent) => {
+const startDraw = (e: MouseEvent | TouchEvent) => {
+  drawing = true;
+  const { x, y } = getPos(e);
+  lastX = x;
+  lastY = y;
+};
+
+const draw = (e: MouseEvent | TouchEvent) => {
   if (!drawing || !ctx) return;
-  const { x, y } = getPos(evt);
+  const { x, y } = getPos(e);
+
+  ctx.beginPath();
+  ctx.moveTo(lastX, lastY);
   ctx.lineTo(x, y);
   ctx.stroke();
+
+  lastX = x;
+  lastY = y;
 };
 
-const handlePointerUp = () => {
+const endDraw = () => {
   drawing = false;
+  if (!canvasEl) return;
+  signatureData.value = canvasEl.toDataURL("image/png");
 };
 
-onMounted(() => {
-  if (props.open) {
-    requestAnimationFrame(initCanvas);
+const getPos = (e: MouseEvent | TouchEvent) => {
+  const rect = canvasEl!.getBoundingClientRect();
+  let clientX = 0;
+  let clientY = 0;
+
+  if (e instanceof TouchEvent) {
+    clientX = e.touches[0].clientX;
+    clientY = e.touches[0].clientY;
+  } else {
+    clientX = e.clientX;
+    clientY = e.clientY;
   }
-  window.addEventListener("mouseup", handlePointerUp);
-  window.addEventListener("touchend", handlePointerUp);
-});
 
-onUnmounted(() => {
-  window.removeEventListener("mouseup", handlePointerUp);
-  window.removeEventListener("touchend", handlePointerUp);
-});
+  return {
+    x: clientX - rect.left,
+    y: clientY - rect.top,
+  };
+};
 
-watch(
-  () => props.open,
-  (open) => {
-    if (open) {
-      errorMessage.value = null;
-      signerName.value = "";
-      requestAnimationFrame(() => {
-        initCanvas();
-      });
-    }
-  }
-);
-
-const handleSubmit = async () => {
-  if (!props.acceptedOption) {
-    errorMessage.value = "Please select an option before signing.";
+// --------------------------------------------------
+// Submit Signature → Create Job
+// --------------------------------------------------
+const submitSignature = async () => {
+  if (!signatureData.value) {
+    alert("Please sign before submitting.");
     return;
   }
 
-  const canvas = canvasRef.value;
-  if (!canvas) return;
-
-  const dataUrl = canvas.toDataURL("image/png");
-  if (!dataUrl || dataUrl === "data:,") {
-    errorMessage.value = "Please add your signature in the box.";
-    return;
-  }
-
-  isSubmitting.value = true;
-  errorMessage.value = null;
+  signing.value = true;
 
   try {
-    const res = await fetch(
-      `/api/smartproposals/${encodeURIComponent(props.proposalId)}/sign`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          accepted_option: props.acceptedOption,
-          signature_image: dataUrl,
-        }),
-      }
-    );
+    // 1️⃣ Submit signature to SmartProposal
+    const signRes = await fetch(`/api/smartproposals/${props.proposalId}/sign`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        accepted_option: props.acceptedOption,
+        signature_image: signatureData.value,
+      }),
+    });
 
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err?.error || "Unable to save signature. Please try again.");
+    if (!signRes.ok) {
+      console.error(await signRes.text());
+      alert("Could not submit signature.");
+      signing.value = false;
+      return;
     }
 
-    const json = await res.json();
-    const proposalId = json.proposalId || props.proposalId;
-    const jobId = json.job_id ?? null;
+    const signData = await signRes.json();
 
-    props.onSuccess({ proposalId, jobId });
-  } catch (err: any) {
-    errorMessage.value = err?.message || "Something went wrong. Please try again.";
+    // 2️⃣ Create Job
+    const jobRes = await fetch("/api/jobs", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        proposal_id: props.proposalId,
+        approved_option: props.acceptedOption,
+        approved_price: 0, // update once proposal pricing is wired
+        deposit_amount: null,
+        client_id: "00000000-0000-0000-0000-000000000000" // TODO replace once auth is wired
+      }),
+    });
+
+    if (!jobRes.ok) {
+      console.error(await jobRes.text());
+      alert("Signature saved, but job could not be created.");
+      signing.value = false;
+      return;
+    }
+
+    const jobData = await jobRes.json();
+
+    // Notify parent with new job ID
+    props.onSuccess(jobData.job.id);
+
+  } catch (err) {
+    console.error(err);
+    alert("Unexpected error saving signature.");
   } finally {
-    isSubmitting.value = false;
+    signing.value = false;
   }
 };
 </script>
 
 <template>
-  <transition name="fade">
-    <div
-      v-if="open"
-      class="fixed inset-0 z-40 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4"
-    >
-      <div
-        class="w-full max-w-lg rounded-2xl bg-white p-5 shadow-xl"
-        @click.stop
-      >
-        <header class="mb-4 flex items-start justify-between gap-3">
-          <div>
-            <p class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
-              Step 2 of 2
-            </p>
-            <h2 class="text-lg font-semibold text-slate-900">
-              Add your signature to approve
-            </h2>
-            <p class="mt-1 text-sm text-slate-600">
-              This confirms which option you’re choosing and lets your contractor move forward.
-            </p>
-          </div>
-          <button
-            type="button"
-            class="text-slate-400 hover:text-slate-600"
-            @click="onClose"
-          >
-            ✕
-          </button>
-        </header>
+  <div
+    v-if="open"
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+  >
+    <div class="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
+      <h2 class="text-lg font-semibold text-slate-900">Sign to Approve</h2>
 
-        <div class="space-y-4">
-          <div>
-            <label class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
-              Your name
-            </label>
-            <input
-              v-model="signerName"
-              type="text"
-              class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-              placeholder="Type your full name"
-            />
-          </div>
+      <!-- Canvas -->
+      <div class="mt-4 rounded-xl border border-slate-300 bg-slate-50 p-3">
+        <canvas
+          ref="initCanvas"
+          width="500"
+          height="200"
+          class="w-full rounded-lg bg-white"
+          @mousedown="startDraw"
+          @mousemove="draw"
+          @mouseup="endDraw"
+          @mouseleave="endDraw"
+          @touchstart.prevent="startDraw"
+          @touchmove.prevent="draw"
+          @touchend.prevent="endDraw"
+        ></canvas>
+      </div>
 
-          <div>
-            <label class="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
-              Sign below
-            </label>
-            <div class="rounded-xl border border-slate-300 bg-slate-50/60 p-3">
-              <canvas
-                ref="canvasRef"
-                class="h-40 w-full rounded-lg bg-white shadow-inner"
-                @mousedown.prevent="handlePointerDown"
-                @mousemove.prevent="handlePointerMove"
-                @touchstart.prevent="handlePointerDown"
-                @touchmove.prevent="handlePointerMove"
-              ></canvas>
-              <div class="mt-2 flex items-center justify-between text-xs text-slate-500">
-                <span>Use your mouse or finger to sign.</span>
-                <button
-                  type="button"
-                  class="text-xs font-semibold text-slate-600 hover:text-slate-800"
-                  @click="clearCanvas"
-                >
-                  Clear
-                </button>
-              </div>
-            </div>
-          </div>
+      <!-- Buttons -->
+      <div class="mt-6 flex justify-end gap-3">
+        <button
+          class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+          @click="onClose"
+        >
+          Cancel
+        </button>
 
-          <p v-if="errorMessage" class="text-sm text-rose-600">
-            {{ errorMessage }}
-          </p>
-
-          <div class="mt-2 flex flex-col gap-2 sm:flex-row sm:justify-end">
-            <button
-              type="button"
-              class="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 shadow-sm hover:bg-slate-50"
-              @click="onClose"
-              :disabled="isSubmitting"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              class="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-70"
-              @click="handleSubmit"
-              :disabled="isSubmitting"
-            >
-              <span v-if="!isSubmitting">Approve &amp; Sign</span>
-              <span v-else>Saving…</span>
-            </button>
-          </div>
-
-          <p class="mt-1 text-[11px] text-slate-500">
-            Nothing is final until your contractor confirms everything with you. This signature lets them know which option you’re choosing so they can move to the next step.
-          </p>
-        </div>
+        <button
+          class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-emerald-700"
+          :disabled="signing"
+          @click="submitSignature"
+        >
+          {{ signing ? "Processing…" : "Sign & Approve" }}
+        </button>
       </div>
     </div>
-  </transition>
+  </div>
 </template>
-
-<style scoped>
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 150ms ease-out;
-}
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
-</style>
