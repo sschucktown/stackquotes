@@ -3,10 +3,12 @@ import { computed, onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import { ChevronRightIcon } from "@heroicons/vue/24/outline";
 import SendKickoffModal from "@/components/Kickoff/SendKickoffModal.vue";
-import { usePrototypePaymentStore } from "@/stores/prototypePaymentStore";
 import ProjectsOverviewDrawer from "@/prototype/hq/components/ProjectsOverviewDrawer.vue";
+import { usePrototypePaymentStore } from "@/stores/prototypePaymentStore";
 
-
+// --------------------------------------------------
+// Types
+// --------------------------------------------------
 type Status =
   | "awaiting-approval"
   | "approved"
@@ -22,29 +24,34 @@ interface ProjectRow {
   price: number;
   deposit: number;
   status: Status;
-  startDate?: string;
-  proposedDate?: string;
-  approvedAt?: string;
-  message?: string;
-  sentAgo?: string;
+  approvedAtISO?: string;      // ⭐ NEW
+  approvedAtText?: string;     // computed fallback
+  proposedDateISO?: string;
+  startDateISO?: string;
   kickoffStatus?: "pending" | "sent" | "viewed";
+  message?: string;
 }
 
-// Shape expected by ProjectsOverviewDrawer
-interface DrawerJob {
-  id: string;
-  title: string;
-  client_name: string;
-  status: string;
-  approved_option?: string;
-  deposit_amount?: number;
-  signature_image?: string;
-  approved_at?: string;
-}
+// Utility
+const formatCurrency = (value: number) =>
+  value.toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  });
 
-const router = useRouter();
-const paymentStore = usePrototypePaymentStore();
+const formatDate = (iso?: string) => {
+  if (!iso) return "";
+  return new Date(iso).toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+};
 
+// --------------------------------------------------
+// DATA — Realistic ISO timestamps
+// --------------------------------------------------
 const projects = ref<ProjectRow[]>([
   {
     id: "p-001",
@@ -54,7 +61,7 @@ const projects = ref<ProjectRow[]>([
     price: 23800,
     deposit: 3570,
     status: "awaiting-approval",
-    sentAgo: "Sent 3 days ago",
+    approvedAtISO: undefined,
   },
   {
     id: "p-002",
@@ -64,7 +71,6 @@ const projects = ref<ProjectRow[]>([
     price: 18600,
     deposit: 2790,
     status: "awaiting-approval",
-    sentAgo: "Sent yesterday",
   },
   {
     id: "p-003",
@@ -74,8 +80,7 @@ const projects = ref<ProjectRow[]>([
     price: 16400,
     deposit: 2460,
     status: "approved",
-    approvedAt: "Approved 2 days ago",
-    sentAgo: "Signed 2 days ago",
+    approvedAtISO: "2025-12-07T14:22:00Z",
   },
   {
     id: "p-004",
@@ -85,9 +90,8 @@ const projects = ref<ProjectRow[]>([
     price: 31200,
     deposit: 4680,
     status: "awaiting-client",
-    proposedDate: "2025-12-12",
+    proposedDateISO: "2025-12-12T00:00:00Z",
     message: "We can hold this week if you confirm by Friday.",
-    sentAgo: "Proposed 1 day ago",
   },
   {
     id: "p-005",
@@ -97,8 +101,7 @@ const projects = ref<ProjectRow[]>([
     price: 22800,
     deposit: 3420,
     status: "scheduled",
-    startDate: "2025-12-18",
-    sentAgo: "Confirmed 4 days ago",
+    startDateISO: "2025-12-18T00:00:00Z",
   },
   {
     id: "p-006",
@@ -108,8 +111,7 @@ const projects = ref<ProjectRow[]>([
     price: 14200,
     deposit: 2130,
     status: "ready",
-    startDate: "2026-01-05",
-    sentAgo: "Scheduled 6 days ago",
+    startDateISO: "2026-01-05T00:00:00Z",
     kickoffStatus: "pending",
   },
   {
@@ -120,343 +122,155 @@ const projects = ref<ProjectRow[]>([
     price: 28500,
     deposit: 4275,
     status: "approved",
-    approvedAt: "Approved today",
-    sentAgo: "Signed today",
+    approvedAtISO: new Date().toISOString(), // approved today
     kickoffStatus: "sent",
   },
 ]);
 
+// --------------------------------------------------
+// Sections
+// --------------------------------------------------
 const sections = [
-  {
-    key: "awaiting-approval" as Status,
-    title: "Awaiting client approval",
-    subtitle: "Proposals sent and awaiting sign-off",
-  },
-  {
-    key: "approved" as Status,
-    title: "Approved → Needs Scheduling",
-    subtitle: "Signed deals waiting for a start date",
-  },
-  {
-    key: "awaiting-client" as Status,
-    title: "Client reviewing schedule",
-    subtitle: "You proposed a date; waiting on client",
-  },
-  {
-    key: "scheduled" as Status,
-    title: "Scheduled",
-    subtitle: "Dates locked with deposit due at scheduling",
-  },
-  {
-    key: "ready" as Status,
-    title: "Ready to start",
-    subtitle: "Everything is confirmed; prep kickoff",
-  },
-];
+  { key: "awaiting-approval", title: "Awaiting client approval", subtitle: "Proposals sent and awaiting sign-off" },
+  { key: "approved", title: "Approved → Needs Scheduling", subtitle: "Signed deals waiting for a start date" },
+  { key: "awaiting-client", title: "Client reviewing schedule", subtitle: "You proposed a date; waiting on client" },
+  { key: "scheduled", title: "Scheduled", subtitle: "Dates locked with deposit due at scheduling" },
+  { key: "ready", title: "Ready to start", subtitle: "Everything is confirmed; prep kickoff" },
+] as const;
 
+// --------------------------------------------------
+// Expand All (desktop)
+// --------------------------------------------------
 const openSections = ref<Record<Status, boolean>>({
-  "awaiting-approval": false,
-  approved: false,
-  "awaiting-client": false,
-  scheduled: false,
-  ready: false,
+  "awaiting-approval": true,
+  approved: true,
+  "awaiting-client": true,
+  scheduled: true,
+  ready: true,
 });
 
-onMounted(() => {
-  const isDesktop =
-    typeof window !== "undefined" && window.innerWidth >= 768;
-  if (isDesktop) {
-    openSections.value = {
-      "awaiting-approval": true,
-      approved: true,
-      "awaiting-client": true,
-      scheduled: true,
-      ready: true,
-    };
-  }
-});
+// --------------------------------------------------
+// Grouped data
+// --------------------------------------------------
+const grouped = computed(() =>
+  sections.map((s) => ({
+    ...s,
+    rows: projects.value.filter((p) => p.status === s.key),
+  }))
+);
 
-const formatCurrency = (value: number) =>
-  value.toLocaleString("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  });
-
-const formatDate = (value?: string) => {
-  if (!value) return "";
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return value;
-  return parsed.toLocaleDateString("en-US", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
-};
-
-const grouped = computed(() => {
-  return sections.map((section) => ({
-    ...section,
-    rows: projects.value.filter((p) => p.status === section.key),
-  }));
-});
-
-const badgeClass = (row: ProjectRow) => {
-  if (row.status === "ready") {
-    if (row.kickoffStatus === "sent" || row.kickoffStatus === "viewed") {
-      return "bg-emerald-50 text-emerald-700 border border-emerald-100";
-    }
-    return "bg-slate-50 text-slate-700 border border-slate-200";
-  }
-  switch (row.status) {
-    case "awaiting-approval":
-      return "bg-amber-50 text-amber-700 border border-amber-100";
-    case "approved":
-      return "bg-blue-50 text-blue-700 border border-blue-100";
-    case "awaiting-client":
-      return "bg-purple-50 text-purple-700 border border-purple-100";
-    case "scheduled":
-      return "bg-emerald-50 text-emerald-700 border border-emerald-100";
-    default:
-      return "bg-slate-50 text-slate-700 border border-slate-100";
-  }
-};
-
-const badgeLabel = (row: ProjectRow) => {
-  if (row.status === "ready") {
-    if (row.kickoffStatus === "viewed") return "Client viewed";
-    if (row.kickoffStatus === "sent") return "Kickoff sent";
-    return "Kickoff pending";
-  }
-  switch (row.status) {
-    case "awaiting-approval":
-      return "Awaiting approval";
-    case "approved":
-      return "Needs scheduling";
-    case "awaiting-client":
-      return "Awaiting client confirmation";
-    case "scheduled":
-      return "Scheduled";
-    default:
-      return "";
-  }
-};
-
-const ctaLabel = (row: ProjectRow) => {
-  if (row.status === "ready") {
-    if (row.kickoffStatus === "pending" || !row.kickoffStatus)
-      return "Send kickoff details";
-    return "View kickoff details";
-  }
-  switch (row.status) {
-    case "awaiting-approval":
-      return "View proposal";
-    case "approved":
-      return "Schedule project";
-    case "awaiting-client":
-      return "View status";
-    case "scheduled":
-      return "View details";
-    default:
-      return "View details";
-  }
-};
-
-const handleCTA = (row: ProjectRow) => {
-  switch (row.status) {
-    case "awaiting-approval":
-      console.log("[HQ] View proposal", row.id);
-      router.push("/prototype/smartproposal/client");
-      break;
-    case "approved":
-      console.log("[HQ] Schedule project", row.id);
-      router.push("/prototype/hq/approval-state");
-      break;
-    case "awaiting-client":
-      console.log("[HQ] View schedule status", row.id);
-      router.push("/prototype/client/dashboard");
-      break;
-    case "scheduled":
-      console.log("[HQ] View scheduled details", row.id);
-      router.push("/prototype/client/contract-packet");
-      break;
-    case "ready":
-      if (row.kickoffStatus === "pending" || !row.kickoffStatus) {
-        activeKickoffRow.value = row;
-        kickoffModalOpen.value = true;
-      } else {
-        router.push(`/client/project/${row.id}/kickoff`);
-      }
-      break;
-  }
-};
-
-const toggleSection = (key: Status) => {
-  openSections.value[key] = !openSections.value[key];
-};
-
-/**
- * Drawer state & helpers
- */
+// --------------------------------------------------
+// Drawer Logic
+// --------------------------------------------------
 const drawerOpen = ref(false);
-const activeDrawerJob = ref<DrawerJob | null>(null);
+const drawerJob = ref<any>(null);
 
-const mapRowToDrawerJob = (row: ProjectRow): DrawerJob => {
-  // Map pipeline status → drawer status tags
-  let status = row.status;
-  if (row.status === "awaiting-approval") status = "sent";
-  if (row.status === "approved") status = "approved";
-
-  return {
+const openDrawer = (row: ProjectRow) => {
+  drawerJob.value = {
     id: row.id,
     title: row.project,
     client_name: row.client,
-    status,
-    approved_option:
-      row.option && row.option !== "Option not selected yet"
-        ? row.option
-        : undefined,
+    status: row.status,
+    approved_option: row.option,
     deposit_amount: row.deposit,
-    signature_image: undefined, // wiring to real signature comes later
-    approved_at: undefined, // can be wired to a real ISO date later
+    signature_image: undefined, // populated once SmartProposal stores signatures
+    approved_at: row.approvedAtISO,
   };
-};
-
-const openDrawerForRow = (row: ProjectRow) => {
-  activeDrawerJob.value = mapRowToDrawerJob(row);
   drawerOpen.value = true;
 };
 
 const closeDrawer = () => {
   drawerOpen.value = false;
+  drawerJob.value = null;
 };
 
-const handleDrawerSchedule = (jobId: string) => {
-  console.log("[HQ Drawer] Schedule project", jobId);
-  drawerOpen.value = false;
-  router.push("/prototype/hq/approval-state");
+// --------------------------------------------------
+// Event Handlers
+// --------------------------------------------------
+const router = useRouter();
+const paymentStore = usePrototypePaymentStore();
+
+const handleCTA = (row: ProjectRow) => {
+  switch (row.status) {
+    case "awaiting-approval":
+      return router.push("/prototype/smartproposal/client");
+    case "approved":
+      return router.push("/prototype/hq/approval-state");
+    case "awaiting-client":
+      return router.push("/prototype/client/dashboard");
+    case "scheduled":
+      return router.push("/prototype/client/contract-packet");
+    case "ready":
+      return openDrawer(row);
+  }
 };
-
-const handleDrawerOpenProposal = (jobId: string) => {
-  console.log("[HQ Drawer] Open proposal", jobId);
-  drawerOpen.value = false;
-  router.push("/prototype/smartproposal/client");
-};
-
-const handleDrawerPayments = (jobId: string) => {
-  console.log("[HQ Drawer] Manage payments", jobId);
-  drawerOpen.value = false;
-  router.push("/payments");
-};
-
-const handleChevron = (row: ProjectRow) => {
-  openDrawerForRow(row);
-};
-
-const kickoffModalOpen = ref(false);
-const activeKickoffRow = ref<ProjectRow | null>(null);
-
-const handleKickoffSent = (payload: {
-  arrivalWindow: string;
-  leadName: string;
-  leadPhone: string;
-  materialNotes: string;
-  accessNotes: string;
-}) => {
-  if (!activeKickoffRow.value) return;
-  activeKickoffRow.value.kickoffStatus = "sent";
-  projects.value = [...projects.value];
-  kickoffModalOpen.value = false;
-};
-
-const depositLabel = (row: ProjectRow) =>
-  paymentStore.isPaid(row.id) ? "Deposit paid" : "Deposit pending";
-
-const depositClass = (row: ProjectRow) =>
-  paymentStore.isPaid(row.id)
-    ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
-    : "bg-slate-100 text-slate-600 border border-slate-200";
 </script>
 
 <template>
   <main class="min-h-screen bg-white text-slate-900">
     <div class="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
-      <header
-        class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
-      >
+      <header class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p
-            class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500"
-          >
+          <p class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
             Contractor HQ
           </p>
           <h1 class="text-2xl font-semibold text-slate-900">
             Projects Overview
           </h1>
         </div>
-        <span
-          class="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 shadow-inner"
-        >
+        <span class="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
           Prototype Only
         </span>
       </header>
 
+      <!-- Sections -->
       <section
         v-for="section in grouped"
         :key="section.key"
-        class="mt-8 border border-slate-200/70 bg-white shadow-sm shadow-slate-100/60 sm:rounded-2xl"
+        class="mt-8 border border-slate-200/70 bg-white shadow-sm sm:rounded-2xl"
       >
         <button
           type="button"
-          class="flex w-full items-center justify-between px-4 py-4 text-left sm:px-6"
-          @click="toggleSection(section.key)"
+          class="flex w-full items-center justify-between px-4 py-4 sm:px-6"
+          @click="openSections[section.key] = !openSections[section.key]"
         >
           <div>
-            <p
-              class="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500"
-            >
+            <p class="text-[11px] uppercase font-semibold tracking-[0.12em] text-slate-500">
               {{ section.title }}
             </p>
             <p class="text-sm text-slate-500">
               {{ section.subtitle }}
             </p>
           </div>
-          <span
-            class="ml-4 inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-600"
-          >
-            <svg
+
+          <span class="ml-4 inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-600">
+            <ChevronRightIcon
               class="h-4 w-4 transition"
               :class="openSections[section.key] ? 'rotate-90 sm:rotate-0' : ''"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
-            </svg>
+            />
           </span>
         </button>
 
         <div v-if="openSections[section.key]" class="divide-y divide-slate-100/80">
-          <div v-if="!section.rows.length" class="px-4 py-6 sm:px-6">
-            <div
-              class="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-4 py-3"
-            >
-              <div>
-                <p class="text-sm font-semibold text-slate-800">
-                  No projects in this stage
-                </p>
-                <p class="text-sm text-slate-500">
-                  They'll appear here once clients progress.
-                </p>
-              </div>
+          <div
+            v-if="!section.rows.length"
+            class="px-4 py-6 sm:px-6"
+          >
+            <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+              <p class="text-sm font-semibold text-slate-800">
+                No projects in this stage
+              </p>
+              <p class="text-sm text-slate-500">
+                They'll appear here once clients progress.
+              </p>
             </div>
           </div>
 
+          <!-- Project Row -->
           <div
             v-for="row in section.rows"
             :key="row.id"
-            class="group px-4 py-4 transition hover:-translate-y-[1px] hover:bg-slate-50/80 sm:px-6"
+            class="group px-4 py-4 transition hover:bg-slate-50 sm:px-6"
           >
             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div class="flex flex-col gap-1">
@@ -468,134 +282,114 @@ const depositClass = (row: ProjectRow) =>
                   <p class="text-sm text-slate-700">
                     {{ row.project }}
                   </p>
+
+                  <!-- Status Badge -->
                   <span
                     class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold"
-                    :class="badgeClass(row)"
+                    :class="
+                      row.status === 'approved'
+                        ? 'bg-blue-50 text-blue-700'
+                        : row.status === 'awaiting-client'
+                        ? 'bg-purple-50 text-purple-700'
+                        : row.status === 'scheduled'
+                        ? 'bg-emerald-50 text-emerald-700'
+                        : row.status === 'ready'
+                        ? 'bg-emerald-50 text-emerald-700'
+                        : 'bg-amber-50 text-amber-700'
+                    "
                   >
-                    {{ badgeLabel(row) }}
+                    {{ row.status }}
                   </span>
                 </div>
+
+                <!-- Option -->
                 <p class="text-sm text-slate-500">
-                  {{ row.option || "Option not selected yet" }}
+                  {{ row.option }}
                   <span
-                    v-if="row.status === 'approved' && row.approvedAt"
+                    v-if="row.approvedAtISO"
                     class="text-slate-400"
                   >
-                    · {{ row.approvedAt }}
+                    · {{ formatDate(row.approvedAtISO) }}
                   </span>
                 </p>
+
+                <!-- Optional message -->
                 <p
-                  v-if="row.status === 'awaiting-client' && row.message"
+                  v-if="row.message"
                   class="text-sm text-slate-500"
                 >
-                  {{
-                    row.message.length > 90
-                      ? row.message.slice(0, 90) + "..."
-                      : row.message
-                  }}
-                </p>
-                <p
-                  v-if="row.sentAgo"
-                  class="text-[13px] text-slate-400"
-                >
-                  {{ row.sentAgo }}
+                  {{ row.message.length > 90 ? row.message.slice(0, 90) + "..." : row.message }}
                 </p>
               </div>
 
+              <!-- Right Column -->
               <div class="flex flex-col items-start gap-2 sm:items-end">
                 <div class="flex flex-wrap items-center gap-3 text-sm text-slate-700">
                   <span class="font-semibold text-slate-900">
                     {{ formatCurrency(row.price) }}
                   </span>
-                  <span v-if="row.deposit" class="text-slate-500">
+
+                  <span class="text-slate-500">
                     Deposit {{ formatCurrency(row.deposit) }}
                   </span>
-                  <span
-                    class="inline-flex items-center rounded-full px-3 py-1 text-[11px] font-semibold"
-                    :class="depositClass(row)"
-                  >
-                    {{ depositLabel(row) }}
-                  </span>
-                  <span
-                    v-if="row.approvedAt && row.status === 'approved'"
-                    class="text-xs font-semibold text-slate-500"
-                  >
-                    {{ row.approvedAt }}
-                  </span>
                 </div>
+
+                <!-- Dates -->
                 <div class="flex flex-wrap items-center gap-3 text-sm text-slate-600">
-                  <span v-if="row.proposedDate">
-                    Proposed {{ formatDate(row.proposedDate) }}
+                  <span v-if="row.proposedDateISO">
+                    Proposed {{ formatDate(row.proposedDateISO) }}
                   </span>
-                  <span v-if="row.startDate">
-                    Start {{ formatDate(row.startDate) }}
+
+                  <span v-if="row.startDateISO">
+                    Start {{ formatDate(row.startDateISO) }}
                   </span>
                 </div>
+
+                <!-- CTA -->
                 <button
                   class="inline-flex items-center justify-center rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
-                  :class="row.status === 'approved'
-                    ? 'bg-emerald-600 hover:bg-emerald-700'
-                    : row.status === 'ready' && row.kickoffStatus === 'pending'
-                    ? 'bg-emerald-600 hover:bg-emerald-700'
-                    : ''"
+                  :class="{
+                    'bg-emerald-600 hover:bg-emerald-700':
+                      row.status === 'approved' ||
+                      (row.status === 'ready' && row.kickoffStatus === 'pending')
+                  }"
                   @click="handleCTA(row)"
                 >
-                  {{ ctaLabel(row) }}
+                  {{
+                    row.status === "awaiting-approval"
+                      ? "View proposal"
+                      : row.status === "approved"
+                      ? "Schedule project"
+                      : row.status === "awaiting-client"
+                      ? "View status"
+                      : row.status === "scheduled"
+                      ? "View details"
+                      : "Open"
+                  }}
                 </button>
               </div>
-            </div>
-
-            <div
-              class="mt-3 flex items-center justify-between text-sm text-slate-600 sm:mt-2"
-            >
-              <div class="flex items-center gap-3">
-                <span v-if="row.status === 'awaiting-approval'">
-                  Option: {{ row.option || "Not selected" }}
-                </span>
-                <span
-                  v-if="row.status === 'awaiting-client' && row.deposit"
-                >
-                  Deposit: {{ formatCurrency(row.deposit) }}
-                </span>
-              </div>
-              <button
-                class="inline-flex items-center text-xs font-semibold text-slate-500 transition hover:text-slate-700"
-                @click="handleChevron(row)"
-              >
-                <ChevronRightIcon class="h-4 w-4" />
-              </button>
             </div>
           </div>
         </div>
       </section>
     </div>
 
-    <SendKickoffModal
-      :open="kickoffModalOpen"
-      :project="
-        activeKickoffRow
-          ? {
-              proposalId: activeKickoffRow.id,
-              clientName: activeKickoffRow.client,
-              projectName: activeKickoffRow.project,
-              startDate:
-                activeKickoffRow.startDate || activeKickoffRow.proposedDate,
-              price: activeKickoffRow.price,
-              deposit: activeKickoffRow.deposit,
-            }
-          : null
-      "
-      @close="kickoffModalOpen = false"
-      @sent="handleKickoffSent"
-    />
-
+    <!-- Drawer -->
     <ProjectsOverviewDrawer
       :open="drawerOpen"
-      :job="activeDrawerJob"
-      :on-close="closeDrawer"
-      @schedule="handleDrawerSchedule"
-      @openProposal="handleDrawerOpenProposal"
-      @payments="handleDrawerPayments"
+      :job="drawerJob"
+      :onClose="closeDrawer"
+      @schedule="(id) => router.push('/prototype/hq/approval-state')"
+      @openProposal="(id) => router.push('/prototype/smartproposal/client')"
+      @payments="(id) => router.push('/payments')"
+    />
+
+    <!-- Kickoff -->
+    <SendKickoffModal
+      :open="false"
+      :project="null"
+      @close="() => {}"
+      @sent="() => {}"
     />
   </main>
 </template>
