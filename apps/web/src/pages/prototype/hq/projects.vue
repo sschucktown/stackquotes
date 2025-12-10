@@ -362,11 +362,6 @@ const handleCTA = (row: ProjectRow) => {
     />
 
     <!-- Kickoff Modal (unused in this version) -->
-    <SendKickoffModal
-      :open="false"
-      :project="null"
-      @close="() => {}"
-      @sent="() => {}"
-    />
+    
   </main>
 </template>
