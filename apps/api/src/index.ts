@@ -1,4 +1,5 @@
 import { createApp } from "./app.js";
+import { jobsRouter } from "./routes/jobs/index.js";
 
 const app = createApp();
 
