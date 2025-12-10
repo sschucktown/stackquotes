@@ -4,7 +4,8 @@ import { useRouter } from "vue-router";
 import { ChevronRightIcon } from "@heroicons/vue/24/outline";
 import SendKickoffModal from "@/components/Kickoff/SendKickoffModal.vue";
 import { usePrototypePaymentStore } from "@/stores/prototypePaymentStore";
-import ProjectsOverviewDrawer from "./components/ProjectsOverviewDrawer.vue";
+import ProjectsOverviewDrawer from "@/prototype/hq/components/ProjectsOverviewDrawer.vue";
+
 
 type Status =
   | "awaiting-approval"
