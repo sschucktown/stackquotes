@@ -1,13 +1,10 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { computed, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
 import SummaryPanel from "./SummaryPanel.vue";
 import SignatureModal from "./SignatureModal.vue";
 
-// --------------------------------------------------
-// Props
-// --------------------------------------------------
 const props = defineProps<{
   proposal: {
     id: string;
@@ -21,29 +18,27 @@ const props = defineProps<{
   };
 }>();
 
-// --------------------------------------------------
-// Router utilities
-// --------------------------------------------------
 const route = useRoute();
 const router = useRouter();
 
-// proposalId comes from prototype route or props
 const proposalId =
   (route.query.proposal as string) ||
   props.proposal.id ||
   "demo-proposal";
 
-// --------------------------------------------------
-// Client selection
-// --------------------------------------------------
+// ---------------------------
+// Selection + Pricing
+// ---------------------------
 const selected = ref(props.proposal.options[0] ?? null);
 
 const depositAmount = computed(() => {
   if (!selected.value) return 0;
-  return (selected.value.price * props.proposal.deposit_percent) / 100;
+  return (
+    (selected.value.price * props.proposal.deposit_percent) /
+    100
+  );
 });
 
-// Currency formatter
 const currency = (value: number) =>
   new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -51,9 +46,9 @@ const currency = (value: number) =>
     maximumFractionDigits: 0,
   }).format(value);
 
-// --------------------------------------------------
-// Signature modal
-// --------------------------------------------------
+// ---------------------------
+// Signature Modal
+// ---------------------------
 const signatureOpen = ref(false);
 
 const handleApprove = () => {
@@ -61,23 +56,40 @@ const handleApprove = () => {
   signatureOpen.value = true;
 };
 
-const handleSignedSuccess = () => {
+const handleSignedSuccess = (payload: {
+  proposalId: string;
+  jobId?: string | null;
+}) => {
   signatureOpen.value = false;
+
+  const finalProposalId = payload.proposalId || proposalId;
+
+  const query: Record<string, string> = {
+    proposal: finalProposalId,
+  };
+  if (payload.jobId) {
+    query.job = payload.jobId;
+  }
 
   router.push({
     path: "/prototype/smartproposal/signed",
-    query: { proposal: proposalId },
+    query,
   });
+};
+
+const handleQuestion = () => {
+  // Simple placeholder for now
+  alert("Ask a question flow coming soon!");
 };
 </script>
 
 <template>
   <div class="mx-auto max-w-4xl p-4 pb-24 lg:flex lg:gap-8">
-    <!-- ========================= -->
-    <!-- Option Selection Column -->
-    <!-- ========================= -->
+    <!-- Options -->
     <div class="flex-1 space-y-4">
-      <h1 class="text-2xl font-bold text-slate-900 mb-4">Choose Your Option</h1>
+      <h1 class="mb-4 text-2xl font-bold text-slate-900">
+        Choose Your Option
+      </h1>
 
       <div class="grid gap-4 sm:grid-cols-2">
         <button
@@ -87,18 +99,16 @@ const handleSignedSuccess = () => {
           :class="[
             selected?.key === option.key
               ? 'border-emerald-600 ring-2 ring-emerald-500'
-              : 'border-slate-200'
+              : 'border-slate-200',
           ]"
           @click="selected = option"
         >
           <p class="text-lg font-semibold text-slate-900">
             {{ option.label }}
           </p>
-
           <p class="text-sm text-slate-600">
-            {{ option.subtitle }}
+            {{ option.subtitle || "Balanced finish and materials" }}
           </p>
-
           <p class="mt-2 text-xl font-bold text-slate-900">
             {{ currency(option.price) }}
           </p>
@@ -106,9 +116,7 @@ const handleSignedSuccess = () => {
       </div>
     </div>
 
-    <!-- ========================= -->
     <!-- Summary Panel -->
-    <!-- ========================= -->
     <SummaryPanel
       class="mt-6 lg:mt-0"
       :selected="selected || undefined"
@@ -116,17 +124,15 @@ const handleSignedSuccess = () => {
       :depositAmount="depositAmount"
       :currency="currency"
       @approve="handleApprove"
-      @question="() => alert('Ask question flow coming soon!')"
+      @question="handleQuestion"
     />
 
-    <!-- ========================= -->
     <!-- Signature Modal -->
-    <!-- ========================= -->
     <SignatureModal
       :open="signatureOpen"
       :proposal-id="proposalId"
       :accepted-option="selected?.key || ''"
-      :on-close="() => (signatureOpen = false)"
+      :on-close="() => (signatureOpen.value = false)"
       :on-success="handleSignedSuccess"
     />
   </div>
