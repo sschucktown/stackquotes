@@ -2,38 +2,34 @@
 import { ref } from "vue";
 import { useRouter } from "vue-router";
 
-// Props
 const props = defineProps<{
   open: boolean;
   jobId: string | null;
-  clientName: string | null;
   onClose: () => void;
 }>();
 
 const emit = defineEmits<{
-  (e: "scheduled", payload: { start: string; end: string | null }): void;
+  (e: "scheduled", jobId: string): void;
 }>();
 
 const router = useRouter();
 
-// Form state
-const startDate = ref("");
-const endDate = ref("");
-
-// UI state
+// ---------------------------
+// Local State
+// ---------------------------
+const startDate = ref<string | null>(null);
 const loading = ref(false);
-const errorMessage = ref<string | null>(null);
+const errorMessage = ref("");
+const success = ref(false);
 
-// Validate minimal
-const canSubmit = computed(() => startDate.value && !loading.value);
-
+// ---------------------------
 // API Call
-const submitSchedule = async () => {
-  if (!props.jobId) return;
-  if (!startDate.value) return;
+// ---------------------------
+const scheduleProject = async () => {
+  if (!props.jobId || !startDate.value) return;
 
   loading.value = true;
-  errorMessage.value = null;
+  errorMessage.value = "";
 
   try {
     const res = await fetch(`/api/jobs/${props.jobId}/schedule`, {
@@ -43,38 +39,29 @@ const submitSchedule = async () => {
       },
       body: JSON.stringify({
         start_date: startDate.value,
-        end_date: endDate.value || null,
       }),
     });
 
-    const json = await res.json();
+    const data = await res.json();
 
     if (!res.ok) {
-      errorMessage.value = json?.error ?? "Failed to schedule project.";
-      loading.value = false;
-      return;
+      throw new Error(data?.error || "Failed to schedule project.");
     }
 
-    // Emit for local parent components
-    emit("scheduled", {
-      start: startDate.value,
-      end: endDate.value || null,
-    });
+    success.value = true;
 
-    // Close modal
-    props.onClose();
+    // Delay to show success state
+    setTimeout(() => {
+      emit("scheduled", props.jobId!);
+      props.onClose();
 
-    // Navigate to contractor confirmation screen
-    router.push({
-      path: "/prototype/hq/schedule/confirm",
-      query: {
-        job: props.jobId,
-        start: startDate.value,
-        end: endDate.value || undefined,
-      },
-    });
+      router.push({
+        name: "ScheduleConfirmPrototype",
+        query: { job: props.jobId },
+      });
+    }, 700);
   } catch (err: any) {
-    errorMessage.value = "Network error — please try again.";
+    errorMessage.value = err.message ?? "Something went wrong.";
   } finally {
     loading.value = false;
   }
@@ -82,67 +69,73 @@ const submitSchedule = async () => {
 </script>
 
 <template>
-  <!-- BACKDROP -->
+  <!-- Overlay -->
   <div
     v-if="open"
-    class="fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
+    class="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm"
     @click="onClose"
-  ></div>
+  />
 
-  <!-- DRAWER -->
+  <!-- Modal -->
   <div
-    class="fixed bottom-0 left-0 right-0 z-50 bg-white shadow-xl rounded-t-2xl transition-transform duration-300"
-    :class="open ? 'translate-y-0' : 'translate-y-full'"
+    v-if="open"
+    class="fixed right-0 top-0 z-50 h-full w-full max-w-md bg-white shadow-2xl transform transition-all duration-300"
   >
-    <div class="mx-auto max-w-2xl px-6 py-6 space-y-6">
-      <div class="text-center">
-        <div class="w-10 h-1 bg-slate-300 rounded-full mx-auto mb-4" />
-        <p class="text-xs uppercase tracking-wider text-slate-500 font-semibold">
-          Schedule Project
-        </p>
-        <h2 class="text-xl font-semibold text-slate-900">
-          {{ clientName || "Client" }}
-        </h2>
-      </div>
-
-      <!-- ERROR -->
-      <div v-if="errorMessage" class="rounded-lg bg-red-50 text-red-700 p-3 text-sm">
-        {{ errorMessage }}
-      </div>
-
-      <!-- FORM -->
-      <div class="space-y-4">
-        <div>
-          <label class="text-sm font-semibold text-slate-700">Start Date</label>
-          <input
-            type="date"
-            v-model="startDate"
-            class="mt-1 w-full rounded-xl border border-slate-300 p-3 shadow-sm focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-
-        <div>
-          <label class="text-sm font-semibold text-slate-700">End Date (optional)</label>
-          <input
-            type="date"
-            v-model="endDate"
-            class="mt-1 w-full rounded-xl border border-slate-300 p-3 shadow-sm focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-      </div>
-
-      <!-- CTA BUTTON -->
+    <!-- Header -->
+    <div class="flex items-center justify-between border-b px-6 py-4">
+      <h2 class="text-lg font-semibold text-slate-900">
+        Schedule Project
+      </h2>
       <button
-        class="w-full rounded-xl bg-emerald-600 text-white font-semibold py-3 shadow transition hover:bg-emerald-700 disabled:opacity-50"
-        :disabled="!canSubmit"
-        @click="submitSchedule"
+        class="text-slate-500 hover:text-slate-700"
+        @click="onClose"
+      >
+        ✕
+      </button>
+    </div>
+
+    <!-- Body -->
+    <div class="p-6 space-y-6">
+      <!-- Date Picker -->
+      <div>
+        <label for="date" class="block text-sm font-medium text-slate-700">
+          Select start date
+        </label>
+        <input
+          id="date"
+          type="date"
+          class="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900"
+          v-model="startDate"
+        />
+      </div>
+
+      <!-- Error message -->
+      <p v-if="errorMessage" class="text-red-600 text-sm">
+        {{ errorMessage }}
+      </p>
+
+      <!-- Success confirmation -->
+      <div
+        v-if="success"
+        class="flex items-center justify-center gap-2 rounded-lg bg-emerald-50 py-3 text-emerald-700 text-sm font-semibold"
+      >
+        ✓ Scheduled!
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="p-6 border-t space-y-3">
+      <button
+        class="w-full rounded-xl bg-emerald-600 px-4 py-3 text-white font-semibold shadow hover:bg-emerald-700 transition disabled:opacity-50"
+        :disabled="!startDate || loading"
+        @click="scheduleProject"
       >
         <span v-if="!loading">Schedule Project</span>
-        <span v-else>Scheduling…</span>
+        <span v-else class="animate-pulse">Scheduling…</span>
       </button>
 
       <button
-        class="w-full rounded-xl bg-slate-100 text-slate-700 font-semibold py-3 shadow-sm"
+        class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-800 font-semibold shadow-sm hover:bg-slate-50 transition"
         @click="onClose"
       >
         Cancel
