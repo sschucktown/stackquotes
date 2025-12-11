@@ -159,11 +159,13 @@ const handleSignedSuccess = () => {
     <!-- Signature Modal -->
     <!-- ========================= -->
     <SignatureModal
-      :open="signatureOpen"
-      :proposal-id="proposalId"
-      :accepted-option="selected?.key || ''"
-      :on-close="() => (signatureOpen = false)"
-      :on-success="handleSignedSuccess"
-    />
+  :open="signatureOpen"
+  :proposal-id="proposalId"
+  :accepted-option="selected?.key || ''"
+  :approved-price="selected?.price || 0"
+  :deposit-amount="depositAmount"
+  :on-close="() => (signatureOpen = false)"
+  :on-success="handleSignedSuccess"
+/>
   </div>
 </template>

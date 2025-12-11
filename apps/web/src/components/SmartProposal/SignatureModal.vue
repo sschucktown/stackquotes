@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { ref, nextTick, watch } from "vue";
+import { nextTick, onMounted, ref, watch } from "vue";
 
 const props = defineProps<{
   open: boolean;
   proposalId: string;
   acceptedOption: string;
+  approvedPrice: number;
+  depositAmount: number | null;
   onClose: () => void;
   onSuccess: (jobId: string) => void;
 }>();
@@ -14,7 +16,6 @@ const props = defineProps<{
 // --------------------------------------------------
 const signing = ref(false);
 const signatureData = ref<string | null>(null);
-
 const canvasRef = ref<HTMLCanvasElement | null>(null);
 let ctx: CanvasRenderingContext2D | null = null;
 
@@ -23,39 +24,57 @@ let lastX = 0;
 let lastY = 0;
 
 // --------------------------------------------------
-// Canvas Setup AFTER modal opens
+// Canvas Setup
 // --------------------------------------------------
+const initCanvas = () => {
+  const canvas = canvasRef.value;
+  if (!canvas) return;
+
+  const context = canvas.getContext("2d");
+  if (!context) return;
+
+  ctx = context;
+  ctx.lineWidth = 3;
+  ctx.lineCap = "round";
+  ctx.strokeStyle = "#111827";
+
+  // Clear any previous strokes
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  signatureData.value = null;
+};
+
 watch(
   () => props.open,
-  async (open) => {
-    if (!open) return;
-    await nextTick();
-
-    const canvas = canvasRef.value;
-    if (!canvas) return;
-
-    ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    ctx.lineWidth = 3;
-    ctx.lineCap = "round";
-    ctx.strokeStyle = "#111827";
+  async (isOpen) => {
+    if (isOpen) {
+      await nextTick();
+      initCanvas();
+    } else {
+      // Reset state when closed
+      drawing = false;
+    }
   }
 );
 
-// --------------------------------------------------
-// Drawing Logic
-// --------------------------------------------------
-const getPos = (e: MouseEvent | TouchEvent) => {
-  const canvas = canvasRef.value!;
-  const rect = canvas.getBoundingClientRect();
+onMounted(() => {
+  if (props.open) {
+    nextTick().then(initCanvas);
+  }
+});
 
+const getPos = (e: MouseEvent | TouchEvent) => {
+  const canvas = canvasRef.value;
+  if (!canvas) return { x: 0, y: 0 };
+
+  const rect = canvas.getBoundingClientRect();
   let clientX = 0;
   let clientY = 0;
 
   if (e instanceof TouchEvent) {
-    clientX = e.touches[0].clientX;
-    clientY = e.touches[0].clientY;
+    const t = e.touches[0] || e.changedTouches[0];
+    if (!t) return { x: 0, y: 0 };
+    clientX = t.clientX;
+    clientY = t.clientY;
   } else {
     clientX = e.clientX;
     clientY = e.clientY;
@@ -68,6 +87,7 @@ const getPos = (e: MouseEvent | TouchEvent) => {
 };
 
 const startDraw = (e: MouseEvent | TouchEvent) => {
+  if (!ctx || !canvasRef.value) return;
   drawing = true;
   const { x, y } = getPos(e);
   lastX = x;
@@ -88,13 +108,16 @@ const draw = (e: MouseEvent | TouchEvent) => {
 };
 
 const endDraw = () => {
+  if (!canvasRef.value) {
+    drawing = false;
+    return;
+  }
   drawing = false;
-  if (!canvasRef.value) return;
   signatureData.value = canvasRef.value.toDataURL("image/png");
 };
 
 // --------------------------------------------------
-// Submit Signature → Backend Approve Pipeline
+// Submit Signature → SmartProposal + Job
 // --------------------------------------------------
 const submitSignature = async () => {
   if (!signatureData.value) {
@@ -105,27 +128,50 @@ const submitSignature = async () => {
   signing.value = true;
 
   try {
-    const res = await fetch(`/api/smartproposals/${props.proposalId}/approve`, {
+    // 1️⃣ Submit signature to SmartProposal
+    const signRes = await fetch(`/api/smartproposals/${props.proposalId}/sign`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        signature_image: signatureData.value,
         accepted_option: props.acceptedOption,
-        proposal_id: props.proposalId,
+        signature_image: signatureData.value,
       }),
     });
 
-    const data = await res.json();
-
-    if (!res.ok) {
-      console.error(data);
-      alert("Could not approve proposal.");
+    if (!signRes.ok) {
+      console.error(await signRes.text());
+      alert("Could not submit signature.");
       signing.value = false;
       return;
     }
 
-    // Backend returns job_id
-    props.onSuccess(data.job_id);
+    await signRes.json(); // We don’t strictly need payload yet
+
+    // 2️⃣ Create Job with REAL price + deposit
+    const jobRes = await fetch("/api/jobs", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        proposal_id: props.proposalId,
+        approved_option: props.acceptedOption,
+        approved_price: props.approvedPrice,
+        deposit_amount: props.depositAmount,
+        // TODO: replace with real client once wired into public proposal view
+        client_id: "00000000-0000-0000-0000-000000000000",
+      }),
+    });
+
+    if (!jobRes.ok) {
+      console.error(await jobRes.text());
+      alert("Signature saved, but job could not be created.");
+      signing.value = false;
+      return;
+    }
+
+    const jobData = await jobRes.json();
+
+    // Notify parent with new job ID (from API `{ success, job }`)
+    props.onSuccess(jobData.job.id);
   } catch (err) {
     console.error(err);
     alert("Unexpected error saving signature.");
@@ -143,13 +189,13 @@ const submitSignature = async () => {
     <div class="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
       <h2 class="text-lg font-semibold text-slate-900">Sign to Approve</h2>
 
-      <!-- Signature Canvas -->
+      <!-- Canvas -->
       <div class="mt-4 rounded-xl border border-slate-300 bg-slate-50 p-3">
         <canvas
           ref="canvasRef"
           width="500"
           height="200"
-          class="w-full rounded-lg bg-white"
+          class="w-full rounded-lg bg-white touch-none"
           @mousedown="startDraw"
           @mousemove="draw"
           @mouseup="endDraw"
@@ -170,7 +216,7 @@ const submitSignature = async () => {
         </button>
 
         <button
-          class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-emerald-700"
+          class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-emerald-700 disabled:opacity-60"
           :disabled="signing"
           @click="submitSignature"
         >
