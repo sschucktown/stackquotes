@@ -41,7 +41,6 @@ const formattedDate = computed(() => {
     class="fixed right-0 top-0 h-full w-full max-w-md bg-white shadow-2xl z-50 transform transition-transform duration-300"
     :class="open ? 'translate-x-0' : 'translate-x-full'"
   >
-    <!-- Header -->
     <header
       class="flex items-center justify-between border-b border-slate-200 px-6 py-4"
     >
@@ -57,11 +56,9 @@ const formattedDate = computed(() => {
       </button>
     </header>
 
-    <!-- Content -->
     <div class="px-6 py-4 overflow-y-auto h-[calc(100%-64px)]">
       <div v-if="job" class="space-y-6">
 
-        <!-- Job Title -->
         <div>
           <p class="text-[11px] uppercase font-semibold tracking-wider text-slate-500">
             Project
@@ -71,7 +68,6 @@ const formattedDate = computed(() => {
           </h3>
         </div>
 
-        <!-- Client -->
         <div>
           <p class="text-[11px] uppercase font-semibold tracking-wider text-slate-500">
             Client
@@ -81,7 +77,6 @@ const formattedDate = computed(() => {
           </p>
         </div>
 
-        <!-- Status -->
         <div>
           <p class="text-[11px] uppercase font-semibold tracking-wider text-slate-500">
             Status
@@ -89,7 +84,7 @@ const formattedDate = computed(() => {
           <p class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold"
              :class="{
                'bg-emerald-100 text-emerald-700': job.status === 'approved',
-               'bg-blue-100 text-blue-700': job.status === 'sent',
+               'bg-blue-100 text-blue-700': job.status === 'scheduled',
                'bg-yellow-100 text-yellow-700': job.status === 'pending',
                'bg-slate-200 text-slate-600': job.status !== 'approved'
              }">
@@ -97,7 +92,6 @@ const formattedDate = computed(() => {
           </p>
         </div>
 
-        <!-- Approved Option -->
         <div v-if="job.approved_option">
           <p class="text-[11px] uppercase font-semibold tracking-wider text-slate-500">
             Selected Option
@@ -107,7 +101,6 @@ const formattedDate = computed(() => {
           </p>
         </div>
 
-        <!-- Deposit -->
         <div v-if="job.deposit_amount !== undefined">
           <p class="text-[11px] uppercase font-semibold tracking-wider text-slate-500">
             Deposit
@@ -117,7 +110,6 @@ const formattedDate = computed(() => {
           </p>
         </div>
 
-        <!-- Signature -->
         <div v-if="job.signature_image" class="space-y-2">
           <p class="text-[11px] uppercase font-semibold tracking-wider text-slate-500">
             Signed Approval
@@ -132,7 +124,7 @@ const formattedDate = computed(() => {
           </p>
         </div>
 
-        <!-- Actions -->
+        <!-- ACTIONS -->
         <div class="pt-4 border-t border-slate-200 space-y-3">
           <button
             class="w-full rounded-xl bg-emerald-600 px-4 py-3 text-white font-semibold shadow hover:bg-emerald-700 transition"
@@ -140,12 +132,14 @@ const formattedDate = computed(() => {
           >
             Schedule Project
           </button>
+
           <button
             class="w-full rounded-xl bg-slate-800 px-4 py-3 text-white font-semibold shadow hover:bg-slate-900 transition"
             @click="emit('openProposal', job.id)"
           >
             View Full Proposal
           </button>
+
           <button
             class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-800 font-semibold shadow-sm hover:bg-slate-50 transition"
             @click="emit('payments', job.id)"
@@ -153,10 +147,8 @@ const formattedDate = computed(() => {
             Manage Payments
           </button>
         </div>
-
       </div>
 
-      <!-- Safe empty state -->
       <div v-else class="text-center text-slate-500 mt-10">
         No project selected.
       </div>

@@ -172,7 +172,6 @@ const handleScheduleSubmit = (payload: { start: string; end?: string }) => {
   scheduleJob.value.startDateISO = payload.start;
   scheduleJob.value.status = "scheduled";
 
-  // Navigate to confirmation screen
   router.push({
     path: "/prototype/hq/schedule/confirm",
     query: {
@@ -189,18 +188,8 @@ const handleScheduleSubmit = (payload: { start: string; end?: string }) => {
    CTA Logic
 --------------------------------------------------- */
 const handleCTA = (row: ProjectRow) => {
-  switch (row.status) {
-    case "awaiting-approval":
-      return router.push("/prototype/smartproposal/client");
-    case "approved":
-      return openScheduleModal(row); // ← scheduling!
-    case "awaiting-client":
-      return router.push("/prototype/client/dashboard");
-    case "scheduled":
-      return openDrawer(row);
-    case "ready":
-      return openDrawer(row);
-  }
+  // 🔥 NEW: Always allow direct JobView navigation
+  return router.push(`/prototype/hq/job-view?id=${row.id}`);
 };
 </script>
 
@@ -236,7 +225,9 @@ const handleCTA = (row: ProjectRow) => {
             </p>
           </div>
 
-          <span class="ml-4 inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-600">
+          <span
+            class="ml-4 inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-600"
+          >
             <ChevronRightIcon
               class="h-4 w-4 transition"
               :class="openSections[section.key] ? 'rotate-90 sm:rotate-0' : ''"
@@ -249,6 +240,7 @@ const handleCTA = (row: ProjectRow) => {
             v-for="row in section.rows"
             :key="row.id"
             class="px-4 py-4 hover:bg-slate-50 sm:px-6 cursor-pointer"
+            @click="handleCTA(row)"
           >
             <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <!-- Left -->
@@ -275,21 +267,9 @@ const handleCTA = (row: ProjectRow) => {
 
                 <button
                   class="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-slate-800 transition"
-                  :class="{
-                    'bg-emerald-600 hover:bg-emerald-700':
-                      row.status === 'approved'
-                  }"
                   @click.stop="handleCTA(row)"
                 >
-                  {{
-                    row.status === "awaiting-approval"
-                      ? "View proposal"
-                      : row.status === "approved"
-                      ? "Schedule project"
-                      : row.status === "scheduled"
-                      ? "View details"
-                      : "View"
-                  }}
+                  View Job →
                 </button>
               </div>
             </div>
@@ -313,7 +293,6 @@ const handleCTA = (row: ProjectRow) => {
       @submit="handleScheduleSubmit"
     />
 
-    <!-- Kickoff Modal (future) -->
     <SendKickoffModal :open="false" :project="null" />
   </main>
 </template>
