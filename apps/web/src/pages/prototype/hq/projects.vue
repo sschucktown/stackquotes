@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 
 import { ChevronRightIcon } from "@heroicons/vue/24/outline";
@@ -33,6 +33,20 @@ interface ProjectRow {
   message?: string;
 }
 
+type Job = {
+  id: string;
+  proposal_id: string;
+  client_id: string;
+  contractor_id: string;
+  approved_option: string;
+  approved_price: number;
+  deposit_amount: number | null;
+  status: "pending" | "scheduled" | "ready" | "in_progress" | "complete";
+  scheduled_start: string | null;
+  scheduled_end: string | null;
+  created_at: string;
+};
+
 /* ---------------------------------------------------
    Router + Stores
 --------------------------------------------------- */
@@ -59,57 +73,55 @@ const formatDate = (iso?: string) => {
 };
 
 /* ---------------------------------------------------
-   Sample Data (Prototype)
+   Data
 --------------------------------------------------- */
-const projects = ref<ProjectRow[]>([
-  {
-    id: "p-001",
-    client: "Sarah Thompson",
-    project: "Maple St Deck",
-    option: "Better",
-    price: 23800,
-    deposit: 3570,
-    status: "awaiting-approval",
-  },
-  {
-    id: "p-003",
-    client: "Julia Reyes",
-    project: "Pine Ave Deck",
-    option: "Good",
-    price: 16400,
-    deposit: 2460,
-    status: "approved",
-    approvedAtISO: "2025-12-07T14:22:00Z",
-  },
-  {
-    id: "p-005",
-    client: "Dana Kim",
-    project: "Broadway Pergola",
-    option: "Better",
-    price: 22800,
-    deposit: 3420,
-    status: "scheduled",
-    startDateISO: "2025-12-18T00:00:00Z",
-  },
-  {
-    id: "p-006",
-    client: "Omar Wilson",
-    project: "Harbor Railing",
-    option: "Good",
-    price: 14200,
-    deposit: 2130,
-    status: "ready",
-    startDateISO: "2026-01-05T00:00:00Z",
-    kickoffStatus: "pending",
-  },
-]);
+const projects = ref<ProjectRow[]>([]);
+
+const mapStatus = (status: string): Status => {
+  switch (status) {
+    case "pending":
+      return "approved";
+    case "scheduled":
+      return "scheduled";
+    case "ready":
+      return "ready";
+    default:
+      return "ready";
+  }
+};
+
+const fetchJobs = async () => {
+  try {
+    const response = await fetch("/api/jobs");
+    if (!response.ok) throw new Error("Failed to fetch jobs");
+
+    const data = (await response.json()) as Job[];
+    projects.value = data.map((job) => ({
+      id: job.id,
+      client: "Client Name Placeholder",
+      project: "Project Title Placeholder",
+      option: job.approved_option,
+      price: job.approved_price,
+      deposit: job.deposit_amount ?? 0,
+      status: mapStatus(job.status),
+      approvedAtISO: job.created_at,
+      startDateISO: job.scheduled_start || undefined,
+    }));
+  } catch (err) {
+    console.error("Error fetching jobs", err);
+  }
+};
+
+onMounted(() => {
+  fetchJobs();
+});
 
 /* ---------------------------------------------------
    Section Grouping
 --------------------------------------------------- */
 const sections = [
   { key: "awaiting-approval", title: "Awaiting client approval" },
-  { key: "approved", title: "Approved → Needs Scheduling" },
+  { key: "approved", title: "Approved - Needs Scheduling" },
   { key: "awaiting-client", title: "Client reviewing schedule" },
   { key: "scheduled", title: "Scheduled" },
   { key: "ready", title: "Ready to start" },
@@ -188,7 +200,7 @@ const handleScheduleSubmit = (payload: { start: string; end?: string }) => {
    CTA Logic
 --------------------------------------------------- */
 const handleCTA = (row: ProjectRow) => {
-  // 🔥 NEW: Always allow direct JobView navigation
+  // NEW: Always allow direct JobView navigation
   return router.push(`/prototype/hq/job-view?id=${row.id}`);
 };
 </script>
@@ -247,14 +259,14 @@ const handleCTA = (row: ProjectRow) => {
               <div>
                 <div class="flex items-center gap-2">
                   <p class="text-sm font-semibold text-slate-900">{{ row.client }}</p>
-                  <span class="text-slate-500">·</span>
+                  <span class="text-slate-500">|</span>
                   <p class="text-sm text-slate-700">{{ row.project }}</p>
                 </div>
 
                 <p class="text-sm text-slate-500">
                   {{ row.option }}
                   <span v-if="row.approvedAtISO" class="text-slate-400">
-                    · {{ formatDate(row.approvedAtISO) }}
+                    | {{ formatDate(row.approvedAtISO) }}
                   </span>
                 </p>
               </div>
@@ -269,7 +281,7 @@ const handleCTA = (row: ProjectRow) => {
                   class="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-slate-800 transition"
                   @click.stop="handleCTA(row)"
                 >
-                  View Job →
+                  View Job >
                 </button>
               </div>
             </div>
@@ -296,3 +308,6 @@ const handleCTA = (row: ProjectRow) => {
     <SendKickoffModal :open="false" :project="null" />
   </main>
 </template>
+
+
+
