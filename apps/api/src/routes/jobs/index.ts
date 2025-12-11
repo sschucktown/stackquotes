@@ -10,14 +10,18 @@ export const jobsRouter = new Hono();
 -------------------------------- */
 const createJobSchema = z.object({
   proposal_id: z.string().uuid(),
+
+  // Data from SmartProposal
   approved_option: z.string().min(1),
   approved_price: z.number().nonnegative(),
-  deposit_amount: z.number().nonnegative().optional(),
+  deposit_amount: z.number().nonnegative().nullable(),
+
+  // Client from SmartProposal
   client_id: z.string().uuid(),
 });
 
 const scheduleSchema = z.object({
-  start_date: z.string(), // ISO yyyy-mm-dd
+  start_date: z.string(), // ISO string
   end_date: z.string().optional(),
 });
 
@@ -33,26 +37,39 @@ jobsRouter.post("/", async (c) => {
   const parsed = createJobSchema.safeParse(body);
 
   if (!parsed.success) {
-    return c.json({ error: "Invalid job payload", details: parsed.error.format() }, 400);
+    return c.json(
+      { error: "Invalid job payload", details: parsed.error.format() },
+      400
+    );
   }
 
-  const payload = parsed.data;
+  const {
+    proposal_id,
+    approved_option,
+    approved_price,
+    deposit_amount,
+    client_id,
+  } = parsed.data;
 
   const { data, error } = await supabase
     .from("jobs")
     .insert({
-      proposal_id: payload.proposal_id,
-      contractor_id: user.id, // contractor = auth user
-      client_id: payload.client_id,
-      approved_option: payload.approved_option,
-      approved_price: payload.approved_price,
-      deposit_amount: payload.deposit_amount ?? null,
+      proposal_id,
+      contractor_id: user.id,
+      client_id,
+      approved_option,
+      approved_price,
+      deposit_amount: deposit_amount ?? null,
+
+      // When the job is created, we stamp the approval time
+      approved_at: new Date().toISOString(),
       status: "pending",
     })
     .select()
     .single();
 
   if (error) {
+    console.error("Job creation error:", error);
     return c.json({ error: "Failed to create job", details: error }, 500);
   }
 
@@ -72,12 +89,14 @@ jobsRouter.patch("/:id/schedule", async (c) => {
   const parsed = scheduleSchema.safeParse(body);
 
   if (!parsed.success) {
-    return c.json({ error: "Invalid schedule payload", details: parsed.error.format() }, 400);
+    return c.json(
+      { error: "Invalid schedule payload", details: parsed.error.format() },
+      400
+    );
   }
 
   const { start_date, end_date } = parsed.data;
 
-  // Update
   const { data, error } = await supabase
     .from("jobs")
     .update({
