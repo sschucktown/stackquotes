@@ -1,301 +1,348 @@
 <template>
-  <div class="min-h-screen bg-slate-50 text-slate-800">
-    <header class="sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur">
-      <div class="mx-auto flex max-w-4xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
-        <div class="flex items-center gap-3">
-          <button
-            class="rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-700 shadow-inner transition hover:bg-slate-200"
-          >
-            HQ
-          </button>
-          <div class="flex flex-col">
-            <div class="flex items-center gap-2">
-              <h1 class="text-lg font-semibold text-slate-900">Maple St Deck</h1>
-              <span
-                class="rounded-full bg-gradient-to-r from-blue-500 to-blue-600 px-3 py-1 text-xs font-semibold text-white shadow"
-              >
-                In Progress
-              </span>
-            </div>
-            <p class="text-xs text-slate-500">Job Overview</p>
-          </div>
-        </div>
-        <div class="flex items-center gap-3 text-slate-500">
-          <button
-            class="rounded-full p-2 transition hover:bg-slate-100 hover:text-slate-700"
-            aria-label="Notifications"
-          >
-            <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M14.857 17.083A2.999 2.999 0 0 1 12 19a2.999 2.999 0 0 1-2.857-1.917M5 9.5A7 7 0 0 1 12 3a7 7 0 0 1 7 6.5v3.17l.724 1.81a1 1 0 0 1-.93 1.37H5.206a1 1 0 0 1-.93-1.37L5 12.67V9.5Z"
-              />
-            </svg>
-          </button>
-          <button
-            class="rounded-full p-2 transition hover:bg-slate-100 hover:text-slate-700"
-            aria-label="Settings"
-            @click="showSettings = true"
-          >
-            <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.757.426 1.757 2.924 0 3.35a1.724 1.724 0 0 0-1.065 2.573c.94 1.543-.827 3.31-2.37 2.37a1.724 1.724 0 0 0-2.572 1.065c-.426 1.757-2.924 1.757-3.35 0a1.724 1.724 0 0 0-2.573-1.065c-1.543.94-3.31-.827-2.37-2.37a1.724 1.724 0 0 0-1.065-2.572c-1.757-.426-1.757-2.924 0-3.35a1.724 1.724 0 0 0 1.065-2.573c-.94-1.543.827-3.31 2.37-2.37.966.589 2.199.167 2.573-1.065Z"
-              />
-              <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-            </svg>
-          </button>
-        </div>
+  <div class="min-h-screen bg-slate-50 text-slate-900">
+    <div class="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
+      <div
+        v-if="loading"
+        class="flex min-h-[60vh] flex-col items-center justify-center gap-3 text-slate-600"
+      >
+        <svg class="h-8 w-8 animate-spin text-slate-400" viewBox="0 0 24 24" fill="none">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+          <path
+            class="opacity-75"
+            fill="currentColor"
+            d="M4 12a8 8 0 0 1 8-8v4a4 4 0 0 0-4 4H4Z"
+          />
+        </svg>
+        <p class="text-sm font-medium">Loading job...</p>
       </div>
-    </header>
 
-    <main class="mx-auto max-w-4xl space-y-8 px-4 py-8 sm:px-6 lg:px-8">
-      <!-- Job Summary -->
-      <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div class="space-y-1">
-            <h2 class="text-xl font-semibold text-slate-900">Maple St Deck</h2>
-            <p class="text-sm text-slate-600">Client: Sarah Thompson</p>
-            <p class="text-sm text-slate-600">Address: 482 Maple St, Seattle, WA</p>
-            <p class="text-sm font-semibold text-slate-700">
-              Next: <span class="text-blue-600">Today at 3PM</span>
-            </p>
-          </div>
-          <button
-            class="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 px-4 py-2 text-sm font-semibold text-white shadow transition hover:from-blue-600 hover:to-blue-700"
-          >
-            Open Job Mode
-            <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
+      <div
+        v-else-if="error"
+        class="flex min-h-[60vh] flex-col items-center justify-center gap-4 text-center"
+      >
+        <div class="space-y-1">
+          <p class="text-lg font-semibold text-slate-800">Could not load job.</p>
+          <p class="text-sm text-slate-500">Please try again or head back to projects.</p>
         </div>
-      </section>
+        <button
+          class="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow transition hover:bg-slate-800"
+          @click="router.push('/prototype/hq/projects')"
+        >
+          <span>&larr;</span>
+          <span>Back to Projects</span>
+        </button>
+      </div>
 
-      <!-- Quick Info Grid -->
-      <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h3 class="mb-4 text-base font-semibold text-slate-900">Quick Info</h3>
-        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 shadow-inner">
-            <p class="text-xs uppercase tracking-wide text-slate-500">Job Type</p>
-            <p class="text-sm font-semibold text-slate-900">Deck</p>
-          </div>
-          <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 shadow-inner">
-            <p class="text-xs uppercase tracking-wide text-slate-500">Created</p>
-            <p class="text-sm font-semibold text-slate-900">Nov 28, 2025</p>
-          </div>
-          <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 shadow-inner">
-            <p class="text-xs uppercase tracking-wide text-slate-500">Proposal</p>
-            <p class="text-sm font-semibold text-slate-900">Sent</p>
-          </div>
-          <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 shadow-inner">
-            <p class="text-xs uppercase tracking-wide text-slate-500">Estimate Range</p>
-            <p class="text-sm font-semibold text-slate-900">$12,800–$19,800</p>
-          </div>
-          <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 shadow-inner">
-            <p class="text-xs uppercase tracking-wide text-slate-500">Assigned Crew</p>
-            <p class="text-sm font-semibold text-slate-900">Not Assigned</p>
-          </div>
-          <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 shadow-inner">
-            <p class="text-xs uppercase tracking-wide text-slate-500">Tags</p>
-            <p class="text-sm font-semibold text-slate-900">Deck, Composite</p>
-          </div>
-        </div>
-      </section>
-
-      <!-- Timeline -->
-      <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h3 class="mb-4 text-base font-semibold text-slate-900">Project Timeline</h3>
-        <div class="relative pl-5">
-          <div class="absolute left-2 top-3 bottom-3 w-px bg-slate-200"></div>
-          <div class="space-y-4">
-            <div v-for="item in timeline" :key="item.title" class="relative flex gap-4">
-              <div class="absolute left-[-1px] top-1.5 h-3 w-3 rounded-full bg-blue-500 shadow"></div>
-              <div class="pl-5">
-                <p class="text-sm font-semibold text-slate-900">{{ item.title }}</p>
-                <p class="text-xs text-slate-600">{{ item.meta }}</p>
+      <div v-else-if="job" class="space-y-6">
+        <!-- Header Block -->
+        <section class="rounded-2xl border border-slate-200 bg-white/90 p-6 shadow-sm backdrop-blur">
+          <div class="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+            <div class="space-y-2">
+              <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Job Overview</p>
+              <div class="flex flex-wrap items-center gap-3">
+                <h1 class="text-2xl font-semibold text-slate-900">Project</h1>
+                <span
+                  :class="statusBadgeClass"
+                  class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold shadow-inner"
+                >
+                  {{ statusLabel }}
+                </span>
+                <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700 shadow-inner">
+                  ID: {{ job.id }}
+                </span>
+              </div>
+              <p class="text-sm text-slate-600">
+                Client:
+                <span class="font-semibold text-slate-900">Client Name</span>
+              </p>
+            </div>
+            <div class="flex flex-wrap items-center gap-3">
+              <span class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-800 shadow-inner">
+                Approved Option
+                <span class="rounded-full bg-slate-900 px-2 py-0.5 text-[11px] font-semibold text-white">
+                  {{ job.approved_option || "Option" }}
+                </span>
+              </span>
+              <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-right shadow-inner">
+                <p class="text-[11px] uppercase tracking-wide text-slate-500">Price</p>
+                <p class="text-sm font-semibold text-slate-900">{{ formatCurrency(job.approved_price) }}</p>
+              </div>
+              <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-right shadow-inner">
+                <p class="text-[11px] uppercase tracking-wide text-slate-500">Deposit</p>
+                <p class="text-sm font-semibold text-slate-900">{{ formatCurrency(job.deposit_amount) }}</p>
               </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <!-- Tasks -->
-      <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div class="mb-3 flex items-center justify-between">
-          <h3 class="text-base font-semibold text-slate-900">Tasks</h3>
-          <span class="text-xs text-slate-500">Preview</span>
-        </div>
-        <ul class="space-y-2">
-          <li
-            v-for="task in tasks"
-            :key="task"
-            class="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 shadow-inner"
-          >
-            <span class="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-600">•</span>
-            <span class="text-sm font-medium text-slate-900">{{ task }}</span>
-          </li>
-        </ul>
-        <button class="mt-4 text-sm font-semibold text-blue-600 underline-offset-4 hover:underline">
-          Open Full Task List (Job Mode)
-        </button>
-      </section>
-
-      <!-- Files & Photos -->
-      <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:p-6">
-        <div class="mb-3 flex items-center justify-between">
-          <h2 class="text-lg font-semibold text-slate-900">Files &amp; Photos</h2>
-          <button @click="showAddFile = true" class="text-sm font-medium text-blue-600 hover:underline">
-            Add File
-          </button>
-        </div>
-
-        <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <div
-            v-for="file in previewFiles"
-            :key="file.id"
-            @click="openViewer(file)"
-            class="aspect-square cursor-pointer overflow-hidden rounded-lg border border-slate-200 bg-slate-100"
-          >
-            <img
-              v-if="file.type === 'image'"
-              :src="file.url"
-              class="h-full w-full object-cover"
-            />
-            <div v-else class="flex h-full w-full items-center justify-center text-sm font-semibold text-slate-500">
-              {{ file.type.toUpperCase() }}
+        <!-- Progress Timeline -->
+        <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div class="flex flex-col gap-4">
+            <div class="flex items-center justify-between">
+              <h2 class="text-base font-semibold text-slate-900">Progress</h2>
+              <p class="text-xs text-slate-500">Timeline</p>
+            </div>
+            <div class="flex flex-col gap-4">
+              <div class="flex flex-wrap items-center gap-4">
+                <template v-for="(step, index) in timelineSteps" :key="step.label">
+                  <div class="flex items-center gap-3">
+                    <div
+                      class="flex h-10 w-10 items-center justify-center rounded-full border text-sm font-semibold shadow-inner"
+                      :class="step.active ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-200 bg-slate-50 text-slate-500'"
+                    >
+                      <span
+                        class="h-2 w-2 rounded-full"
+                        :class="step.active ? 'bg-white' : 'bg-slate-400'"
+                      ></span>
+                    </div>
+                    <div class="flex flex-col">
+                      <span class="text-sm font-semibold text-slate-900">{{ step.label }}</span>
+                      <span class="text-xs text-slate-500">{{ step.active ? "Active" : "Pending" }}</span>
+                    </div>
+                  </div>
+                  <div
+                    v-if="index < timelineSteps.length - 1"
+                    class="hidden h-px flex-1 bg-gradient-to-r from-slate-200 via-slate-200 to-slate-200 sm:block"
+                  ></div>
+                </template>
+              </div>
             </div>
           </div>
-        </div>
+        </section>
 
-        <button
-          class="mt-4 text-sm font-medium text-slate-600 underline transition hover:text-slate-800"
-          @click="goToFilesManager"
-        >
-          View All Files →
-        </button>
-      </section>
-
-      <!-- Messages -->
-      <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div class="mb-4 flex items-center justify-between">
-          <h3 class="text-base font-semibold text-slate-900">Recent Messages</h3>
-          <span class="text-xs text-slate-500">3</span>
-        </div>
-        <div class="space-y-3">
-          <div
-            v-for="message in messages"
-            :key="message.title"
-            class="flex items-start justify-between rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 shadow-inner"
-          >
+        <!-- Primary CTA -->
+        <section v-if="primaryCtaLabel" class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p class="text-sm font-semibold text-slate-900">{{ message.title }}</p>
-              <p class="text-sm text-slate-600">{{ message.preview }}</p>
+              <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Primary Action</p>
+              <p class="text-sm text-slate-700">
+                Guide the next step based on status: {{ statusLabel }}.
+              </p>
             </div>
-            <span class="text-xs text-slate-500">{{ message.time }}</span>
+            <button
+              class="inline-flex items-center gap-2 rounded-full bg-slate-900 px-5 py-2 text-sm font-semibold text-white shadow-lg transition hover:translate-y-[-1px] hover:bg-slate-800"
+              @click="handlePrimaryAction"
+            >
+              {{ primaryCtaLabel }}
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M13 6l6 6-6 6" />
+              </svg>
+            </button>
           </div>
-        </div>
-        <button class="mt-4 text-sm font-semibold text-blue-600 underline-offset-4 hover:underline">
-          Open Full Inbox
-        </button>
-      </section>
+        </section>
 
-      <!-- Financial Summary -->
-      <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div class="mb-4 flex items-center justify-between">
-          <h3 class="text-base font-semibold text-slate-900">Financial Summary</h3>
-          <button
-            class="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 shadow-inner transition hover:bg-blue-100"
-          >
-            Send Payment Link
-          </button>
-        </div>
-        <div class="grid gap-4 sm:grid-cols-3">
-          <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 shadow-inner">
-            <p class="text-xs uppercase tracking-wide text-slate-500">Contract Amount</p>
-            <p class="text-lg font-semibold text-slate-900">$19,800</p>
+        <!-- Details Cards -->
+        <section class="grid gap-4 md:grid-cols-2">
+          <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div class="mb-4 flex items-center justify-between">
+              <h3 class="text-base font-semibold text-slate-900">Project Details</h3>
+              <span class="text-xs text-slate-500">Summary</span>
+            </div>
+            <dl class="space-y-3">
+              <div class="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
+                <dt class="text-xs uppercase tracking-wide text-slate-500">Approved Option</dt>
+                <dd class="text-sm font-semibold text-slate-900">{{ job.approved_option || "\u2014" }}</dd>
+              </div>
+              <div class="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
+                <dt class="text-xs uppercase tracking-wide text-slate-500">Price</dt>
+                <dd class="text-sm font-semibold text-slate-900">{{ formatCurrency(job.approved_price) }}</dd>
+              </div>
+              <div class="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
+                <dt class="text-xs uppercase tracking-wide text-slate-500">Deposit Amount</dt>
+                <dd class="text-sm font-semibold text-slate-900">{{ formatCurrency(job.deposit_amount) }}</dd>
+              </div>
+              <div class="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
+                <dt class="text-xs uppercase tracking-wide text-slate-500">Proposal ID</dt>
+                <dd class="text-sm font-semibold text-slate-900">{{ job.proposal_id }}</dd>
+              </div>
+              <div class="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
+                <dt class="text-xs uppercase tracking-wide text-slate-500">Created</dt>
+                <dd class="text-sm font-semibold text-slate-900">{{ formatDate(job.created_at) }}</dd>
+              </div>
+            </dl>
           </div>
-          <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 shadow-inner">
-            <p class="text-xs uppercase tracking-wide text-slate-500">Deposit Paid</p>
-            <p class="text-lg font-semibold text-slate-900">$2,400</p>
-          </div>
-          <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 shadow-inner">
-            <p class="text-xs uppercase tracking-wide text-slate-500">Remaining Balance</p>
-            <p class="text-lg font-semibold text-slate-900">$17,400</p>
-          </div>
-        </div>
-      </section>
-    </main>
 
-    <SettingsDrawer v-if="showSettings" @close="showSettings = false" />
-    <AddFileModal v-if="showAddFile" @close="showAddFile = false" @add="handleAddFile" />
+          <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div class="mb-4 flex items-center justify-between">
+              <h3 class="text-base font-semibold text-slate-900">Schedule</h3>
+              <span class="text-xs text-slate-500">{{ job.status === "scheduled" ? "Confirmed" : "Planning" }}</span>
+            </div>
+            <div
+              v-if="!job.scheduled_start"
+              class="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center text-sm text-slate-500"
+            >
+              No schedule yet
+            </div>
+            <div v-else class="space-y-3">
+              <div class="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
+                <p class="text-xs uppercase tracking-wide text-slate-500">Start Date</p>
+                <p class="text-sm font-semibold text-slate-900">{{ formatDate(job.scheduled_start) }}</p>
+              </div>
+              <div class="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
+                <p class="text-xs uppercase tracking-wide text-slate-500">End Date</p>
+                <p class="text-sm font-semibold text-slate-900">{{ formatDate(job.scheduled_end) }}</p>
+              </div>
+            </div>
+          </div>
+        </section>
 
-    <ImageViewerModal
-      v-if="showViewer"
-      :file="viewerFile"
-      @close="showViewer = false"
-    />
+        <!-- Placeholder Panels -->
+        <section class="grid gap-4 md:grid-cols-2">
+          <details class="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <summary class="flex cursor-pointer items-center justify-between text-base font-semibold text-slate-900">
+              Messages
+              <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">Coming soon</span>
+            </summary>
+          </details>
+          <details class="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <summary class="flex cursor-pointer items-center justify-between text-base font-semibold text-slate-900">
+              Files
+              <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">Coming soon</span>
+            </summary>
+          </details>
+        </section>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
-import { useRouter } from "vue-router";
-import AddFileModal from "@/prototype/contractor/files/AddFileModal.vue";
-import ImageViewerModal from "@/prototype/contractor/files/ImageViewerModal.vue";
-import SettingsDrawer from "@/components/Settings/SettingsDrawer.vue";
+import { computed, onMounted, ref } from "vue";
+import { useRoute, useRouter } from "vue-router";
 
+type JobStatus = "pending" | "scheduled" | "in_progress" | "ready" | "complete";
+
+type Job = {
+  id: string;
+  proposal_id: string;
+  contractor_id: string;
+  client_id: string;
+  approved_option: string;
+  approved_price: number;
+  deposit_amount: number | null;
+  status: JobStatus;
+  scheduled_start: string | null;
+  scheduled_end: string | null;
+  created_at: string;
+};
+
+const route = useRoute();
 const router = useRouter();
 
-const showSettings = ref(false);
-const timeline = [
-  { title: "Proposal sent", meta: "Nov 28" },
-  { title: "Client viewed", meta: "Nov 28" },
-  { title: "Proposal accepted", meta: "Nov 29" },
-  { title: "Deposit received", meta: "Nov 29 - $2,400" },
-  { title: "Visit scheduled", meta: "Dec 3, 3PM" },
-  { title: "Note added", meta: "Site has old joists" }
-];
+const job = ref<Job | null>(null);
+const loading = ref(true);
+const error = ref(false);
 
-const tasks = [
-  "Perform site measurements",
-  "Photograph existing deck",
-  "Identify hazards or obstructions"
-];
+const jobId = computed(() => (route.query.id as string) || (route.params.id as string));
 
-const previewFiles = ref([
-  { id: 1, url: "https://source.unsplash.com/random/400x400?deck", type: "image" },
-  { id: 2, url: "https://source.unsplash.com/random/400x400?measurement", type: "image" },
-  { id: 3, url: "https://source.unsplash.com/random/400x400?notes", type: "image" },
-  { id: 4, url: "https://placehold.co/400x400?text=PDF", type: "pdf" }
-]);
+const statusBadgeClass = computed(() => {
+  const styles: Record<JobStatus, string> = {
+    pending: "bg-amber-50 text-amber-700 ring-1 ring-amber-200",
+    scheduled: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200",
+    ready: "bg-sky-50 text-sky-700 ring-1 ring-sky-200",
+    in_progress: "bg-purple-50 text-purple-700 ring-1 ring-purple-200",
+    complete: "bg-slate-100 text-slate-700 ring-1 ring-slate-200"
+  };
 
-const messages = [
-  { title: "Sarah Thompson (Deck)", preview: "Quick question about materials", time: "2h ago" },
-  { title: "Mike Robertson (Patio)", preview: "Did you get the photos?", time: "4h ago" },
-  { title: "Auto message", preview: "Proposal follow-up pending", time: "Yesterday" }
-];
+  return job.value ? styles[job.value.status] : "bg-slate-100 text-slate-700 ring-1 ring-slate-200";
+});
 
-const showAddFile = ref(false);
-const showViewer = ref(false);
-const viewerFile = ref<{ id: number; url: string; type: string } | null>(null);
+const statusLabel = computed(() => {
+  const status = job.value?.status || "pending";
+  if (status === "in_progress") return "In Progress";
+  return status.charAt(0).toUpperCase() + status.slice(1);
+});
 
-const openViewer = (file: { id: number; url: string; type: string }) => {
-  viewerFile.value = file;
-  showViewer.value = true;
-};
+const timelineSteps = computed(() => {
+  const status = job.value?.status;
 
-const goToFilesManager = () => {
-  router.push("/prototype/contractor/files?jobId=demo-job");
-};
-
-const handleAddFile = (file: { name: string; type: string; thumbnail: string }) => {
-  previewFiles.value = [
-    { id: Date.now(), url: file.thumbnail, type: file.type === "document" ? "pdf" : file.type },
-    ...previewFiles.value
+  return [
+    { label: "Proposal Signed", active: true },
+    { label: "Deposit Paid", active: false },
+    { label: "Scheduled", active: status === "scheduled" },
+    { label: "In Progress", active: status === "in_progress" },
+    { label: "Complete", active: status === "complete" }
   ];
-  showAddFile.value = false;
+});
+
+const primaryCtaLabel = computed(() => {
+  if (!job.value) return null;
+
+  switch (job.value.status) {
+    case "pending":
+      return "Schedule Project";
+    case "scheduled":
+      return "View Schedule";
+    case "ready":
+      return "Prepare Start";
+    case "in_progress":
+      return "Mark Complete";
+    default:
+      return null;
+  }
+});
+
+const formatCurrency = (value: number | null | undefined) => {
+  if (value === null || value === undefined) return "\u2014";
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(value);
 };
+
+const formatDate = (value: string | null | undefined) => {
+  if (!value) return "\u2014";
+  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(new Date(value));
+};
+
+const fetchJob = async () => {
+  loading.value = true;
+  error.value = false;
+
+  const id = jobId.value;
+
+  if (!id) {
+    error.value = true;
+    loading.value = false;
+    return;
+  }
+
+  try {
+    const response = await fetch(`/api/jobs/${id}`);
+
+    if (!response.ok) {
+      throw new Error("Failed to load job");
+    }
+
+    const data = (await response.json()) as Job;
+    job.value = data;
+  } catch (err) {
+    console.error("Error fetching job", err);
+    error.value = true;
+  } finally {
+    loading.value = false;
+  }
+};
+
+const handlePrimaryAction = () => {
+  if (!job.value) return;
+
+  switch (job.value.status) {
+    case "pending":
+      router.push("/prototype/hq/schedule/confirm");
+      break;
+    case "scheduled":
+      router.push("/prototype/hq/schedule/confirm");
+      break;
+    case "ready":
+      console.log("Prepare start placeholder");
+      break;
+    case "in_progress":
+      console.log("Mark complete placeholder");
+      break;
+    default:
+      break;
+  }
+};
+
+onMounted(() => {
+  fetchJob();
+});
 </script>
