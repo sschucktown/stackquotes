@@ -2,8 +2,12 @@
 import { ref, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
+// Existing components
 import SummaryPanel from "./SummaryPanel.vue";
 import SignatureModal from "./SignatureModal.vue";
+
+// NEW component
+import AgreementDrawer from "./AgreementDrawer.vue";
 
 // --------------------------------------------------
 // Props
@@ -11,44 +15,29 @@ import SignatureModal from "./SignatureModal.vue";
 const props = defineProps<{
   proposal: {
     id: string;
-    client_id: string;
+    deposit_percent: number;
     options: Array<{
       key: string;
       label: string;
       subtitle?: string;
       price: number;
     }>;
-    deposit_percent: number;
   };
 }>();
 
 // --------------------------------------------------
 // Router
 // --------------------------------------------------
-const route = useRoute();
 const router = useRouter();
+const route = useRoute();
 
 const proposalId =
-  (route.query.proposal as string) ||
-  props.proposal.id ||
-  "demo-proposal";
-
-const clientId =
-  (route.query.client as string) ||
-  props.proposal.client_id ||
-  "demo-client";
+  (route.query.proposal as string) || props.proposal.id || "demo-proposal";
 
 // --------------------------------------------------
-// Selection state
+// Client selection
 // --------------------------------------------------
 const selected = ref(props.proposal.options[0] ?? null);
-
-const depositAmount = computed(() => {
-  if (!selected.value) return 0;
-  return (
-    (selected.value.price * props.proposal.deposit_percent) / 100
-  );
-});
 
 const currency = (value: number) =>
   new Intl.NumberFormat("en-US", {
@@ -57,84 +46,47 @@ const currency = (value: number) =>
     maximumFractionDigits: 0,
   }).format(value);
 
+const depositAmount = computed(() => {
+  if (!selected.value) return 0;
+  return (selected.value.price * props.proposal.deposit_percent) / 100;
+});
+
+// --------------------------------------------------
+// Agreement Drawer
+// --------------------------------------------------
+const agreementOpen = ref(false);
+
+const openAgreement = () => {
+  if (!selected.value) return;
+  agreementOpen.value = true;
+};
+
 // --------------------------------------------------
 // Signature Modal
 // --------------------------------------------------
 const signatureOpen = ref(false);
-const loading = ref(false);
-const errorMessage = ref("");
 
-// Trigger modal
-const handleApprove = () => {
-  if (!selected.value) return;
+const openSignature = () => {
+  agreementOpen.value = false;
   signatureOpen.value = true;
 };
 
-// After signature success → POST job → redirect
-const handleSignedSuccess = async (signatureUrl: string) => {
+const handleSignedSuccess = () => {
   signatureOpen.value = false;
-
-  // --------------------------------------------------
-  // Create JOB after SmartProposal signing
-  // --------------------------------------------------
-  loading.value = true;
-  errorMessage.value = "";
-
-  try {
-    const res = await fetch("/api/jobs", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        proposal_id: proposalId,
-        client_id: clientId,
-        approved_option: selected.value?.key,
-        approved_price: selected.value?.price,
-        deposit_amount: depositAmount.value || null
-      })
-    });
-
-    const json = await res.json();
-
-    if (!res.ok) {
-      console.error("Job creation failed:", json);
-      throw new Error(json.error || "Job creation error");
-    }
-
-    const jobId = json.job?.id;
-
-    if (!jobId) {
-      console.warn("No job ID returned — using fallback.");
-      return router.push({
-        path: "/prototype/hq/approval-state"
-      });
-    }
-
-    // Redirect contractor to Project Approval State
-    return router.push({
-      path: "/prototype/hq/approval-state",
-      query: { job: jobId }
-    });
-
-  } catch (err: any) {
-    console.error(err);
-    errorMessage.value = err.message || "Unexpected error";
-  } finally {
-    loading.value = false;
-  }
+  router.push({
+    path: "/prototype/smartproposal/signed",
+    query: { proposal: proposalId },
+  });
 };
 </script>
 
 <template>
   <div class="mx-auto max-w-4xl p-4 pb-24 lg:flex lg:gap-8">
     <!-- ========================= -->
-    <!-- Option Selection Column -->
+    <!-- Option Selector -->
     <!-- ========================= -->
     <div class="flex-1 space-y-4">
-      <h1 class="text-2xl font-bold text-slate-900 mb-4">
-        Choose Your Option
-      </h1>
+      <h1 class="text-2xl font-bold text-slate-900 mb-4">Choose Your Option</h1>
 
       <div class="grid gap-4 sm:grid-cols-2">
         <button
@@ -143,7 +95,7 @@ const handleSignedSuccess = async (signatureUrl: string) => {
           class="rounded-2xl border p-4 text-left shadow-sm transition hover:-translate-y-[1px] hover:shadow-md"
           :class="[
             selected?.key === option.key
-              ? 'border-emerald-600 ring-2 ring-emerald-500'
+              ? 'border-blue-600 ring-2 ring-blue-500'
               : 'border-slate-200'
           ]"
           @click="selected = option"
@@ -151,7 +103,6 @@ const handleSignedSuccess = async (signatureUrl: string) => {
           <p class="text-lg font-semibold text-slate-900">
             {{ option.label }}
           </p>
-
           <p class="text-sm text-slate-600">
             {{ option.subtitle }}
           </p>
@@ -164,7 +115,8 @@ const handleSignedSuccess = async (signatureUrl: string) => {
     </div>
 
     <!-- ========================= -->
-    <!-- Summary Panel -->
+    <!-- SUMMARY PANEL -->
+    <!-- CTA points to agreement -->
     <!-- ========================= -->
     <SummaryPanel
       class="mt-6 lg:mt-0"
@@ -172,10 +124,20 @@ const handleSignedSuccess = async (signatureUrl: string) => {
       :depositPercent="proposal.deposit_percent"
       :depositAmount="depositAmount"
       :currency="currency"
-      :loading="loading"
-      :error="errorMessage"
-      @approve="handleApprove"
+      @approve="openAgreement"
       @question="() => alert('Ask question flow coming soon!')"
+    />
+
+    <!-- ========================= -->
+    <!-- Agreement Drawer -->
+    <!-- ========================= -->
+    <AgreementDrawer
+      :open="agreementOpen"
+      :optionName="selected?.label || ''"
+      :price="selected?.price || 0"
+      :deposit="depositAmount"
+      :onClose="() => (agreementOpen = false)"
+      @continue="openSignature"
     />
 
     <!-- ========================= -->
