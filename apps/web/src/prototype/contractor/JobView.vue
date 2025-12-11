@@ -1,6 +1,8 @@
 <template>
   <div class="min-h-screen bg-slate-50 text-slate-900">
     <div class="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
+      
+      <!-- LOADING -->
       <div
         v-if="loading"
         class="flex min-h-[60vh] flex-col items-center justify-center gap-3 text-slate-600"
@@ -16,6 +18,7 @@
         <p class="text-sm font-medium">Loading job...</p>
       </div>
 
+      <!-- ERROR -->
       <div
         v-else-if="error"
         class="flex min-h-[60vh] flex-col items-center justify-center gap-4 text-center"
@@ -33,29 +36,38 @@
         </button>
       </div>
 
+      <!-- SUCCESS -->
       <div v-else-if="job" class="space-y-6">
-        <!-- Header Block -->
+
+        <!-- HEADER -->
         <section class="rounded-2xl border border-slate-200 bg-white/90 p-6 shadow-sm backdrop-blur">
           <div class="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+
             <div class="space-y-2">
               <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Job Overview</p>
               <div class="flex flex-wrap items-center gap-3">
                 <h1 class="text-2xl font-semibold text-slate-900">Project</h1>
+
+                <!-- STATUS BADGE -->
                 <span
                   :class="statusBadgeClass"
                   class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold shadow-inner"
                 >
                   {{ statusLabel }}
                 </span>
+
                 <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700 shadow-inner">
                   ID: {{ job.id }}
                 </span>
               </div>
+
               <p class="text-sm text-slate-600">
                 Client:
-                <span class="font-semibold text-slate-900">Client Name</span>
+                <span class="font-semibold text-slate-900">{{ job.client_id }}</span>
               </p>
             </div>
+
+            <!-- PRICE + DEPOSIT -->
             <div class="flex flex-wrap items-center gap-3">
               <span class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-800 shadow-inner">
                 Approved Option
@@ -63,25 +75,32 @@
                   {{ job.approved_option || "Option" }}
                 </span>
               </span>
+
               <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-right shadow-inner">
                 <p class="text-[11px] uppercase tracking-wide text-slate-500">Price</p>
-                <p class="text-sm font-semibold text-slate-900">{{ formatCurrency(job.approved_price) }}</p>
+                <p class="text-sm font-semibold text-slate-900">
+                  {{ formatCurrency(job.approved_price) }}
+                </p>
               </div>
+
               <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-right shadow-inner">
                 <p class="text-[11px] uppercase tracking-wide text-slate-500">Deposit</p>
-                <p class="text-sm font-semibold text-slate-900">{{ formatCurrency(job.deposit_amount) }}</p>
+                <p class="text-sm font-semibold text-slate-900">
+                  {{ formatCurrency(job.deposit_amount) }}
+                </p>
               </div>
             </div>
           </div>
         </section>
 
-        <!-- Progress Timeline -->
+        <!-- TIMELINE -->
         <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <div class="flex flex-col gap-4">
             <div class="flex items-center justify-between">
               <h2 class="text-base font-semibold text-slate-900">Progress</h2>
               <p class="text-xs text-slate-500">Timeline</p>
             </div>
+
             <div class="flex flex-col gap-4">
               <div class="flex flex-wrap items-center gap-4">
                 <template v-for="(step, index) in timelineSteps" :key="step.label">
@@ -95,11 +114,13 @@
                         :class="step.active ? 'bg-white' : 'bg-slate-400'"
                       ></span>
                     </div>
+
                     <div class="flex flex-col">
                       <span class="text-sm font-semibold text-slate-900">{{ step.label }}</span>
                       <span class="text-xs text-slate-500">{{ step.active ? "Active" : "Pending" }}</span>
                     </div>
                   </div>
+
                   <div
                     v-if="index < timelineSteps.length - 1"
                     class="hidden h-px flex-1 bg-gradient-to-r from-slate-200 via-slate-200 to-slate-200 sm:block"
@@ -110,7 +131,7 @@
           </div>
         </section>
 
-        <!-- Primary CTA -->
+        <!-- CTA -->
         <section v-if="primaryCtaLabel" class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -119,6 +140,7 @@
                 Guide the next step based on status: {{ statusLabel }}.
               </p>
             </div>
+
             <button
               class="inline-flex items-center gap-2 rounded-full bg-slate-900 px-5 py-2 text-sm font-semibold text-white shadow-lg transition hover:translate-y-[-1px] hover:bg-slate-800"
               @click="handlePrimaryAction"
@@ -131,30 +153,37 @@
           </div>
         </section>
 
-        <!-- Details Cards -->
+        <!-- DETAILS -->
         <section class="grid gap-4 md:grid-cols-2">
+
+          <!-- LEFT CARD -->
           <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <div class="mb-4 flex items-center justify-between">
               <h3 class="text-base font-semibold text-slate-900">Project Details</h3>
               <span class="text-xs text-slate-500">Summary</span>
             </div>
+
             <dl class="space-y-3">
               <div class="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
                 <dt class="text-xs uppercase tracking-wide text-slate-500">Approved Option</dt>
-                <dd class="text-sm font-semibold text-slate-900">{{ job.approved_option || "\u2014" }}</dd>
+                <dd class="text-sm font-semibold text-slate-900">{{ job.approved_option || "—" }}</dd>
               </div>
+
               <div class="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
                 <dt class="text-xs uppercase tracking-wide text-slate-500">Price</dt>
                 <dd class="text-sm font-semibold text-slate-900">{{ formatCurrency(job.approved_price) }}</dd>
               </div>
+
               <div class="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
-                <dt class="text-xs uppercase tracking-wide text-slate-500">Deposit Amount</dt>
+                <dt class="text-xs uppercase tracking-wide text-slate-500">Deposit</dt>
                 <dd class="text-sm font-semibold text-slate-900">{{ formatCurrency(job.deposit_amount) }}</dd>
               </div>
+
               <div class="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
                 <dt class="text-xs uppercase tracking-wide text-slate-500">Proposal ID</dt>
                 <dd class="text-sm font-semibold text-slate-900">{{ job.proposal_id }}</dd>
               </div>
+
               <div class="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
                 <dt class="text-xs uppercase tracking-wide text-slate-500">Created</dt>
                 <dd class="text-sm font-semibold text-slate-900">{{ formatDate(job.created_at) }}</dd>
@@ -162,22 +191,26 @@
             </dl>
           </div>
 
+          <!-- RIGHT CARD -->
           <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <div class="mb-4 flex items-center justify-between">
               <h3 class="text-base font-semibold text-slate-900">Schedule</h3>
               <span class="text-xs text-slate-500">{{ job.status === "scheduled" ? "Confirmed" : "Planning" }}</span>
             </div>
+
             <div
               v-if="!job.scheduled_start"
               class="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center text-sm text-slate-500"
             >
               No schedule yet
             </div>
+
             <div v-else class="space-y-3">
               <div class="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
                 <p class="text-xs uppercase tracking-wide text-slate-500">Start Date</p>
                 <p class="text-sm font-semibold text-slate-900">{{ formatDate(job.scheduled_start) }}</p>
               </div>
+
               <div class="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
                 <p class="text-xs uppercase tracking-wide text-slate-500">End Date</p>
                 <p class="text-sm font-semibold text-slate-900">{{ formatDate(job.scheduled_end) }}</p>
@@ -186,7 +219,7 @@
           </div>
         </section>
 
-        <!-- Placeholder Panels -->
+        <!-- PLACEHOLDERS -->
         <section class="grid gap-4 md:grid-cols-2">
           <details class="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <summary class="flex cursor-pointer items-center justify-between text-base font-semibold text-slate-900">
@@ -194,6 +227,7 @@
               <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">Coming soon</span>
             </summary>
           </details>
+
           <details class="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <summary class="flex cursor-pointer items-center justify-between text-base font-semibold text-slate-900">
               Files
@@ -201,6 +235,7 @@
             </summary>
           </details>
         </section>
+
       </div>
     </div>
   </div>
@@ -233,8 +268,12 @@ const job = ref<Job | null>(null);
 const loading = ref(true);
 const error = ref(false);
 
+// Accepts both `/job-view?id=x` AND `/job-view/:id`
 const jobId = computed(() => (route.query.id as string) || (route.params.id as string));
 
+/* -------------------------------
+   STATUS BADGE
+-------------------------------- */
 const statusBadgeClass = computed(() => {
   const styles: Record<JobStatus, string> = {
     pending: "bg-amber-50 text-amber-700 ring-1 ring-amber-200",
@@ -253,6 +292,9 @@ const statusLabel = computed(() => {
   return status.charAt(0).toUpperCase() + status.slice(1);
 });
 
+/* -------------------------------
+   TIMELINE
+-------------------------------- */
 const timelineSteps = computed(() => {
   const status = job.value?.status;
 
@@ -265,6 +307,9 @@ const timelineSteps = computed(() => {
   ];
 });
 
+/* -------------------------------
+   CTA
+-------------------------------- */
 const primaryCtaLabel = computed(() => {
   if (!job.value) return null;
 
@@ -282,16 +327,49 @@ const primaryCtaLabel = computed(() => {
   }
 });
 
+const handlePrimaryAction = () => {
+  if (!job.value) return;
+
+  switch (job.value.status) {
+    case "pending":
+      router.push("/prototype/hq/schedule/confirm");
+      break;
+    case "scheduled":
+      router.push("/prototype/hq/schedule/confirm");
+      break;
+    case "ready":
+      console.log("Prepare start — coming soon");
+      break;
+    case "in_progress":
+      console.log("Mark complete — coming soon");
+      break;
+  }
+};
+
+/* -------------------------------
+   FORMATTERS
+-------------------------------- */
 const formatCurrency = (value: number | null | undefined) => {
-  if (value === null || value === undefined) return "\u2014";
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(value);
+  if (value === null || value === undefined) return "—";
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0
+  }).format(value);
 };
 
 const formatDate = (value: string | null | undefined) => {
-  if (!value) return "\u2014";
-  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(new Date(value));
+  if (!value) return "—";
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric"
+  }).format(new Date(value));
 };
 
+/* -------------------------------
+   FETCH JOB — FIXED PAYLOAD
+-------------------------------- */
 const fetchJob = async () => {
   loading.value = true;
   error.value = false;
@@ -311,8 +389,10 @@ const fetchJob = async () => {
       throw new Error("Failed to load job");
     }
 
-    const data = (await response.json()) as Job;
-    job.value = data;
+    const json = await response.json();
+
+    // FIX: API returns { success: true, job: {...} }
+    job.value = json.job;
   } catch (err) {
     console.error("Error fetching job", err);
     error.value = true;
@@ -321,28 +401,5 @@ const fetchJob = async () => {
   }
 };
 
-const handlePrimaryAction = () => {
-  if (!job.value) return;
-
-  switch (job.value.status) {
-    case "pending":
-      router.push("/prototype/hq/schedule/confirm");
-      break;
-    case "scheduled":
-      router.push("/prototype/hq/schedule/confirm");
-      break;
-    case "ready":
-      console.log("Prepare start placeholder");
-      break;
-    case "in_progress":
-      console.log("Mark complete placeholder");
-      break;
-    default:
-      break;
-  }
-};
-
-onMounted(() => {
-  fetchJob();
-});
+onMounted(fetchJob);
 </script>
