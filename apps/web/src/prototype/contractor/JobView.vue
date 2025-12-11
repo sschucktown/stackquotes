@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen bg-slate-50 text-slate-900">
     <div class="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
-      
+
       <!-- LOADING -->
       <div
         v-if="loading"
@@ -45,6 +45,7 @@
 
             <div class="space-y-2">
               <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Job Overview</p>
+
               <div class="flex flex-wrap items-center gap-3">
                 <h1 class="text-2xl font-semibold text-slate-900">Project</h1>
 
@@ -153,10 +154,8 @@
           </div>
         </section>
 
-        <!-- DETAILS -->
+        <!-- PROJECT DETAILS -->
         <section class="grid gap-4 md:grid-cols-2">
-
-          <!-- LEFT CARD -->
           <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <div class="mb-4 flex items-center justify-between">
               <h3 class="text-base font-semibold text-slate-900">Project Details</h3>
@@ -191,7 +190,7 @@
             </dl>
           </div>
 
-          <!-- RIGHT CARD -->
+          <!-- SCHEDULE -->
           <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <div class="mb-4 flex items-center justify-between">
               <h3 class="text-base font-semibold text-slate-900">Schedule</h3>
@@ -217,6 +216,26 @@
               </div>
             </div>
           </div>
+        </section>
+
+        <!-- SIGNATURE PANEL -->
+        <section
+          v-if="job.signature_image"
+          class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
+        >
+          <h2 class="text-base font-semibold text-slate-900">Client Signature</h2>
+
+          <div class="mt-4">
+            <img
+              :src="job.signature_image"
+              alt="Client Signature"
+              class="max-h-40 rounded-lg border border-slate-300 bg-white p-2 shadow-inner"
+            />
+          </div>
+
+          <p class="mt-2 text-sm text-slate-500">
+            Signed on: {{ formatDate(job.approved_at) }}
+          </p>
         </section>
 
         <!-- PLACEHOLDERS -->
@@ -259,6 +278,10 @@ type Job = {
   scheduled_start: string | null;
   scheduled_end: string | null;
   created_at: string;
+
+  /* NEW */
+  signature_image: string | null;
+  approved_at: string | null;
 };
 
 const route = useRoute();
@@ -283,7 +306,9 @@ const statusBadgeClass = computed(() => {
     complete: "bg-slate-100 text-slate-700 ring-1 ring-slate-200"
   };
 
-  return job.value ? styles[job.value.status] : "bg-slate-100 text-slate-700 ring-1 ring-slate-200";
+  return job.value
+    ? styles[job.value.status]
+    : "bg-slate-100 text-slate-700 ring-1 ring-slate-200";
 });
 
 const statusLabel = computed(() => {
@@ -332,8 +357,6 @@ const handlePrimaryAction = () => {
 
   switch (job.value.status) {
     case "pending":
-      router.push("/prototype/hq/schedule/confirm");
-      break;
     case "scheduled":
       router.push("/prototype/hq/schedule/confirm");
       break;
@@ -368,7 +391,7 @@ const formatDate = (value: string | null | undefined) => {
 };
 
 /* -------------------------------
-   FETCH JOB — FIXED PAYLOAD
+   FETCH JOB
 -------------------------------- */
 const fetchJob = async () => {
   loading.value = true;
@@ -391,7 +414,7 @@ const fetchJob = async () => {
 
     const json = await response.json();
 
-    // FIX: API returns { success: true, job: {...} }
+    // API returns { success: true, job: {...} }
     job.value = json.job;
   } catch (err) {
     console.error("Error fetching job", err);

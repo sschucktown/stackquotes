@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, nextTick, watch } from "vue";
 
 const props = defineProps<{
   open: boolean;
@@ -14,7 +14,8 @@ const props = defineProps<{
 // --------------------------------------------------
 const signing = ref(false);
 const signatureData = ref<string | null>(null);
-let canvasEl: HTMLCanvasElement | null = null;
+
+const canvasRef = ref<HTMLCanvasElement | null>(null);
 let ctx: CanvasRenderingContext2D | null = null;
 
 let drawing = false;
@@ -22,17 +23,48 @@ let lastX = 0;
 let lastY = 0;
 
 // --------------------------------------------------
-// Canvas Setup
+// Canvas Setup AFTER modal opens
 // --------------------------------------------------
-const initCanvas = (canvas: HTMLCanvasElement | null) => {
-  if (!canvas) return;
-  canvasEl = canvas;
-  ctx = canvas.getContext("2d");
-  if (!ctx) return;
+watch(
+  () => props.open,
+  async (open) => {
+    if (!open) return;
+    await nextTick();
 
-  ctx.lineWidth = 3;
-  ctx.lineCap = "round";
-  ctx.strokeStyle = "#111827";
+    const canvas = canvasRef.value;
+    if (!canvas) return;
+
+    ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    ctx.lineWidth = 3;
+    ctx.lineCap = "round";
+    ctx.strokeStyle = "#111827";
+  }
+);
+
+// --------------------------------------------------
+// Drawing Logic
+// --------------------------------------------------
+const getPos = (e: MouseEvent | TouchEvent) => {
+  const canvas = canvasRef.value!;
+  const rect = canvas.getBoundingClientRect();
+
+  let clientX = 0;
+  let clientY = 0;
+
+  if (e instanceof TouchEvent) {
+    clientX = e.touches[0].clientX;
+    clientY = e.touches[0].clientY;
+  } else {
+    clientX = e.clientX;
+    clientY = e.clientY;
+  }
+
+  return {
+    x: clientX - rect.left,
+    y: clientY - rect.top,
+  };
 };
 
 const startDraw = (e: MouseEvent | TouchEvent) => {
@@ -57,31 +89,12 @@ const draw = (e: MouseEvent | TouchEvent) => {
 
 const endDraw = () => {
   drawing = false;
-  if (!canvasEl) return;
-  signatureData.value = canvasEl.toDataURL("image/png");
-};
-
-const getPos = (e: MouseEvent | TouchEvent) => {
-  const rect = canvasEl!.getBoundingClientRect();
-  let clientX = 0;
-  let clientY = 0;
-
-  if (e instanceof TouchEvent) {
-    clientX = e.touches[0].clientX;
-    clientY = e.touches[0].clientY;
-  } else {
-    clientX = e.clientX;
-    clientY = e.clientY;
-  }
-
-  return {
-    x: clientX - rect.left,
-    y: clientY - rect.top,
-  };
+  if (!canvasRef.value) return;
+  signatureData.value = canvasRef.value.toDataURL("image/png");
 };
 
 // --------------------------------------------------
-// Submit Signature → Create Job
+// Submit Signature → Backend Approve Pipeline
 // --------------------------------------------------
 const submitSignature = async () => {
   if (!signatureData.value) {
@@ -92,50 +105,27 @@ const submitSignature = async () => {
   signing.value = true;
 
   try {
-    // 1️⃣ Submit signature to SmartProposal
-    const signRes = await fetch(`/api/smartproposals/${props.proposalId}/sign`, {
+    const res = await fetch(`/api/smartproposals/${props.proposalId}/approve`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        accepted_option: props.acceptedOption,
         signature_image: signatureData.value,
-      }),
-    });
-
-    if (!signRes.ok) {
-      console.error(await signRes.text());
-      alert("Could not submit signature.");
-      signing.value = false;
-      return;
-    }
-
-    const signData = await signRes.json();
-
-    // 2️⃣ Create Job
-    const jobRes = await fetch("/api/jobs", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
+        accepted_option: props.acceptedOption,
         proposal_id: props.proposalId,
-        approved_option: props.acceptedOption,
-        approved_price: 0, // update once proposal pricing is wired
-        deposit_amount: null,
-        client_id: "00000000-0000-0000-0000-000000000000" // TODO replace once auth is wired
       }),
     });
 
-    if (!jobRes.ok) {
-      console.error(await jobRes.text());
-      alert("Signature saved, but job could not be created.");
+    const data = await res.json();
+
+    if (!res.ok) {
+      console.error(data);
+      alert("Could not approve proposal.");
       signing.value = false;
       return;
     }
 
-    const jobData = await jobRes.json();
-
-    // Notify parent with new job ID
-    props.onSuccess(jobData.job.id);
-
+    // Backend returns job_id
+    props.onSuccess(data.job_id);
   } catch (err) {
     console.error(err);
     alert("Unexpected error saving signature.");
@@ -153,10 +143,10 @@ const submitSignature = async () => {
     <div class="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
       <h2 class="text-lg font-semibold text-slate-900">Sign to Approve</h2>
 
-      <!-- Canvas -->
+      <!-- Signature Canvas -->
       <div class="mt-4 rounded-xl border border-slate-300 bg-slate-50 p-3">
         <canvas
-          ref="initCanvas"
+          ref="canvasRef"
           width="500"
           height="200"
           class="w-full rounded-lg bg-white"
