@@ -2,18 +2,15 @@
 import { ref, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
-// Existing components
 import SummaryPanel from "./SummaryPanel.vue";
 import SignatureModal from "./SignatureModal.vue";
-
-// NEW component
 import AgreementDrawer from "./AgreementDrawer.vue";
 
-// --------------------------------------------------
-// Props
-// --------------------------------------------------
+/* --------------------------------------------------
+   Props (OPTIONAL — prototype safe)
+-------------------------------------------------- */
 const props = defineProps<{
-  proposal: {
+  proposal?: {
     id: string;
     deposit_percent: number;
     options: Array<{
@@ -25,19 +22,37 @@ const props = defineProps<{
   };
 }>();
 
-// --------------------------------------------------
-// Router
-// --------------------------------------------------
+/* --------------------------------------------------
+   PROTOTYPE FALLBACK
+-------------------------------------------------- */
+const demoProposal = {
+  id: "demo-proposal",
+  deposit_percent: 15,
+  options: [
+    { key: "good", label: "Good", subtitle: "Baseline materials", price: 15800 },
+    { key: "better", label: "Better", subtitle: "Upgraded materials", price: 19800 },
+    { key: "best", label: "Best", subtitle: "Premium everything", price: 23800 }
+  ]
+};
+
+// If no real proposal passed → use demo
+const proposal = computed(() => props.proposal ?? demoProposal);
+
+/* --------------------------------------------------
+   Router
+-------------------------------------------------- */
 const router = useRouter();
 const route = useRoute();
 
 const proposalId =
-  (route.query.proposal as string) || props.proposal.id || "demo-proposal";
+  (route.query.proposal as string) ||
+  proposal.value.id ||
+  "demo-proposal";
 
-// --------------------------------------------------
-// Client selection
-// --------------------------------------------------
-const selected = ref(props.proposal.options[0] ?? null);
+/* --------------------------------------------------
+   Client Selection
+-------------------------------------------------- */
+const selected = ref(proposal.value.options[0]);
 
 const currency = (value: number) =>
   new Intl.NumberFormat("en-US", {
@@ -46,14 +61,15 @@ const currency = (value: number) =>
     maximumFractionDigits: 0,
   }).format(value);
 
-const depositAmount = computed(() => {
-  if (!selected.value) return 0;
-  return (selected.value.price * props.proposal.deposit_percent) / 100;
-});
+const depositAmount = computed(() =>
+  selected.value
+    ? (selected.value.price * proposal.value.deposit_percent) / 100
+    : 0
+);
 
-// --------------------------------------------------
-// Agreement Drawer
-// --------------------------------------------------
+/* --------------------------------------------------
+   Agreement Drawer
+-------------------------------------------------- */
 const agreementOpen = ref(false);
 
 const openAgreement = () => {
@@ -61,9 +77,9 @@ const openAgreement = () => {
   agreementOpen.value = true;
 };
 
-// --------------------------------------------------
-// Signature Modal
-// --------------------------------------------------
+/* --------------------------------------------------
+   Signature Modal
+-------------------------------------------------- */
 const signatureOpen = ref(false);
 
 const openSignature = () => {
@@ -75,7 +91,7 @@ const handleSignedSuccess = () => {
   signatureOpen.value = false;
   router.push({
     path: "/prototype/smartproposal/signed",
-    query: { proposal: proposalId },
+    query: { proposal: proposalId }
   });
 };
 </script>
@@ -115,8 +131,7 @@ const handleSignedSuccess = () => {
     </div>
 
     <!-- ========================= -->
-    <!-- SUMMARY PANEL -->
-    <!-- CTA points to agreement -->
+    <!-- Summary Panel -->
     <!-- ========================= -->
     <SummaryPanel
       class="mt-6 lg:mt-0"
