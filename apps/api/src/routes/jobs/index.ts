@@ -71,7 +71,7 @@ jobsRouter.post("/", async (c) => {
     return c.json({ error: "Failed to create job", details: error }, 500);
   }
 
-  return c.json(data);
+  return c.json({ job: data });
 });
 
 /* -------------------------------
@@ -93,7 +93,7 @@ jobsRouter.get("/", async (c) => {
     return c.json({ error: "Failed to load jobs", details: error }, 500);
   }
 
-  return c.json(data ?? []);
+  return c.json({ jobs: data ?? [] });
 });
 
 /* -------------------------------
@@ -117,7 +117,7 @@ jobsRouter.get("/:id", async (c) => {
     return c.json({ error: "Job not found", details: error }, 404);
   }
 
-  return c.json(data);
+  return c.json({ job: data });
 });
 
 /* -------------------------------
@@ -159,5 +159,5 @@ jobsRouter.patch("/:id/schedule", async (c) => {
     return c.json({ error: "Failed to schedule job", details: error }, 500);
   }
 
-  return c.json(data);
+  return c.json({ job: data });
 });

@@ -1,324 +1,118 @@
-<template>
-  <div class="min-h-screen bg-slate-50 text-slate-900">
-    <div class="mx-auto flex max-w-5xl flex-col gap-5 px-4 py-6 sm:px-6 lg:px-8">
-      <header class="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-5">
-          <div class="flex flex-wrap items-center gap-3">
-            <button class="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-700 shadow-inner transition hover:bg-slate-200" @click="router.push('/prototype/hq')">
-              <span class="text-lg leading-none">&larr;</span>
-              <span>Back</span>
-            </button>
-            <div class="flex flex-col">
-              <div class="flex flex-wrap items-center gap-2">
-                <h1 class="text-lg font-semibold text-slate-900">{{ job?.name || 'Job' }}</h1>
-                <span class="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 shadow-inner">{{ job?.status || 'In Progress' }}</span>
-                <span
-                  v-if="job?.proposalDraft"
-                  class="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700"
-                >
-                  Proposal Draft
-                </span>
-              <button
-                class="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 shadow-inner transition hover:bg-blue-100"
-                @click="openPayments"
-              >
-                Payments
-              </button>
-              <button
-                class="inline-flex items-center gap-2 rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-xs font-semibold text-violet-700 shadow-inner transition hover:bg-violet-100"
-                @click="openInbox"
-              >
-                Messages
-              </button>
-              <button
-                class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700 shadow-inner transition hover:bg-slate-200"
-                @click="openFiles"
-              >
-                Files
-              </button>
-            </div>
-            <p class="text-xs text-slate-500">Individual Job View</p>
-          </div>
-        </div>
-        <div class="flex flex-wrap items-center gap-2">
-          <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700 shadow-inner">Client: Sarah Thompson</span>
-          <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700 shadow-inner">Due Today 3:00 PM</span>
-          <button
-            class="rounded-full p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
-            aria-label="Settings"
-            @click="showSettings = true"
-          >
-            <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.757.426 1.757 2.924 0 3.35a1.724 1.724 0 0 0-1.065 2.573c.94 1.543-.827 3.31-2.37 2.37a1.724 1.724 0 0 0-2.572 1.065c-.426 1.757-2.924 1.757-3.35 0a1.724 1.724 0 0 0-2.573-1.065c-1.543.94-3.31-.827-2.37-2.37a1.724 1.724 0 0 0-1.065-2.572c-1.757-.426-1.757-2.924 0-3.35a1.724 1.724 0 0 0 1.065-2.573c-.94-1.543.827-3.31 2.37-2.37.966.589 2.199.167 2.573-1.065Z"
-              />
-              <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-            </svg>
-          </button>
-        </div>
-      </header>
-
-      <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Job Snapshot</p>
-            <h2 class="text-lg font-semibold text-slate-900">{{ job?.name }}</h2>
-            <p class="text-sm text-slate-600">{{ job?.location }} - {{ job?.detail }}</p>
-          </div>
-          <div class="flex flex-wrap items-center gap-2">
-            <span class="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-sm font-semibold text-blue-700 shadow-inner">
-              Remaining Balance: $17,400
-            </span>
-            <button class="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-sm font-semibold text-blue-700 shadow-inner transition hover:bg-blue-100">
-              Send Payment Link
-            </button>
-            <button class="text-sm font-semibold text-blue-600 underline-offset-4 hover:underline">
-              Record Offline Payment
-            </button>
-          </div>
-        </div>
-      </section>
-
-      <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h3 class="mb-4 text-base font-semibold text-slate-900">Quick Info</h3>
-        <div
-          v-if="job?.proposalDraft"
-          class="mb-4 flex flex-col gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 shadow-inner sm:flex-row sm:items-center sm:justify-between"
-        >
-          <div>
-            <p class="text-xs font-semibold uppercase tracking-wide text-emerald-700">Proposal Draft Ready</p>
-            <p class="text-sm font-semibold text-emerald-800">{{ job.proposalDraft.jobName }}</p>
-            <p class="text-xs text-emerald-700">Created {{ new Date(job.proposalDraft.createdAt).toLocaleString() }}</p>
-          </div>
-          <button
-            type="button"
-            class="inline-flex items-center gap-2 rounded-full border border-emerald-300 bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-md transition hover:bg-emerald-700"
-            @click="router.push({ path: '/prototype/smartproposal', query: { job: job.id } })"
-          >
-            Open Proposal
-          </button>
-        </div>
-        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 shadow-inner">
-            <p class="text-xs uppercase tracking-wide text-slate-500">Job Type</p>
-            <p class="text-sm font-semibold text-slate-900">{{ job?.type }}</p>
-          </div>
-          <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 shadow-inner">
-            <p class="text-xs uppercase tracking-wide text-slate-500">Created</p>
-            <p class="text-sm font-semibold text-slate-900">Nov 28, 2025</p>
-          </div>
-          <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 shadow-inner">
-            <p class="text-xs uppercase tracking-wide text-slate-500">Proposal</p>
-            <p class="text-sm font-semibold text-slate-900">Sent</p>
-          </div>
-          <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 shadow-inner">
-            <p class="text-xs uppercase tracking-wide text-slate-500">Estimate Range</p>
-            <p class="text-sm font-semibold text-slate-900">$12,800 - $19,800</p>
-          </div>
-          <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 shadow-inner">
-            <p class="text-xs uppercase tracking-wide text-slate-500">Assigned Crew</p>
-            <p class="text-sm font-semibold text-slate-900">Not Assigned</p>
-          </div>
-          <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 shadow-inner">
-            <p class="text-xs uppercase tracking-wide text-slate-500">Tags</p>
-            <p class="text-sm font-semibold text-slate-900">Deck, Composite</p>
-          </div>
-        </div>
-      </section>
-
-      <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div class="flex items-center justify-between">
-          <h3 class="text-base font-semibold text-slate-900">Payments Snapshot</h3>
-          <div class="flex items-center gap-2">
-            <span class="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-sm font-semibold text-blue-700 shadow-inner">
-              Remaining Balance: $17,400
-            </span>
-            <button class="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 shadow-inner transition hover:bg-blue-100">
-              Send Payment Link
-            </button>
-            <button class="text-sm font-semibold text-blue-600 underline-offset-4 hover:underline">
-              Record Offline Payment
-            </button>
-          </div>
-        </div>
-      </section>
-
-      <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div class="mb-4 flex items-center justify-between">
-          <h3 class="text-base font-semibold text-slate-900">Project Timeline</h3>
-          <button class="text-sm font-semibold text-blue-600 underline-offset-4 hover:underline" @click="openInbox">
-            View Inbox
-          </button>
-        </div>
-        <div class="relative pl-5">
-          <div class="absolute left-2 top-3 bottom-3 w-px bg-slate-200"></div>
-          <div class="space-y-4">
-            <div v-for="item in previewEvents" :key="item.id" class="relative flex gap-4">
-              <div class="absolute left-[-1px] top-1.5 h-3 w-3 rounded-full bg-blue-500 shadow"></div>
-              <div class="pl-5">
-                <p class="text-sm font-semibold text-slate-900">{{ item.title }}</p>
-                <p class="text-xs text-slate-600">{{ item.time }}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div class="mb-3 flex items-center justify-between">
-          <h3 class="text-base font-semibold text-slate-900">Tasks</h3>
-          <span class="text-xs text-slate-500">Preview</span>
-        </div>
-        <ul class="space-y-2">
-          <li
-            v-for="task in tasks"
-            :key="task"
-            class="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 shadow-inner"
-          >
-            <span class="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-600">+</span>
-            <span class="text-sm font-medium text-slate-900">{{ task }}</span>
-          </li>
-        </ul>
-        <button class="mt-4 text-sm font-semibold text-blue-600 underline-offset-4 hover:underline" @click="openFiles">
-          Manage Task Files ->
-        </button>
-      </section>
-
-      <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:p-6">
-        <div class="mb-3 flex items-center justify-between">
-          <h2 class="text-lg font-semibold text-slate-900">Files &amp; Photos</h2>
-          <button class="text-sm font-semibold text-blue-600 underline-offset-4 hover:underline" @click="openFiles">
-            View All Files ->
-          </button>
-        </div>
-
-        <div class="grid grid-cols-3 gap-3 sm:grid-cols-4">
-          <div
-            v-for="file in previewFiles"
-            :key="file.id"
-            class="aspect-square overflow-hidden rounded-lg border border-slate-200 bg-slate-100"
-          >
-            <img
-              v-if="file.kind === 'image'"
-              :src="file.thumbUrl || file.url"
-              class="h-full w-full object-cover"
-            />
-            <div v-else class="flex h-full w-full items-center justify-center text-sm font-semibold text-slate-500">
-              {{ file.kind.toUpperCase() }}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div class="mb-3 flex items-center justify-between">
-          <div class="flex items-center gap-2">
-            <h3 class="text-base font-semibold text-slate-900">Recent Messages</h3>
-            <span class="text-xs text-slate-500">3</span>
-          </div>
-          <button class="text-sm font-semibold text-blue-600 underline-offset-4 hover:underline" @click="openInbox">
-            View Full Inbox ->
-          </button>
-        </div>
-        <div class="space-y-3">
-          <button
-            v-for="message in previewMessages"
-            :key="message.name"
-            type="button"
-            class="flex w-full items-start justify-between rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-left shadow-inner transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50"
-            @click="openThread(message.threadId)"
-          >
-            <div>
-              <div class="flex items-center gap-2">
-                <p class="text-sm font-semibold text-slate-900">{{ message.name }} ({{ message.project }})</p>
-                <span v-if="message.unread" class="inline-block h-2 w-2 rounded-full bg-blue-500"></span>
-              </div>
-              <p
-                class="text-sm"
-                :class="message.unread ? 'font-semibold text-slate-900' : 'text-slate-600'"
-              >
-                {{ message.preview }}
-              </p>
-            </div>
-            <span class="text-xs text-slate-500">{{ message.time }}</span>
-          </button>
-        </div>
-      </section>
-
-      <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div class="mb-4 flex items-center justify-between">
-          <h3 class="text-base font-semibold text-slate-900">Financial Summary</h3>
-          <button
-            class="inline-flex items-center gap-2 rounded-full bg-blue-600 px-3 py-2 text-xs font-semibold text-white shadow-md transition hover:bg-blue-700"
-            @click="openPayments"
-          >
-            View Payment Activity ->
-          </button>
-        </div>
-        <div class="grid gap-4 sm:grid-cols-3">
-          <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 shadow-inner">
-            <p class="text-xs uppercase tracking-wide text-slate-500">Contract Amount</p>
-            <p class="text-lg font-semibold text-slate-900">$19,800</p>
-          </div>
-          <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 shadow-inner">
-            <p class="text-xs uppercase tracking-wide text-slate-500">Deposit Paid</p>
-            <p class="text-lg font-semibold text-slate-900">$2,400</p>
-          </div>
-          <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 shadow-inner">
-            <p class="text-xs uppercase tracking-wide text-slate-500">Remaining Balance</p>
-            <p class="text-lg font-semibold text-slate-900">$17,400</p>
-          </div>
-        </div>
-      </section>
-
-      <div class="pb-20"></div>
-    </div>
-
-    <SettingsDrawer v-if="showSettings" @close="showSettings = false" />
-    <Transition name="fade">
-      <PaymentActivity v-if="showPayments" @close="showPayments = false" />
-    </Transition>
-    <Transition name="fade">
-      <FullMessagingInbox v-if="showInbox" @close="showInbox = false" />
-    </Transition>
-    <Transition name="fade">
-      <FilesManager v-if="showFilesManager" @close="showFilesManager = false" />
-    </Transition>
-  </div>
-</template>
-
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { messageStore } from "@/prototype/stores/messages";
+
 import PaymentActivity from "./PaymentActivity.vue";
 import FullMessagingInbox from "./FullMessagingInbox.vue";
 import FilesManager from "./FilesManager.vue";
+import SettingsDrawer from "@/components/Settings/SettingsDrawer.vue";
+
+import { messageStore } from "@/prototype/stores/messages";
 import { jobLevelFiles, setFileContext } from "@/prototype/stores/files";
 import { timelineEvents } from "./usePrototypeEvents";
-import SettingsDrawer from "@/components/Settings/SettingsDrawer.vue";
-import { useContractorHQPrototype } from "@/stores/contractorHQPrototype";
 
+/* ----------------------------------
+   Types
+---------------------------------- */
+type JobStatus = "pending" | "scheduled" | "ready" | "in_progress" | "complete";
+
+type Job = {
+  id: string;
+  proposal_id: string;
+  contractor_id: string;
+  client_id: string;
+  approved_option: string;
+  approved_price: number;
+  deposit_amount: number | null;
+  status: JobStatus;
+  scheduled_start: string | null;
+  scheduled_end: string | null;
+  approved_at: string | null;
+  created_at: string;
+};
+
+/* ----------------------------------
+   Router / State
+---------------------------------- */
 const router = useRouter();
 const route = useRoute();
+
+const job = ref<Job | null>(null);
+const loading = ref(false);
+const error = ref(false);
+
 const showSettings = ref(false);
 const showPayments = ref(false);
 const showInbox = ref(false);
 const showFilesManager = ref(false);
-const hqStore = useContractorHQPrototype();
 
-const job = computed(() => hqStore.getJob(typeof route.query.job === "string" ? route.query.job : undefined));
+/* ----------------------------------
+   Job ID Resolution
+---------------------------------- */
+const jobId = computed(() => {
+  const val = route.query.job;
+  return typeof val === "string" ? val : "";
+});
 
+/* ----------------------------------
+   Fetch Job
+---------------------------------- */
+const fetchJob = async (id: string) => {
+  loading.value = true;
+  error.value = false;
+  job.value = null;
+
+  try {
+    const res = await fetch(`/api/jobs/${id}`);
+    if (!res.ok) throw new Error("Failed to load job");
+
+    const json = await res.json();
+    job.value = json.job;
+  } catch (err) {
+    console.error(err);
+    error.value = true;
+  } finally {
+    loading.value = false;
+  }
+};
+
+watch(
+  jobId,
+  (id) => {
+    if (!id) {
+      error.value = true;
+      return;
+    }
+    fetchJob(id);
+  },
+  { immediate: true }
+);
+
+/* ----------------------------------
+   Computed Helpers
+---------------------------------- */
+const statusLabel = computed(() => {
+  if (!job.value) return "";
+  if (job.value.status === "in_progress") return "In Progress";
+  return job.value.status.charAt(0).toUpperCase() + job.value.status.slice(1);
+});
+
+const remainingBalance = computed(() => {
+  if (!job.value) return 0;
+  return job.value.approved_price - (job.value.deposit_amount ?? 0);
+});
+
+/* ----------------------------------
+   Prototype Sections (Still Mocked)
+---------------------------------- */
 const tasks = [
   "Perform site measurements",
   "Photograph existing deck",
-  "Identify hazards or obstructions"
+  "Identify hazards or obstructions",
 ];
 
 const previewFiles = computed(() => jobLevelFiles.value.slice(0, 4));
-
-const previewEvents = computed(() => (job.value?.timeline || timelineEvents.value).slice(0, 3));
+const previewEvents = computed(() => timelineEvents.value.slice(0, 3));
 const previewMessages = computed(() =>
   messageStore.threads.slice(0, 3).map((thread) => ({
     name: thread.participant,
@@ -326,10 +120,13 @@ const previewMessages = computed(() =>
     preview: thread.lastMessage,
     time: thread.lastMessageTime,
     threadId: thread.id,
-    unread: thread.unread
+    unread: thread.unread,
   }))
 );
 
+/* ----------------------------------
+   Actions
+---------------------------------- */
 function openPayments() {
   showPayments.value = true;
 }
@@ -339,27 +136,12 @@ function openInbox() {
 }
 
 function openFiles() {
-  openFilesManager();
+  setFileContext(job.value?.id || "", null);
+  showFilesManager.value = true;
 }
 
 function openThread(id: string) {
   messageStore.markThreadRead(id);
   router.push({ path: "/prototype/contractor/messages", query: { threadId: id } });
 }
-
-function openFilesManager(taskId: string | null = null) {
-  setFileContext(job.value?.id || "maple-st-deck", taskId);
-  showFilesManager.value = true;
-}
 </script>
-
-<style scoped>
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.2s ease;
-}
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
-</style>
