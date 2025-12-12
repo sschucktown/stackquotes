@@ -180,8 +180,10 @@ const router = createRouter({
     {
       path: "/prototype/kickoff/message",
       name: "KickoffMessageLightbox",
-      component: () => import("@/components/Messaging/MessageLightbox.vue"),
-      props: (route) => ({ open: true, jobId: (route.query.job as string) || undefined, actor: "contractor" }),
+      component: () => import("@/components/Kickoff/KickoffMessage.vue"),
+      props: (route) => ({
+        job_id: (route.query.job_id as string) || (route.params.id as string) || (route.query.job as string),
+      }),
       meta: { public: true, allowAuthenticated: true },
     },
     {
