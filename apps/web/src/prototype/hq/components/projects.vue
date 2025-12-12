@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 
 type JobStatus = "pending" | "scheduled" | "ready" | "in_progress" | "complete";
+type FilterKey = "all" | "pending" | "scheduled" | "active" | "completed";
 
 type Job = {
   id: string;
@@ -28,7 +29,14 @@ const jobs = ref<Job[]>([]);
 const loading = ref(false);
 const error = ref(false);
 
-const activeFilter = ref("all");
+const activeFilter = ref<FilterKey>("all");
+const filterChips: { key: FilterKey; label: string }[] = [
+  { key: "all", label: "All" },
+  { key: "pending", label: "Pending" },
+  { key: "scheduled", label: "Scheduled" },
+  { key: "active", label: "Active" },
+  { key: "completed", label: "Completed" }
+];
 
 // ----------------------------------
 // Fetch Jobs
@@ -56,65 +64,57 @@ onMounted(fetchJobs);
 // ----------------------------------
 // Helpers
 // ----------------------------------
-const now = new Date();
-
-const isActive = (job: Job) => {
-  if (!job.scheduled_start) return false;
-  const start = new Date(job.scheduled_start);
-  const end = new Date(job.scheduled_end || job.scheduled_start);
-  return start <= now && now <= end;
-};
-
-const groupJobs = (list: Job[]) => {
+const groupedJobs = computed(() => {
   const pending: Job[] = [];
   const scheduled: Job[] = [];
   const active: Job[] = [];
   const completed: Job[] = [];
 
-  for (const job of list) {
-    if (job.status === "complete") {
-      completed.push(job);
-      continue;
+  for (const job of jobs.value) {
+    switch (job.status) {
+      case "pending":
+        pending.push(job);
+        break;
+      case "scheduled":
+        scheduled.push(job);
+        break;
+      case "ready":
+      case "in_progress":
+        active.push(job);
+        break;
+      case "complete":
+        completed.push(job);
+        break;
     }
-
-    if (job.status === "scheduled") {
-      if (isActive(job)) active.push(job);
-      else scheduled.push(job);
-      continue;
-    }
-
-    pending.push(job);
   }
 
   return { pending, scheduled, active, completed };
-};
-
-const filterJobs = computed(() => {
-  switch (activeFilter.value) {
-    case "pending":
-      return jobs.value.filter(j => j.status === "pending");
-    case "scheduled":
-      return jobs.value.filter(j => j.status === "scheduled" && !isActive(j));
-    case "active":
-      return jobs.value.filter(j => isActive(j));
-    case "completed":
-      return jobs.value.filter(j => j.status === "complete");
-    case "high-value":
-      return jobs.value.filter(j => j.approved_price >= 10000);
-    case "needs-scheduling":
-      return jobs.value.filter(j => j.status === "pending");
-    default:
-      return jobs.value;
-  }
 });
 
-const grouped = computed(() => groupJobs(filterJobs.value));
+const filteredGroups = computed(() => {
+  const groups = groupedJobs.value;
+
+  if (activeFilter.value === "all") return groups;
+
+  return {
+    pending: activeFilter.value === "pending" ? groups.pending : [],
+    scheduled: activeFilter.value === "scheduled" ? groups.scheduled : [],
+    active: activeFilter.value === "active" ? groups.active : [],
+    completed: activeFilter.value === "completed" ? groups.completed : []
+  };
+});
+
+const shortenId = (id: string) => (id.length > 8 ? id.slice(0, 8) : id);
+const formatCurrency = (amount: number | null) =>
+  amount === null ? "Pending" : amount.toLocaleString("en-US", { style: "currency", currency: "USD" });
+const formatDate = (value: string | null) =>
+  value ? new Date(value).toLocaleDateString() : "To be scheduled";
 
 // ----------------------------------
 // Navigation
 // ----------------------------------
 const openJob = (job: Job) => {
-  router.push({ path: "/prototype/contractor/individual-job", query: { job: job.id } });
+  router.push({ path: "/prototype/hq/projects/job", query: { job: job.id } });
 };
 </script>
 
@@ -129,15 +129,7 @@ const openJob = (job: Job) => {
       <!-- FILTER CHIPS -->
       <div class="mb-6 flex flex-wrap gap-2">
         <button
-          v-for="chip in [
-            { key: 'all', label: 'All' },
-            { key: 'pending', label: 'Pending' },
-            { key: 'scheduled', label: 'Scheduled' },
-            { key: 'active', label: 'Active' },
-            { key: 'completed', label: 'Completed' },
-            { key: 'high-value', label: 'High Value ($10k+)' },
-            { key: 'needs-scheduling', label: 'Needs Scheduling' }
-          ]"
+          v-for="chip in filterChips"
           :key="chip.key"
           @click="activeFilter = chip.key"
           class="rounded-full border px-3 py-1.5 text-xs font-semibold transition shadow-sm"
@@ -172,106 +164,135 @@ const openJob = (job: Job) => {
       </div>
 
       <!-- NO JOBS -->
-      <div v-else-if="jobs.length === 0" class="py-20 text-center text-slate-500">
-        No jobs yet — send a proposal to begin.
+      <div v-else-if="jobs.length === 0" class="flex flex-col items-center justify-center py-20 text-center text-slate-500">
+        <p class="text-lg font-semibold text-slate-900">No jobs yet</p>
+        <p class="text-sm text-slate-500 mb-4">Create your first job to start tracking projects.</p>
+        <button
+          class="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-slate-800"
+          @click="router.push('/prototype/kickoff/builder')"
+        >
+          Create your first job
+        </button>
       </div>
 
       <!-- JOB GROUPS -->
       <div v-else class="space-y-8">
         <!-- Pending -->
-        <section v-if="grouped.pending.length">
+        <section v-if="filteredGroups.pending.length">
           <h2 class="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-500">
             Pending Approval / Not Scheduled
           </h2>
           <div class="space-y-3">
             <div
-              v-for="job in grouped.pending"
+              v-for="job in filteredGroups.pending"
               :key="job.id"
               class="cursor-pointer rounded-2xl border border-slate-200 bg-white p-4 shadow-sm hover:bg-slate-50"
               @click="openJob(job)"
             >
               <div class="flex justify-between">
-                <p class="font-semibold text-slate-900">{{ job.approved_option }}</p>
+                <div>
+                  <p class="font-semibold text-slate-900">{{ job.approved_option }}</p>
+                  <p class="text-xs text-slate-500">Job {{ shortenId(job.id) }}</p>
+                </div>
                 <span class="text-xs rounded-full bg-amber-100 px-2 py-1 font-semibold text-amber-700">
                   Pending
                 </span>
               </div>
               <p class="text-xs text-slate-500 mt-1">Created {{ new Date(job.created_at).toLocaleDateString() }}</p>
+              <p v-if="job.scheduled_start" class="text-xs text-slate-500 mt-1">
+                Scheduled start {{ formatDate(job.scheduled_start) }}
+              </p>
+              <p class="text-xs text-slate-500 mt-1">Deposit: {{ formatCurrency(job.deposit_amount) }}</p>
             </div>
           </div>
         </section>
 
         <!-- Scheduled -->
-        <section v-if="grouped.scheduled.length">
+        <section v-if="filteredGroups.scheduled.length">
           <h2 class="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-500">
             Scheduled
           </h2>
           <div class="space-y-3">
             <div
-              v-for="job in grouped.scheduled"
+              v-for="job in filteredGroups.scheduled"
               :key="job.id"
               class="cursor-pointer rounded-2xl border border-slate-200 bg-white p-4 shadow-sm hover:bg-slate-50"
               @click="openJob(job)"
             >
               <div class="flex justify-between">
-                <p class="font-semibold text-slate-900">{{ job.approved_option }}</p>
+                <div>
+                  <p class="font-semibold text-slate-900">{{ job.approved_option }}</p>
+                  <p class="text-xs text-slate-500">Job {{ shortenId(job.id) }}</p>
+                </div>
                 <span class="text-xs rounded-full bg-blue-100 px-2 py-1 font-semibold text-blue-700">
                   Scheduled
                 </span>
               </div>
-              <p class="text-xs text-slate-500 mt-1">
-                Starts {{ new Date(job.scheduled_start!).toLocaleDateString() }}
+              <p v-if="job.scheduled_start" class="text-xs text-slate-500 mt-1">
+                Scheduled start {{ formatDate(job.scheduled_start) }}
               </p>
+              <p class="text-xs text-slate-500 mt-1">Deposit: {{ formatCurrency(job.deposit_amount) }}</p>
             </div>
           </div>
         </section>
 
         <!-- Active -->
-        <section v-if="grouped.active.length">
+        <section v-if="filteredGroups.active.length">
           <h2 class="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-500">
             In Progress
           </h2>
           <div class="space-y-3">
             <div
-              v-for="job in grouped.active"
+              v-for="job in filteredGroups.active"
               :key="job.id"
               class="cursor-pointer rounded-2xl border border-slate-200 bg-white p-4 shadow shadow-emerald-100 hover:bg-slate-50"
               @click="openJob(job)"
             >
               <div class="flex justify-between">
-                <p class="font-semibold text-slate-900">{{ job.approved_option }}</p>
+                <div>
+                  <p class="font-semibold text-slate-900">{{ job.approved_option }}</p>
+                  <p class="text-xs text-slate-500">Job {{ shortenId(job.id) }}</p>
+                </div>
                 <span class="text-xs rounded-full bg-emerald-100 px-2 py-1 font-semibold text-emerald-700">
                   Active
                 </span>
               </div>
-              <p class="text-xs text-slate-500 mt-1">
-                Started {{ new Date(job.scheduled_start!).toLocaleDateString() }}
+              <p v-if="job.scheduled_start" class="text-xs text-slate-500 mt-1">
+                Started {{ formatDate(job.scheduled_start) }}
               </p>
+              <p class="text-xs text-slate-500 mt-1">Deposit: {{ formatCurrency(job.deposit_amount) }}</p>
             </div>
           </div>
         </section>
 
         <!-- Completed -->
-        <section v-if="grouped.completed.length">
+        <section v-if="filteredGroups.completed.length">
           <h2 class="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-500">
             Completed
           </h2>
           <div class="space-y-3">
             <div
-              v-for="job in grouped.completed"
+              v-for="job in filteredGroups.completed"
               :key="job.id"
               class="cursor-pointer rounded-2xl border border-slate-200 bg-white p-4 shadow-sm opacity-80 hover:bg-slate-50"
               @click="openJob(job)"
             >
               <div class="flex justify-between">
-                <p class="font-semibold text-slate-900">{{ job.approved_option }}</p>
+                <div>
+                  <p class="font-semibold text-slate-900">{{ job.approved_option }}</p>
+                  <p class="text-xs text-slate-500">Job {{ shortenId(job.id) }}</p>
+                </div>
                 <span class="text-xs rounded-full bg-slate-200 px-2 py-1 font-semibold text-slate-700">
                   Completed
                 </span>
               </div>
-              <p class="text-xs text-slate-500 mt-1">
-                Completed {{ new Date(job.scheduled_end || job.created_at).toLocaleDateString() }}
+              <p v-if="job.scheduled_start" class="text-xs text-slate-500 mt-1">
+                Scheduled start {{ formatDate(job.scheduled_start) }}
               </p>
+              <p class="text-xs text-slate-500 mt-1">
+                Completed {{ formatDate(job.scheduled_end || job.created_at) }}
+              </p>
+              <p class="text-xs text-slate-500 mt-1">Deposit: {{ formatCurrency(job.deposit_amount) }}</p>
             </div>
           </div>
         </section>
