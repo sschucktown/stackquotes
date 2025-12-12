@@ -211,6 +211,7 @@ const router = createRouter({
     {
       path: "/prototype/client/schedule",
       name: "ClientSchedule",
+      alias: "/prototype/client/schedule/:id",
       component: () => import("@/pages/prototype/client/schedule.vue"),
       meta: { public: true, allowAuthenticated: true },
     },
@@ -595,4 +596,3 @@ router.beforeEach(async (to) => {
 });
 
 export default router;
-
