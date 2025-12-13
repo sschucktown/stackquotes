@@ -260,6 +260,18 @@ const router = createRouter({
       meta: { public: true, allowAuthenticated: true },
     },
     {
+      path: "/prototype/hq/projects/job",
+      name: "ContractorHQJobView",
+      component: () => import("@/prototype/contractor/JobView.vue"),
+      meta: { public: true, allowAuthenticated: true },
+    },
+    {
+      path: "/prototype/hq/projects/job/timeline",
+      name: "ContractorHQJobTimeline",
+      component: () => import("@/prototype/hq/projects/JobTimeline.vue"),
+      meta: { public: true, allowAuthenticated: true },
+    },
+    {
       path: "/prototype/hq/schedule/confirm",
       name: "ScheduleConfirmPrototype",
       component: () => import("@/prototype/hq/schedule/ScheduleConfirm.vue"),

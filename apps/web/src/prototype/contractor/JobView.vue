@@ -60,6 +60,17 @@
                 <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700 shadow-inner">
                   ID: {{ job.id }}
                 </span>
+
+                <button
+                  type="button"
+                  class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-slate-50"
+                  @click="goToTimeline"
+                >
+                  View Timeline
+                  <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M12 5l7 7-7 7" />
+                  </svg>
+                </button>
               </div>
 
               <p class="text-sm text-slate-600">
@@ -292,7 +303,19 @@ const loading = ref(true);
 const error = ref(false);
 
 // Accepts both `/job-view?id=x` AND `/job-view/:id`
-const jobId = computed(() => (route.query.id as string) || (route.params.id as string));
+const getQueryValue = (key: string) => {
+  const value = route.query[key];
+  return Array.isArray(value) ? value[0] : (value as string | undefined);
+};
+
+const jobId = computed(
+  () =>
+    getQueryValue("job") ||
+    getQueryValue("job_id") ||
+    getQueryValue("id") ||
+    (route.params.id as string | undefined) ||
+    ""
+);
 
 /* -------------------------------
    STATUS BADGE
@@ -367,6 +390,12 @@ const handlePrimaryAction = () => {
       console.log("Mark complete — coming soon");
       break;
   }
+};
+
+const goToTimeline = () => {
+  const id = job.value?.id || jobId.value;
+  if (!id) return;
+  router.push({ path: "/prototype/hq/projects/job/timeline", query: { job: id } });
 };
 
 /* -------------------------------
