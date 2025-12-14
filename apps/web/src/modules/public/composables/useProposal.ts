@@ -1,8 +1,16 @@
 import { ref, computed } from "vue";
 import { supabase } from "@/lib/supabase";
 import { apiFetch } from "@/lib/http";
-import type { ApiResponse, Estimate, Proposal, ProposalDepositConfig } from "@stackquotes/types";
+import type {
+  ApiResponse,
+  Estimate,
+  Proposal,
+  ProposalDepositConfig,
+} from "@stackquotes/types";
 
+/* -----------------------------
+   Types
+-------------------------------- */
 export type UnifiedType = "estimate" | "proposal";
 
 export interface PublicEstimatePayload {
@@ -43,20 +51,19 @@ export interface UnifiedProposalState {
   id: string | null;
   status: string | null;
 
+  // Estimate (QuickQuote)
   estimateToken: string | null;
   estimatePayload: PublicEstimatePayload | null;
 
-  linkedProposalId: string | null;
-  linkedProposalToken: string | null;
-
+  // Proposal
   proposalToken: string | null;
   proposalPayload: PublicProposalPayload | null;
 }
 
-const UUID_REGEX =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-
-export function useProposal(idOrToken: string) {
+/* -----------------------------
+   Composable
+-------------------------------- */
+export function useProposal(identifier: string) {
   const loading = ref(false);
   const error = ref<string | null>(null);
 
@@ -64,13 +71,8 @@ export function useProposal(idOrToken: string) {
     kind: null,
     id: null,
     status: null,
-
     estimateToken: null,
     estimatePayload: null,
-
-    linkedProposalId: null,
-    linkedProposalToken: null,
-
     proposalToken: null,
     proposalPayload: null,
   });
@@ -79,9 +81,12 @@ export function useProposal(idOrToken: string) {
   const isProposal = computed(() => state.value.kind === "proposal");
   const proposalDisplayPayload = computed(() => state.value.proposalPayload);
 
+  /* -----------------------------
+     Load
+  -------------------------------- */
   const load = async () => {
-    const identifier = (idOrToken ?? "").toString().trim();
-    if (!identifier) {
+    const value = (identifier ?? "").trim();
+    if (!value) {
       error.value = "Not found";
       return;
     }
@@ -90,118 +95,69 @@ export function useProposal(idOrToken: string) {
     error.value = null;
 
     try {
-      const isUuid = UUID_REGEX.test(identifier);
-
-      /* -------------------------------------------------
-         1) UUID PATH — internal proposal ID FIRST
-         ------------------------------------------------- */
-      if (isUuid) {
-        const sp = await supabase
-          .from("smart_proposals")
-          .select(
-            "id, status, public_token, quickquote_id, accepted_option, payment_link_url, user_id, client_id, title, description"
-          )
-          .eq("id", identifier)
-          .maybeSingle();
-
-        if (sp.data) {
-          const proposalId = sp.data.id as string;
-          const token = (sp.data as any).public_token as string | null;
-
-          state.value.kind = "proposal";
-          state.value.id = proposalId;
-          state.value.status = (sp.data as any).status ?? null;
-          state.value.proposalToken = token;
-          state.value.linkedProposalId = proposalId;
-          state.value.linkedProposalToken = token;
-
-          if (token) {
-            const res = await apiFetch<PublicProposalPayload>(
-              `/share/proposal/${encodeURIComponent(token)}`
-            );
-            if (!res.error) {
-              state.value.proposalPayload = res.data ?? null;
-              return;
-            }
-          }
-        }
-      }
-
-      /* -------------------------------------------------
-         2) TOKEN PATH — public proposal links
-         ------------------------------------------------- */
-      const publicRes = await apiFetch<PublicProposalPayload>(
-        `/share/proposal/${encodeURIComponent(identifier)}`
+      /* ---------------------------------
+         1) Try PUBLIC PROPOSAL (token)
+         --------------------------------- */
+      const proposalRes = await apiFetch<PublicProposalPayload>(
+        `/share/proposal/${encodeURIComponent(value)}`
       );
 
-      if (!publicRes.error && publicRes.data) {
-        const proposal = publicRes.data.proposal;
+      if (!proposalRes.error && proposalRes.data) {
+        const proposal = proposalRes.data.proposal;
 
-        state.value.kind = "proposal";
-        state.value.id = proposal.id;
-        state.value.status = (proposal as any).status ?? null;
-        state.value.proposalToken = proposal.publicToken ?? identifier;
-        state.value.linkedProposalId = proposal.id;
-        state.value.linkedProposalToken = proposal.publicToken ?? identifier;
-        state.value.proposalPayload = publicRes.data;
+        state.value = {
+          kind: "proposal",
+          id: proposal.id,
+          status: proposal.status ?? null,
+          estimateToken: null,
+          estimatePayload: null,
+          proposalToken: proposal.publicToken ?? value,
+          proposalPayload: proposalRes.data,
+        };
+
         return;
       }
 
-      /* -------------------------------------------------
-         3) ESTIMATE FALLBACK — legacy / QuickQuote
-         ------------------------------------------------- */
+      /* ---------------------------------
+         2) Try ESTIMATE by internal ID
+         --------------------------------- */
       const est = await supabase
         .from("estimates")
         .select(
-          "id, status, approval_token, converted_to_proposal, user_id, client_id, project_title, subtotal, tax, total, notes"
+          "id, status, approval_token, user_id, client_id, project_title"
         )
-        .eq("id", identifier)
+        .eq("id", value)
         .maybeSingle();
 
       if (est.data) {
-        const estimateId = est.data.id as string;
-        const token = (est.data as any).approval_token as string | null;
+        const token = est.data.approval_token ?? null;
 
-        state.value.kind = "estimate";
-        state.value.id = estimateId;
-        state.value.status = (est.data as any).status ?? null;
-        state.value.estimateToken = token;
+        state.value = {
+          kind: "estimate",
+          id: est.data.id,
+          status: est.data.status ?? null,
+          estimateToken: token,
+          estimatePayload: null,
+          proposalToken: null,
+          proposalPayload: null,
+        };
 
+        // Load public estimate payload if token exists
         if (token) {
-          const res = await apiFetch<PublicEstimatePayload>(
+          const estRes = await apiFetch<PublicEstimatePayload>(
             `/share/estimate/${encodeURIComponent(token)}`
           );
-          if (!res.error) {
-            state.value.estimatePayload = res.data ?? null;
-          }
-        }
-
-        const linked = await supabase
-          .from("smart_proposals")
-          .select("id, public_token, status")
-          .eq("quickquote_id", estimateId)
-          .maybeSingle();
-
-        if (linked.data) {
-          state.value.linkedProposalId = linked.data.id as string;
-          state.value.linkedProposalToken =
-            (linked.data as any).public_token as string | null;
-
-          if (state.value.linkedProposalToken) {
-            const res2 = await apiFetch<PublicProposalPayload>(
-              `/share/proposal/${encodeURIComponent(
-                state.value.linkedProposalToken
-              )}`
-            );
-            if (!res2.error) {
-              state.value.proposalPayload = res2.data ?? null;
-            }
+          if (!estRes.error) {
+            state.value.estimatePayload = estRes.data ?? null;
           }
         }
 
         return;
       }
 
+      /* ---------------------------------
+         Not found
+         --------------------------------- */
       error.value = "Not found";
     } catch (e: any) {
       console.error(e);
@@ -211,13 +167,18 @@ export function useProposal(idOrToken: string) {
     }
   };
 
+  /* -----------------------------
+     Actions
+  -------------------------------- */
   const approveEstimate = async (approverName?: string | null) => {
     if (!state.value.estimateToken) {
       return { error: "Missing estimate token" } as ApiResponse<unknown>;
     }
 
     const res = await apiFetch(
-      `/share/estimate/${encodeURIComponent(state.value.estimateToken)}/approve`,
+      `/share/estimate/${encodeURIComponent(
+        state.value.estimateToken
+      )}/approve`,
       {
         method: "POST",
         body: JSON.stringify({ name: approverName ?? null }),
