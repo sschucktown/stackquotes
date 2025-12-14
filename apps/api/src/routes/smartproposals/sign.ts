@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { requireUser } from "../../lib/auth.js";
 import { getServiceClient } from "../../lib/supabase.js";
+import { createJobEvent, JOB_EVENT_TYPES } from "../../lib/jobEvents.js";
 
 export const signRouter = new Hono();
 
@@ -137,6 +138,19 @@ signRouter.post("/", async (c) => {
       { error: "Failed to create job for signed proposal", details: jobErr },
       500
     );
+  }
+
+  try {
+    await createJobEvent(supabase, {
+      jobId: job.id,
+      type: JOB_EVENT_TYPES.JOB_CREATED,
+      actor: "system",
+      title: "Job created",
+      description: "Project created from signed proposal",
+    });
+  } catch (eventError) {
+    console.error("[smartproposals/sign] failed to record JOB_CREATED event", eventError);
+    return c.json({ error: "Failed to record job event", details: eventError }, 500);
   }
 
   return c.json({

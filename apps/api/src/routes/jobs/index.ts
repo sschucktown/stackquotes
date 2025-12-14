@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { getServiceClient } from "../../lib/supabase.js";
 import { requireUser } from "../../lib/auth.js";
+import { createJobEvent, listJobEventsForJob, JOB_EVENT_TYPES } from "../../lib/jobEvents.js";
 
 export const jobsRouter = new Hono();
 
@@ -71,6 +72,19 @@ jobsRouter.post("/", async (c) => {
     return c.json({ error: "Failed to create job", details: error }, 500);
   }
 
+  try {
+    await createJobEvent(supabase, {
+      jobId: data.id,
+      type: JOB_EVENT_TYPES.JOB_CREATED,
+      actor: "system",
+      title: "Job created",
+      description: "Project created from signed proposal",
+    });
+  } catch (eventError) {
+    console.error("[jobs] failed to record JOB_CREATED event", eventError);
+    return c.json({ error: "Failed to record job event", details: eventError }, 500);
+  }
+
   return c.json({ job: data });
 });
 
@@ -121,6 +135,43 @@ jobsRouter.get("/:id", async (c) => {
 });
 
 /* -------------------------------
+   GET /api/jobs/:id/events
+   Fetch timeline events for a job
+-------------------------------- */
+jobsRouter.get("/:id/events", async (c) => {
+  const user = await requireUser(c);
+  const supabase = getServiceClient();
+  const jobId = c.req.param("id");
+
+  const { data: job, error: jobError } = await supabase
+    .from("jobs")
+    .select("id, contractor_id")
+    .eq("id", jobId)
+    .maybeSingle();
+
+  if (jobError || !job || job.contractor_id !== user.id) {
+    return c.json({ error: "Job not found" }, 404);
+  }
+
+  try {
+    const events = await listJobEventsForJob(supabase, jobId);
+    return c.json({
+      events: events.map(({ id, type, actor, title, description, created_at }) => ({
+        id,
+        type,
+        actor,
+        title,
+        description: description ?? null,
+        created_at,
+      })),
+    });
+  } catch (eventError) {
+    console.error("[jobs] failed to load events", eventError);
+    return c.json({ error: "Failed to load job events", details: eventError }, 500);
+  }
+});
+
+/* -------------------------------
    PATCH /api/jobs/:id/schedule
    Set start/end dates
 -------------------------------- */
@@ -157,6 +208,19 @@ jobsRouter.patch("/:id/schedule", async (c) => {
   if (error) {
     console.error("Schedule update error:", error);
     return c.json({ error: "Failed to schedule job", details: error }, 500);
+  }
+
+  try {
+    await createJobEvent(supabase, {
+      jobId: data.id,
+      type: JOB_EVENT_TYPES.JOB_SCHEDULED,
+      actor: "contractor",
+      title: "Job scheduled",
+      description: "Start date scheduled",
+    });
+  } catch (eventError) {
+    console.error("[jobs] failed to record JOB_SCHEDULED event", eventError);
+    return c.json({ error: "Failed to record job event", details: eventError }, 500);
   }
 
   return c.json({ job: data });
