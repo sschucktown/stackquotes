@@ -30,7 +30,7 @@ signRouter.post("/", async (c) => {
 
   const { accepted_option, signature_image } = parsed;
 
-  // 1) Fetch the proposal (we need contractor_id, client_id, line_items, deposit_amount)
+  // 1) Fetch proposal
   const { data: proposal, error: fetchErr } = await supabase
     .from("smart_proposals")
     .select("id, contractor_id, client_id, line_items, deposit_amount")
@@ -41,7 +41,7 @@ signRouter.post("/", async (c) => {
     return c.json({ error: "Proposal not found", details: fetchErr }, 404);
   }
 
-  // 2) Compute approved price from line_items.options (best-effort)
+  // 2) Compute approved price (best effort)
   let approvedPrice = 0;
   try {
     const payload: any = proposal.line_items;
@@ -49,22 +49,13 @@ signRouter.post("/", async (c) => {
     const lower = accepted_option.toLowerCase();
 
     const matched =
-      options.find(
-        (o: any) => (o?.name ?? "").toString().toLowerCase() === lower
-      ) ||
-      options.find(
-        (o: any) => (o?.name ?? "").toString().toLowerCase() === "better"
-      ) ||
-      options[0] ||
-      null;
+      options.find((o: any) => (o?.name ?? "").toLowerCase() === lower) ||
+      options.find((o: any) => (o?.name ?? "").toLowerCase() === "better") ||
+      options[0];
 
-    const raw =
-      matched?.subtotal ??
-      matched?.price ??
-      matched?.total ??
-      0;
-
-    approvedPrice = Number(raw) || 0;
+    approvedPrice = Number(
+      matched?.subtotal ?? matched?.price ?? matched?.total ?? 0
+    ) || 0;
   } catch {
     approvedPrice = 0;
   }
@@ -74,11 +65,11 @@ signRouter.post("/", async (c) => {
       ? Number(proposal.deposit_amount)
       : null;
 
-  // 3) Convert Base64 → Buffer and upload signature
+  // 3) Upload signature
   const base64Data = signature_image.split(",")[1];
   const buffer = Buffer.from(base64Data, "base64");
-
   const filename = `${proposalId}.png`;
+
   const { error: uploadErr } = await supabase.storage
     .from("proposal-signatures")
     .upload(filename, buffer, {
@@ -87,10 +78,7 @@ signRouter.post("/", async (c) => {
     });
 
   if (uploadErr) {
-    return c.json(
-      { error: "Signature upload failed", details: uploadErr },
-      500
-    );
+    return c.json({ error: "Signature upload failed", details: uploadErr }, 500);
   }
 
   const { data: publicUrlData } = supabase.storage
@@ -100,7 +88,7 @@ signRouter.post("/", async (c) => {
   const signatureUrl = publicUrlData.publicUrl;
   const nowIso = new Date().toISOString();
 
-  // 4) Update proposal state
+  // 4) Update proposal
   const { error: updateErr } = await supabase
     .from("smart_proposals")
     .update({
@@ -112,13 +100,10 @@ signRouter.post("/", async (c) => {
     .eq("id", proposalId);
 
   if (updateErr) {
-    return c.json(
-      { error: "Failed to update proposal", details: updateErr },
-      500
-    );
+    return c.json({ error: "Failed to update proposal", details: updateErr }, 500);
   }
 
-  // 5) Create Job row
+  // 5) Create job (PRIMARY PATH)
   const { data: job, error: jobErr } = await supabase
     .from("jobs")
     .insert({
@@ -128,6 +113,7 @@ signRouter.post("/", async (c) => {
       approved_option: accepted_option,
       approved_price: approvedPrice,
       deposit_amount: depositAmount,
+      approved_at: nowIso,
       status: "pending",
     })
     .select()
@@ -140,6 +126,7 @@ signRouter.post("/", async (c) => {
     );
   }
 
+  // 6) Record job event (NON-BLOCKING)
   try {
     await createJobEvent(supabase, {
       jobId: job.id,
@@ -148,9 +135,8 @@ signRouter.post("/", async (c) => {
       title: "Job created",
       description: "Project created from signed proposal",
     });
-  } catch (eventError) {
-    console.error("[smartproposals/sign] failed to record JOB_CREATED event", eventError);
-    return c.json({ error: "Failed to record job event", details: eventError }, 500);
+  } catch (err) {
+    console.error("[sign] Failed to record JOB_CREATED event", err);
   }
 
   return c.json({
