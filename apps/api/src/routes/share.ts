@@ -1,3 +1,8 @@
+import { Hono } from "hono";
+import { getServiceClient } from "../lib/supabase.js";
+
+export const shareRouter = new Hono();
+
 shareRouter.get("/proposal/id/:id", async (c) => {
   const id = c.req.param("id");
   const supabase = getServiceClient();
@@ -33,3 +38,5 @@ shareRouter.get("/proposal/id/:id", async (c) => {
     proposal,
   });
 });
+
+export default shareRouter;
