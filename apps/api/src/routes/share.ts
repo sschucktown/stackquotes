@@ -13,10 +13,7 @@ shareRouter.get("/proposal/:token", async (c) => {
   const supabase = getServiceClient();
 
   if (!token) {
-    return c.json(
-      { error: "Invalid proposal link" },
-      400
-    );
+    return c.json({ error: "Invalid proposal link" }, 400);
   }
 
   const { data: proposal, error } = await supabase
@@ -31,6 +28,10 @@ shareRouter.get("/proposal/:token", async (c) => {
       client_id,
       contractor_id,
       payment_link_url,
+      deposit_config,
+      deposit_amount,
+      options,
+      totals,
       created_at,
       signed_at
     `)
@@ -44,9 +45,36 @@ shareRouter.get("/proposal/:token", async (c) => {
     );
   }
 
+  /**
+   * IMPORTANT:
+   * This response shape MUST match PublicProposalPayload
+   * used by useProposal()
+   */
   return c.json({
     data: {
-      proposal,
+      proposal: {
+        ...proposal,
+        acceptedOption: proposal.accepted_option ?? null,
+        paymentLinkUrl: proposal.payment_link_url ?? null,
+        depositConfig: proposal.deposit_config ?? null,
+      },
+
+      contractor: null,
+      client: null,
+
+      deposit: {
+        amount: proposal.deposit_amount ?? null,
+        config: proposal.deposit_config ?? null,
+      },
+
+      paymentLinkUrl: proposal.payment_link_url ?? null,
+
+      plan: {
+        tier: "launch",
+        allowMultiOptions: true,
+        wowPortalEnabled: true,
+        inTrial: false,
+      },
     },
   });
 });
