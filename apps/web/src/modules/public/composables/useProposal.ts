@@ -105,17 +105,17 @@ export function useProposal(publicToken: string) {
       state.value = {
         kind: "proposal",
         proposalId: normalizedProposal.id,
-        proposalToken: normalizedProposal.public_token ?? token,
+        proposalToken: normalizedProposal.publicToken ?? token,
         status: normalizedProposal.status ?? null,
         proposalPayload: {
           proposal: normalizedProposal,
           contractor: null,
           client: null,
           deposit: {
-            amount: normalizedProposal.deposit_locked ?? null,
+            amount: normalizedProposal.depositAmount ?? null,
             config: normalizedProposal.depositConfig,
           },
-          paymentLinkUrl: normalizedProposal.payment_link_url ?? null,
+          paymentLinkUrl: normalizedProposal.paymentLinkUrl ?? null,
         },
       };
     } catch (e) {
