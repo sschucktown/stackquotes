@@ -4,7 +4,7 @@
 
       <!-- Loading -->
       <div v-if="loading" class="flex h-48 items-center justify-center text-slate-500">
-        Loading proposal...
+        Loading proposal…
       </div>
 
       <!-- Error -->
@@ -46,7 +46,7 @@
             :disabled="submitting"
             @click="accept"
           >
-            {{ submitting ? "Submitting..." : "Accept Proposal" }}
+            {{ submitting ? "Submitting…" : "Accept Proposal" }}
           </button>
         </section>
       </div>
@@ -71,12 +71,12 @@ import { useProposal } from "@/modules/public/composables/useProposal";
    Route
 ---------------------------- */
 const route = useRoute();
-const token = String(route.params.id ?? "");
+const token = String(route.params.token);
 
 /* ----------------------------
    Composable (GUARDED)
 ---------------------------- */
-const proposalComposable = useProposal(token);
+const proposalComposable = useProposal(token.value);
 
 if (!proposalComposable) {
   throw new Error("useProposal composable failed to initialize");
@@ -86,14 +86,15 @@ const {
   loading,
   error,
   proposalDisplayPayload,
-  load,
+  load
 } = proposalComposable;
 
 /* ----------------------------
    Lifecycle
 ---------------------------- */
 onMounted(() => {
-  if (token) {
+    console.log("🔑 Proposal token from route:", token);
+  if (token.value) {
     load();
   }
 });
