@@ -3,21 +3,25 @@ import { getServiceClient } from "../lib/supabase.js";
 
 export const shareRouter = new Hono();
 
-shareRouter.get("/proposal/id/:id", async (c) => {
-  const id = c.req.param("id");
+/**
+ * GET /api/share/proposal/:token
+ * Public, client-safe proposal fetch
+ */
+shareRouter.get("/proposal/:token", async (c) => {
+  const token = c.req.param("token");
   const supabase = getServiceClient();
 
-  if (!id) {
-    c.status(400);
-    return c.json({ error: "Invalid proposal id" });
+  if (!token) {
+    return c.json({ error: "Invalid proposal link" }, 400);
   }
 
-  const { data: proposal, error } = await supabase
+  const { data, error } = await supabase
     .from("smart_proposals")
     .select(`
       id,
+      public_token,
       status,
-      signed_option,
+      accepted_option,
       title,
       description,
       client_id,
@@ -26,16 +30,18 @@ shareRouter.get("/proposal/id/:id", async (c) => {
       created_at,
       signed_at
     `)
-    .eq("id", id)
-    .single();
+    .eq("public_token", token)
+    .maybeSingle();
 
-  if (error || !proposal) {
-    c.status(404);
-    return c.json({ error: "Proposal not found" });
+  if (error || !data) {
+    return c.json(
+      { error: "This proposal link is invalid or has expired." },
+      404
+    );
   }
 
   return c.json({
-    proposal,
+    proposal: data,
   });
 });
 
