@@ -129,8 +129,8 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
 import { useRoute } from "vue-router";
-import { useProposal } from "@modules/public/composables/useProposal";
-import { acceptPublicProposal } from "@modules/public/api/proposal";
+import { useProposal } from "../../modules/public/composables/useProposal";
+import { acceptPublicProposal } from "@/modules/public/api/proposal";
 import ClientPackageCard from "@/modules/proposals/components/ClientPackageCard.vue";
 import CommentsPanel from "@/modules/smartproposal/components/CommentsPanel.vue";
 import type { ProposalOption } from "@stackquotes/types";
@@ -148,7 +148,7 @@ onMounted(load);
 /* ---------------------------
    Normalized data
 --------------------------- */
-const proposal = computed(() => proposalDisplayPayload.value?.proposal ?? null);
+const proposal = computed(() => proposalRef.value);
 const contractor = computed(() => proposalDisplayPayload.value?.contractor ?? null);
 const paymentLinkUrl = computed(() => proposalDisplayPayload.value?.paymentLinkUrl ?? null);
 
