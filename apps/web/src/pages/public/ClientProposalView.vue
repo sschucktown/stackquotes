@@ -93,6 +93,7 @@ const {
    Lifecycle
 ---------------------------- */
 onMounted(() => {
+    console.log("🔑 Proposal token from route:", token);
   if (token.value) {
     load();
   }
