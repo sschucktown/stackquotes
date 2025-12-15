@@ -64,7 +64,7 @@ const router = createRouter({
       meta: { public: true, allowAuthenticated: true },
     },
     {
-      path: "/proposal/:id",
+      path: "/proposal/:token",
       name: "public-proposal",
       component: () => import("@/pages/public/ClientProposalView.vue"),
       props: true,
