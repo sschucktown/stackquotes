@@ -39,16 +39,18 @@
             <h2 class="text-lg font-semibold text-slate-900">
               {{ proposal.title }}
             </h2>
-            <span class="rounded-full px-3 py-1 text-xs font-semibold"
+            <span
+              class="rounded-full px-3 py-1 text-xs font-semibold"
               :class="statusClass"
             >
               {{ statusLabel }}
             </span>
           </div>
 
-          <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <!-- Options -->
+          <div v-if="options.length" class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             <ClientPackageCard
-              v-for="opt in proposal.options"
+              v-for="opt in options"
               :key="opt.name"
               :option="opt"
               :selected="opt.name === selectedOptionName"
@@ -58,19 +60,22 @@
           </div>
 
           <!-- Selected summary -->
-          <div class="mt-4 rounded-2xl border bg-slate-50 p-4">
+          <div
+            v-if="selectedOption"
+            class="mt-4 rounded-2xl border bg-slate-50 p-4"
+          >
             <div class="flex items-center justify-between">
               <div>
                 <div class="text-sm font-semibold text-slate-900">
-                  {{ selectedOption?.name }}
+                  {{ selectedOption.name }}
                 </div>
                 <div class="text-xs text-slate-600">
-                  {{ selectedOption?.summary }}
+                  {{ selectedOption.summary }}
                 </div>
               </div>
               <div class="text-right">
                 <div class="text-xl font-semibold text-slate-900">
-                  {{ currency(selectedOption?.subtotal) }}
+                  {{ currency(selectedOption.subtotal) }}
                 </div>
                 <div v-if="selectedDeposit" class="text-xs text-slate-600">
                   Deposit: {{ currency(selectedDeposit) }}
@@ -111,12 +116,11 @@
 
         <!-- Comments -->
         <CommentsPanel
-          v-if="proposal.publicToken"
+          v-if="proposal.public_token"
           :proposal-id="proposal.id"
-          :token="proposal.publicToken"
+          :token="proposal.public_token"
           mode="client"
         />
-
       </div>
     </div>
   </div>
@@ -135,37 +139,53 @@ import type { ProposalOption } from "@stackquotes/types";
    Setup
 --------------------------- */
 const route = useRoute();
-const token = String(route.params.token ?? "");
+const token = String(route.params.id ?? "");
 
-const { loading, error, state, proposalDisplayPayload, load } =
-  useProposal(token);
+const { loading, error, proposalDisplayPayload, load } = useProposal(token);
 
 onMounted(load);
 
 /* ---------------------------
-   Derived state
+   Normalized data
 --------------------------- */
 const proposal = computed(() => proposalDisplayPayload.value?.proposal ?? null);
 const contractor = computed(() => proposalDisplayPayload.value?.contractor ?? null);
 const paymentLinkUrl = computed(() => proposalDisplayPayload.value?.paymentLinkUrl ?? null);
 
+const options = computed<ProposalOption[]>(() => {
+  return proposal.value?.line_items?.options ?? [];
+});
+
+const depositConfig = computed(() => {
+  return proposal.value?.deposit_config ?? null;
+});
+
+/* ---------------------------
+   Selection state
+--------------------------- */
 const selectedOptionName = ref<string | null>(null);
 const submitting = ref(false);
 const acceptError = ref<string | null>(null);
 const acceptMessage = ref<string | null>(null);
 
 const selectedOption = computed<ProposalOption | null>(() => {
-  return proposal.value?.options.find(o => o.name === selectedOptionName.value)
-    ?? proposal.value?.options[0]
-    ?? null;
+  if (!options.value.length) return null;
+  return (
+    options.value.find(o => o.name === selectedOptionName.value)
+    ?? options.value[0]
+  );
 });
 
 const selectedDeposit = computed(() => {
-  if (!selectedOption.value) return null;
-  const config = proposal.value?.depositConfig;
-  if (!config) return null;
-  if (config.type === "fixed") return config.value;
-  return Math.round(selectedOption.value.subtotal * (config.value / 100));
+  if (!selectedOption.value || !depositConfig.value) return null;
+
+  if (depositConfig.value.type === "fixed") {
+    return depositConfig.value.value;
+  }
+
+  return Math.round(
+    selectedOption.value.subtotal * (depositConfig.value.value / 100)
+  );
 });
 
 /* ---------------------------
@@ -198,7 +218,7 @@ const selectOption = (name: string) => {
 };
 
 const accept = async () => {
-  if (!proposal.value?.publicToken || !selectedOption.value) return;
+  if (!proposal.value?.public_token || !selectedOption.value) return;
 
   submitting.value = true;
   acceptError.value = null;
@@ -206,7 +226,7 @@ const accept = async () => {
 
   try {
     await acceptPublicProposal(
-      proposal.value.publicToken,
+      proposal.value.public_token,
       selectedOption.value.name
     );
     acceptMessage.value = "Thanks! Your selection has been saved.";
