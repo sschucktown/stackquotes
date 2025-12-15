@@ -1,5 +1,5 @@
 import { ref, computed } from "vue";
-import { apiFetch } from "@/lib/http";
+import { apiFetch } from "@/lib/http.ts";
 import type {
   Proposal,
   ProposalDepositConfig,
