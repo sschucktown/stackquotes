@@ -8,8 +8,6 @@ export const shareRouter = new Hono();
  * URL: /api/share/proposal/:token
  */
 shareRouter.get("/proposal/:token", async (c) => {
-
-  // 🔥 ADD THIS LINE (FIRST LINE INSIDE HANDLER)
   console.log("🔥 SHARE ROUTE HIT:", c.req.path);
 
   const token = c.req.param("token");
@@ -21,16 +19,35 @@ shareRouter.get("/proposal/:token", async (c) => {
     .eq("public_token", token)
     .maybeSingle();
 
-  if (!proposal) {
+  if (error || !proposal) {
     return c.json(
       { error: "This proposal link is invalid or has expired." },
       404
     );
   }
 
+  // 🔑 SHAPE MATCHES useProposal EXPECTATION
   return c.json({
     data: {
       proposal,
+      contractor: {
+        businessName: null,
+        accentColor: null,
+        logoUrl: null,
+        email: null,
+      },
+      client: null,
+      deposit: {
+        amount: proposal.deposit_amount ?? null,
+        config: proposal.deposit_config ?? null,
+      },
+      paymentLinkUrl: proposal.payment_link_url ?? null,
+      plan: {
+        tier: "launch",
+        allowMultiOptions: true,
+        wowPortalEnabled: true,
+        inTrial: false,
+      },
     },
   });
 });
