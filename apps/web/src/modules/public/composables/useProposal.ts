@@ -1,8 +1,6 @@
 import { ref, computed } from "vue";
 import { apiFetch } from "@/lib/http";
 import type {
-  ApiResponse,
-  Estimate,
   Proposal,
   ProposalDepositConfig,
 } from "@stackquotes/types";
@@ -10,8 +8,6 @@ import type {
 /* ----------------------------------
    Types
 ---------------------------------- */
-
-export type UnifiedType = "proposal";
 
 export interface PublicProposalContractorBranding {
   businessName: string | null;
@@ -39,12 +35,11 @@ export interface PublicProposalPayload {
   } | null;
 }
 
-export interface UnifiedProposalState {
-  kind: UnifiedType | null;
+export interface ProposalState {
   proposalId: string | null;
   proposalToken: string | null;
   status: string | null;
-  proposalPayload: PublicProposalPayload | null;
+  payload: PublicProposalPayload | null;
 }
 
 /* ----------------------------------
@@ -55,19 +50,18 @@ export function useProposal(publicToken: string) {
   const loading = ref(false);
   const error = ref<string | null>(null);
 
-  const state = ref<UnifiedProposalState>({
-    kind: null,
+  const state = ref<ProposalState>({
     proposalId: null,
     proposalToken: null,
     status: null,
-    proposalPayload: null,
+    payload: null,
   });
 
-  const isProposal = computed(() => state.value.kind === "proposal");
-  const proposalDisplayPayload = computed(() => state.value.proposalPayload);
+  const isLoaded = computed(() => Boolean(state.value.payload));
+  const proposalDisplayPayload = computed(() => state.value.payload);
 
   /* ----------------------------------
-     Load proposal (TOKEN ONLY)
+     Load proposal (PUBLIC TOKEN ONLY)
   ---------------------------------- */
   const load = async () => {
     const token = publicToken?.trim();
@@ -92,13 +86,15 @@ export function useProposal(publicToken: string) {
 
       const proposal = res.data.proposal;
 
-      state.value.kind = "proposal";
       state.value.proposalId = proposal.id;
       state.value.proposalToken = proposal.publicToken ?? token;
       state.value.status = proposal.status ?? null;
-      state.value.proposalPayload = res.data;
-    } catch (e: any) {
-      console.error("[useProposal] load failed:", e);
+      state.value.payload = res.data;
+
+      // 🔥 IMPORTANT: ensure stale error is cleared
+      error.value = null;
+    } catch (err) {
+      console.error("[useProposal] Failed to load proposal:", err);
       error.value = "Failed to load proposal.";
     } finally {
       loading.value = false;
@@ -109,7 +105,7 @@ export function useProposal(publicToken: string) {
     loading,
     error,
     state,
-    isProposal,
+    isLoaded,
     proposalDisplayPayload,
     load,
   };
