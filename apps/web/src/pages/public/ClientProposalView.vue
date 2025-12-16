@@ -34,8 +34,10 @@ onMounted(() => {
 /* ----------------------------
    Typed derived state (CRITICAL FIX)
 ---------------------------- */
-const proposal = computed<PublicProposal | null>(() => {
-  return proposalDisplayPayload.value?.proposal ?? null;
+const proposal = computed(() => {
+  const p = proposalDisplayPayload.value?.proposal;
+  if (!p || !p.publicToken) return null;
+  return p;
 });
 
 const contractor = computed(() => {
