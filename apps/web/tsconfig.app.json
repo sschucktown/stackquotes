@@ -1,15 +1,11 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
+    "composite": true,
     "outDir": "dist",
-    "rootDir": "../..",
+    "types": ["node", "vite/client"],
     "jsx": "preserve",
-
-    "composite": false,
-    "noEmit": false,
-    "emitDeclarationOnly": false,
-
-    "types": ["node", "vite/client"]
+    "rootDir": "../.."
   },
   "include": [
     "src/**/*",
