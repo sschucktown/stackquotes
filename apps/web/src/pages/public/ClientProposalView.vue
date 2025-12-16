@@ -9,6 +9,8 @@ import {
 } from "@/modules/proposals/utils/visualAssets";
 import { acceptPublicProposal } from "@/modules/public/api/proposal";
 import { useProposal } from "@/modules/public/composables/useProposal";
+import type { PublicProposal } from "@/modules/public/types/publicProposal";
+
 
 /* ----------------------------
    Route
@@ -32,7 +34,7 @@ onMounted(() => {
 /* ----------------------------
    Typed derived state (CRITICAL FIX)
 ---------------------------- */
-const proposal = computed<Proposal | null>(() => {
+const proposal = computed<PublicProposal | null>(() => {
   return proposalDisplayPayload.value?.proposal ?? null;
 });
 
