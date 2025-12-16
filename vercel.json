@@ -7,11 +7,21 @@
   "installCommand": "pnpm install --no-frozen-lockfile",
   "buildCommand": "pnpm run vercel-build",
   "outputDirectory": "apps/web/dist",
+
   "routes": [
     {
       "src": "/api/(.*)",
       "dest": "api/index.js"
     },
+
+    {
+      "src": "/assets/(.*)",
+      "headers": {
+        "cache-control": "public, max-age=31536000, immutable"
+      },
+      "dest": "/assets/$1"
+    },
+
     {
       "src": "/(.*)",
       "dest": "/index.html"
