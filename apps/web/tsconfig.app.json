@@ -2,12 +2,14 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "dist",
-    "types": [
-      "node",
-      "vite/client"
-    ],
+    "rootDir": "../..",
     "jsx": "preserve",
-    "rootDir": "../.."
+
+    "composite": false,
+    "noEmit": false,
+    "emitDeclarationOnly": false,
+
+    "types": ["node", "vite/client"]
   },
   "include": [
     "src/**/*",

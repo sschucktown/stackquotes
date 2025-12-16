@@ -4,8 +4,10 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["apps/web/src/*"],
-      "@modules/*": ["apps/web/src/modules/*"]
+      "@modules/*": ["apps/web/src/modules/*"],
+      "@stackquotes/types": ["packages/types/src"],
+      "@stackquotes/ui": ["packages/ui/src"],
+      "@stackquotes/config": ["packages/config/src"]
     }
-  },
-  "files": []
+  }
 }
