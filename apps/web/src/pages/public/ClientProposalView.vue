@@ -4,7 +4,7 @@
 
       <!-- Loading -->
       <div v-if="loading" class="flex h-48 items-center justify-center text-slate-500">
-        Loading proposal…
+        Loading proposal...
       </div>
 
       <!-- Error -->
@@ -32,11 +32,13 @@
         <section class="space-y-4 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-100">
           <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             <ClientPackageCard
-              v-for="opt in proposal.options ?? []"
-              :key="opt.name"
-              :option="opt"
-              :selected="opt.name === selectedOptionName"
-              @select="selectOption(opt.name)"
+              v-for="pkg in packageOptions"
+              :key="pkg.option.name"
+              :option="pkg.option"
+              :trade="pkg.trade"
+              :tier="pkg.tier"
+              :selected="pkg.option.name === selectedOptionName"
+              @select="selectOption(pkg.option.name)"
             />
           </div>
 
@@ -46,7 +48,7 @@
             :disabled="submitting"
             @click="accept"
           >
-            {{ submitting ? "Submitting…" : "Accept Proposal" }}
+            {{ submitting ? "Submitting..." : "Accept Proposal" }}
           </button>
         </section>
       </div>
@@ -55,46 +57,40 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useRoute } from "vue-router";
+import type { ProposalOption } from "@stackquotes/types";
 import ClientPackageCard from "@/modules/proposals/components/ClientPackageCard.vue";
+import {
+  resolveTradeFromAbstractKey,
+  resolveTierFromAbstractKey,
+} from "@/modules/proposals/utils/visualAssets";
 import { acceptPublicProposal } from "@/modules/public/api/proposal";
-
-/**
- * IMPORTANT:
- * Do NOT destructure from an undefined composable.
- * Import directly and guard the call.
- */
 import { useProposal } from "@/modules/public/composables/useProposal";
 
 /* ----------------------------
    Route
 ---------------------------- */
 const route = useRoute();
-const token = String(route.params.token);
+const token = String(route.params.token ?? "");
 
 /* ----------------------------
    Composable (GUARDED)
 ---------------------------- */
-const proposalComposable = useProposal(token.value);
+const proposalComposable = useProposal(token);
 
 if (!proposalComposable) {
   throw new Error("useProposal composable failed to initialize");
 }
 
-const {
-  loading,
-  error,
-  proposalDisplayPayload,
-  load
-} = proposalComposable;
+const { loading, error, proposalDisplayPayload, load } = proposalComposable;
 
 /* ----------------------------
    Lifecycle
 ---------------------------- */
 onMounted(() => {
-    console.log("🔑 Proposal token from route:", token);
-  if (token.value) {
+  console.log("[ClientProposalView] Proposal token from route:", token);
+  if (token) {
     load();
   }
 });
@@ -102,13 +98,22 @@ onMounted(() => {
 /* ----------------------------
    Derived State (GUARDED)
 ---------------------------- */
-const proposal = computed(() =>
-  proposalDisplayPayload?.value?.proposal ?? null
-);
+const proposal = computed(() => proposalDisplayPayload.value?.proposal ?? null);
 
-const contractor = computed(() =>
-  proposalDisplayPayload?.value?.contractor ?? null
-);
+const contractor = computed(() => proposalDisplayPayload.value?.contractor ?? null);
+
+const packageOptions = computed(() => {
+  const opts = (proposal.value?.options ?? []) as ProposalOption[];
+
+  return opts.map((option) => {
+    const abstractKey = option?.visual?.abstract_key;
+    return {
+      option,
+      trade: resolveTradeFromAbstractKey(abstractKey),
+      tier: resolveTierFromAbstractKey(abstractKey),
+    };
+  });
+});
 
 /* ----------------------------
    Selection
@@ -128,10 +133,7 @@ const accept = async () => {
 
   submitting.value = true;
   try {
-    await acceptPublicProposal(
-      proposal.value.publicToken,
-      selectedOptionName.value
-    );
+    await acceptPublicProposal(proposal.value.publicToken, selectedOptionName.value);
     await load();
   } finally {
     submitting.value = false;
