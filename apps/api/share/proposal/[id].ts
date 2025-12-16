@@ -1,77 +1,91 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from "@supabase/supabase-js";
 
-// Server-side Supabase client (SERVICE ROLE — never exposed to browser)
+// Server-side Supabase client (SERVICE ROLE)
 const supabase = createClient(
   process.env.SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+);
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // Only allow GET
-  if (req.method !== 'GET') {
-    return res.status(405).json({ error: 'Method not allowed' })
+export default async function handler(req: any, res: any) {
+  if (req.method !== "GET") {
+    return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const { id } = req.query
+  const { id } = req.query;
 
-  // Basic guard
-  if (!id || typeof id !== 'string') {
-    return res.status(400).json({ error: 'Invalid proposal id' })
+  if (!id || typeof id !== "string") {
+    return res.status(400).json({ error: "Invalid proposal id" });
   }
 
-  // Fetch proposal
-  const { data: proposal, error } = await supabase
-    .from('smart_proposals')
+  const { data, error } = await supabase
+    .from("smart_proposals")
     .select(`
       id,
       status,
-      signed_option,
       public_token,
-      quickquote_id,
-      payment_link_url,
-      user_id,
-      contractor_id,
-      client_id,
+      signed_option,
       title,
       description,
-      created_at,
-      signed_at
+      payment_link_url,
+      deposit_config,
+      line_items,
+      contractor:contractor_id (
+        business_name,
+        logo_url,
+        accent_color,
+        email
+      ),
+      client:client_id (
+        id,
+        name,
+        email
+      )
     `)
-    .eq('id', id)
-    .single()
+    .eq("id", id)
+    .single();
 
-  // Not found (true 404)
-  if (error && error.code === 'PGRST116') {
-    return res.status(404).json({ error: 'Proposal not found' })
+  if (error || !data) {
+    console.error("[share/proposal] fetch error:", error);
+    return res.status(404).json({ error: "Proposal not found" });
   }
 
-  // Other DB error
-  if (error) {
-    console.error('Proposal fetch error:', error)
-    return res.status(500).json({ error: 'Failed to load proposal' })
-  }
+  // Supabase joins ALWAYS return arrays
+  const contractor = Array.isArray(data.contractor)
+    ? data.contractor[0]
+    : null;
 
-  // 🔒 Future hook: expiration logic (INTENTIONALLY DISABLED FOR MVP)
-  /*
-  if (proposal.expires_at && new Date(proposal.expires_at) < new Date()) {
-    return res.status(410).json({ error: 'Proposal expired' })
-  }
-  */
+  const client = Array.isArray(data.client)
+    ? data.client[0]
+    : null;
 
-  // ✅ Success
   return res.status(200).json({
     proposal: {
-      id: proposal.id,
-      status: proposal.status,
-      signed_option: proposal.signed_option,
-      title: proposal.title,
-      description: proposal.description,
-      client_id: proposal.client_id,
-      contractor_id: proposal.contractor_id,
-      payment_link_url: proposal.payment_link_url,
-      created_at: proposal.created_at,
-      signed_at: proposal.signed_at
-    }
-  })
+      id: data.id,
+      publicToken: data.public_token,
+      status: data.status,
+      title: data.title,
+      description: data.description,
+      signedOption: data.signed_option ?? null,
+      options: data.line_items?.options ?? [],
+      depositConfig: data.deposit_config ?? null,
+    },
+
+    contractor: contractor
+      ? {
+          businessName: contractor.business_name,
+          logoUrl: contractor.logo_url,
+          accentColor: contractor.accent_color,
+          email: contractor.email,
+        }
+      : null,
+
+    client: client ?? null,
+
+    deposit: {
+      amount: null,
+      config: data.deposit_config ?? null,
+    },
+
+    paymentLinkUrl: data.payment_link_url ?? null,
+  });
 }
