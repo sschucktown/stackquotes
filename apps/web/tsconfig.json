@@ -5,8 +5,9 @@
     "paths": {
       "@/*": ["src/*"],
       "@modules/*": ["src/modules/*"],
+      "@stackquotes/ui": ["../../packages/ui/src"],
       "@stackquotes/types": ["../../packages/types/src"],
-      "@stackquotes/ui": ["../../packages/ui/src"]
+      "@stackquotes/db": ["../../packages/db/src"]
     }
   },
   "references": [
