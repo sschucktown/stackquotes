@@ -1,23 +1,11 @@
 {
-  "extends": "./tsconfig.json",
+  "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "composite": true,
-
+    "noEmit": false,
     "outDir": "dist",
-    "rootDir": "../..",
-
-    "baseUrl": ".",
-    "types": ["node", "vite/client"],
-
-    "paths": {
-      "@/*": ["src/*"],
-      "@modules/*": ["src/modules/*"],
-
-      "@stackquotes/types": ["../../packages/types/src/index.ts"],
-      "@stackquotes/ui": ["../../packages/ui/src/index.ts"],
-      "@stackquotes/config": ["../../packages/config/src/index.ts"],
-      "@stackquotes/db": ["../../packages/db/src/index.ts"]
-    }
+    "rootDir": "src",
+    "types": ["node", "vite/client"]
   },
   "include": [
     "src/**/*",
