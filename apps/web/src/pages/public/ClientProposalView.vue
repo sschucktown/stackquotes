@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { computed, ref, watch, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import type { ProposalOption } from "@stackquotes/types";
 
@@ -13,50 +13,54 @@ import { acceptPublicProposal } from "@/modules/public/api/proposal";
 import { useProposal } from "@/modules/public/composables/useProposal";
 
 /* ----------------------------
-   Route
+   Route (single source of truth)
 ---------------------------- */
-
-
 const route = useRoute();
-const token = computed(() => String(route.params.id ?? ""));
 
-console.log("[DEBUG] route.params:", route.params);
+const token = computed(() => {
+  const params = route.params as Record<string, unknown>;
+  return (
+    (typeof params.token === "string" && params.token) ||
+    (typeof params.id === "string" && params.id) ||
+    ""
+  );
+});
 
+console.log("[ClientProposalView] route.params:", route.params);
 
 /* ----------------------------
-   Proposal composable (NO ref wrapper)
+   Proposal composable (DIRECT)
 ---------------------------- */
-let proposalApi:
-  | ReturnType<typeof useProposal>
-  | null = null;
+const {
+  loading,
+  error,
+  proposalDisplayPayload,
+  load,
+} = useProposal(token.value);
 
 /* ----------------------------
-   Initialize when token exists
+   Load when token is ready
 ---------------------------- */
 watch(
   token,
   (t) => {
     if (!t) return;
-
-    console.log("[ClientProposalView] initializing with token:", t);
-
-    proposalApi = useProposal(t);
-    proposalApi.load();
+    console.log("[ClientProposalView] loading proposal:", t);
+    load();
   },
   { immediate: true }
 );
 
 /* ----------------------------
-   Safe computed accessors
+   Derived state (NO GENERICS)
 ---------------------------- */
-const loading = computed(() => proposalApi?.loading.value ?? false);
-const error = computed(() => proposalApi?.error.value ?? null);
-const payload = computed(
-  () => proposalApi?.proposalDisplayPayload.value ?? null
-);
+const proposal = computed(() => {
+  return proposalDisplayPayload.value?.proposal ?? null;
+});
 
-const proposal = computed(() => payload.value?.proposal ?? null);
-const contractor = computed(() => payload.value?.contractor ?? null);
+const contractor = computed(() => {
+  return proposalDisplayPayload.value?.contractor ?? null;
+});
 
 /* ----------------------------
    Package options
@@ -71,7 +75,7 @@ const packageOptions = computed(() => {
 });
 
 /* ----------------------------
-   Selection (auto-select)
+   Selection (auto-select first)
 ---------------------------- */
 const selectedOptionName = ref<string | null>(null);
 
@@ -96,13 +100,14 @@ const accept = async () => {
   if (proposal.value.status === "accepted") return;
 
   submitting.value = true;
+  console.log("[ClientProposalView] accepting:", selectedOptionName.value);
 
   try {
     await acceptPublicProposal(
       proposal.value.publicToken,
       selectedOptionName.value
     );
-    await proposalApi?.load();
+    await load();
   } finally {
     submitting.value = false;
   }
