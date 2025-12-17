@@ -113,3 +113,63 @@ const accept = async () => {
   }
 };
 </script>
+
+<template>
+  <div class="min-h-screen bg-slate-50 px-4 py-10">
+    <div class="mx-auto max-w-4xl">
+
+      <!-- Loading -->
+      <div v-if="loading" class="py-20 text-center text-slate-500">
+        Loading proposal…
+      </div>
+
+      <!-- Error -->
+      <div
+        v-else-if="error"
+        class="rounded-xl border border-rose-200 bg-rose-50 p-6 text-center text-rose-600"
+      >
+        {{ error }}
+      </div>
+
+      <!-- Proposal -->
+      <div v-else-if="proposal" class="space-y-8">
+
+        <!-- Header -->
+        <header class="text-center">
+          <h1 class="text-2xl font-semibold text-slate-900">
+            {{ proposal.title }}
+          </h1>
+          <p v-if="proposal.description" class="mt-2 text-sm text-slate-600">
+            {{ proposal.description }}
+          </p>
+        </header>
+
+        <!-- Options -->
+        <section class="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-100">
+          <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <ClientPackageCard
+              v-for="pkg in packageOptions"
+              :key="pkg.option.name"
+              :option="pkg.option"
+              :trade="pkg.trade"
+              :tier="pkg.tier"
+              :selected="pkg.option.name === selectedOptionName"
+              @select="selectedOptionName = pkg.option.name"
+            />
+          </div>
+
+          <button
+            class="mt-6 w-full rounded-xl bg-blue-600 px-4 py-3 font-semibold text-white hover:bg-blue-700"
+            :disabled="submitting || proposal.status === 'accepted'"
+            @click="accept"
+          >
+            <span v-if="submitting">Submitting…</span>
+            <span v-else-if="proposal.status === 'accepted'">Accepted</span>
+            <span v-else>Accept Proposal</span>
+          </button>
+        </section>
+
+      </div>
+    </div>
+  </div>
+</template>
