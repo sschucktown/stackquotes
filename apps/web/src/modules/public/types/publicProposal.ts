@@ -1,10 +1,11 @@
 import type { ProposalOption, ProposalDepositConfig } from "@stackquotes/types";
 
 export interface PublicProposal {
-  publicToken: string;
-  status: "sent" | "accepted" | "paid";
+  id: string;
   title: string;
-  description?: string | null;
+  description: string | null;
+  status: "sent" | "accepted" | "expired";
+  publicToken: string;
   options: ProposalOption[];
   depositConfig: ProposalDepositConfig | null;
 }
