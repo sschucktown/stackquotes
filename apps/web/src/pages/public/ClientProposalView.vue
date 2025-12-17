@@ -97,6 +97,10 @@ const submitting = ref(false);
 
 const accept = async () => {
     console.log("[ACCEPT] click fired");
+    console.log("[ACCEPT] publicToken:", proposal.value?.publicToken);
+console.log("[ACCEPT] selectedOptionName:", selectedOptionName.value);
+console.log("[ACCEPT] proposal.status:", proposal.value?.status);
+
   if (!proposal.value?.publicToken) return;
   if (!selectedOptionName.value) return;
   if (proposal.value.status === "accepted") return;
