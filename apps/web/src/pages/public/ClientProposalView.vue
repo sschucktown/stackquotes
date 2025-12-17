@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { computed, ref, watch, onMounted } from "vue";
+import { computed, ref, watch } from "vue";
 import { useRoute } from "vue-router";
-import type { ProposalOption } from "@stackquotes/types";
 
 import ClientPackageCard from "@/modules/proposals/components/ClientPackageCard.vue";
 import {
@@ -13,15 +12,15 @@ import { acceptPublicProposal } from "@/modules/public/api/proposal";
 import { useProposal } from "@/modules/public/composables/useProposal";
 
 /* ----------------------------
-   Route (single source of truth)
+   Route token (single source)
 ---------------------------- */
 const route = useRoute();
 
 const token = computed(() => {
-  const params = route.params as Record<string, unknown>;
+  const p = route.params as Record<string, unknown>;
   return (
-    (typeof params.token === "string" && params.token) ||
-    (typeof params.id === "string" && params.id) ||
+    (typeof p.token === "string" && p.token) ||
+    (typeof p.id === "string" && p.id) ||
     ""
   );
 });
@@ -39,7 +38,7 @@ const {
 } = useProposal(token.value);
 
 /* ----------------------------
-   Load when token is ready
+   Load when token changes
 ---------------------------- */
 watch(
   token,
@@ -52,22 +51,17 @@ watch(
 );
 
 /* ----------------------------
-   Derived state (NO GENERICS)
+   Derived state (SAFE)
 ---------------------------- */
-const proposal = computed(() => {
-  return proposalDisplayPayload.value?.proposal ?? null;
-});
-
-const contractor = computed(() => {
-  return proposalDisplayPayload.value?.contractor ?? null;
-});
+const proposal = computed(() => proposalDisplayPayload.value?.proposal ?? null);
+const contractor = computed(() => proposalDisplayPayload.value?.contractor ?? null);
 
 /* ----------------------------
    Package options
 ---------------------------- */
 const packageOptions = computed(() => {
   const opts = proposal.value?.options ?? [];
-  return opts.map((option: ProposalOption) => ({
+  return opts.map((option: any) => ({
     option,
     trade: resolveTradeFromAbstractKey(option.visual?.abstract_key),
     tier: resolveTierFromAbstractKey(option.visual?.abstract_key),
@@ -75,7 +69,7 @@ const packageOptions = computed(() => {
 });
 
 /* ----------------------------
-   Selection (auto-select first)
+   Selection (auto-select)
 ---------------------------- */
 const selectedOptionName = ref<string | null>(null);
 
@@ -93,6 +87,10 @@ watch(
    Accept
 ---------------------------- */
 const submitting = ref(false);
+
+const selectOption = (name: string) => {
+  selectedOptionName.value = name;
+};
 
 const accept = async () => {
   if (!proposal.value?.publicToken) return;
