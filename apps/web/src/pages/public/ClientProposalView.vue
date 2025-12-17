@@ -96,6 +96,7 @@ watch(
 const submitting = ref(false);
 
 const accept = async () => {
+    console.log("[ACCEPT] click fired");
   if (!proposal.value?.publicToken) return;
   if (!selectedOptionName.value) return;
   if (proposal.value.status === "accepted") return;
