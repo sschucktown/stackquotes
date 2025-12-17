@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch, onMounted } from "vue";
+import { computed, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 
 import ClientPackageCard from "@/modules/proposals/components/ClientPackageCard.vue";
@@ -12,42 +12,63 @@ import { acceptPublicProposal } from "@/modules/public/api/proposal";
 import { useProposal } from "@/modules/public/composables/useProposal";
 
 /* ----------------------------
-   Route
+   ROUTE (SOURCE OF TRUTH)
 ---------------------------- */
 const route = useRoute();
-const token = computed(() => String(route.params.id ?? ""));
 
-/* ----------------------------
-   Proposal API
----------------------------- */
-const {
-  loading,
-  error,
-  proposalDisplayPayload,
-  load,
-} = useProposal();
+console.log("[DEBUG] full route:", route);
+console.log("[DEBUG] route.params:", route.params);
+console.log("[DEBUG] route.path:", route.path);
 
-/* ----------------------------
-   Load once
----------------------------- */
-onMounted(() => {
-  console.log("[ClientProposalView] loading token:", token.value);
-  if (token.value) {
-    load(token.value);
-  }
+/**
+ * IMPORTANT:
+ * Supports BOTH `/proposal/:id` and `/proposal/:token`
+ */
+const token = computed(() => {
+  const params = route.params as Record<string, unknown>;
+  return (
+    (typeof params.id === "string" && params.id) ||
+    (typeof params.token === "string" && params.token) ||
+    ""
+  );
 });
 
-/* ----------------------------
-   Derived state (THIS WAS THE BUG)
----------------------------- */
-const proposal = computed(() => proposalDisplayPayload.value);
+console.log("[DEBUG] resolved token:", token.value);
 
 /* ----------------------------
-   Package options
+   COMPOSABLE (NO ARGS)
 ---------------------------- */
+const { loading, error, proposalDisplayPayload, load } = useProposal();
+
+/* ----------------------------
+   LOAD WHEN TOKEN EXISTS
+---------------------------- */
+watch(
+  token,
+  async (t) => {
+    if (!t) {
+      console.warn("[ClientProposalView] NO TOKEN – NOT LOADING");
+      return;
+    }
+
+    console.log("[ClientProposalView] loading proposal with token:", t);
+    await load(t);
+    console.log(
+      "[ClientProposalView] payload after load:",
+      proposalDisplayPayload.value
+    );
+  },
+  { immediate: true }
+);
+
+/* ----------------------------
+   DERIVED STATE
+---------------------------- */
+const proposal = computed(() => proposalDisplayPayload.value ?? null);
+
 const packageOptions = computed(() => {
   const opts = proposal.value?.options ?? [];
-  return opts.map((option) => ({
+  return opts.map((option: any) => ({
     option,
     trade: resolveTradeFromAbstractKey(option.visual?.abstract_key),
     tier: resolveTierFromAbstractKey(option.visual?.abstract_key),
@@ -55,7 +76,7 @@ const packageOptions = computed(() => {
 });
 
 /* ----------------------------
-   Selection
+   SELECTION
 ---------------------------- */
 const selectedOptionName = ref<string | null>(null);
 
@@ -70,7 +91,7 @@ watch(
 );
 
 /* ----------------------------
-   Accept
+   ACCEPT
 ---------------------------- */
 const submitting = ref(false);
 
@@ -80,7 +101,6 @@ const accept = async () => {
   if (proposal.value.status === "accepted") return;
 
   submitting.value = true;
-  console.log("[ClientProposalView] accepting:", selectedOptionName.value);
 
   try {
     await acceptPublicProposal(
