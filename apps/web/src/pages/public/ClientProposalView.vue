@@ -16,14 +16,6 @@ import { useProposal } from "@/modules/public/composables/useProposal";
 ---------------------------- */
 const route = useRoute();
 
-console.log("[DEBUG] full route:", route);
-console.log("[DEBUG] route.params:", route.params);
-console.log("[DEBUG] route.path:", route.path);
-
-/**
- * IMPORTANT:
- * Supports BOTH `/proposal/:id` and `/proposal/:token`
- */
 const token = computed(() => {
   const params = route.params as Record<string, unknown>;
   return (
@@ -36,7 +28,7 @@ const token = computed(() => {
 console.log("[DEBUG] resolved token:", token.value);
 
 /* ----------------------------
-   COMPOSABLE (NO ARGS)
+   COMPOSABLE
 ---------------------------- */
 const { loading, error, proposalDisplayPayload, load } = useProposal();
 
@@ -46,29 +38,26 @@ const { loading, error, proposalDisplayPayload, load } = useProposal();
 watch(
   token,
   async (t) => {
-    if (!t) {
-      console.warn("[ClientProposalView] NO TOKEN – NOT LOADING");
-      return;
-    }
+    if (!t) return;
 
-    console.log("[ClientProposalView] loading proposal with token:", t);
+    console.log("[ClientProposalView] loading proposal:", t);
     await load(t);
-    console.log(
-      "[ClientProposalView] payload after load:",
-      proposalDisplayPayload.value
-    );
+    console.log("[ClientProposalView] payload:", proposalDisplayPayload.value);
   },
   { immediate: true }
 );
 
 /* ----------------------------
-   DERIVED STATE
+   ✅ DERIVED STATE (FIXED)
 ---------------------------- */
-const proposal = computed(() => proposalDisplayPayload.value ?? null);
+const proposal = computed(() => proposalDisplayPayload.value);
 
+/* ----------------------------
+   PACKAGE OPTIONS
+---------------------------- */
 const packageOptions = computed(() => {
   const opts = proposal.value?.options ?? [];
-  return opts.map((option: any) => ({
+  return opts.map((option) => ({
     option,
     trade: resolveTradeFromAbstractKey(option.visual?.abstract_key),
     tier: resolveTierFromAbstractKey(option.visual?.abstract_key),
@@ -96,10 +85,10 @@ watch(
 const submitting = ref(false);
 
 const accept = async () => {
-    console.log("[ACCEPT] click fired");
-    console.log("[ACCEPT] publicToken:", proposal.value?.publicToken);
-console.log("[ACCEPT] selectedOptionName:", selectedOptionName.value);
-console.log("[ACCEPT] proposal.status:", proposal.value?.status);
+  console.log("[ACCEPT] click fired");
+  console.log("[ACCEPT] publicToken:", proposal.value?.publicToken);
+  console.log("[ACCEPT] selectedOptionName:", selectedOptionName.value);
+  console.log("[ACCEPT] proposal.status:", proposal.value?.status);
 
   if (!proposal.value?.publicToken) return;
   if (!selectedOptionName.value) return;
