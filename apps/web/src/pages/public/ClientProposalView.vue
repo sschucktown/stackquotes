@@ -15,8 +15,13 @@ import { useProposal } from "@/modules/public/composables/useProposal";
 /* ----------------------------
    Route
 ---------------------------- */
+
+
 const route = useRoute();
 const token = computed(() => String(route.params.id ?? ""));
+
+console.log("[DEBUG] route.params:", route.params);
+
 
 /* ----------------------------
    Proposal composable (NO ref wrapper)
