@@ -5,8 +5,6 @@ import type { PublicProposal } from "@/modules/public/types/publicProposal";
 export function useProposal() {
   const loading = ref(false);
   const error = ref<string | null>(null);
-
-  // ✅ This is the proposal itself
   const proposalDisplayPayload = ref<PublicProposal | null>(null);
 
   const load = async (token: string) => {
@@ -28,12 +26,10 @@ export function useProposal() {
         return;
       }
 
-      // ✅ res.data IS the PublicProposal
       proposalDisplayPayload.value = res.data;
     } catch (e) {
       console.error("[useProposal] load failed:", e);
       error.value = "Failed to load proposal.";
-      proposalDisplayPayload.value = null;
     } finally {
       loading.value = false;
     }
