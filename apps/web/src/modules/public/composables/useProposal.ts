@@ -20,6 +20,7 @@ export function useProposal() {
     try {
       const res = await fetchPublicProposal(token);
 
+      // ✅ res is ApiResponse<PublicProposal> — inferred
       if (res.error || !res.data) {
         error.value = "This proposal link is invalid or has expired.";
         proposalDisplayPayload.value = null;
@@ -30,6 +31,7 @@ export function useProposal() {
     } catch (e) {
       console.error("[useProposal] load failed:", e);
       error.value = "Failed to load proposal.";
+      proposalDisplayPayload.value = null;
     } finally {
       loading.value = false;
     }
