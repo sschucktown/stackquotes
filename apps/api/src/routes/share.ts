@@ -33,10 +33,6 @@ shareRouter.get("/proposal/:token", async (c: Context) => {
     );
   }
 
-  /**
-   * 🚨 CRITICAL:
-   * Normalize snake_case DB fields → camelCase API fields
-   */
   return c.json({
     data: {
       proposal: {
@@ -77,7 +73,7 @@ shareRouter.get("/proposal/:token", async (c: Context) => {
 
 /* =========================================================
    POST /api/share/proposal/:token/accept
-   Accept a proposal option
+   Accept proposal + create job
 ========================================================= */
 shareRouter.post("/proposal/:token/accept", async (c: Context) => {
   const token = c.req.param("token");
@@ -94,6 +90,9 @@ shareRouter.post("/proposal/:token/accept", async (c: Context) => {
     return c.json({ error: "Missing option name" }, 400);
   }
 
+  /* ----------------------------
+     Fetch proposal
+  ---------------------------- */
   const { data: proposal, error } = await supabase
     .from("smart_proposals")
     .select("*")
@@ -104,13 +103,21 @@ shareRouter.post("/proposal/:token/accept", async (c: Context) => {
     return c.json({ error: "Proposal not found" }, 404);
   }
 
-  const optionExists = Array.isArray(proposal.options)
-    && proposal.options.some((o: any) => o.name === optionName);
+  if (proposal.status === "accepted") {
+    return c.json({ error: "Proposal already accepted" }, 400);
+  }
 
-  if (!optionExists) {
+  const selectedOption = Array.isArray(proposal.options)
+    ? proposal.options.find((o: any) => o.name === optionName)
+    : null;
+
+  if (!selectedOption) {
     return c.json({ error: "Invalid option selected" }, 400);
   }
 
+  /* ----------------------------
+     Update proposal
+  ---------------------------- */
   const { error: updateError } = await supabase
     .from("smart_proposals")
     .update({
@@ -121,14 +128,41 @@ shareRouter.post("/proposal/:token/accept", async (c: Context) => {
     .eq("id", proposal.id);
 
   if (updateError) {
-    console.error("[ACCEPT ERROR]", updateError);
+    console.error("[PROPOSAL UPDATE ERROR]", updateError);
     return c.json({ error: "Failed to accept proposal" }, 500);
   }
 
+  /* ----------------------------
+     Create job
+  ---------------------------- */
+  const { data: job, error: jobError } = await supabase
+    .from("jobs")
+    .insert({
+      proposal_id: proposal.id,
+      contractor_id: proposal.contractor_id,
+      client_id: proposal.client_id,
+      approved_option: optionName,
+      approved_price: selectedOption.subtotal ?? 0,
+      deposit_amount: proposal.deposit_amount ?? null,
+      status: "pending",
+    })
+    .select("id, job_public_token")
+    .single();
+
+  if (jobError) {
+    console.error("[JOB CREATE ERROR]", jobError);
+    return c.json({ error: "Job creation failed" }, 500);
+  }
+
+  /* ----------------------------
+     Response
+  ---------------------------- */
   return c.json({
     data: {
       status: "accepted",
       acceptedOption: optionName,
+      jobId: job.id,
+      jobPublicToken: job.job_public_token,
     },
   });
 });
