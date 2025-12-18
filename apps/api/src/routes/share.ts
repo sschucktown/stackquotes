@@ -33,6 +33,7 @@ shareRouter.get("/proposal/:token", async (c: Context) => {
     );
   }
 
+  // Normalize DB → API shape
   return c.json({
     data: {
       proposal: {
@@ -44,23 +45,18 @@ shareRouter.get("/proposal/:token", async (c: Context) => {
         options: proposal.options ?? [],
         depositConfig: proposal.deposit_config ?? null,
       },
-
       contractor: {
         businessName: null,
         accentColor: null,
         logoUrl: null,
         email: null,
       },
-
       client: null,
-
       deposit: {
         amount: proposal.deposit_amount ?? null,
         config: proposal.deposit_config ?? null,
       },
-
       paymentLinkUrl: proposal.payment_link_url ?? null,
-
       plan: {
         tier: "launch",
         allowMultiOptions: true,
@@ -90,9 +86,7 @@ shareRouter.post("/proposal/:token/accept", async (c: Context) => {
     return c.json({ error: "Missing option name" }, 400);
   }
 
-  /* ----------------------------
-     Fetch proposal
-  ---------------------------- */
+  // 1️⃣ Fetch proposal
   const { data: proposal, error } = await supabase
     .from("smart_proposals")
     .select("*")
@@ -107,6 +101,7 @@ shareRouter.post("/proposal/:token/accept", async (c: Context) => {
     return c.json({ error: "Proposal already accepted" }, 400);
   }
 
+  // 2️⃣ Validate option
   const selectedOption = Array.isArray(proposal.options)
     ? proposal.options.find((o: any) => o.name === optionName)
     : null;
@@ -115,9 +110,19 @@ shareRouter.post("/proposal/:token/accept", async (c: Context) => {
     return c.json({ error: "Invalid option selected" }, 400);
   }
 
-  /* ----------------------------
-     Update proposal
-  ---------------------------- */
+  // 3️⃣ Compute pricing
+  const approvedPrice = selectedOption.subtotal ?? null;
+
+  let depositAmount: number | null = null;
+  if (proposal.deposit_config?.type === "fixed") {
+    depositAmount = proposal.deposit_config.value;
+  } else if (proposal.deposit_config?.type === "percent" && approvedPrice) {
+    depositAmount = Math.round(
+      approvedPrice * (proposal.deposit_config.value / 100)
+    );
+  }
+
+  // 4️⃣ Accept proposal
   const { error: updateError } = await supabase
     .from("smart_proposals")
     .update({
@@ -128,13 +133,11 @@ shareRouter.post("/proposal/:token/accept", async (c: Context) => {
     .eq("id", proposal.id);
 
   if (updateError) {
-    console.error("[PROPOSAL UPDATE ERROR]", updateError);
+    console.error("[ACCEPT ERROR]", updateError);
     return c.json({ error: "Failed to accept proposal" }, 500);
   }
 
-  /* ----------------------------
-     Create job
-  ---------------------------- */
+  // 5️⃣ CREATE JOB ✅
   const { data: job, error: jobError } = await supabase
     .from("jobs")
     .insert({
@@ -142,11 +145,11 @@ shareRouter.post("/proposal/:token/accept", async (c: Context) => {
       contractor_id: proposal.contractor_id,
       client_id: proposal.client_id,
       approved_option: optionName,
-      approved_price: selectedOption.subtotal ?? 0,
-      deposit_amount: proposal.deposit_amount ?? null,
+      approved_price: approvedPrice,
+      deposit_amount: depositAmount,
       status: "pending",
     })
-    .select("id, job_public_token")
+    .select()
     .single();
 
   if (jobError) {
@@ -154,15 +157,12 @@ shareRouter.post("/proposal/:token/accept", async (c: Context) => {
     return c.json({ error: "Job creation failed" }, 500);
   }
 
-  /* ----------------------------
-     Response
-  ---------------------------- */
+  // 6️⃣ Success
   return c.json({
     data: {
       status: "accepted",
-      acceptedOption: optionName,
-      jobId: job.id,
-      jobPublicToken: job.job_public_token,
+      job_id: job.id,
+      job_public_token: job.job_public_token,
     },
   });
 });
