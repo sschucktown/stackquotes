@@ -1,11 +1,12 @@
 import { ref } from "vue";
 import { fetchPublicProposal } from "@/modules/public/api/proposal";
-import type { PublicProposal } from "@/modules/public/types/publicProposal";
 
 export function useProposal() {
   const loading = ref(false);
   const error = ref<string | null>(null);
-  const proposalDisplayPayload = ref<PublicProposal | null>(null);
+
+  // IMPORTANT: this is the FULL payload, not just the proposal
+  const proposalDisplayPayload = ref<any | null>(null);
 
   const load = async (token: string) => {
     if (!token) {
@@ -20,18 +21,17 @@ export function useProposal() {
     try {
       const res = await fetchPublicProposal(token);
 
-      if (!res || res.error || !res.data) {
+      if (!res || !res.data) {
         error.value = "This proposal link is invalid or has expired.";
         proposalDisplayPayload.value = null;
         return;
       }
 
-      // ✅ THIS IS THE KEY LINE
+      // 🔑 STORE THE FULL PAYLOAD
       proposalDisplayPayload.value = res.data;
     } catch (e) {
       console.error("[useProposal] load failed:", e);
       error.value = "Failed to load proposal.";
-      proposalDisplayPayload.value = null;
     } finally {
       loading.value = false;
     }

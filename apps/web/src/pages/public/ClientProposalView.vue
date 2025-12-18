@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
 import { useRoute } from "vue-router";
+import type { ProposalOption } from "@stackquotes/types";
 
 import ClientPackageCard from "@/modules/proposals/components/ClientPackageCard.vue";
 import {
@@ -12,20 +13,20 @@ import { acceptPublicProposal } from "@/modules/public/api/proposal";
 import { useProposal } from "@/modules/public/composables/useProposal";
 
 /* ----------------------------
-   ROUTE (SOURCE OF TRUTH)
+   ROUTE
 ---------------------------- */
 const route = useRoute();
 
 const token = computed(() => {
-  const params = route.params as Record<string, unknown>;
-  return (
-    (typeof params.id === "string" && params.id) ||
-    (typeof params.token === "string" && params.token) ||
-    ""
-  );
+  const p = route.params as Record<string, unknown>;
+  return typeof p.token === "string"
+    ? p.token
+    : typeof p.id === "string"
+    ? p.id
+    : "";
 });
 
-console.log("[DEBUG] resolved token:", token.value);
+console.log("[ClientProposalView] token:", token.value);
 
 /* ----------------------------
    COMPOSABLE
@@ -33,22 +34,24 @@ console.log("[DEBUG] resolved token:", token.value);
 const { loading, error, proposalDisplayPayload, load } = useProposal();
 
 /* ----------------------------
-   LOAD WHEN TOKEN EXISTS
+   LOAD PROPOSAL
 ---------------------------- */
 watch(
   token,
   async (t) => {
     if (!t) return;
-
     console.log("[ClientProposalView] loading proposal:", t);
     await load(t);
-    console.log("[ClientProposalView] payload:", proposalDisplayPayload.value);
+    console.log(
+      "[ClientProposalView] proposal:",
+      proposalDisplayPayload.value
+    );
   },
   { immediate: true }
 );
 
 /* ----------------------------
-   ✅ DERIVED STATE (FIXED)
+   DERIVED STATE
 ---------------------------- */
 const proposal = computed(() => proposalDisplayPayload.value);
 
@@ -57,7 +60,7 @@ const proposal = computed(() => proposalDisplayPayload.value);
 ---------------------------- */
 const packageOptions = computed(() => {
   const opts = proposal.value?.options ?? [];
-  return opts.map((option) => ({
+  return opts.map((option: ProposalOption) => ({
     option,
     trade: resolveTradeFromAbstractKey(option.visual?.abstract_key),
     tier: resolveTierFromAbstractKey(option.visual?.abstract_key),
@@ -86,13 +89,21 @@ const submitting = ref(false);
 
 const accept = async () => {
   console.log("[ACCEPT] click fired");
-  console.log("[ACCEPT] publicToken:", proposal.value?.publicToken);
-  console.log("[ACCEPT] selectedOptionName:", selectedOptionName.value);
-  console.log("[ACCEPT] proposal.status:", proposal.value?.status);
 
-  if (!proposal.value?.publicToken) return;
-  if (!selectedOptionName.value) return;
-  if (proposal.value.status === "accepted") return;
+  if (!proposal.value?.publicToken) {
+    console.warn("[ACCEPT] missing publicToken");
+    return;
+  }
+
+  if (!selectedOptionName.value) {
+    console.warn("[ACCEPT] no option selected");
+    return;
+  }
+
+  if (proposal.value.status === "accepted") {
+    console.warn("[ACCEPT] already accepted");
+    return;
+  }
 
   submitting.value = true;
 
@@ -152,6 +163,7 @@ const accept = async () => {
             />
           </div>
 
+          <!-- Accept -->
           <button
             class="mt-6 w-full rounded-xl bg-blue-600 px-4 py-3 font-semibold text-white hover:bg-blue-700"
             :disabled="submitting || proposal.status === 'accepted'"
@@ -162,7 +174,6 @@ const accept = async () => {
             <span v-else>Accept Proposal</span>
           </button>
         </section>
-
       </div>
     </div>
   </div>
