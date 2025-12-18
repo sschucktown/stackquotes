@@ -13,7 +13,7 @@ import { acceptPublicProposal } from "@/modules/public/api/proposal";
 import { useProposal } from "@/modules/public/composables/useProposal";
 
 /* ----------------------------
-   ROUTE
+   ROUTE (SOURCE OF TRUTH)
 ---------------------------- */
 const route = useRoute();
 
@@ -26,7 +26,7 @@ const token = computed(() => {
     : "";
 });
 
-console.log("[ClientProposalView] token:", token.value);
+console.log("[ClientProposalView] resolved token:", token.value);
 
 /* ----------------------------
    COMPOSABLE
@@ -40,10 +40,12 @@ watch(
   token,
   async (t) => {
     if (!t) return;
+
     console.log("[ClientProposalView] loading proposal:", t);
     await load(t);
+
     console.log(
-      "[ClientProposalView] proposal:",
+      "[ClientProposalView] full payload:",
       proposalDisplayPayload.value
     );
   },
@@ -51,15 +53,22 @@ watch(
 );
 
 /* ----------------------------
-   DERIVED STATE
+   DERIVED STATE (THIS WAS THE BUG)
 ---------------------------- */
-const proposal = computed(() => proposalDisplayPayload.value);
+const proposal = computed(() => {
+  return proposalDisplayPayload.value?.proposal ?? null;
+});
+
+const contractor = computed(() => {
+  return proposalDisplayPayload.value?.contractor ?? null;
+});
 
 /* ----------------------------
    PACKAGE OPTIONS
 ---------------------------- */
 const packageOptions = computed(() => {
   const opts = proposal.value?.options ?? [];
+
   return opts.map((option: ProposalOption) => ({
     option,
     trade: resolveTradeFromAbstractKey(option.visual?.abstract_key),
@@ -68,7 +77,7 @@ const packageOptions = computed(() => {
 });
 
 /* ----------------------------
-   SELECTION
+   SELECTION (AUTO-SELECT FIRST)
 ---------------------------- */
 const selectedOptionName = ref<string | null>(null);
 
@@ -89,21 +98,13 @@ const submitting = ref(false);
 
 const accept = async () => {
   console.log("[ACCEPT] click fired");
+  console.log("[ACCEPT] publicToken:", proposal.value?.publicToken);
+  console.log("[ACCEPT] selectedOptionName:", selectedOptionName.value);
+  console.log("[ACCEPT] status:", proposal.value?.status);
 
-  if (!proposal.value?.publicToken) {
-    console.warn("[ACCEPT] missing publicToken");
-    return;
-  }
-
-  if (!selectedOptionName.value) {
-    console.warn("[ACCEPT] no option selected");
-    return;
-  }
-
-  if (proposal.value.status === "accepted") {
-    console.warn("[ACCEPT] already accepted");
-    return;
-  }
+  if (!proposal.value?.publicToken) return;
+  if (!selectedOptionName.value) return;
+  if (proposal.value.status === "accepted") return;
 
   submitting.value = true;
 
@@ -112,6 +113,8 @@ const accept = async () => {
       proposal.value.publicToken,
       selectedOptionName.value
     );
+
+    // reload updated proposal
     await load(token.value);
   } finally {
     submitting.value = false;
@@ -174,6 +177,7 @@ const accept = async () => {
             <span v-else>Accept Proposal</span>
           </button>
         </section>
+
       </div>
     </div>
   </div>
