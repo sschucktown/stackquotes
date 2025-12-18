@@ -45,12 +45,12 @@ shareRouter.get("/proposal/:token", async (c: Context) => {
 
 /* =========================================================
    POST /api/share/proposal/:token/accept
-   Accept proposal AND create job (idempotent)
 ========================================================= */
 shareRouter.post("/proposal/:token/accept", async (c: Context) => {
+  console.log("🔥 ACCEPT ROUTE HIT");
+
   const token = c.req.param("token");
   const supabase = getServiceClient();
-
   const { optionName } = await c.req.json<{ optionName?: string }>();
 
   if (!token || !optionName) {
@@ -68,7 +68,7 @@ shareRouter.post("/proposal/:token/accept", async (c: Context) => {
     return c.json({ error: "Proposal not found" }, 404);
   }
 
-  // 2️⃣ If job already exists → safe exit
+  // 2️⃣ Idempotent exit
   if (proposal.job_id) {
     return c.json({
       data: {
@@ -89,27 +89,30 @@ shareRouter.post("/proposal/:token/accept", async (c: Context) => {
 
   const approvedPrice = selectedOption.subtotal ?? null;
 
-  // 4️⃣ Create job
-  const { data: job, error: jobError } = await supabase
+  // 4️⃣ CREATE JOB ✅ (ARRAY REQUIRED)
+  const { data: jobs, error: jobError } = await supabase
     .from("jobs")
-    .insert({
-      proposal_id: proposal.id,
-      contractor_id: proposal.contractor_id,
-      client_id: proposal.client_id,
-      approved_option: optionName,
-      approved_price: approvedPrice,
-      deposit_amount: proposal.deposit_amount,
-      status: "pending",
-    })
-    .select()
-    .single();
+    .insert([
+      {
+        proposal_id: proposal.id,
+        contractor_id: proposal.contractor_id,
+        client_id: proposal.client_id,
+        approved_option: optionName,
+        approved_price: approvedPrice,
+        deposit_amount: proposal.deposit_amount,
+        status: "pending",
+      },
+    ])
+    .select();
 
   if (jobError) {
     console.error("[JOB CREATE ERROR]", jobError);
     return c.json({ error: "Job creation failed" }, 500);
   }
 
-  // 5️⃣ Back-link job → proposal
+  const job = jobs[0];
+
+  // 5️⃣ Back-link proposal
   await supabase
     .from("smart_proposals")
     .update({
