@@ -25,10 +25,7 @@ shareRouter.get("/proposal/:token", async (c: Context) => {
     .single();
 
   if (error || !proposal) {
-    return c.json(
-      { error: "This proposal link is invalid or has expired." },
-      404
-    );
+    return c.json({ error: "Proposal not found" }, 404);
   }
 
   return c.json({
@@ -42,44 +39,22 @@ shareRouter.get("/proposal/:token", async (c: Context) => {
         options: proposal.options ?? [],
         depositConfig: proposal.deposit_config ?? null,
       },
-      contractor: {
-        businessName: null,
-        accentColor: null,
-        logoUrl: null,
-        email: null,
-      },
-      client: null,
-      deposit: {
-        amount: proposal.deposit_amount ?? null,
-        config: proposal.deposit_config ?? null,
-      },
-      paymentLinkUrl: proposal.payment_link_url ?? null,
-      plan: {
-        tier: "launch",
-        allowMultiOptions: true,
-        wowPortalEnabled: true,
-        inTrial: false,
-      },
     },
   });
 });
 
 /* =========================================================
    POST /api/share/proposal/:token/accept
+   Accept proposal AND create job (idempotent)
 ========================================================= */
 shareRouter.post("/proposal/:token/accept", async (c: Context) => {
   const token = c.req.param("token");
   const supabase = getServiceClient();
 
-  if (!token) {
-    return c.json({ error: "Invalid proposal link" }, 400);
-  }
+  const { optionName } = await c.req.json<{ optionName?: string }>();
 
-  const body = await c.req.json<{ optionName?: string }>();
-  const optionName = body.optionName;
-
-  if (!optionName) {
-    return c.json({ error: "Missing option name" }, 400);
+  if (!token || !optionName) {
+    return c.json({ error: "Invalid request" }, 400);
   }
 
   // 1️⃣ Fetch proposal
@@ -93,11 +68,17 @@ shareRouter.post("/proposal/:token/accept", async (c: Context) => {
     return c.json({ error: "Proposal not found" }, 404);
   }
 
-  if (proposal.status === "accepted") {
-    return c.json({ error: "Proposal already accepted" }, 400);
+  // 2️⃣ If job already exists → safe exit
+  if (proposal.job_id) {
+    return c.json({
+      data: {
+        status: proposal.status,
+        job_id: proposal.job_id,
+      },
+    });
   }
 
-  // 2️⃣ Validate option
+  // 3️⃣ Validate option
   const selectedOption = Array.isArray(proposal.options)
     ? proposal.options.find((o: any) => o.name === optionName)
     : null;
@@ -106,37 +87,9 @@ shareRouter.post("/proposal/:token/accept", async (c: Context) => {
     return c.json({ error: "Invalid option selected" }, 400);
   }
 
-  // 3️⃣ Pricing
   const approvedPrice = selectedOption.subtotal ?? null;
 
-  let depositAmount: number | null = null;
-  if (proposal.deposit_config?.type === "fixed") {
-    depositAmount = proposal.deposit_config.value;
-  } else if (
-    proposal.deposit_config?.type === "percent" &&
-    approvedPrice
-  ) {
-    depositAmount = Math.round(
-      approvedPrice * (proposal.deposit_config.value / 100)
-    );
-  }
-
-  // 4️⃣ Accept proposal
-  const { error: updateError } = await supabase
-    .from("smart_proposals")
-    .update({
-      status: "accepted",
-      accepted_option: optionName,
-      accepted_at: new Date().toISOString(),
-    })
-    .eq("id", proposal.id);
-
-  if (updateError) {
-    console.error("[ACCEPT ERROR]", updateError);
-    return c.json({ error: "Failed to accept proposal" }, 500);
-  }
-
-  // 5️⃣ Create job
+  // 4️⃣ Create job
   const { data: job, error: jobError } = await supabase
     .from("jobs")
     .insert({
@@ -145,31 +98,28 @@ shareRouter.post("/proposal/:token/accept", async (c: Context) => {
       client_id: proposal.client_id,
       approved_option: optionName,
       approved_price: approvedPrice,
-      deposit_amount: depositAmount,
+      deposit_amount: proposal.deposit_amount,
       status: "pending",
     })
     .select()
     .single();
 
-  if (jobError || !job) {
+  if (jobError) {
     console.error("[JOB CREATE ERROR]", jobError);
     return c.json({ error: "Job creation failed" }, 500);
   }
 
-  // 6️⃣ Link job back to proposal
-  const { error: linkError } = await supabase
+  // 5️⃣ Back-link job → proposal
+  await supabase
     .from("smart_proposals")
     .update({
+      status: "accepted",
+      accepted_option: optionName,
+      accepted_at: new Date().toISOString(),
       job_id: job.id,
     })
     .eq("id", proposal.id);
 
-  if (linkError) {
-    console.error("[JOB LINK ERROR]", linkError);
-    return c.json({ error: "Failed to link job to proposal" }, 500);
-  }
-
-  // 7️⃣ Success
   return c.json({
     data: {
       status: "accepted",
