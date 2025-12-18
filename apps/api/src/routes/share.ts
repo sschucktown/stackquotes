@@ -4,13 +4,11 @@ import { getServiceClient } from "../lib/supabase.js";
 
 /**
  * PUBLIC SHARE ROUTER
- * Handles public SmartProposal access
  */
 export const shareRouter = new Hono();
 
 /* =========================================================
    GET /api/share/proposal/:token
-   Fetch public SmartProposal (TOKEN-BASED)
 ========================================================= */
 shareRouter.get("/proposal/:token", async (c: Context) => {
   const token = c.req.param("token");
@@ -33,7 +31,6 @@ shareRouter.get("/proposal/:token", async (c: Context) => {
     );
   }
 
-  // Normalize DB → API shape
   return c.json({
     data: {
       proposal: {
@@ -69,7 +66,6 @@ shareRouter.get("/proposal/:token", async (c: Context) => {
 
 /* =========================================================
    POST /api/share/proposal/:token/accept
-   Accept proposal + create job
 ========================================================= */
 shareRouter.post("/proposal/:token/accept", async (c: Context) => {
   const token = c.req.param("token");
@@ -110,13 +106,16 @@ shareRouter.post("/proposal/:token/accept", async (c: Context) => {
     return c.json({ error: "Invalid option selected" }, 400);
   }
 
-  // 3️⃣ Compute pricing
+  // 3️⃣ Pricing
   const approvedPrice = selectedOption.subtotal ?? null;
 
   let depositAmount: number | null = null;
   if (proposal.deposit_config?.type === "fixed") {
     depositAmount = proposal.deposit_config.value;
-  } else if (proposal.deposit_config?.type === "percent" && approvedPrice) {
+  } else if (
+    proposal.deposit_config?.type === "percent" &&
+    approvedPrice
+  ) {
     depositAmount = Math.round(
       approvedPrice * (proposal.deposit_config.value / 100)
     );
@@ -137,7 +136,7 @@ shareRouter.post("/proposal/:token/accept", async (c: Context) => {
     return c.json({ error: "Failed to accept proposal" }, 500);
   }
 
-  // 5️⃣ CREATE JOB ✅
+  // 5️⃣ Create job
   const { data: job, error: jobError } = await supabase
     .from("jobs")
     .insert({
@@ -152,12 +151,25 @@ shareRouter.post("/proposal/:token/accept", async (c: Context) => {
     .select()
     .single();
 
-  if (jobError) {
+  if (jobError || !job) {
     console.error("[JOB CREATE ERROR]", jobError);
     return c.json({ error: "Job creation failed" }, 500);
   }
 
-  // 6️⃣ Success
+  // 6️⃣ Link job back to proposal
+  const { error: linkError } = await supabase
+    .from("smart_proposals")
+    .update({
+      job_id: job.id,
+    })
+    .eq("id", proposal.id);
+
+  if (linkError) {
+    console.error("[JOB LINK ERROR]", linkError);
+    return c.json({ error: "Failed to link job to proposal" }, 500);
+  }
+
+  // 7️⃣ Success
   return c.json({
     data: {
       status: "accepted",
