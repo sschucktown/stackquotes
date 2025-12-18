@@ -1,30 +1,17 @@
-import { createSupabase } from "@stackquotes/db";
-import type { SupabaseClient } from "@stackquotes/db";
+import { createClient } from "@supabase/supabase-js";
 
-const REQUIRED_KEYS = [
-  "SUPABASE_URL",
-  "SUPABASE_SERVICE_ROLE_KEY",
-  "SUPABASE_ANON_KEY"
-] as const;
+export function getServiceClient() {
+  const url = process.env.SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-const validateEnv = (env: Record<string, string | undefined>) => {
-  const missing = REQUIRED_KEYS.filter((key) => !env[key]);
-  if (missing.length) {
-    console.error("[supabase] missing env", missing);
-    throw new Error(`Supabase configuration missing: ${missing.join(", ")}`);
+  if (!url || !serviceKey) {
+    throw new Error("Missing Supabase service role env vars");
   }
-};
 
-export const getServiceClient = (
-  env: Record<string, string | undefined> = process.env
-): SupabaseClient => {
-  validateEnv(env);
-  return createSupabase({ useServiceRole: true, env });
-};
-
-export const getAnonClient = (
-  env: Record<string, string | undefined> = process.env
-): SupabaseClient => {
-  validateEnv(env);
-  return createSupabase({ useServiceRole: false, env });
-};
+  return createClient(url, serviceKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+  });
+}
