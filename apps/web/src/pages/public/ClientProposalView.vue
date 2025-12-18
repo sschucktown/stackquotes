@@ -53,14 +53,10 @@ watch(
 );
 
 /* ----------------------------
-   DERIVED STATE (THIS WAS THE BUG)
+   DERIVED STATE
 ---------------------------- */
 const proposal = computed(() => {
   return proposalDisplayPayload.value?.proposal ?? null;
-});
-
-const contractor = computed(() => {
-  return proposalDisplayPayload.value?.contractor ?? null;
 });
 
 /* ----------------------------
@@ -77,15 +73,20 @@ const packageOptions = computed(() => {
 });
 
 /* ----------------------------
-   SELECTION (AUTO-SELECT FIRST)
+   SELECTION (AUTO-SELECT FIRST — ONCE)
 ---------------------------- */
 const selectedOptionName = ref<string | null>(null);
 
 watch(
   () => proposal.value?.options,
   (opts) => {
-    if (!selectedOptionName.value && opts?.length) {
+    if (
+      !selectedOptionName.value &&
+      opts?.length &&
+      proposal.value?.status !== "accepted"
+    ) {
       selectedOptionName.value = opts[0].name;
+      console.log("[AUTOSELECT] option:", opts[0].name);
     }
   },
   { immediate: true }
@@ -114,7 +115,7 @@ const accept = async () => {
       selectedOptionName.value
     );
 
-    // reload updated proposal
+    // Reload updated proposal (status should now be "accepted")
     await load(token.value);
   } finally {
     submitting.value = false;
@@ -162,6 +163,7 @@ const accept = async () => {
               :trade="pkg.trade"
               :tier="pkg.tier"
               :selected="pkg.option.name === selectedOptionName"
+              :disabled="proposal.status === 'accepted'"
               @select="selectedOptionName = pkg.option.name"
             />
           </div>
