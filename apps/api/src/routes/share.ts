@@ -2,9 +2,6 @@ import { Hono } from "hono";
 import type { Context } from "hono";
 import { getServiceClient } from "../lib/supabase.js";
 
-/**
- * PUBLIC SHARE ROUTER
- */
 export const shareRouter = new Hono();
 
 /* =========================================================
@@ -28,6 +25,11 @@ shareRouter.get("/proposal/:token", async (c: Context) => {
     return c.json({ error: "Proposal not found" }, 404);
   }
 
+  // 🔑 THIS IS THE FIX
+  const options = Array.isArray(proposal.line_items)
+    ? proposal.line_items
+    : [];
+
   return c.json({
     data: {
       proposal: {
@@ -36,12 +38,7 @@ shareRouter.get("/proposal/:token", async (c: Context) => {
         description: proposal.description,
         status: proposal.status,
         publicToken: proposal.public_token,
-
-        // 🔑 CRITICAL FIX
-        options: Array.isArray(proposal.line_items)
-          ? proposal.line_items
-          : [],
-
+        options, // ← NOW CORRECT
         depositConfig: proposal.deposit_config ?? null,
       },
     },
@@ -71,52 +68,15 @@ shareRouter.post("/proposal/:token/accept", async (c: Context) => {
     return c.json({ error: "Proposal not found" }, 404);
   }
 
-  if (proposal.job_id) {
-    return c.json({
-      data: {
-        status: proposal.status,
-        job_id: proposal.job_id,
-      },
-    });
-  }
-
   const options = Array.isArray(proposal.line_items)
     ? proposal.line_items
     : [];
 
-  const selectedOption = options.find(
-    (o: any) => o.name === optionName
-  );
+  const selectedOption = options.find((o: any) => o.name === optionName);
 
   if (!selectedOption) {
     return c.json({ error: "Invalid option selected" }, 400);
   }
-
-  const approvedPrice =
-    typeof selectedOption.subtotal === "number"
-      ? selectedOption.subtotal
-      : null;
-
-  const { data: jobs, error: jobError } = await supabase
-    .from("jobs")
-    .insert([
-      {
-        proposal_id: proposal.id,
-        contractor_id: proposal.contractor_id,
-        client_id: proposal.client_id,
-        approved_option: optionName,
-        approved_price: approvedPrice,
-        deposit_amount: proposal.deposit_amount,
-        status: "pending",
-      },
-    ])
-    .select();
-
-  if (jobError || !jobs?.length) {
-    return c.json({ error: "Job creation failed" }, 500);
-  }
-
-  const job = jobs[0];
 
   await supabase
     .from("smart_proposals")
@@ -124,16 +84,11 @@ shareRouter.post("/proposal/:token/accept", async (c: Context) => {
       status: "accepted",
       accepted_option: optionName,
       accepted_at: new Date().toISOString(),
-      job_id: job.id,
     })
     .eq("id", proposal.id);
 
   return c.json({
-    data: {
-      status: "accepted",
-      job_id: job.id,
-      job_public_token: job.job_public_token,
-    },
+    data: { status: "accepted" },
   });
 });
 
