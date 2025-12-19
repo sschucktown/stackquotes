@@ -83,11 +83,10 @@ watch(
 );
 
 /* -------------------------------------------------
-   ACCEPT FLOW
+   ACCEPT FLOW (NO job_id HERE)
 -------------------------------------------------- */
 const submitting = ref(false);
 const showSignatureModal = ref(false);
-const jobId = ref<string | null>(null);
 
 const accept = async () => {
   if (!proposal.value || !selectedOptionName.value) {
@@ -98,25 +97,12 @@ const accept = async () => {
   submitting.value = true;
 
   try {
-    const res = await acceptPublicProposal(
+    await acceptPublicProposal(
       proposal.value.publicToken,
       selectedOptionName.value
     );
 
-    // 🔒 BREAK WRONG STATIC TYPE SAFELY
-    const rawData = (res as unknown as { data?: unknown })?.data;
-
-    if (
-      !rawData ||
-      typeof rawData !== "object" ||
-      !("job_id" in rawData) ||
-      typeof (rawData as any).job_id !== "string"
-    ) {
-      console.error("[ACCEPT] Invalid accept response", res);
-      return;
-    }
-
-    jobId.value = (rawData as { job_id: string }).job_id;
+    // Accept succeeded → open signature modal
     showSignatureModal.value = true;
   } catch (err) {
     console.error("[ACCEPT] failed", err);
@@ -142,6 +128,7 @@ const approvedPrice = computed(() => {
 <template>
   <div class="min-h-screen bg-slate-50 px-4 py-10">
     <div class="mx-auto max-w-4xl">
+
       <div v-if="loading" class="py-20 text-center text-slate-500">
         Loading proposal…
       </div>
@@ -154,6 +141,8 @@ const approvedPrice = computed(() => {
       </div>
 
       <div v-else-if="proposal" class="space-y-8">
+
+        <!-- Header -->
         <header class="text-center">
           <h1 class="text-2xl font-semibold text-slate-900">
             {{ proposal.title }}
@@ -163,6 +152,7 @@ const approvedPrice = computed(() => {
           </p>
         </header>
 
+        <!-- Options -->
         <section class="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-100">
           <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             <ClientPackageCard
@@ -177,7 +167,7 @@ const approvedPrice = computed(() => {
           </div>
 
           <button
-            class="mt-6 w-full rounded-xl bg-blue-600 px-4 py-3 font-semibold text-white hover:bg-blue-700"
+            class="mt-6 w-full rounded-xl bg-blue-600 px-4 py-3 font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
             :disabled="submitting"
             @click="accept"
           >
@@ -187,8 +177,9 @@ const approvedPrice = computed(() => {
       </div>
     </div>
 
+    <!-- SIGNATURE MODAL -->
     <SignatureModal
-      v-if="proposal && jobId"
+      v-if="proposal"
       :open="showSignatureModal"
       :proposal-id="proposal.id"
       :accepted-option="selectedOptionName!"
