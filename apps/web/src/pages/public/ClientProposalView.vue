@@ -207,3 +207,119 @@ const accept = async () => {
     </div>
   </div>
 </template>
+<script setup lang="ts">
+import { computed, ref, watch } from "vue";
+import { useRoute } from "vue-router";
+import type { ProposalOption } from "@stackquotes/types";
+
+import ClientPackageCard from "@/modules/proposals/components/ClientPackageCard.vue";
+import {
+  resolveTradeFromAbstractKey,
+  resolveTierFromAbstractKey,
+} from "@/modules/proposals/utils/visualAssets";
+
+import { acceptPublicProposal } from "@/modules/public/api/proposal";
+import { useProposal } from "@/modules/public/composables/useProposal";
+
+/* ----------------------------
+   ROUTE TOKEN (LOCKED)
+---------------------------- */
+const route = useRoute();
+
+const publicToken = computed(() => {
+  const p = route.params as Record<string, unknown>;
+  return typeof p.token === "string"
+    ? p.token
+    : typeof p.id === "string"
+    ? p.id
+    : "";
+});
+
+console.log("[ClientProposalView] publicToken:", publicToken.value);
+
+/* ----------------------------
+   COMPOSABLE
+---------------------------- */
+const { loading, error, proposalDisplayPayload, load } = useProposal();
+
+/* ----------------------------
+   LOAD (TOKEN ONLY)
+---------------------------- */
+watch(
+  publicToken,
+  async (token) => {
+    if (!token) return;
+    console.log("[LOAD] using token:", token);
+    await load(token);
+  },
+  { immediate: true }
+);
+
+/* ----------------------------
+   DERIVED
+---------------------------- */
+const proposal = computed(() => {
+  return proposalDisplayPayload.value?.proposal ?? null;
+});
+
+/* ----------------------------
+   OPTIONS
+---------------------------- */
+const packageOptions = computed(() => {
+  const opts = proposal.value?.options ?? [];
+  return opts.map((option: ProposalOption) => ({
+    option,
+    trade: resolveTradeFromAbstractKey(option.visual?.abstract_key),
+    tier: resolveTierFromAbstractKey(option.visual?.abstract_key),
+  }));
+});
+
+/* ----------------------------
+   AUTO SELECT
+---------------------------- */
+const selectedOptionName = ref<string | null>(null);
+
+watch(
+  () => proposal.value?.options,
+  (opts) => {
+    if (!selectedOptionName.value && opts?.length) {
+      selectedOptionName.value = opts[0].name;
+      console.log("[AUTO-SELECT] selectedOptionName:", selectedOptionName.value);
+    }
+  },
+  { immediate: true }
+);
+
+/* ----------------------------
+   ACCEPT
+---------------------------- */
+const submitting = ref(false);
+
+const accept = async () => {
+  if (!proposal.value) return;
+
+  if (!selectedOptionName.value) {
+    console.warn("[ACCEPT] no option available");
+    return;
+  }
+
+  submitting.value = true;
+
+  try {
+    console.log("[ACCEPT] sending", {
+      token: publicToken.value,
+      optionName: selectedOptionName.value,
+    });
+
+    await acceptPublicProposal(
+      publicToken.value,
+      selectedOptionName.value
+    );
+
+    // 🔒 IMPORTANT: reload using SAME token
+    await load(publicToken.value);
+  } finally {
+    submitting.value = false;
+  }
+};
+</script>

@@ -11,17 +11,13 @@ shareRouter.get("/proposal/:token", async (c: Context) => {
   const token = c.req.param("token");
   const supabase = getServiceClient();
 
-  if (!token) {
-    return c.json({ error: "Invalid proposal link" }, 400);
-  }
-
-  const { data: proposal, error } = await supabase
+  const { data: proposal } = await supabase
     .from("smart_proposals")
     .select("*")
     .eq("public_token", token)
     .single();
 
-  if (error || !proposal) {
+  if (!proposal) {
     return c.json({ error: "Proposal not found" }, 404);
   }
 
@@ -44,29 +40,24 @@ shareRouter.get("/proposal/:token", async (c: Context) => {
 ========================================================= */
 shareRouter.post("/proposal/:token/accept", async (c: Context) => {
   const token = c.req.param("token");
-  const supabase = getServiceClient();
   const { optionName } = await c.req.json<{ optionName?: string }>();
-
-  console.log("[ACCEPT] token:", token);
-  console.log("[ACCEPT] optionName:", optionName);
+  const supabase = getServiceClient();
 
   if (!token || !optionName) {
     return c.json({ error: "Invalid request" }, 400);
   }
 
-  /* 1️⃣ Fetch proposal */
-  const { data: proposal, error: proposalError } = await supabase
+  const { data: proposal } = await supabase
     .from("smart_proposals")
     .select("*")
     .eq("public_token", token)
     .single();
 
-  console.log("[ACCEPT] proposal:", proposal);
-
-  if (proposalError || !proposal) {
+  if (!proposal) {
     return c.json({ error: "Proposal not found" }, 404);
   }
 
+  // Idempotent
   if (proposal.job_id) {
     return c.json({
       data: {
@@ -76,72 +67,49 @@ shareRouter.post("/proposal/:token/accept", async (c: Context) => {
     });
   }
 
-  /* 2️⃣ Validate option */
-  const options = Array.isArray(proposal.line_items)
-    ? proposal.line_items
-    : [];
-
-  const selectedOption = options.find(
+  const selected = proposal.line_items?.find(
     (o: any) => o.name === optionName
   );
 
-  if (!selectedOption) {
-    return c.json({ error: "Invalid option selected" }, 400);
+  if (!selected) {
+    return c.json({ error: "Invalid option" }, 400);
   }
-
-  const approvedPrice =
-    typeof selectedOption.subtotal === "number"
-      ? selectedOption.subtotal
-      : null;
-
-  /* 3️⃣ Create job */
-  const jobPayload = {
-    proposal_id: proposal.id,
-    contractor_id: proposal.contractor_id,
-    client_id: proposal.client_id,
-    approved_option: optionName,
-    approved_price: approvedPrice,
-    deposit_amount: proposal.deposit_amount,
-    status: "pending",
-  };
-
-  console.log("[JOB INSERT PAYLOAD]", jobPayload);
 
   const { data: jobs, error: jobError } = await supabase
     .from("jobs")
-    .insert([jobPayload])
-    .select()
-    .single();
+    .insert([{
+      proposal_id: proposal.id,
+      contractor_id: proposal.contractor_id,
+      client_id: proposal.client_id,
+      approved_option: optionName,
+      approved_price: selected.subtotal ?? null,
+      deposit_amount: proposal.deposit_amount,
+      status: "pending",
+    }])
+    .select();
 
-  console.log("[JOB INSERT RESULT]", jobs, jobError);
-
-  if (jobError || !jobs) {
+  if (jobError || !jobs?.length) {
+    console.error("[JOB ERROR]", jobError);
     return c.json({ error: "Job creation failed" }, 500);
   }
 
-  /* 4️⃣ Update proposal */
-  const { error: updateError } = await supabase
+  const job = jobs[0];
+
+  await supabase
     .from("smart_proposals")
     .update({
       status: "accepted",
       accepted_option: optionName,
       accepted_at: new Date().toISOString(),
-      job_id: jobs.id,
+      job_id: job.id,
     })
     .eq("id", proposal.id);
 
-  console.log("[PROPOSAL UPDATE ERROR]", updateError);
-
-  if (updateError) {
-    return c.json({ error: "Proposal update failed" }, 500);
-  }
-
-  /* 5️⃣ Success */
   return c.json({
     data: {
       status: "accepted",
-      job_id: jobs.id,
-      job_public_token: jobs.job_public_token,
+      job_id: job.id,
+      job_public_token: job.job_public_token,
     },
   });
 });
