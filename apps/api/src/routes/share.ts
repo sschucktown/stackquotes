@@ -2,6 +2,9 @@ import { Hono } from "hono";
 import type { Context } from "hono";
 import { getServiceClient } from "../lib/supabase.js";
 
+/**
+ * PUBLIC SHARE ROUTER
+ */
 export const shareRouter = new Hono();
 
 /* =========================================================
@@ -11,13 +14,17 @@ shareRouter.get("/proposal/:token", async (c: Context) => {
   const token = c.req.param("token");
   const supabase = getServiceClient();
 
-  const { data: proposal } = await supabase
+  if (!token) {
+    return c.json({ error: "Invalid proposal link" }, 400);
+  }
+
+  const { data: proposal, error } = await supabase
     .from("smart_proposals")
     .select("*")
     .eq("public_token", token)
     .single();
 
-  if (!proposal) {
+  if (error || !proposal) {
     return c.json({ error: "Proposal not found" }, 404);
   }
 
@@ -29,7 +36,13 @@ shareRouter.get("/proposal/:token", async (c: Context) => {
         description: proposal.description,
         status: proposal.status,
         publicToken: proposal.public_token,
-        options: proposal.line_items ?? [],
+
+        // 🔑 CRITICAL FIX
+        options: Array.isArray(proposal.line_items)
+          ? proposal.line_items
+          : [],
+
+        depositConfig: proposal.deposit_config ?? null,
       },
     },
   });
@@ -40,24 +53,24 @@ shareRouter.get("/proposal/:token", async (c: Context) => {
 ========================================================= */
 shareRouter.post("/proposal/:token/accept", async (c: Context) => {
   const token = c.req.param("token");
-  const { optionName } = await c.req.json<{ optionName?: string }>();
   const supabase = getServiceClient();
+
+  const { optionName } = await c.req.json<{ optionName?: string }>();
 
   if (!token || !optionName) {
     return c.json({ error: "Invalid request" }, 400);
   }
 
-  const { data: proposal } = await supabase
+  const { data: proposal, error } = await supabase
     .from("smart_proposals")
     .select("*")
     .eq("public_token", token)
     .single();
 
-  if (!proposal) {
+  if (error || !proposal) {
     return c.json({ error: "Proposal not found" }, 404);
   }
 
-  // Idempotent
   if (proposal.job_id) {
     return c.json({
       data: {
@@ -67,29 +80,39 @@ shareRouter.post("/proposal/:token/accept", async (c: Context) => {
     });
   }
 
-  const selected = proposal.line_items?.find(
+  const options = Array.isArray(proposal.line_items)
+    ? proposal.line_items
+    : [];
+
+  const selectedOption = options.find(
     (o: any) => o.name === optionName
   );
 
-  if (!selected) {
-    return c.json({ error: "Invalid option" }, 400);
+  if (!selectedOption) {
+    return c.json({ error: "Invalid option selected" }, 400);
   }
+
+  const approvedPrice =
+    typeof selectedOption.subtotal === "number"
+      ? selectedOption.subtotal
+      : null;
 
   const { data: jobs, error: jobError } = await supabase
     .from("jobs")
-    .insert([{
-      proposal_id: proposal.id,
-      contractor_id: proposal.contractor_id,
-      client_id: proposal.client_id,
-      approved_option: optionName,
-      approved_price: selected.subtotal ?? null,
-      deposit_amount: proposal.deposit_amount,
-      status: "pending",
-    }])
+    .insert([
+      {
+        proposal_id: proposal.id,
+        contractor_id: proposal.contractor_id,
+        client_id: proposal.client_id,
+        approved_option: optionName,
+        approved_price: approvedPrice,
+        deposit_amount: proposal.deposit_amount,
+        status: "pending",
+      },
+    ])
     .select();
 
   if (jobError || !jobs?.length) {
-    console.error("[JOB ERROR]", jobError);
     return c.json({ error: "Job creation failed" }, 500);
   }
 
