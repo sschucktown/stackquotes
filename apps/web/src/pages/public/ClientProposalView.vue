@@ -31,6 +31,15 @@ watch(
   async (t) => {
     if (!t) return;
     await load(t);
+     console.log(
+      "[VERIFY] proposal.options:",
+      proposalDisplayPayload.value?.proposal?.options
+    );
+
+    console.log(
+      "[VERIFY] options length:",
+      proposalDisplayPayload.value?.proposal?.options?.length
+    );
     console.log("[ClientProposalView] payload:", proposalDisplayPayload.value);
   },
   { immediate: true }
