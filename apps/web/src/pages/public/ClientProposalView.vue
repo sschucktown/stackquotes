@@ -73,39 +73,61 @@ const packageOptions = computed(() => {
 });
 
 /* ----------------------------
-   SELECTION (AUTO-SELECT FIRST — ONCE)
+   SELECTION (FORCE DEFAULT)
 ---------------------------- */
 const selectedOptionName = ref<string | null>(null);
 
 watch(
   () => proposal.value?.options,
   (opts) => {
-    if (
-      !selectedOptionName.value &&
-      opts?.length &&
-      proposal.value?.status !== "accepted"
-    ) {
+    if (!opts || opts.length === 0) return;
+
+    // 🔒 HARD GUARANTEE: always select something
+    if (!selectedOptionName.value) {
       selectedOptionName.value = opts[0].name;
-      console.log("[AUTOSELECT] option:", opts[0].name);
+      console.warn(
+        "[ClientProposalView] Auto-selected option:",
+        selectedOptionName.value
+      );
     }
   },
   { immediate: true }
 );
 
 /* ----------------------------
-   ACCEPT
+   ACCEPT (NO SILENT FAILURES)
 ---------------------------- */
 const submitting = ref(false);
 
 const accept = async () => {
   console.log("[ACCEPT] click fired");
-  console.log("[ACCEPT] publicToken:", proposal.value?.publicToken);
-  console.log("[ACCEPT] selectedOptionName:", selectedOptionName.value);
-  console.log("[ACCEPT] status:", proposal.value?.status);
 
-  if (!proposal.value?.publicToken) return;
-  if (!selectedOptionName.value) return;
-  if (proposal.value.status === "accepted") return;
+  if (!proposal.value) {
+    console.error("[ACCEPT] proposal missing");
+    return;
+  }
+
+  if (!proposal.value.publicToken) {
+    console.error("[ACCEPT] missing publicToken");
+    return;
+  }
+
+  // 🔒 FINAL SAFETY NET
+  if (!selectedOptionName.value && proposal.value.options?.length) {
+    selectedOptionName.value = proposal.value.options[0].name;
+    console.warn(
+      "[ACCEPT] Forcing option:",
+      selectedOptionName.value
+    );
+  }
+
+  if (!selectedOptionName.value) {
+    console.error("[ACCEPT] no option available — aborting");
+    return;
+  }
+
+  console.log("[ACCEPT] token:", proposal.value.publicToken);
+  console.log("[ACCEPT] option:", selectedOptionName.value);
 
   submitting.value = true;
 
@@ -115,8 +137,10 @@ const accept = async () => {
       selectedOptionName.value
     );
 
-    // Reload updated proposal (status should now be "accepted")
+    console.log("[ACCEPT] success — reloading proposal");
     await load(token.value);
+  } catch (err) {
+    console.error("[ACCEPT] failed", err);
   } finally {
     submitting.value = false;
   }
@@ -163,14 +187,13 @@ const accept = async () => {
               :trade="pkg.trade"
               :tier="pkg.tier"
               :selected="pkg.option.name === selectedOptionName"
-              :disabled="proposal.status === 'accepted'"
               @select="selectedOptionName = pkg.option.name"
             />
           </div>
 
           <!-- Accept -->
           <button
-            class="mt-6 w-full rounded-xl bg-blue-600 px-4 py-3 font-semibold text-white hover:bg-blue-700"
+            class="mt-6 w-full rounded-xl bg-blue-600 px-4 py-3 font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
             :disabled="submitting || proposal.status === 'accepted'"
             @click="accept"
           >
@@ -179,7 +202,6 @@ const accept = async () => {
             <span v-else>Accept Proposal</span>
           </button>
         </section>
-
       </div>
     </div>
   </div>
