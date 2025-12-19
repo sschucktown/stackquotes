@@ -4,6 +4,7 @@ import { getServiceClient } from "../lib/supabase.js";
 
 /**
  * PUBLIC SHARE ROUTER
+ * Handles public SmartProposal access + acceptance
  */
 export const shareRouter = new Hono();
 
@@ -13,8 +14,6 @@ export const shareRouter = new Hono();
 shareRouter.get("/proposal/:token", async (c: Context) => {
   const token = c.req.param("token");
   const supabase = getServiceClient();
-
-  console.log("🔎 [SHARE GET] token:", token);
 
   if (!token) {
     return c.json({ error: "Invalid proposal link" }, 400);
@@ -27,17 +26,8 @@ shareRouter.get("/proposal/:token", async (c: Context) => {
     .single();
 
   if (error || !proposal) {
-    console.error("❌ [SHARE GET] proposal not found", error);
     return c.json({ error: "Proposal not found" }, 404);
   }
-
-  // 🔑 CRITICAL FIX:
-  // line_items is the ONLY source of options
-  const options = Array.isArray(proposal.line_items)
-    ? proposal.line_items
-    : [];
-
-  console.log("📦 [SHARE GET] options count:", options.length);
 
   return c.json({
     data: {
@@ -47,10 +37,7 @@ shareRouter.get("/proposal/:token", async (c: Context) => {
         description: proposal.description,
         status: proposal.status,
         publicToken: proposal.public_token,
-
-        // 👇 THIS IS THE FIX
-        options,
-
+        options: proposal.options ?? [],
         depositConfig: proposal.deposit_config ?? null,
       },
     },
@@ -59,35 +46,35 @@ shareRouter.get("/proposal/:token", async (c: Context) => {
 
 /* =========================================================
    POST /api/share/proposal/:token/accept
+   Accept proposal AND create job (idempotent)
 ========================================================= */
 shareRouter.post("/proposal/:token/accept", async (c: Context) => {
   const token = c.req.param("token");
   const supabase = getServiceClient();
 
-  console.log("🚨 [ACCEPT] token:", token);
-
   const { optionName } = await c.req.json<{ optionName?: string }>();
-  console.log("🚨 [ACCEPT] optionName:", optionName);
 
   if (!token || !optionName) {
     return c.json({ error: "Invalid request" }, 400);
   }
 
-  // 1️⃣ Fetch proposal
-  const { data: proposal, error } = await supabase
+  /* -------------------------------------------------------
+     1️⃣ Fetch proposal
+  ------------------------------------------------------- */
+  const { data: proposal, error: proposalError } = await supabase
     .from("smart_proposals")
     .select("*")
     .eq("public_token", token)
     .single();
 
-  if (error || !proposal) {
-    console.error("❌ [ACCEPT] proposal not found", error);
+  if (proposalError || !proposal) {
     return c.json({ error: "Proposal not found" }, 404);
   }
 
-  // 2️⃣ Idempotency
+  /* -------------------------------------------------------
+     2️⃣ Idempotency
+  ------------------------------------------------------- */
   if (proposal.job_id) {
-    console.warn("⚠️ [ACCEPT] job already exists:", proposal.job_id);
     return c.json({
       data: {
         status: proposal.status,
@@ -96,16 +83,12 @@ shareRouter.post("/proposal/:token/accept", async (c: Context) => {
     });
   }
 
-  // 3️⃣ Validate option AGAINST line_items
-  const options = Array.isArray(proposal.line_items)
-    ? proposal.line_items
-    : [];
-
-  const selectedOption = options.find(
-    (o: any) => o?.name === optionName
-  );
-
-  console.log("📦 [ACCEPT] selectedOption:", selectedOption);
+  /* -------------------------------------------------------
+     3️⃣ Validate option
+  ------------------------------------------------------- */
+  const selectedOption = Array.isArray(proposal.options)
+    ? proposal.options.find((o: any) => o.name === optionName)
+    : null;
 
   if (!selectedOption) {
     return c.json({ error: "Invalid option selected" }, 400);
@@ -116,33 +99,32 @@ shareRouter.post("/proposal/:token/accept", async (c: Context) => {
       ? selectedOption.subtotal
       : null;
 
-  // 4️⃣ Create job
-  const jobPayload = {
-    proposal_id: proposal.id,
-    contractor_id: proposal.contractor_id,
-    client_id: proposal.client_id,
-    approved_option: optionName,
-    approved_price: approvedPrice,
-    deposit_amount: proposal.deposit_amount,
-    status: "pending",
-  };
-
-  console.log("🧪 [JOB INSERT PAYLOAD]", jobPayload);
-
-  const { data: jobs, error: jobError } = await supabase
+  /* -------------------------------------------------------
+     4️⃣ Create job
+  ------------------------------------------------------- */
+  const { data: job, error: jobError } = await supabase
     .from("jobs")
-    .insert([jobPayload])
-    .select();
+    .insert({
+      proposal_id: proposal.id,
+      contractor_id: proposal.contractor_id,
+      client_id: proposal.client_id,
+      approved_option: optionName,
+      approved_price: approvedPrice,
+      deposit_amount: proposal.deposit_amount,
+      status: "pending",
+    })
+    .select()
+    .single();
 
-  if (jobError || !jobs || jobs.length === 0) {
-    console.error("❌ [JOB CREATE FAILED]", jobError);
+  if (jobError || !job) {
+    console.error("[JOB CREATE ERROR]", jobError);
     return c.json({ error: "Job creation failed" }, 500);
   }
 
-  const job = jobs[0];
-
-  // 5️⃣ Back-link proposal
-  await supabase
+  /* -------------------------------------------------------
+     5️⃣ Back-link job → proposal (STRICT)
+  ------------------------------------------------------- */
+  const { data: updatedProposal, error: updateError } = await supabase
     .from("smart_proposals")
     .update({
       status: "accepted",
@@ -150,10 +132,21 @@ shareRouter.post("/proposal/:token/accept", async (c: Context) => {
       accepted_at: new Date().toISOString(),
       job_id: job.id,
     })
-    .eq("id", proposal.id);
+    .eq("id", proposal.id)
+    .select("job_id")
+    .single();
 
-  console.log("✅ [ACCEPT SUCCESS] job_id:", job.id);
+  if (updateError || !updatedProposal?.job_id) {
+    console.error("[PROPOSAL BACKLINK FAILED]", updateError);
+    return c.json(
+      { error: "Proposal accepted but job link failed" },
+      500
+    );
+  }
 
+  /* -------------------------------------------------------
+     6️⃣ Success
+  ------------------------------------------------------- */
   return c.json({
     data: {
       status: "accepted",
