@@ -10,37 +10,28 @@ import {
   resolveTierFromAbstractKey,
 } from "@/modules/proposals/utils/visualAssets";
 
-import { acceptPublicProposal } from "@/modules/public/api/proposal";
 import { useProposal } from "@/modules/public/composables/useProposal";
 import type { ProposalOption } from "@stackquotes/types";
 
 /* -------------------------------------------------
-   ROUTE
+   ROUTE TOKEN
 -------------------------------------------------- */
 const route = useRoute();
 
 const token = computed(() => {
   const p = route.params as Record<string, unknown>;
-  return typeof p.token === "string"
-    ? p.token
-    : typeof p.id === "string"
-    ? p.id
-    : "";
+  return typeof p.token === "string" ? p.token : "";
 });
 
 /* -------------------------------------------------
-   COMPOSABLE
+   LOAD PROPOSAL
 -------------------------------------------------- */
 const { loading, error, proposalDisplayPayload, load } = useProposal();
 
-/* -------------------------------------------------
-   LOAD
--------------------------------------------------- */
 watch(
   token,
   async (t) => {
-    if (!t) return;
-    await load(t);
+    if (t) await load(t);
   },
   { immediate: true }
 );
@@ -48,9 +39,9 @@ watch(
 /* -------------------------------------------------
    PROPOSAL
 -------------------------------------------------- */
-const proposal = computed(() => {
-  return proposalDisplayPayload.value?.proposal ?? null;
-});
+const proposal = computed(() => proposalDisplayPayload.value?.proposal ?? null);
+
+const publicToken = computed(() => proposal.value?.publicToken ?? "");
 
 /* -------------------------------------------------
    OPTIONS
@@ -74,7 +65,7 @@ const selectedOptionName = ref<string | null>(null);
 watch(
   () => proposal.value?.options,
   (opts) => {
-    if (!selectedOptionName.value && Array.isArray(opts) && opts.length > 0) {
+    if (!selectedOptionName.value && Array.isArray(opts) && opts.length) {
       selectedOptionName.value = opts[0].name;
       console.log("[AUTO-SELECT]", opts[0].name);
     }
@@ -83,32 +74,16 @@ watch(
 );
 
 /* -------------------------------------------------
-   ACCEPT FLOW (NO job_id HERE)
+   SIGNATURE FLOW
 -------------------------------------------------- */
-const submitting = ref(false);
 const showSignatureModal = ref(false);
 
-const accept = async () => {
+const openSignature = () => {
   if (!proposal.value || !selectedOptionName.value) {
     console.warn("[ACCEPT] missing proposal or option");
     return;
   }
-
-  submitting.value = true;
-
-  try {
-    await acceptPublicProposal(
-      proposal.value.publicToken,
-      selectedOptionName.value
-    );
-
-    // Accept succeeded → open signature modal
-    showSignatureModal.value = true;
-  } catch (err) {
-    console.error("[ACCEPT] failed", err);
-  } finally {
-    submitting.value = false;
-  }
+  showSignatureModal.value = true;
 };
 
 /* -------------------------------------------------
@@ -141,8 +116,6 @@ const approvedPrice = computed(() => {
       </div>
 
       <div v-else-if="proposal" class="space-y-8">
-
-        <!-- Header -->
         <header class="text-center">
           <h1 class="text-2xl font-semibold text-slate-900">
             {{ proposal.title }}
@@ -152,7 +125,6 @@ const approvedPrice = computed(() => {
           </p>
         </header>
 
-        <!-- Options -->
         <section class="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-100">
           <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             <ClientPackageCard
@@ -167,26 +139,26 @@ const approvedPrice = computed(() => {
           </div>
 
           <button
-            class="mt-6 w-full rounded-xl bg-blue-600 px-4 py-3 font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
-            :disabled="submitting"
-            @click="accept"
+            class="mt-6 w-full rounded-xl bg-blue-600 px-4 py-3 font-semibold text-white hover:bg-blue-700"
+            @click="openSignature"
           >
-            {{ submitting ? "Submitting…" : "Accept Proposal" }}
+            Accept & Sign
           </button>
         </section>
       </div>
     </div>
 
-    <!-- SIGNATURE MODAL -->
     <SignatureModal
+  v-if="proposal && publicToken"
   :open="showSignatureModal"
-  :public-token="proposal.publicToken"
+  :public-token="publicToken"
   :accepted-option="selectedOptionName!"
-  :on-close="() => (showSignatureModal = false)"
+  :on-close="() => { showSignatureModal = false }"
   :on-success="() => {
     showSignatureModal = false;
     load(token);
   }"
 />
+
   </div>
 </template>
