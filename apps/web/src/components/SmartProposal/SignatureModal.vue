@@ -46,10 +46,9 @@ const initCanvas = () => {
 watch(
   () => props.open,
   async (open) => {
-    if (open) {
-      await nextTick();
-      initCanvas();
-    }
+    if (!open) return;
+    await nextTick();
+    initCanvas();
   }
 );
 
@@ -103,7 +102,7 @@ const endDraw = () => {
 };
 
 /* --------------------------------------------------
-   Submit Signature (PUBLIC ROUTE)
+   Submit Signature (PUBLIC)
 -------------------------------------------------- */
 const submitSignature = async () => {
   if (!signatureData.value) {
@@ -118,7 +117,9 @@ const submitSignature = async () => {
       `/api/share/proposal/${props.publicToken}/sign`,
       {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
           accepted_option: props.acceptedOption,
           signature_image: signatureData.value,
@@ -127,14 +128,14 @@ const submitSignature = async () => {
     );
 
     if (!res.ok) {
-      console.error(await res.text());
+      console.error("[SIGNATURE ERROR]", await res.text());
       alert("Failed to save signature.");
       return;
     }
 
     props.onSuccess();
   } catch (err) {
-    console.error(err);
+    console.error("[SIGNATURE EXCEPTION]", err);
     alert("Unexpected error saving signature.");
   } finally {
     signing.value = false;
@@ -148,7 +149,9 @@ const submitSignature = async () => {
     class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
   >
     <div class="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
-      <h2 class="text-lg font-semibold text-slate-900">Sign to Approve</h2>
+      <h2 class="text-lg font-semibold text-slate-900">
+        Sign to Approve
+      </h2>
 
       <div class="mt-4 rounded-xl border border-slate-300 bg-slate-50 p-3">
         <canvas
@@ -175,7 +178,7 @@ const submitSignature = async () => {
         </button>
 
         <button
-          class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white"
+          class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
           :disabled="signing"
           @click="submitSignature"
         >

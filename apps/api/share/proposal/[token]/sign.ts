@@ -4,17 +4,23 @@ import { getServiceClient } from "../../../lib/supabase";
 
 export const signRouter = new Hono();
 
+/* --------------------------------------------------
+   Schema
+-------------------------------------------------- */
 const bodySchema = z.object({
   accepted_option: z.string().min(1),
   signature_image: z.string().startsWith("data:image/"),
 });
 
+/* --------------------------------------------------
+   POST /api/share/proposal/:token/sign
+-------------------------------------------------- */
 signRouter.post("/", async (c) => {
   const supabase = getServiceClient();
-  const token = c.req.param("token");
+  const publicToken = c.req.param("token");
 
-  if (!token) {
-    return c.json({ error: "Missing token" }, 400);
+  if (!publicToken) {
+    return c.json({ error: "Missing proposal token" }, 400);
   }
 
   let parsed;
@@ -27,20 +33,45 @@ signRouter.post("/", async (c) => {
   const { accepted_option, signature_image } = parsed;
 
   /* --------------------------------------------------
-     1️⃣ Fetch proposal by public token
+     1) Fetch proposal by PUBLIC TOKEN
   -------------------------------------------------- */
-  const { data: proposal, error } = await supabase
+  const { data: proposal, error: fetchErr } = await supabase
     .from("smart_proposals")
-    .select("*")
-    .eq("public_token", token)
+    .select(
+      "id, contractor_id, client_id, line_items, deposit_amount"
+    )
+    .eq("public_token", publicToken)
     .single();
 
-  if (error || !proposal) {
+  if (fetchErr || !proposal) {
     return c.json({ error: "Proposal not found" }, 404);
   }
 
   /* --------------------------------------------------
-     2️⃣ Upload signature
+     2) Resolve approved price
+  -------------------------------------------------- */
+  let approvedPrice = 0;
+
+  try {
+    const payload: any = proposal.line_items;
+    const options = Array.isArray(payload?.options)
+      ? payload.options
+      : [];
+
+    const lower = accepted_option.toLowerCase();
+
+    const match =
+      options.find(
+        (o: any) => (o?.name ?? "").toLowerCase() === lower
+      ) || options[0];
+
+    approvedPrice = Number(match?.subtotal ?? 0);
+  } catch {
+    approvedPrice = 0;
+  }
+
+  /* --------------------------------------------------
+     3) Upload signature
   -------------------------------------------------- */
   const base64 = signature_image.split(",")[1];
   const buffer = Buffer.from(base64, "base64");
@@ -57,14 +88,32 @@ signRouter.post("/", async (c) => {
     return c.json({ error: "Signature upload failed" }, 500);
   }
 
-  const { data: publicUrl } = supabase.storage
+  const { data: urlData } = supabase.storage
     .from("proposal-signatures")
     .getPublicUrl(filename);
 
+  const signatureUrl = urlData.publicUrl;
   const now = new Date().toISOString();
 
   /* --------------------------------------------------
-     3️⃣ Create job
+     4) Update proposal
+  -------------------------------------------------- */
+  const { error: updateErr } = await supabase
+    .from("smart_proposals")
+    .update({
+      signed_option: accepted_option,
+      signature_image: signatureUrl,
+      signed_at: now,
+      status: "accepted",
+    })
+    .eq("id", proposal.id);
+
+  if (updateErr) {
+    return c.json({ error: "Failed to update proposal" }, 500);
+  }
+
+  /* --------------------------------------------------
+     5) Create job (PRIMARY SIDE EFFECT)
   -------------------------------------------------- */
   const { data: job, error: jobErr } = await supabase
     .from("jobs")
@@ -73,33 +122,24 @@ signRouter.post("/", async (c) => {
       contractor_id: proposal.contractor_id,
       client_id: proposal.client_id,
       approved_option: accepted_option,
-      approved_price: 0,
+      approved_price: approvedPrice,
       deposit_amount: proposal.deposit_amount,
+      approved_at: now,
       status: "pending",
     })
     .select()
     .single();
 
   if (jobErr || !job) {
-    return c.json({ error: "Job creation failed" }, 500);
+    return c.json({ error: "Failed to create job" }, 500);
   }
 
   /* --------------------------------------------------
-     4️⃣ Update proposal
+     DONE
   -------------------------------------------------- */
-  await supabase
-    .from("smart_proposals")
-    .update({
-      signed_option: accepted_option,
-      signature_image: publicUrl.publicUrl,
-      signed_at: now,
-      status: "accepted",
-      job_id: job.id,
-    })
-    .eq("id", proposal.id);
-
   return c.json({
     success: true,
     job_id: job.id,
+    proposal_id: proposal.id,
   });
 });

@@ -6,6 +6,14 @@
     "outDir": "dist",
     "types": ["node", "vite/client"]
   },
-  "include": ["src/**/*"],
+  "references": [
+    { "path": "../../packages/config" },
+    { "path": "../../packages/types" }
+  ],
+  "include": [
+    "src/**/*",
+    "../../packages/config/src/**/*",
+    "../../packages/types/src/**/*"
+  ],
   "exclude": ["node_modules", "dist"]
 }
