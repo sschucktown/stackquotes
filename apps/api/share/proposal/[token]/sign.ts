@@ -2,67 +2,63 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { getServiceClient } from "../../../lib/supabase";
 
-export const signRouter = new Hono();
+const app = new Hono();
 
-/* --------------------------------------------------
-   Schema
--------------------------------------------------- */
-const bodySchema = z.object({
-  accepted_option: z.string().min(1),
-  signature_image: z.string().startsWith("data:image/"),
-});
-
-/* --------------------------------------------------
-   POST /api/share/proposal/:token/sign
--------------------------------------------------- */
-signRouter.post("/", async (c) => {
+/**
+ * POST /api/share/proposal/:token/sign
+ * Public signing endpoint (NO AUTH)
+ */
+app.post("/", async (c) => {
   const supabase = getServiceClient();
   const publicToken = c.req.param("token");
 
   if (!publicToken) {
-    return c.json({ error: "Missing proposal token" }, 400);
+    return c.json({ error: "Missing public token" }, 400);
   }
 
-  let parsed;
+  const bodySchema = z.object({
+    accepted_option: z.string().min(1),
+    signature_image: z.string().startsWith("data:image/"),
+  });
+
+  let body;
   try {
-    parsed = bodySchema.parse(await c.req.json());
+    body = bodySchema.parse(await c.req.json());
   } catch {
     return c.json({ error: "Invalid payload" }, 400);
   }
 
-  const { accepted_option, signature_image } = parsed;
+  const { accepted_option, signature_image } = body;
 
-  /* --------------------------------------------------
-     1) Fetch proposal by PUBLIC TOKEN
-  -------------------------------------------------- */
-  const { data: proposal, error: fetchErr } = await supabase
+  // 1️⃣ Load proposal by public token
+  const { data: proposal, error } = await supabase
     .from("smart_proposals")
     .select(
-      "id, contractor_id, client_id, line_items, deposit_amount"
+      `
+        id,
+        contractor_id,
+        client_id,
+        line_items,
+        deposit_amount
+      `
     )
     .eq("public_token", publicToken)
     .single();
 
-  if (fetchErr || !proposal) {
+  if (error || !proposal) {
     return c.json({ error: "Proposal not found" }, 404);
   }
 
-  /* --------------------------------------------------
-     2) Resolve approved price
-  -------------------------------------------------- */
+  // 2️⃣ Determine approved price
   let approvedPrice = 0;
-
   try {
     const payload: any = proposal.line_items;
-    const options = Array.isArray(payload?.options)
-      ? payload.options
-      : [];
-
-    const lower = accepted_option.toLowerCase();
+    const options = Array.isArray(payload?.options) ? payload.options : [];
 
     const match =
       options.find(
-        (o: any) => (o?.name ?? "").toLowerCase() === lower
+        (o: any) =>
+          (o?.name ?? "").toLowerCase() === accepted_option.toLowerCase()
       ) || options[0];
 
     approvedPrice = Number(match?.subtotal ?? 0);
@@ -70,9 +66,7 @@ signRouter.post("/", async (c) => {
     approvedPrice = 0;
   }
 
-  /* --------------------------------------------------
-     3) Upload signature
-  -------------------------------------------------- */
+  // 3️⃣ Upload signature
   const base64 = signature_image.split(",")[1];
   const buffer = Buffer.from(base64, "base64");
   const filename = `${proposal.id}.png`;
@@ -92,29 +86,20 @@ signRouter.post("/", async (c) => {
     .from("proposal-signatures")
     .getPublicUrl(filename);
 
-  const signatureUrl = urlData.publicUrl;
   const now = new Date().toISOString();
 
-  /* --------------------------------------------------
-     4) Update proposal
-  -------------------------------------------------- */
-  const { error: updateErr } = await supabase
+  // 4️⃣ Update proposal
+  await supabase
     .from("smart_proposals")
     .update({
       signed_option: accepted_option,
-      signature_image: signatureUrl,
+      signature_image: urlData.publicUrl,
       signed_at: now,
       status: "accepted",
     })
     .eq("id", proposal.id);
 
-  if (updateErr) {
-    return c.json({ error: "Failed to update proposal" }, 500);
-  }
-
-  /* --------------------------------------------------
-     5) Create job (PRIMARY SIDE EFFECT)
-  -------------------------------------------------- */
+  // 5️⃣ Create job
   const { data: job, error: jobErr } = await supabase
     .from("jobs")
     .insert({
@@ -123,7 +108,7 @@ signRouter.post("/", async (c) => {
       client_id: proposal.client_id,
       approved_option: accepted_option,
       approved_price: approvedPrice,
-      deposit_amount: proposal.deposit_amount,
+      deposit_amount: proposal.deposit_amount ?? null,
       approved_at: now,
       status: "pending",
     })
@@ -134,12 +119,10 @@ signRouter.post("/", async (c) => {
     return c.json({ error: "Failed to create job" }, 500);
   }
 
-  /* --------------------------------------------------
-     DONE
-  -------------------------------------------------- */
   return c.json({
     success: true,
     job_id: job.id,
-    proposal_id: proposal.id,
   });
 });
+
+export default app;
