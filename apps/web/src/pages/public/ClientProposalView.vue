@@ -179,17 +179,14 @@ const approvedPrice = computed(() => {
 
     <!-- SIGNATURE MODAL -->
     <SignatureModal
-      v-if="proposal"
-      :open="showSignatureModal"
-      :proposal-id="proposal.id"
-      :accepted-option="selectedOptionName!"
-      :approved-price="approvedPrice"
-      :deposit-amount="proposal.depositConfig?.value ?? null"
-      :on-close="() => (showSignatureModal = false)"
-      :on-success="() => {
-        showSignatureModal = false;
-        load(token);
-      }"
-    />
+  :open="showSignatureModal"
+  :public-token="proposal.publicToken"
+  :accepted-option="selectedOptionName!"
+  :on-close="() => (showSignatureModal = false)"
+  :on-success="() => {
+    showSignatureModal = false;
+    load(token);
+  }"
+/>
   </div>
 </template>

@@ -6,7 +6,8 @@ import { nextTick, onMounted, ref, watch } from "vue";
 -------------------------------------------------- */
 const props = defineProps<{
   open: boolean;
-  proposalId: string;
+  publicToken: string;
+  acceptedOption: string;
   onClose: () => void;
   onSuccess: () => void;
 }>();
@@ -102,7 +103,7 @@ const endDraw = () => {
 };
 
 /* --------------------------------------------------
-   Submit Signature ONLY
+   Submit Signature (PUBLIC ROUTE)
 -------------------------------------------------- */
 const submitSignature = async () => {
   if (!signatureData.value) {
@@ -114,11 +115,12 @@ const submitSignature = async () => {
 
   try {
     const res = await fetch(
-      `/api/smartproposals/${props.proposalId}/sign`,
+      `/api/share/proposal/${props.publicToken}/sign`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          accepted_option: props.acceptedOption,
           signature_image: signatureData.value,
         }),
       }

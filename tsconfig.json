@@ -5,6 +5,9 @@
     "paths": {
       "@/*": ["apps/web/src/*"],
       "@modules/*": ["apps/web/src/modules/*"],
+
+      "@stackquotes/api/*": ["apps/api/*"],
+
       "@stackquotes/types": ["packages/types/src"],
       "@stackquotes/ui": ["packages/ui/src"],
       "@stackquotes/config": ["packages/config/src"]
