@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
-import { useRoute, useRouter } from "vue-router";
+import { useRoute } from "vue-router";
 
 import ClientPackageCard from "@/modules/proposals/components/ClientPackageCard.vue";
 import SignatureModal from "@/components/SmartProposal/SignatureModal.vue";
@@ -14,10 +14,9 @@ import { useProposal } from "@/modules/public/composables/useProposal";
 import type { ProposalOption } from "@stackquotes/types";
 
 /* -------------------------------------------------
-   ROUTE
+   ROUTE TOKEN
 -------------------------------------------------- */
 const route = useRoute();
-const router = useRouter();
 
 const token = computed(() => {
   const p = route.params as Record<string, unknown>;
@@ -41,24 +40,7 @@ watch(
    PROPOSAL
 -------------------------------------------------- */
 const proposal = computed(() => proposalDisplayPayload.value?.proposal ?? null);
-
-/**
- * Public token used for signing endpoint
- */
 const publicToken = computed(() => proposal.value?.publicToken ?? "");
-
-/**
- * If proposal already accepted → redirect
- */
-watch(
-  () => proposal.value?.status,
-  (status) => {
-    if (status === "accepted" && publicToken.value) {
-      router.replace(`/proposal/${publicToken.value}/success`);
-    }
-  },
-  { immediate: true }
-);
 
 /* -------------------------------------------------
    OPTIONS
@@ -91,18 +73,31 @@ watch(
 );
 
 /* -------------------------------------------------
-   SIGNATURE MODAL
+   ACCEPT / SIGN STATE
 -------------------------------------------------- */
 const showSignatureModal = ref(false);
+const accepted = ref(false);
 
 const openSignature = () => {
   if (!proposal.value || !selectedOptionName.value) {
-    console.warn("[SIGN] missing proposal or option");
+    console.warn("[ACCEPT] missing proposal or option");
     return;
   }
-
   showSignatureModal.value = true;
 };
+
+/* -------------------------------------------------
+   PRICE
+-------------------------------------------------- */
+const approvedPrice = computed(() => {
+  if (!proposal.value || !selectedOptionName.value) return 0;
+
+  const opt = proposal.value.options.find(
+    (o: ProposalOption) => o.name === selectedOptionName.value
+  );
+
+  return opt?.subtotal ?? 0;
+});
 </script>
 
 <template>
@@ -124,6 +119,7 @@ const openSignature = () => {
 
       <!-- Proposal -->
       <div v-else-if="proposal" class="space-y-8">
+
         <!-- Header -->
         <header class="text-center">
           <h1 class="text-2xl font-semibold text-slate-900">
@@ -133,6 +129,14 @@ const openSignature = () => {
             {{ proposal.description }}
           </p>
         </header>
+
+        <!-- Accepted Banner -->
+        <div
+          v-if="accepted"
+          class="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-center text-emerald-700"
+        >
+          ✅ Proposal accepted! The contractor will contact you shortly.
+        </div>
 
         <!-- Options -->
         <section class="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-100">
@@ -144,15 +148,22 @@ const openSignature = () => {
               :trade="pkg.trade"
               :tier="pkg.tier"
               :selected="pkg.option.name === selectedOptionName"
-              @select="selectedOptionName = pkg.option.name"
+              :disabled="accepted"
+              @select="!accepted && (selectedOptionName = pkg.option.name)"
             />
           </div>
 
           <button
-            class="mt-6 w-full rounded-xl bg-blue-600 px-4 py-3 font-semibold text-white hover:bg-blue-700"
+            class="mt-6 w-full rounded-xl px-4 py-3 font-semibold text-white"
+            :class="
+              accepted
+                ? 'bg-slate-400 cursor-not-allowed'
+                : 'bg-blue-600 hover:bg-blue-700'
+            "
+            :disabled="accepted"
             @click="openSignature"
           >
-            Accept & Sign
+            {{ accepted ? "Proposal Accepted" : "Accept & Sign" }}
           </button>
         </section>
       </div>
@@ -160,11 +171,15 @@ const openSignature = () => {
 
     <!-- Signature Modal -->
     <SignatureModal
-      v-if="proposal && publicToken && selectedOptionName"
+      v-if="proposal && publicToken"
       :open="showSignatureModal"
       :public-token="publicToken"
-      :accepted-option="selectedOptionName"
-      :on-close="() => { showSignatureModal = false }"
+      :accepted-option="selectedOptionName!"
+      :on-close="() => (showSignatureModal = false)"
+      :on-success="() => {
+        showSignatureModal = false;
+        accepted = true;
+      }"
     />
   </div>
 </template>
