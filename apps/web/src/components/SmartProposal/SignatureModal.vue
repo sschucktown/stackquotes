@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { nextTick, onMounted, ref, watch } from "vue";
+import { useRouter } from "vue-router";
 
 /* --------------------------------------------------
    Props
@@ -9,8 +10,9 @@ const props = defineProps<{
   publicToken: string;
   acceptedOption: string;
   onClose: () => void;
-  onSuccess: () => void;
 }>();
+
+const router = useRouter();
 
 /* --------------------------------------------------
    State
@@ -31,9 +33,10 @@ const initCanvas = () => {
   const canvas = canvasRef.value;
   if (!canvas) return;
 
-  ctx = canvas.getContext("2d");
-  if (!ctx) return;
+  const context = canvas.getContext("2d");
+  if (!context) return;
 
+  ctx = context;
   ctx.lineWidth = 3;
   ctx.lineCap = "round";
   ctx.strokeStyle = "#111827";
@@ -57,39 +60,48 @@ onMounted(() => {
 });
 
 /* --------------------------------------------------
-   Drawing
+   Drawing Logic
 -------------------------------------------------- */
 const getPos = (e: MouseEvent | TouchEvent) => {
-  const rect = canvasRef.value!.getBoundingClientRect();
-  const t =
-    e instanceof TouchEvent ? e.touches[0] || e.changedTouches[0] : e;
+  const canvas = canvasRef.value!;
+  const rect = canvas.getBoundingClientRect();
+
+  if (e instanceof TouchEvent) {
+    const t = e.touches[0] || e.changedTouches[0];
+    return { x: t.clientX - rect.left, y: t.clientY - rect.top };
+  }
 
   return {
-    x: t.clientX - rect.left,
-    y: t.clientY - rect.top,
+    x: e.clientX - rect.left,
+    y: e.clientY - rect.top,
   };
 };
 
 const startDraw = (e: MouseEvent | TouchEvent) => {
   if (!ctx) return;
   drawing = true;
-  Object.assign({ lastX, lastY }, getPos(e));
+  const { x, y } = getPos(e);
+  lastX = x;
+  lastY = y;
 };
 
 const draw = (e: MouseEvent | TouchEvent) => {
   if (!drawing || !ctx) return;
   const { x, y } = getPos(e);
+
   ctx.beginPath();
   ctx.moveTo(lastX, lastY);
   ctx.lineTo(x, y);
   ctx.stroke();
+
   lastX = x;
   lastY = y;
 };
 
 const endDraw = () => {
+  if (!canvasRef.value) return;
   drawing = false;
-  signatureData.value = canvasRef.value!.toDataURL("image/png");
+  signatureData.value = canvasRef.value.toDataURL("image/png");
 };
 
 /* --------------------------------------------------
@@ -97,7 +109,7 @@ const endDraw = () => {
 -------------------------------------------------- */
 const submitSignature = async () => {
   if (!signatureData.value) {
-    alert("Please sign first.");
+    alert("Please sign before submitting.");
     return;
   }
 
@@ -122,7 +134,11 @@ const submitSignature = async () => {
       return;
     }
 
-    props.onSuccess();
+    // ✅ Hard redirect to success page
+    router.push(`/proposal/${props.publicToken}/success`);
+  } catch (err) {
+    console.error(err);
+    alert("Unexpected error saving signature.");
   } finally {
     signing.value = false;
   }
@@ -135,14 +151,14 @@ const submitSignature = async () => {
     class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
   >
     <div class="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
-      <h2 class="text-lg font-semibold">Sign to Approve</h2>
+      <h2 class="text-lg font-semibold text-slate-900">Sign to Approve</h2>
 
-      <div class="mt-4 rounded-xl border bg-slate-50 p-3">
+      <div class="mt-4 rounded-xl border border-slate-300 bg-slate-50 p-3">
         <canvas
           ref="canvasRef"
           width="500"
           height="200"
-          class="w-full rounded bg-white"
+          class="w-full rounded-lg bg-white touch-none"
           @mousedown="startDraw"
           @mousemove="draw"
           @mouseup="endDraw"
@@ -154,12 +170,15 @@ const submitSignature = async () => {
       </div>
 
       <div class="mt-6 flex justify-end gap-3">
-        <button class="border px-4 py-2 text-sm" @click="onClose">
+        <button
+          class="rounded-lg border px-4 py-2 text-sm"
+          @click="onClose"
+        >
           Cancel
         </button>
 
         <button
-          class="bg-emerald-600 px-4 py-2 text-sm font-semibold text-white"
+          class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white"
           :disabled="signing"
           @click="submitSignature"
         >

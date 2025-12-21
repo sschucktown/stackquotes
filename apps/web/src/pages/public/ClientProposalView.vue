@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 
 import ClientPackageCard from "@/modules/proposals/components/ClientPackageCard.vue";
 import SignatureModal from "@/components/SmartProposal/SignatureModal.vue";
@@ -14,9 +14,10 @@ import { useProposal } from "@/modules/public/composables/useProposal";
 import type { ProposalOption } from "@stackquotes/types";
 
 /* -------------------------------------------------
-   ROUTE TOKEN
+   ROUTE
 -------------------------------------------------- */
 const route = useRoute();
+const router = useRouter();
 
 const token = computed(() => {
   const p = route.params as Record<string, unknown>;
@@ -41,7 +42,23 @@ watch(
 -------------------------------------------------- */
 const proposal = computed(() => proposalDisplayPayload.value?.proposal ?? null);
 
+/**
+ * Public token used for signing endpoint
+ */
 const publicToken = computed(() => proposal.value?.publicToken ?? "");
+
+/**
+ * If proposal already accepted → redirect
+ */
+watch(
+  () => proposal.value?.status,
+  (status) => {
+    if (status === "accepted" && publicToken.value) {
+      router.replace(`/proposal/${publicToken.value}/success`);
+    }
+  },
+  { immediate: true }
+);
 
 /* -------------------------------------------------
    OPTIONS
@@ -65,7 +82,7 @@ const selectedOptionName = ref<string | null>(null);
 watch(
   () => proposal.value?.options,
   (opts) => {
-    if (!selectedOptionName.value && Array.isArray(opts) && opts.length) {
+    if (!selectedOptionName.value && Array.isArray(opts) && opts.length > 0) {
       selectedOptionName.value = opts[0].name;
       console.log("[AUTO-SELECT]", opts[0].name);
     }
@@ -74,40 +91,30 @@ watch(
 );
 
 /* -------------------------------------------------
-   SIGNATURE FLOW
+   SIGNATURE MODAL
 -------------------------------------------------- */
 const showSignatureModal = ref(false);
 
 const openSignature = () => {
   if (!proposal.value || !selectedOptionName.value) {
-    console.warn("[ACCEPT] missing proposal or option");
+    console.warn("[SIGN] missing proposal or option");
     return;
   }
+
   showSignatureModal.value = true;
 };
-
-/* -------------------------------------------------
-   PRICE
--------------------------------------------------- */
-const approvedPrice = computed(() => {
-  if (!proposal.value || !selectedOptionName.value) return 0;
-
-  const opt = proposal.value.options.find(
-    (o: ProposalOption) => o.name === selectedOptionName.value
-  );
-
-  return opt?.subtotal ?? 0;
-});
 </script>
 
 <template>
   <div class="min-h-screen bg-slate-50 px-4 py-10">
     <div class="mx-auto max-w-4xl">
 
+      <!-- Loading -->
       <div v-if="loading" class="py-20 text-center text-slate-500">
         Loading proposal…
       </div>
 
+      <!-- Error -->
       <div
         v-else-if="error"
         class="rounded-xl border border-rose-200 bg-rose-50 p-6 text-center text-rose-600"
@@ -115,7 +122,9 @@ const approvedPrice = computed(() => {
         {{ error }}
       </div>
 
+      <!-- Proposal -->
       <div v-else-if="proposal" class="space-y-8">
+        <!-- Header -->
         <header class="text-center">
           <h1 class="text-2xl font-semibold text-slate-900">
             {{ proposal.title }}
@@ -125,6 +134,7 @@ const approvedPrice = computed(() => {
           </p>
         </header>
 
+        <!-- Options -->
         <section class="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-100">
           <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             <ClientPackageCard
@@ -148,17 +158,13 @@ const approvedPrice = computed(() => {
       </div>
     </div>
 
+    <!-- Signature Modal -->
     <SignatureModal
-  v-if="proposal && publicToken"
-  :open="showSignatureModal"
-  :public-token="publicToken"
-  :accepted-option="selectedOptionName!"
-  :on-close="() => { showSignatureModal = false }"
-  :on-success="() => {
-    showSignatureModal = false;
-    load(token);
-  }"
-/>
-
+      v-if="proposal && publicToken && selectedOptionName"
+      :open="showSignatureModal"
+      :public-token="publicToken"
+      :accepted-option="selectedOptionName"
+      :on-close="() => { showSignatureModal = false }"
+    />
   </div>
 </template>
