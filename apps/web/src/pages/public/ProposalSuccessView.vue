@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, watch } from "vue";
 import { useRoute } from "vue-router";
 import { useProposal } from "@/modules/public/composables/useProposal";
 
@@ -14,21 +14,43 @@ const token = computed(() => {
 });
 
 /* -------------------------------------------------
-   OPTIONAL DATA (best-effort only)
+   LOAD PROPOSAL
 -------------------------------------------------- */
-const { proposalDisplayPayload } = useProposal();
+const { loading, error, proposalDisplayPayload, load } = useProposal();
 
-const proposal = computed(() => proposalDisplayPayload.value?.proposal ?? null);
-const acceptedOption = computed(
-  () => proposal.value?.signed_option ?? null
+watch(
+  token,
+  async (t) => {
+    if (t) await load(t);
+  },
+  { immediate: true }
 );
+
+/* -------------------------------------------------
+   DATA
+-------------------------------------------------- */
+const proposal = computed(() => proposalDisplayPayload.value?.proposal ?? null);
 </script>
 
 <template>
   <div class="min-h-screen bg-slate-50 px-4 py-16">
     <div class="mx-auto max-w-2xl text-center">
 
-      <div class="rounded-3xl bg-white p-10 shadow-sm ring-1 ring-slate-100">
+      <div v-if="loading" class="text-slate-500">
+        Finalizing your project…
+      </div>
+
+      <div
+        v-else-if="error"
+        class="rounded-xl border border-rose-200 bg-rose-50 p-6 text-rose-600"
+      >
+        {{ error }}
+      </div>
+
+      <div
+        v-else-if="proposal"
+        class="rounded-3xl bg-white p-10 shadow-sm ring-1 ring-slate-100"
+      >
         <div class="text-4xl">🎉</div>
 
         <h1 class="mt-4 text-2xl font-semibold text-slate-900">
@@ -39,20 +61,16 @@ const acceptedOption = computed(
           We’ve received your signed approval and the contractor has been notified.
         </p>
 
-        <!-- OPTIONAL DETAILS -->
-        <div
-          v-if="proposal"
-          class="mt-6 rounded-xl bg-slate-50 p-4 text-left"
-        >
+        <div class="mt-6 rounded-xl bg-slate-50 p-4 text-left">
           <div class="text-sm text-slate-500">Project</div>
           <div class="font-medium text-slate-900">
             {{ proposal.title }}
           </div>
 
-          <div v-if="acceptedOption" class="mt-3">
+          <div v-if="proposal.signed_option" class="mt-3">
             <div class="text-sm text-slate-500">Selected option</div>
             <div class="font-medium text-slate-900">
-              {{ acceptedOption }}
+              {{ proposal.signed_option }}
             </div>
           </div>
         </div>
@@ -60,6 +78,10 @@ const acceptedOption = computed(
         <p class="mt-6 text-sm text-slate-500">
           You’re all set. No further action is required.
         </p>
+      </div>
+
+      <div v-else class="text-slate-500">
+        Proposal not found.
       </div>
 
     </div>
