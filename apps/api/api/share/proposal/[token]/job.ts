@@ -15,7 +15,7 @@ jobRouter.get("/", async (c) => {
     return c.json({ error: "Missing proposal token" }, 400);
   }
 
-  // Find proposal
+  // 1️⃣ Find proposal by public token
   const { data: proposal, error: proposalErr } = await supabase
     .from("smart_proposals")
     .select("id")
@@ -26,7 +26,7 @@ jobRouter.get("/", async (c) => {
     return c.json({ error: "Proposal not found" }, 404);
   }
 
-  // Find job created from proposal
+  // 2️⃣ Find job created from proposal
   const { data: job, error: jobErr } = await supabase
     .from("jobs")
     .select("id, deposit_amount, payment_link_url")
@@ -37,9 +37,12 @@ jobRouter.get("/", async (c) => {
     return c.json({ error: "Job not found" }, 404);
   }
 
+  // 3️⃣ Return job in a stable shape
   return c.json({
-    job_id: job.id,
-    deposit_amount: job.deposit_amount ?? 0,
-    payment_link_url: job.payment_link_url,
+    job: {
+      id: job.id,
+      deposit_amount: job.deposit_amount ?? 0,
+      payment_link_url: job.payment_link_url,
+    },
   });
 });
