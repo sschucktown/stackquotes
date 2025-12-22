@@ -3,10 +3,13 @@ import { computed, watch } from "vue";
 import { useRoute } from "vue-router";
 import { useProposal } from "@/modules/public/composables/useProposal";
 
+
+
 /* -------------------------------------------------
    ROUTE
 -------------------------------------------------- */
 const route = useRoute();
+console.log("ROUTE PARAMS", route.params);
 
 const token = computed(() => {
   const p = route.params as Record<string, unknown>;
