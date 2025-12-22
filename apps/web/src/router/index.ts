@@ -537,6 +537,13 @@ const router = createRouter({
           name: "settings",
           component: () => import("@/pages/settings/SettingsPage.vue"),
         },
+        {
+  path: "/proposal/:token/success",
+  name: "proposal-success",
+  component: () =>
+    import("@/pages/public/ProposalSuccessView.vue"),
+}
+
       ],
     },
   ],
