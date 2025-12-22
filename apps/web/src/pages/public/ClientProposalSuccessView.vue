@@ -31,6 +31,7 @@ watch(
    DATA
 -------------------------------------------------- */
 const proposal = computed(() => proposalDisplayPayload.value?.proposal ?? null);
+console.log("PUBLIC PROPOSAL PAYLOAD", proposal.value);
 
 /**
  * Deposit resolution (THIS WAS THE BUG)
