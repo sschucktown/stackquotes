@@ -13,7 +13,12 @@ console.log("ROUTE PARAMS", route.params);
 
 const token = computed(() => {
   const p = route.params as Record<string, unknown>;
-  return typeof p.token === "string" ? p.token : "";
+  return typeof p.token === "string"
+  ? p.token
+  : typeof p.id === "string"
+  ? p.id
+  : "";
+
 });
 
 /* -------------------------------------------------
