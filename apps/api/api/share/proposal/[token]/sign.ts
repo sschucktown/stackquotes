@@ -1,12 +1,15 @@
 import { Hono } from "hono";
 import { z } from "zod";
 import { getServiceClient } from "../../../../lib/supabase";
+import { createJobFromProposal } from "../../../../lib/createJobFromProposal";
+import { createDepositPayLink } from "../../../../lib/createDepositPayLink";
 
 export const signRouter = new Hono();
 
 /* --------------------------------------------------
-   Payload
+   Schema
 -------------------------------------------------- */
+
 const bodySchema = z.object({
   accepted_option: z.string().min(1),
   signature_image: z.string().startsWith("data:image/"),
@@ -15,68 +18,67 @@ const bodySchema = z.object({
 /* --------------------------------------------------
    POST /api/share/proposal/:token/sign
 -------------------------------------------------- */
+
 signRouter.post("/", async (c) => {
   const supabase = getServiceClient();
 
   const token = c.req.param("token");
   if (!token) {
-    return c.json({ error: "Missing public token" }, 400);
+    return c.json({ error: "Missing proposal token" }, 400);
   }
+
+  /* -----------------------------
+     Parse body
+  ------------------------------ */
 
   let parsed;
   try {
     parsed = bodySchema.parse(await c.req.json());
-  } catch (err) {
-    return c.json({ error: "Invalid payload", details: err }, 400);
+  } catch {
+    return c.json({ error: "Invalid payload" }, 400);
   }
 
   const { accepted_option, signature_image } = parsed;
 
-  /* --------------------------------------------------
+  /* -----------------------------
      Fetch proposal by public token
-  -------------------------------------------------- */
-  const { data: proposal, error: proposalErr } = await supabase
+  ------------------------------ */
+
+  const { data: proposal, error: fetchErr } = await supabase
     .from("smart_proposals")
     .select(
-      "id, contractor_id, client_id, line_items, deposit_amount"
+      `
+        id,
+        contractor_id,
+        client_id,
+        line_items,
+        deposit_amount,
+        status,
+        signed_at
+      `
     )
     .eq("public_token", token)
     .single();
 
-  if (proposalErr || !proposal) {
-    console.error("❌ [SIGN] Proposal fetch failed", proposalErr);
+  if (fetchErr || !proposal) {
+    return c.json({ error: "Proposal not found" }, 404);
+  }
+
+  if (proposal.signed_at) {
+    return c.json({ error: "Proposal already signed" }, 409);
+  }
+
+  if (proposal.status !== "sent") {
     return c.json(
-      { error: "Proposal not found", details: proposalErr },
-      404
+      { error: "Proposal is not in a signable state" },
+      409
     );
   }
 
-  /* --------------------------------------------------
-     Compute approved price
-  -------------------------------------------------- */
-  let approvedPrice = 0;
-
-  try {
-    const payload: any = proposal.line_items;
-    const options = Array.isArray(payload?.options) ? payload.options : [];
-
-    const matched =
-      options.find(
-        (o: any) =>
-          (o?.name ?? "").toLowerCase() ===
-          accepted_option.toLowerCase()
-      ) || options[0];
-
-    approvedPrice = Number(
-      matched?.subtotal ?? matched?.price ?? matched?.total ?? 0
-    );
-  } catch {
-    approvedPrice = 0;
-  }
-
-  /* --------------------------------------------------
+  /* -----------------------------
      Upload signature
-  -------------------------------------------------- */
+  ------------------------------ */
+
   const base64 = signature_image.split(",")[1];
   const buffer = Buffer.from(base64, "base64");
   const filename = `${proposal.id}.png`;
@@ -89,90 +91,87 @@ signRouter.post("/", async (c) => {
     });
 
   if (uploadErr) {
-    console.error("❌ [SIGN] Signature upload failed", uploadErr);
-    return c.json(
-      { error: "Signature upload failed", details: uploadErr },
-      500
-    );
+    console.error("[SIGN] signature upload failed", uploadErr);
+    return c.json({ error: "Signature upload failed" }, 500);
   }
 
-  const { data: publicUrlData } = supabase.storage
+  const { data: publicUrl } = supabase.storage
     .from("proposal-signatures")
     .getPublicUrl(filename);
 
-  const signatureUrl = publicUrlData.publicUrl;
-  const nowIso = new Date().toISOString();
-
-  /* --------------------------------------------------
+  /* -----------------------------
      Update proposal
-  -------------------------------------------------- */
+  ------------------------------ */
+
+  const now = new Date().toISOString();
+
   const { error: updateErr } = await supabase
     .from("smart_proposals")
     .update({
       signed_option: accepted_option,
-      signature_image: signatureUrl,
-      signed_at: nowIso,
+      signature_image: publicUrl.publicUrl,
+      signed_at: now,
       status: "accepted",
     })
     .eq("id", proposal.id);
 
   if (updateErr) {
-    console.error("❌ [SIGN] Proposal update failed", updateErr);
+    console.error("[SIGN] proposal update failed", updateErr);
+    return c.json({ error: "Failed to update proposal" }, 500);
+  }
+
+  /* -----------------------------
+     Create job (single source of truth)
+  ------------------------------ */
+
+  let jobResult;
+  try {
+    jobResult = await createJobFromProposal({
+      supabase,
+      proposal,
+      acceptedOption: accepted_option,
+      actor: "client",
+    });
+  } catch (err: any) {
+    console.error("❌ [SIGN] job create failed", err);
     return c.json(
-      { error: "Failed to update proposal", details: updateErr },
+      { error: err.message || "Failed to create job" },
       500
     );
   }
 
-  /* --------------------------------------------------
-     CREATE JOB — THIS IS WHAT IS FAILING
-  -------------------------------------------------- */
-  console.log("🧪 [JOB INSERT PAYLOAD]", {
-    proposal_id: proposal.id,
-    contractor_id: proposal.contractor_id,
-    client_id: proposal.client_id,
-    approved_option: accepted_option,
-    approved_price: approvedPrice,
-    deposit_amount: proposal.deposit_amount,
-    status: "pending",
-  });
+  /* -----------------------------
+     Create deposit pay link (optional)
+  ------------------------------ */
 
-  const { data: job, error: jobErr } = await supabase
-    .from("jobs")
-    .insert({
-      proposal_id: proposal.id,
-      contractor_id: proposal.contractor_id,
-      client_id: proposal.client_id,
-      approved_option: accepted_option,
-      approved_price: approvedPrice,
-      deposit_amount: proposal.deposit_amount ?? null,
-      approved_at: nowIso,
-      status: "pending",
-    })
-    .select()
-    .single();
+  let payment_link_url: string | null = null;
 
-  if (jobErr) {
-    console.error("❌ [SIGN] JOB INSERT FAILED", jobErr);
-    return c.json(
-      {
-        error: "Failed to create job",
-        message: jobErr.message,
-        hint: jobErr.hint,
-        code: jobErr.code,
-        details: jobErr,
-      },
-      500
-    );
+  if (proposal.deposit_amount && proposal.deposit_amount > 0) {
+    try {
+      payment_link_url = await createDepositPayLink({
+        supabase,
+        jobId: jobResult.job.id,
+        amount: proposal.deposit_amount,
+      });
+    } catch (err) {
+      console.error(
+        "[SIGN] deposit pay link creation failed",
+        err
+      );
+      // non-fatal
+    }
   }
 
-  /* --------------------------------------------------
+  /* -----------------------------
      Success
-  -------------------------------------------------- */
+  ------------------------------ */
+
   return c.json({
     success: true,
-    job_id: job.id,
     proposal_id: proposal.id,
-    signature_url: signatureUrl,
+    job_id: jobResult.job.id,
+    accepted_option,
+    deposit_amount: proposal.deposit_amount ?? null,
+    payment_link_url,
   });
 });
