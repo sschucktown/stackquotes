@@ -1,28 +1,20 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { createClient } from '@supabase/supabase-js'
+import { Hono } from "hono";
+import { getServiceClient } from "../../../lib/supabase";
 
-// Server-side Supabase client (SERVICE ROLE — never exposed to browser)
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+const router = new Hono();
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // Only allow GET
-  if (req.method !== 'GET') {
-    return res.status(405).json({ error: 'Method not allowed' })
+// GET /api/share/proposal/:token
+router.get("/", async (c) => {
+  const token = c.req.param("token");
+
+  if (!token) {
+    return c.json({ error: "Invalid proposal token" }, 400);
   }
 
-  const { id } = req.query
+  const supabase = getServiceClient();
 
-  // Basic guard
-  if (!id || typeof id !== 'string') {
-    return res.status(400).json({ error: 'Invalid proposal id' })
-  }
-
-  // Fetch proposal
   const { data: proposal, error } = await supabase
-    .from('smart_proposals')
+    .from("smart_proposals")
     .select(`
       id,
       status,
@@ -38,29 +30,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       created_at,
       signed_at
     `)
-    .eq('id', id)
-    .single()
+    .eq("public_token", token)
+    .single();
 
-  // Not found (true 404)
-  if (error && error.code === 'PGRST116') {
-    return res.status(404).json({ error: 'Proposal not found' })
+  if (error && error.code === "PGRST116") {
+    return c.json({ error: "Proposal not found" }, 404);
   }
 
-  // Other DB error
   if (error) {
-    console.error('Proposal fetch error:', error)
-    return res.status(500).json({ error: 'Failed to load proposal' })
+    console.error("Proposal fetch error:", error);
+    return c.json({ error: "Failed to load proposal" }, 500);
   }
 
-  // 🔒 Future hook: expiration logic (INTENTIONALLY DISABLED FOR MVP)
-  /*
-  if (proposal.expires_at && new Date(proposal.expires_at) < new Date()) {
-    return res.status(410).json({ error: 'Proposal expired' })
-  }
-  */
-
-  // ✅ Success
-  return res.status(200).json({
+  return c.json({
     proposal: {
       id: proposal.id,
       status: proposal.status,
@@ -71,7 +53,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       contractor_id: proposal.contractor_id,
       payment_link_url: proposal.payment_link_url,
       created_at: proposal.created_at,
-      signed_at: proposal.signed_at
-    }
-  })
-}
+      signed_at: proposal.signed_at,
+    },
+  });
+});
+
+export default router;
