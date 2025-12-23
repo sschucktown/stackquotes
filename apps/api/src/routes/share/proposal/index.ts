@@ -1,11 +1,7 @@
 import { Hono } from "hono";
-import { signRouter } from "../sign";
-import { jobRouter } from "../../../job";
+import { proposalTokenRouter } from "./[token]/index.js";
 
-export const sharedProposalRouter = new Hono();
+export const proposalRouter = new Hono();
 
-// POST /api/share/proposal/:token/sign
-sharedProposalRouter.route("/sign", signRouter);
-
-// GET /api/share/proposal/:token/job
-sharedProposalRouter.route("/job", jobRouter);
+// /api/share/proposal/:token/...
+proposalRouter.route("/:token", proposalTokenRouter);

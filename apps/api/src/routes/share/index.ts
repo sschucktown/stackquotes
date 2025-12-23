@@ -1,7 +1,7 @@
 import { Hono } from "hono";
-import { sharedProposalRouter } from "./proposal";
+import { proposalRouter } from "./proposal/index.js";
 
 export const shareRouter = new Hono();
 
-// /api/share/proposal/:token/...
-shareRouter.route("/proposal/:token", sharedProposalRouter);
+// /api/share/proposal/...
+shareRouter.route("/proposal", proposalRouter);
