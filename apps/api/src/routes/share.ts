@@ -222,4 +222,28 @@ shareRouter.get("/proposal/:token/job", async (c: Context) => {
   });
 });
 
+/* =========================================================
+   DEBUG: list recent proposals + tokens
+   TEMPORARY — REMOVE AFTER DEBUGGING
+========================================================= */
+shareRouter.get("/_debug/proposals", async () => {
+  const supabase = getServiceClient();
+
+  const { data, error } = await supabase
+    .from("smart_proposals")
+    .select("id, public_token, job_id, created_at")
+    .order("created_at", { ascending: false })
+    .limit(5);
+
+  if (error) {
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      { status: 500 }
+    );
+  }
+
+  return new Response(JSON.stringify(data), { status: 200 });
+});
+
+
 export default shareRouter;
