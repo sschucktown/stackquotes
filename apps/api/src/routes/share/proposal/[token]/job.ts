@@ -1,21 +1,23 @@
-import { Hono } from "hono";
-import { getServiceClient } from "../../../../lib/supabase";
+import type { VercelRequest, VercelResponse } from "@vercel/node";
+import { getServiceClient } from "../../../../../lib/supabase";
 
-export const jobRouter = new Hono();
-
-/* --------------------------------------------------
-   GET /api/share/proposal/:token/job
--------------------------------------------------- */
-
-jobRouter.get("/", async (c) => {
-  const supabase = getServiceClient();
-
-  const token = c.req.param("token");
-  if (!token) {
-    return c.json({ error: "Missing proposal token" }, 400);
+export default async function handler(
+  req: VercelRequest,
+  res: VercelResponse
+) {
+  if (req.method !== "GET") {
+    return res.status(405).json({ error: "Method not allowed" });
   }
 
-  // 1️⃣ Resolve proposal by public token
+  const token = req.query.token;
+
+  if (!token || typeof token !== "string") {
+    return res.status(400).json({ error: "Missing proposal token" });
+  }
+
+  const supabase = getServiceClient();
+
+  // 1️⃣ Find proposal by public token
   const { data: proposal, error: proposalErr } = await supabase
     .from("smart_proposals")
     .select("id")
@@ -23,10 +25,10 @@ jobRouter.get("/", async (c) => {
     .single();
 
   if (proposalErr || !proposal) {
-    return c.json({ error: "Proposal not found" }, 404);
+    return res.status(404).json({ error: "Proposal not found" });
   }
 
-  // 2️⃣ Resolve job by proposal_id
+  // 2️⃣ Find job linked to proposal
   const { data: job, error: jobErr } = await supabase
     .from("jobs")
     .select("id, deposit_amount, payment_link_url")
@@ -34,13 +36,13 @@ jobRouter.get("/", async (c) => {
     .single();
 
   if (jobErr || !job) {
-    return c.json({ error: "Job not found" }, 404);
+    return res.status(404).json({ error: "Job not found" });
   }
 
-  // ✅ FLAT RESPONSE — matches frontend expectations
-  return c.json({
+  // 3️⃣ Success
+  return res.status(200).json({
     id: job.id,
     deposit_amount: job.deposit_amount ?? 0,
-    payment_link_url: job.payment_link_url ?? null,
+    payment_link_url: job.payment_link_url,
   });
-});
+}

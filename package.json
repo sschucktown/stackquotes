@@ -22,16 +22,17 @@
     "vercel-build": "pnpm turbo run build --filter=@stackquotes/web --filter=@stackquotes/api --verbosity=3"
   },
   "devDependencies": {
-    "tsup": "^8.5.0",
-    "turbo": "^2.5.8",
-    "concurrently": "^8.2.0",
-    "typescript": "^5.5.4",
     "@types/node": "^20.14.9",
-    "tsx": "^4.19.2"
+    "@vercel/node": "^5.5.16",
+    "concurrently": "^8.2.0",
+    "tsup": "^8.5.0",
+    "tsx": "^4.19.2",
+    "turbo": "^2.5.8",
+    "typescript": "^5.5.4"
   },
   "dependencies": {
-    "dotenv": "^17.2.3",
     "@hono/node-server": "^1.19.5",
+    "dotenv": "^17.2.3",
     "hono": "^4.9.10"
   }
 }
