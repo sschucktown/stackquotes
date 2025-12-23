@@ -3,18 +3,11 @@
   "buildCommand": "pnpm run vercel-build",
   "outputDirectory": "apps/web/dist",
 
-  "functions": {
-    "apps/api/api/**/*.ts": {
-      "runtime": "nodejs18.x"
-    }
-  },
-
   "routes": [
     {
       "src": "/api/(.*)",
       "dest": "apps/api/api/$1"
     },
-
     {
       "src": "/assets/(.*)",
       "headers": {
@@ -22,7 +15,6 @@
       },
       "dest": "/assets/$1"
     },
-
     {
       "src": "/(.*)",
       "dest": "/index.html"
