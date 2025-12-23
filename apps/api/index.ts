@@ -1,10 +1,22 @@
-// /api/index.ts
-import { createApp } from "../apps/api/src/app.js"; // <-- leave for runtime only
-// ⬆️ Vercel will resolve this at build time even if TS can't; we’ll silence TS below
+// apps/api/index.ts
 
-// Tell TypeScript to ignore this missing type
-// @ts-ignore
+import { createApp } from "./src/app";
+
+/**
+ * Create the Hono app
+ */
 const app = createApp();
 
-export const config = { runtime: "edge" };
-export default app;
+/**
+ * ✅ Vercel expects a fetch handler
+ * NOT the app object
+ */
+export default app.fetch;
+
+/**
+ * ✅ Must be Node runtime
+ * (Supabase service role, DB access, etc.)
+ */
+export const config = {
+  runtime: "nodejs",
+};
