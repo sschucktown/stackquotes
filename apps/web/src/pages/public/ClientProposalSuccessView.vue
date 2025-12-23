@@ -1,142 +1,86 @@
 <script setup lang="ts">
-import { computed, watch } from "vue";
+import { ref, onMounted } from "vue";
 import { useRoute } from "vue-router";
-import { useProposal } from "@/modules/public/composables/useProposal";
 
-
-
-/* -------------------------------------------------
-   ROUTE
--------------------------------------------------- */
 const route = useRoute();
-console.log("ROUTE PARAMS", route.params);
+const token = route.params.token as string;
 
-const token = computed(() => {
-  const p = route.params as Record<string, unknown>;
-  return typeof p.token === "string"
-  ? p.token
-  : typeof p.id === "string"
-  ? p.id
-  : "";
+const loading = ref(true);
+const error = ref<string | null>(null);
 
-});
+const jobId = ref<string | null>(null);
+const depositAmount = ref<number>(0);
+const paymentLinkUrl = ref<string | null>(null);
 
-/* -------------------------------------------------
-   LOAD PROPOSAL
--------------------------------------------------- */
-const { loading, error, proposalDisplayPayload, load } = useProposal();
+onMounted(async () => {
+  console.log("[SUCCESS] mounted");
+  console.log("[SUCCESS] token:", token);
 
-watch(
-  token,
-  async (t) => {
-    if (!t) return;
-    await load(t);
-  },
-  { immediate: true }
-);
+  try {
+    const res = await fetch(`/api/share/proposal/${token}/job`);
+    console.log("[SUCCESS] job fetch status:", res.status);
 
-/* -------------------------------------------------
-   DATA
--------------------------------------------------- */
-const proposal = computed(() => proposalDisplayPayload.value?.proposal ?? null);
-console.log("PUBLIC PROPOSAL PAYLOAD", proposal.value);
+    if (!res.ok) {
+      throw new Error("Failed to load job");
+    }
 
-/**
- * Deposit resolution (THIS WAS THE BUG)
- * Handles both legacy + public proposal shapes
- */
-const depositAmount = computed(() => {
-  if (!proposal.value) return 0;
+    const data = await res.json();
+    console.log("[SUCCESS] job payload:", data);
 
-  // 1️⃣ Explicit fixed deposit
-  if (typeof proposal.value.deposit_amount === "number") {
-    return proposal.value.deposit_amount;
+    jobId.value = data.job_id;
+    depositAmount.value = data.deposit_amount ?? 0;
+    paymentLinkUrl.value = data.payment_link_url ?? null;
+  } catch (err: any) {
+    console.error("[SUCCESS] job fetch error", err);
+    error.value = err.message ?? "Unknown error";
+  } finally {
+    loading.value = false;
   }
-
-  // 2️⃣ Public proposal config
-  if (
-    proposal.value.depositConfig &&
-    typeof proposal.value.depositConfig.value === "number"
-  ) {
-    return proposal.value.depositConfig.value;
-  }
-
-  return 0;
 });
-
-const showDepositButton = computed(() => depositAmount.value > 0);
-
-const acceptedOption = computed(
-  () => proposal.value?.signed_option ?? null
-);
 </script>
 
 <template>
-  <div class="min-h-screen bg-slate-50 px-4 py-16">
-    <div class="mx-auto max-w-2xl text-center">
+  <div class="max-w-lg mx-auto py-16 px-4">
+    <div class="bg-white rounded-xl shadow p-8 text-center">
+      <div class="text-4xl mb-4">🎉</div>
 
-      <!-- Loading -->
-      <div v-if="loading" class="text-slate-500">
-        Finalizing your project…
+      <h1 class="text-2xl font-semibold mb-2">
+        Your project is approved
+      </h1>
+
+      <p class="text-gray-600 mb-6">
+        We’ve received your signed approval and the contractor has been notified.
+      </p>
+
+      <div v-if="loading" class="text-gray-500">
+        Loading payment details…
       </div>
 
-      <!-- Error -->
-      <div
-        v-else-if="error"
-        class="rounded-xl border border-rose-200 bg-rose-50 p-6 text-rose-600"
-      >
+      <div v-else-if="error" class="text-red-600">
         {{ error }}
       </div>
 
-      <!-- Success -->
-      <div
-        v-else-if="proposal"
-        class="rounded-3xl bg-white p-10 shadow-sm ring-1 ring-slate-100"
-      >
-        <div class="text-4xl">🎉</div>
-
-        <h1 class="mt-4 text-2xl font-semibold text-slate-900">
-          Your project is approved
-        </h1>
-
-        <p class="mt-2 text-slate-600">
-          We’ve received your signed approval and the contractor has been notified.
+      <!-- ✅ DEPOSIT CTA -->
+      <div v-else-if="depositAmount > 0" class="mt-6">
+        <p class="text-sm text-gray-600 mb-3">
+          Deposit required: <strong>${{ depositAmount }}</strong>
         </p>
 
-        <!-- Project Summary -->
-        <div class="mt-6 rounded-xl bg-slate-50 p-4 text-left">
-          <div class="text-sm text-slate-500">Project</div>
-          <div class="font-medium text-slate-900">
-            {{ proposal.title }}
-          </div>
+        <a
+          v-if="paymentLinkUrl"
+          :href="paymentLinkUrl"
+          class="inline-block bg-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-700"
+        >
+          Pay Deposit
+        </a>
 
-          <div v-if="acceptedOption" class="mt-3">
-            <div class="text-sm text-slate-500">Selected option</div>
-            <div class="font-medium text-slate-900">
-              {{ acceptedOption }}
-            </div>
-          </div>
-
-          <div v-if="showDepositButton" class="mt-3">
-            <div class="text-sm text-slate-500">Deposit due</div>
-            <div class="font-semibold text-slate-900">
-              ${{ depositAmount.toLocaleString() }}
-            </div>
-          </div>
-        </div>
-
-        <!-- Deposit CTA -->
-        <div v-if="showDepositButton" class="mt-8">
-          <button
-            class="w-full rounded-xl bg-emerald-600 px-4 py-3 font-semibold text-white hover:bg-emerald-700"
-          >
-            Pay Deposit
-          </button>
-        </div>
-
-        <p class="mt-6 text-sm text-slate-500">
-          You’re all set. No further action is required right now.
+        <p v-else class="text-gray-500 text-sm">
+          Payment link will be sent shortly.
         </p>
+      </div>
+
+      <div v-else class="text-gray-500 mt-4">
+        No deposit required. You’re all set.
       </div>
     </div>
   </div>
