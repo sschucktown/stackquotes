@@ -1,0 +1,224 @@
+{
+  "../lib/createJobFromProposal.ts": [],
+  "app.ts": [
+    "routes/addons.ts",
+    "routes/billing.ts",
+    "routes/clients.ts",
+    "routes/contractor.ts",
+    "routes/dashboard.ts",
+    "routes/email.ts",
+    "routes/estimates.ts",
+    "routes/jobs/index.ts",
+    "routes/kickoff.ts",
+    "routes/onboarding/index.ts",
+    "routes/pdf.ts",
+    "routes/proposals.ts",
+    "routes/settings.ts",
+    "routes/share.ts",
+    "routes/smartproposals/index.ts",
+    "routes/stripe/index.ts",
+    "routes/wisetack/index.ts"
+  ],
+  "index.ts": [
+    "app.ts",
+    "routes/jobs/index.ts"
+  ],
+  "integrations/wisetack.ts": [],
+  "jobs/downgrade-expired-trials.ts": [
+    "lib/supabase.ts"
+  ],
+  "jobs/post-signup.ts": [
+    "lib/stripe.ts",
+    "lib/supabase.ts"
+  ],
+  "lib/auth.ts": [
+    "lib/supabase.ts"
+  ],
+  "lib/brand.ts": [],
+  "lib/email.ts": [],
+  "lib/fees.ts": [],
+  "lib/jobEvents.ts": [],
+  "lib/pdf.ts": [
+    "lib/brand.ts"
+  ],
+  "lib/plan.ts": [
+    "lib/supabase.ts"
+  ],
+  "lib/smartProposal.ts": [],
+  "lib/storage.ts": [
+    "lib/supabase.ts"
+  ],
+  "lib/stripe.ts": [],
+  "lib/supabase.ts": [],
+  "lib/templates/email.ts": [
+    "lib/brand.ts"
+  ],
+  "routes/addons.ts": [
+    "lib/auth.ts",
+    "lib/stripe.ts",
+    "lib/supabase.ts",
+    "routes/stripe/utils.ts"
+  ],
+  "routes/billing.ts": [
+    "lib/auth.ts",
+    "lib/supabase.ts"
+  ],
+  "routes/clients.ts": [
+    "lib/auth.ts",
+    "lib/supabase.ts"
+  ],
+  "routes/contractor.ts": [
+    "lib/auth.ts",
+    "lib/storage.ts",
+    "lib/supabase.ts"
+  ],
+  "routes/dashboard.ts": [
+    "lib/auth.ts",
+    "lib/supabase.ts"
+  ],
+  "routes/email.ts": [
+    "lib/auth.ts",
+    "lib/email.ts",
+    "lib/supabase.ts",
+    "lib/templates/email.ts"
+  ],
+  "routes/estimates.ts": [
+    "lib/auth.ts",
+    "lib/plan.ts",
+    "lib/supabase.ts",
+    "services/smartProposals.ts"
+  ],
+  "routes/jobs/index.ts": [
+    "lib/auth.ts",
+    "lib/jobEvents.ts",
+    "lib/supabase.ts"
+  ],
+  "routes/kickoff.ts": [
+    "lib/auth.ts",
+    "lib/supabase.ts"
+  ],
+  "routes/onboarding/index.ts": [
+    "lib/supabase.ts"
+  ],
+  "routes/pdf.ts": [
+    "lib/auth.ts",
+    "lib/pdf.ts",
+    "lib/storage.ts",
+    "lib/supabase.ts"
+  ],
+  "routes/proposals-sign.ts": [
+    "lib/supabase.ts"
+  ],
+  "routes/proposals.approve.ts": [],
+  "routes/proposals.ts": [
+    "lib/auth.ts",
+    "lib/email.ts",
+    "lib/plan.ts",
+    "lib/stripe.ts",
+    "lib/supabase.ts",
+    "services/smartProposals.ts"
+  ],
+  "routes/public/jobs.ts": [
+    "lib/supabase.ts"
+  ],
+  "routes/settings.ts": [
+    "lib/auth.ts",
+    "lib/storage.ts",
+    "lib/supabase.ts"
+  ],
+  "routes/share.ts": [
+    "lib/supabase.ts"
+  ],
+  "routes/share/index.ts": [
+    "routes/share/proposal/index.ts"
+  ],
+  "routes/share/proposal/[id].ts": [],
+  "routes/share/proposal/[token]/index.ts": [
+    "routes/share/proposal/[token]/job.ts",
+    "routes/share/proposal/[token]/sign.ts"
+  ],
+  "routes/share/proposal/[token]/job.ts": [
+    "lib/supabase.ts"
+  ],
+  "routes/share/proposal/[token]/sign.ts": [
+    "../lib/createJobFromProposal.ts",
+    "lib/supabase.ts"
+  ],
+  "routes/share/proposal/index.ts": [
+    "routes/share/proposal/[token]/index.ts"
+  ],
+  "routes/smartproposals/comments.ts": [
+    "lib/auth.ts",
+    "lib/email.ts",
+    "lib/supabase.ts"
+  ],
+  "routes/smartproposals/index.ts": [
+    "routes/smartproposals/comments.ts",
+    "routes/smartproposals/sign.ts"
+  ],
+  "routes/smartproposals/sign.ts": [
+    "lib/auth.ts",
+    "lib/jobEvents.ts",
+    "lib/supabase.ts"
+  ],
+  "routes/stripe/create-checkout-session.ts": [
+    "lib/auth.ts",
+    "lib/stripe.ts",
+    "lib/supabase.ts",
+    "routes/stripe/utils.ts"
+  ],
+  "routes/stripe/create-checkout.ts": [
+    "lib/auth.ts",
+    "lib/stripe.ts",
+    "lib/supabase.ts",
+    "routes/stripe/utils.ts"
+  ],
+  "routes/stripe/create-connect-account.ts": [
+    "lib/auth.ts",
+    "lib/stripe.ts",
+    "lib/supabase.ts",
+    "routes/stripe/utils.ts"
+  ],
+  "routes/stripe/create-installment-plan.ts": [
+    "lib/auth.ts",
+    "routes/stripe/utils.ts"
+  ],
+  "routes/stripe/create-onetime.ts": [
+    "lib/auth.ts",
+    "lib/stripe.ts",
+    "routes/stripe/utils.ts"
+  ],
+  "routes/stripe/create-payment-link.ts": [
+    "lib/auth.ts",
+    "lib/fees.ts",
+    "lib/stripe.ts",
+    "lib/supabase.ts",
+    "routes/stripe/utils.ts"
+  ],
+  "routes/stripe/create-subscription-test.ts": [
+    "lib/auth.ts",
+    "lib/stripe.ts",
+    "lib/supabase.ts"
+  ],
+  "routes/stripe/index.ts": [
+    "routes/stripe/create-checkout-session.ts",
+    "routes/stripe/create-checkout.ts",
+    "routes/stripe/create-connect-account.ts",
+    "routes/stripe/create-installment-plan.ts",
+    "routes/stripe/create-onetime.ts",
+    "routes/stripe/create-payment-link.ts",
+    "routes/stripe/create-subscription-test.ts",
+    "routes/stripe/webhook.ts"
+  ],
+  "routes/stripe/utils.ts": [],
+  "routes/stripe/webhook.ts": [
+    "lib/stripe.ts",
+    "lib/supabase.ts"
+  ],
+  "routes/wisetack/index.ts": [
+    "lib/supabase.ts"
+  ],
+  "services/smartProposals.ts": [
+    "lib/smartProposal.ts"
+  ]
+}

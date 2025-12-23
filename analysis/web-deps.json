@@ -1,0 +1,366 @@
+{
+  "../../../packages/config/src/index.ts": [
+    "../../../packages/config/src/stripePrices.ts"
+  ],
+  "../../../packages/config/src/stripePrices.ts": [],
+  "../../../packages/types/src/index.ts": [],
+  "../../../packages/ui/src/components/SQBadge.vue": [],
+  "../../../packages/ui/src/components/SQButton.vue": [],
+  "../../../packages/ui/src/components/SQCard.vue": [],
+  "../../../packages/ui/src/components/SQInput.vue": [],
+  "../../../packages/ui/src/components/SQModal.vue": [],
+  "../../../packages/ui/src/components/SQSelect.vue": [],
+  "../../../packages/ui/src/components/SQTextarea.vue": [],
+  "../../../packages/ui/src/index.ts": [
+    "../../../packages/ui/src/components/SQBadge.vue",
+    "../../../packages/ui/src/components/SQButton.vue",
+    "../../../packages/ui/src/components/SQCard.vue",
+    "../../../packages/ui/src/components/SQInput.vue",
+    "../../../packages/ui/src/components/SQModal.vue",
+    "../../../packages/ui/src/components/SQSelect.vue",
+    "../../../packages/ui/src/components/SQTextarea.vue"
+  ],
+  "App.vue": [
+    "lib/auth.ts"
+  ],
+  "api/comments.ts": [],
+  "assets/marketing-demo-proposal.png": [],
+  "assets/tailwind.css": [],
+  "components/SmartProposal/SignatureModal.vue": [],
+  "components/SmartProposal/sign.ts": [
+    "lib/auth.ts",
+    "lib/supabase.ts"
+  ],
+  "components/dashboard/ActionCard.vue": [],
+  "components/dashboard/ActionCenter.vue": [
+    "components/dashboard/ActionCard.vue",
+    "modules/contractor/stores/profileStore.ts",
+    "modules/quickquote/stores/estimateStore.ts"
+  ],
+  "components/dashboard/ActionCenterModule.vue": [
+    "lib/supabase.ts",
+    "stores/demoStore.ts"
+  ],
+  "components/dashboard/AiInsightsWidget.vue": [],
+  "components/dashboard/CarouselModule.vue": [],
+  "components/dashboard/CommandCenter.vue": [
+    "components/dashboard/ActionCenter.vue",
+    "components/dashboard/ActionCenterModule.vue",
+    "components/dashboard/AiInsightsWidget.vue",
+    "components/dashboard/CarouselModule.vue",
+    "components/dashboard/SummaryBand.vue",
+    "modules/contractor/stores/profileStore.ts",
+    "modules/quickquote/stores/estimateStore.ts"
+  ],
+  "components/dashboard/SummaryBand.vue": [],
+  "components/marketing/StackQuotesLanding.d.ts": [],
+  "components/marketing/StackQuotesProLanding.vue": [],
+  "components/navigation/SidebarMenu.vue": [
+    "lib/auth.ts",
+    "stores/demoStore.ts"
+  ],
+  "components/navigation/UniversalFab.vue": [],
+  "components/navigation/navItems.ts": [],
+  "components/quickquote/logic/useClientSummary.ts": [
+    "stores/quickQuotePrototype.ts"
+  ],
+  "components/quickquote/logic/useQuickQuoteCalculator.ts": [
+    "stores/quickQuotePrototype.ts"
+  ],
+  "composables/usePublicJob.ts": [],
+  "composables/useTier.ts": [
+    "lib/http.ts"
+  ],
+  "config/stripe.ts": [
+    "../../../packages/config/src/index.ts"
+  ],
+  "data/demo.ts": [
+    "../../../packages/types/src/index.ts"
+  ],
+  "env.d.ts": [],
+  "layouts/Layout.vue": [
+    "components/navigation/SidebarMenu.vue",
+    "components/navigation/UniversalFab.vue"
+  ],
+  "lib/analytics.ts": [],
+  "lib/auth.ts": [
+    "lib/http.ts",
+    "lib/supabase.ts"
+  ],
+  "lib/http.ts": [
+    "../../../packages/types/src/index.ts",
+    "lib/supabase.ts"
+  ],
+  "lib/stripeCheckout.ts": [
+    "lib/supabase.ts"
+  ],
+  "lib/supabase.ts": [
+    "../../../packages/config/src/index.ts"
+  ],
+  "lib/wisetack.ts": [
+    "lib/http.ts"
+  ],
+  "main.ts": [
+    "../../../packages/ui/src/index.ts",
+    "App.vue",
+    "assets/tailwind.css",
+    "router/index.ts"
+  ],
+  "modules/contractor/api/profile.ts": [
+    "../../../packages/types/src/index.ts",
+    "lib/http.ts"
+  ],
+  "modules/contractor/api/projects.ts": [
+    "../../../packages/types/src/index.ts",
+    "lib/http.ts"
+  ],
+  "modules/contractor/stores/profileStore.ts": [
+    "../../../packages/types/src/index.ts",
+    "data/demo.ts",
+    "modules/contractor/api/profile.ts",
+    "stores/demoStore.ts"
+  ],
+  "modules/contractor/stores/starterProjectsStore.ts": [
+    "../../../packages/types/src/index.ts",
+    "modules/contractor/api/projects.ts",
+    "stores/demoStore.ts"
+  ],
+  "modules/proposals/api/proposals.ts": [
+    "../../../packages/types/src/index.ts",
+    "lib/http.ts"
+  ],
+  "modules/proposals/components/ClientPackageCard.vue": [
+    "../../../packages/types/src/index.ts",
+    "modules/proposals/utils/visualAssets.ts"
+  ],
+  "modules/proposals/stores/proposalStore.ts": [
+    "../../../packages/types/src/index.ts",
+    "data/demo.ts",
+    "modules/proposals/api/proposals.ts",
+    "stores/demoStore.ts"
+  ],
+  "modules/proposals/utils/visualAssets.ts": [],
+  "modules/public/api/estimates.ts": [
+    "../../../packages/types/src/index.ts",
+    "lib/http.ts"
+  ],
+  "modules/public/api/profile.ts": [
+    "../../../packages/types/src/index.ts",
+    "lib/http.ts"
+  ],
+  "modules/public/api/proposal.ts": [
+    "lib/http.ts",
+    "modules/public/types/publicProposal.ts"
+  ],
+  "modules/public/composables/useProposal.ts": [
+    "modules/public/api/proposal.ts"
+  ],
+  "modules/public/composables/usePublicJob.ts": [],
+  "modules/public/types/PublicProposalViewModel.ts": [
+    "../../../packages/types/src/index.ts"
+  ],
+  "modules/public/types/publicProposal.ts": [
+    "../../../packages/types/src/index.ts"
+  ],
+  "modules/quickquote/api/clients.ts": [
+    "../../../packages/types/src/index.ts",
+    "lib/http.ts"
+  ],
+  "modules/quickquote/api/create.ts": [
+    "../../../packages/types/src/index.ts",
+    "modules/quickquote/api/estimates.ts",
+    "modules/quickquote/api/get.ts",
+    "modules/quickquote/stores/useQuickQuoteStore.ts"
+  ],
+  "modules/quickquote/api/email.ts": [
+    "../../../packages/types/src/index.ts",
+    "lib/http.ts"
+  ],
+  "modules/quickquote/api/estimates.ts": [
+    "../../../packages/types/src/index.ts",
+    "lib/http.ts"
+  ],
+  "modules/quickquote/api/get.ts": [
+    "../../../packages/types/src/index.ts",
+    "lib/supabase.ts",
+    "modules/quickquote/api/status.ts",
+    "modules/quickquote/stores/useQuickQuoteStore.ts"
+  ],
+  "modules/quickquote/api/pdf.ts": [
+    "../../../packages/types/src/index.ts",
+    "lib/http.ts"
+  ],
+  "modules/quickquote/api/send.ts": [
+    "../../../packages/types/src/index.ts",
+    "modules/quickquote/api/email.ts",
+    "modules/quickquote/api/pdf.ts"
+  ],
+  "modules/quickquote/api/settings.ts": [
+    "../../../packages/types/src/index.ts",
+    "lib/http.ts"
+  ],
+  "modules/quickquote/api/status.ts": [
+    "../../../packages/types/src/index.ts",
+    "modules/quickquote/api/estimates.ts",
+    "modules/quickquote/stores/useQuickQuoteStore.ts"
+  ],
+  "modules/quickquote/api/update.ts": [
+    "../../../packages/types/src/index.ts",
+    "modules/quickquote/api/estimates.ts",
+    "modules/quickquote/api/get.ts",
+    "modules/quickquote/stores/useQuickQuoteStore.ts"
+  ],
+  "modules/quickquote/composables/useEstimateForm.ts": [
+    "../../../packages/types/src/index.ts"
+  ],
+  "modules/quickquote/stores/clientStore.ts": [
+    "../../../packages/types/src/index.ts",
+    "data/demo.ts",
+    "modules/quickquote/api/clients.ts",
+    "stores/demoStore.ts"
+  ],
+  "modules/quickquote/stores/estimateStore.ts": [
+    "../../../packages/types/src/index.ts",
+    "data/demo.ts",
+    "modules/proposals/stores/proposalStore.ts",
+    "modules/quickquote/api/email.ts",
+    "modules/quickquote/api/estimates.ts",
+    "modules/quickquote/api/pdf.ts",
+    "modules/quickquote/utils/status.ts",
+    "stores/demoStore.ts"
+  ],
+  "modules/quickquote/stores/quoteStore.ts": [
+    "../../../packages/types/src/index.ts",
+    "lib/supabase.ts",
+    "modules/contractor/stores/profileStore.ts"
+  ],
+  "modules/quickquote/stores/settingsStore.ts": [
+    "../../../packages/types/src/index.ts",
+    "data/demo.ts",
+    "modules/quickquote/api/settings.ts",
+    "stores/demoStore.ts"
+  ],
+  "modules/quickquote/stores/useQuickQuoteStore.ts": [
+    "../../../packages/types/src/index.ts",
+    "lib/auth.ts",
+    "modules/quickquote/api/create.ts",
+    "modules/quickquote/api/get.ts",
+    "modules/quickquote/api/send.ts",
+    "modules/quickquote/api/status.ts",
+    "modules/quickquote/api/update.ts"
+  ],
+  "modules/quickquote/utils/status.ts": [
+    "../../../packages/types/src/index.ts"
+  ],
+  "modules/smartproposal/composables/useProposalComments.ts": [
+    "lib/http.ts"
+  ],
+  "modules/smartproposals-v2/stores/useSpv2Store.ts": [
+    "modules/smartproposals-v2/types.ts"
+  ],
+  "modules/smartproposals-v2/types.ts": [],
+  "modules/smartproposals-v2/utils/theme.ts": [
+    "modules/smartproposals-v2/stores/useSpv2Store.ts"
+  ],
+  "pages/auth/LoginPage.vue": [
+    "lib/auth.ts",
+    "stores/demoStore.ts"
+  ],
+  "pages/auth/RegisterPage.vue": [
+    "lib/auth.ts",
+    "stores/demoStore.ts"
+  ],
+  "pages/dashboard/Dashboard.vue": [
+    "components/dashboard/CarouselModule.vue",
+    "components/dashboard/CommandCenter.vue",
+    "composables/useTier.ts",
+    "lib/http.ts"
+  ],
+  "pages/marketing/StackQuotesProLandingPage.vue": [
+    "assets/marketing-demo-proposal.png",
+    "components/marketing/StackQuotesProLanding.vue",
+    "lib/auth.ts"
+  ],
+  "pages/payments/PaymentsPage.vue": [
+    "lib/http.ts",
+    "modules/contractor/stores/profileStore.ts"
+  ],
+  "pages/pricing.vue": [
+    "lib/auth.ts",
+    "lib/stripeCheckout.ts"
+  ],
+  "pages/public/ClientProposalView.vue": [
+    "../../../packages/types/src/index.ts",
+    "components/SmartProposal/SignatureModal.vue",
+    "modules/proposals/components/ClientPackageCard.vue",
+    "modules/proposals/utils/visualAssets.ts",
+    "modules/public/composables/useProposal.ts"
+  ],
+  "pages/public/ContractorProfilePage.vue": [
+    "data/demo.ts",
+    "modules/public/api/profile.ts",
+    "stores/demoStore.ts"
+  ],
+  "pages/public/EstimateApprovalPage.vue": [
+    "../../../packages/types/src/index.ts",
+    "modules/public/api/estimates.ts",
+    "modules/quickquote/utils/status.ts"
+  ],
+  "pages/public/ProposalSuccessView.vue": [],
+  "pages/settings/SettingsPage.vue": [
+    "lib/auth.ts",
+    "modules/contractor/stores/profileStore.ts"
+  ],
+  "prototype/client-portal/data/mockProposal.ts": [],
+  "prototype/client/optionsData.ts": [],
+  "prototype/composables/useMockMessageChannel.ts": [
+    "prototype/stores/messages.ts"
+  ],
+  "prototype/contractor/usePrototypeEvents.ts": [],
+  "prototype/smartproposal/types.ts": [],
+  "prototype/smartproposal/useOptionTotals.ts": [
+    "prototype/smartproposal/types.ts"
+  ],
+  "prototype/stores/files.ts": [],
+  "prototype/stores/messages.ts": [],
+  "prototype/usePrototypeSettings.ts": [],
+  "router/index.ts": [
+    "layouts/Layout.vue",
+    "lib/auth.ts",
+    "modules/contractor/stores/profileStore.ts",
+    "pages/auth/LoginPage.vue",
+    "pages/auth/RegisterPage.vue",
+    "pages/dashboard/Dashboard.vue",
+    "pages/marketing/StackQuotesProLandingPage.vue",
+    "pages/payments/PaymentsPage.vue",
+    "pages/pricing.vue",
+    "pages/public/ClientProposalView.vue",
+    "pages/public/ContractorProfilePage.vue",
+    "pages/public/EstimateApprovalPage.vue",
+    "pages/public/ProposalSuccessView.vue",
+    "pages/settings/SettingsPage.vue",
+    "stores/demoStore.ts"
+  ],
+  "shims-vue.d.ts": [],
+  "stores/alertStore.ts": [],
+  "stores/approvalEventStore.ts": [],
+  "stores/contractorHQPrototype.ts": [
+    "prototype/contractor/usePrototypeEvents.ts",
+    "prototype/stores/messages.ts"
+  ],
+  "stores/demoStore.ts": [],
+  "stores/messageStore.ts": [],
+  "stores/onboardingPrototype.ts": [],
+  "stores/proposalPrototype.ts": [],
+  "stores/prototypePaymentStore.ts": [],
+  "stores/quickQuotePrototype.ts": [
+    "components/quickquote/logic/useQuickQuoteCalculator.ts"
+  ],
+  "stores/schedulesStore.ts": [],
+  "stores/schedulingStore.ts": [],
+  "stores/smartProposalPrototype.ts": [],
+  "stores/timelineStore.ts": [],
+  "stores/useClientSchedulePrototype.ts": [
+    "router/index.ts"
+  ]
+}
