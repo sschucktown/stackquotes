@@ -13,6 +13,7 @@ type CreateJobArgs = {
     line_items: any;
     deposit_amount: number | null;
     status?: string;
+    job_id?: string | null;
   };
   acceptedOption: string;
   actor?: "system" | "client" | "contractor";
@@ -50,10 +51,25 @@ export async function createJobFromProposal(
     throw new Error("[JOB] Missing accepted option");
   }
 
-  if (proposal.status && proposal.status !== "sent") {
+  if (
+    proposal.status &&
+    proposal.status !== "sent" &&
+    proposal.status !== "accepted"
+  ) {
     throw new Error(
-      `[JOB] Proposal status must be 'sent' (got '${proposal.status}')`
+      `[JOB] Invalid proposal status '${proposal.status}' for job creation`
     );
+  }
+
+  /* -----------------------------
+     Idempotency — job already exists
+  ------------------------------ */
+
+  if (proposal.job_id) {
+    return {
+      job: { id: proposal.job_id },
+      approvedPrice: 0, // caller should already have this
+    };
   }
 
   /* -----------------------------
@@ -93,7 +109,7 @@ export async function createJobFromProposal(
   }
 
   /* -----------------------------
-     Insert job (SAFE FIELDS ONLY)
+     Insert job
   ------------------------------ */
 
   const { data: job, error: jobErr } = await supabase
@@ -118,10 +134,6 @@ export async function createJobFromProposal(
     console.error("❌ [JOB] job create failed", jobErr);
     throw new Error("Failed to create job");
   }
-
-  /* -----------------------------
-     Success
-  ------------------------------ */
 
   return {
     job,
