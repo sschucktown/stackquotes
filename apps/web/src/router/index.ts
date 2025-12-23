@@ -5,6 +5,10 @@ import { useAuth } from "@/lib/auth";
 import { useDemoStore } from "@/stores/demoStore";
 import { useContractorProfileStore } from "@modules/contractor/stores/profileStore";
 
+/* --------------------------------------------------
+   Auth wait helper
+-------------------------------------------------- */
+
 const waitForAuth = async () => {
   const { loading } = useAuth();
   if (!loading.value) return;
@@ -18,13 +22,20 @@ const waitForAuth = async () => {
   });
 };
 
-// Session flags to soften onboarding redirect behavior
+/* --------------------------------------------------
+   Onboarding flags
+-------------------------------------------------- */
+
 const ONBOARDING_SKIP_KEY = "stackquotes:onboarding:skip";
 const ONBOARDING_DONE_KEY = "stackquotes:onboarding:done";
+
 const readFlag = (key: string): boolean => {
   if (typeof window === "undefined") return false;
   try {
-    const storages: (Storage | null)[] = [window.localStorage, window.sessionStorage];
+    const storages: (Storage | null)[] = [
+      window.localStorage,
+      window.sessionStorage,
+    ];
     return storages.some((storage) => storage?.getItem(key) === "1");
   } catch {
     return false;
@@ -34,21 +45,32 @@ const readFlag = (key: string): boolean => {
 const isOnboardingBypassed = (): boolean =>
   readFlag(ONBOARDING_SKIP_KEY) || readFlag(ONBOARDING_DONE_KEY);
 
+/* --------------------------------------------------
+   Router
+-------------------------------------------------- */
+
 const router = createRouter({
   history: createWebHistory(),
   routes: [
+    /* -----------------------------
+       MARKETING / PUBLIC
+    ------------------------------ */
+
     {
       path: "/",
       name: "landing",
-      component: () => import("@/pages/marketing/StackQuotesProLandingPage.vue"),
-      meta: { public: true, allowAuthenticated: false }
+      component: () =>
+        import("@/pages/marketing/StackQuotesProLandingPage.vue"),
+      meta: { public: true, allowAuthenticated: false },
     },
+
     {
       path: "/pricing",
       name: "pricing",
       component: () => import("@/pages/pricing.vue"),
       meta: { public: true, allowAuthenticated: true },
     },
+
     {
       path: "/share/estimate/:token",
       name: "public-estimate-approval",
@@ -56,6 +78,7 @@ const router = createRouter({
       props: true,
       meta: { public: true, allowAuthenticated: true },
     },
+
     {
       path: "/share/profile/:slug",
       name: "public-contractor-profile",
@@ -63,6 +86,7 @@ const router = createRouter({
       props: true,
       meta: { public: true, allowAuthenticated: true },
     },
+
     {
       path: "/proposal/:token",
       name: "public-proposal",
@@ -70,383 +94,45 @@ const router = createRouter({
       props: true,
       meta: { public: true, allowAuthenticated: true },
     },
+
+    /* ✅ FIXED LOCATION — SUCCESS PAGE */
     {
-      path: "/app/prototypes/client-portal",
-      redirect: "/prototype/client-portal",
-    },
-    {
-      path: "/app/prototypes/quickquote",
-      redirect: "/prototype/quickquote",
-    },
-    {
-      path: "/app/prototypes/quickquote/builder",
-      redirect: "/prototype/quickquote/builder",
-    },
-    {
-      path: "/app/prototypes/quickquote-client-preview",
-      redirect: "/prototype/quickquote-client-preview",
-    },
-    {
-      path: "/app/prototypes/quickquote/templates",
-      redirect: "/prototype/quickquote/templates",
-    },
-    {
-      path: "/app/prototypes/quickquote/preview/:id",
-      redirect: (to) => `/quickquote/${to.params.id}/preview`,
-    },
-    {
-      path: "/app/prototypes/visit",
-      redirect: "/prototype/visit",
-    },
-    {
-      path: "/app/prototypes/visit-summary",
-      redirect: "/prototype/visit-summary",
-    },
-    {
-      path: "/app/prototypes/hq",
-      redirect: "/prototype/hq",
-    },
-    {
-      path: "/app/prototypes/job-view",
-      redirect: "/prototype/job-view",
-    },
-    {
-      path: "/prototype/client-portal",
-      name: "ClientProposalPrototypePublic",
-      component: () => import("@/prototype/client-portal/ClientProposalPage.vue"),
+      path: "/proposal/:token/success",
+      name: "proposal-success",
+      component: () => import("@/pages/public/ProposalSuccessView.vue"),
+      props: true,
       meta: { public: true, allowAuthenticated: true },
-    },
-    {
-      path: "/prototype/quickquote",
-      name: "QuickQuotePortalPrototypePublic",
-      component: () => import("@/prototype/quickquote/QuickQuotePortal.vue"),
-      meta: { public: true, allowAuthenticated: true },
-    },
-    {
-      path: "/prototype/quickquote/templates",
-      name: "QuickQuoteTemplateSelector",
-      component: () => import("@/prototype/quickquote/QuickQuoteTemplateSelector.vue"),
-      meta: { public: true, allowAuthenticated: true },
-    },
-    {
-      path: "/prototype/quickquote-client-preview",
-      name: "QuickQuoteClientPreviewPrototypePublic",
-      component: () => import("@/prototype/quickquote/QuickQuotePortal.vue"),
-      meta: { public: true, allowAuthenticated: true },
-    },
-    {
-      path: "/prototype/quickquote/builder",
-      name: "QuickQuoteBuilder",
-      component: () => import("@/components/quickquote/QuickQuoteBuilder.vue"),
-      meta: { public: true, allowAuthenticated: true },
-    },
-    {
-      path: "/prototype/quickquote/finish",
-      name: "QuickQuoteFinish",
-      component: () => import("@/prototype/quickquote/QuickQuoteFinish.vue"),
-      meta: { public: true, allowAuthenticated: true },
-    },
-    {
-      path: "/prototype/smartproposal/builder",
-      name: "SmartProposalBuilderPrototype",
-      alias: "/prototype/smartproposal",
-      component: () => import("@/components/SmartProposal/SmartProposalBuilder.vue"),
-      meta: { public: true, allowAuthenticated: true },
-    },
-    {
-      path: "/prototype/smartproposal/client",
-      name: "SmartProposalClientPreview",
-      component: () => import("@/components/SmartProposal/ClientView.vue"),
-      meta: { public: true, allowAuthenticated: true },
-    },
-    {
-      path: "/prototype/smartproposal/signed",
-      name: "SmartProposalClientSigned",
-      component: () => import("@/prototype/smartproposal/SmartProposalSigned.vue"),
-      meta: { public: true, allowAuthenticated: true },
-    },
-    {
-      path: "/prototype/kickoff/builder",
-      name: "KickoffBuilderPrototype",
-      component: () => import("@/components/Kickoff/KickoffBuilder.vue"),
-      meta: { public: true, allowAuthenticated: true },
-    },
-    {
-      path: "/prototype/kickoff/packet",
-      name: "KickoffPacketPrototype",
-      component: () => import("@/components/Kickoff/KickoffPacket.vue"),
-      meta: { public: true, allowAuthenticated: true },
-    },
-    {
-      path: "/prototype/kickoff/message",
-      name: "KickoffMessageLightbox",
-      component: () => import("@/components/Kickoff/KickoffMessage.vue"),
-      props: (route) => ({
-        job_id: (route.query.job_id as string) || (route.params.id as string) || (route.query.job as string),
-      }),
-      meta: { public: true, allowAuthenticated: true },
-    },
-    {
-      path: "/prototype/client/kickoff",
-      name: "ClientKickoffDashboardPrototype",
-      component: () => import("@/components/Kickoff/ClientKickoffDashboard.vue"),
-      meta: { public: true, allowAuthenticated: true },
-    },
-    {
-      path: "/prototype/client/kickoff/confirm",
-      name: "ClientKickoffConfirmPrototype",
-      component: () => import("@/components/Kickoff/KickoffSuccess.vue"),
-      meta: { public: true, allowAuthenticated: true },
-    },
-    {
-      path: "/prototype/client/kickoff/access",
-      name: "ClientKickoffAccessPrototype",
-      component: () => import("@/components/Kickoff/ClientAccessForm.vue"),
-      meta: { public: true, allowAuthenticated: true },
-    },
-    {
-      path: "/prototype/client/schedule-preview",
-      name: "ClientSchedulePreview",
-      component: () => import("@/pages/prototype/client/schedule.vue"),
-      meta: { public: true, allowAuthenticated: true },
-    },
-    {
-      path: "/prototype/client/schedule",
-      name: "ClientSchedule",
-      alias: "/prototype/client/schedule/:id",
-      component: () => import("@/pages/prototype/client/schedule.vue"),
-      meta: { public: true, allowAuthenticated: true },
-    },
-    {
-      path: "/prototype/client/schedule/confirmed",
-      name: "ClientScheduleConfirmed",
-      component: () => import("@/pages/prototype/client/schedule/confirmed.vue"),
-      meta: { public: true, allowAuthenticated: true },
-    },
-    {
-      path: "/prototype/client/schedule/requested-change",
-      name: "ClientScheduleRequestedChange",
-      component: () => import("@/pages/prototype/client/schedule/requested-change.vue"),
-      meta: { public: true, allowAuthenticated: true },
-    },
-    {
-      path: "/prototype/client/contract-packet",
-      name: "ClientContractPacket",
-      component: () => import("@/pages/prototype/client/contract-packet.vue"),
-      meta: { public: true, allowAuthenticated: true },
-    },
-    {
-      path: "/prototype/client/dashboard",
-      name: "ClientDashboardOverview",
-      component: () => import("@/pages/prototype/client/dashboard.vue"),
-      meta: { public: true, allowAuthenticated: true },
-    },
-    {
-      path: "/prototype/client/pre-construction",
-      name: "ClientPreConstruction",
-      component: () => import("@/pages/prototype/client/pre-construction.vue"),
-      meta: { public: true, allowAuthenticated: true },
-    },
-    {
-      path: "/prototype/hq/approval-state",
-      name: "ProjectApprovalState",
-      component: () => import("@/pages/prototype/hq/ProjectApprovalState.vue"),
-      meta: { public: true, allowAuthenticated: true },
-    },
-    {
-      path: "/prototype/hq/projects",
-      name: "ContractorHQProjects",
-      component: () => import("@/pages/prototype/hq/projects.vue"),
-      meta: { public: true, allowAuthenticated: true },
-    },
-    {
-      path: "/prototype/hq/projects/job",
-      name: "ContractorHQJobView",
-      component: () => import("@/prototype/contractor/JobView.vue"),
-      meta: { public: true, allowAuthenticated: true },
-    },
-    {
-      path: "/prototype/hq/projects/job/timeline",
-      name: "ContractorHQJobTimeline",
-      component: () => import("@/prototype/hq/projects/JobTimeline.vue"),
-      meta: { public: true, allowAuthenticated: true },
-    },
-    {
-      path: "/prototype/hq/schedule/confirm",
-      name: "ScheduleConfirmPrototype",
-      component: () => import("@/prototype/hq/schedule/ScheduleConfirm.vue"),
-      meta: { public: true, allowAuthenticated: true }
     },
 
-    {
-      path: "/client/project/:id/kickoff",
-      name: "ClientKickoffDetails",
-      component: () => import("@/components/Client/KickoffDetails.vue"),
-      meta: { public: true, allowAuthenticated: true },
-    },
-    {
-      path: "/prototype/proposal/demo",
-      name: "SmartProposalClientDemo",
-      component: () => import("@/prototype/client/ClientProposalView.vue"),
-      meta: { public: true, allowAuthenticated: true },
-    },
-    {
-      path: "/quickquote/:id/preview",
-      name: "QuickQuoteClientPreview",
-      component: () => import("@/prototype/quickquote/QuickQuoteClientView.vue"),
-      meta: { public: true, allowAuthenticated: true },
-    },
-    {
-      path: "/prototype/visit",
-      name: "VisitModePrototype",
-      component: () => import("@/prototype/visit/VisitMode.vue"),
-      meta: { public: true, allowAuthenticated: true },
-    },
-    {
-      path: "/prototype/visit-summary",
-      name: "VisitSummaryPrototype",
-      component: () => import("@/prototype/visit/VisitSummary.vue"),
-      meta: { public: true, allowAuthenticated: true },
-    },
-    {
-      path: "/prototype/hq",
-      name: "ContractorHQPrototypePublic",
-      component: () => import("@/prototype/ContractorHQ.vue"),
-      meta: { public: true, allowAuthenticated: true },
-    },
-    {
-      path: "/prototype/job-view",
-      name: "ContractorJobViewPrototypePublic",
-      component: () => import("@/prototype/contractor/JobView.vue"),
-      meta: { public: true, allowAuthenticated: true },
-    },
-    {
-      path: "/prototype/contractor/timeline",
-      name: "ContractorProjectTimelinePrototype",
-      component: () => import("@/prototype/contractor/ProjectTimeline.vue"),
-      meta: { public: true, allowAuthenticated: true },
-    },
-    {
-      path: "/prototype/task",
-      name: "ContractorTaskPagePrototype",
-      component: () => import("@/prototype/task/TaskPage.vue"),
-      meta: { public: true, allowAuthenticated: true },
-    },
-    {
-      path: "/prototype/job/files",
-      name: "ContractorJobFilesPrototype",
-      component: () => import("@/prototype/job/FilesManager.vue"),
-      meta: { public: true, allowAuthenticated: true },
-    },
-    {
-      path: "/prototype/contractor/files",
-      name: "ContractorFilesManagerPrototype",
-      component: () => import("@/prototype/contractor/files/FilesManagerPage.vue"),
-      meta: { public: true, allowAuthenticated: true },
-    },
-    {
-      path: "/prototype/contractor/individual-job",
-      name: "ContractorIndividualJobViewPrototype",
-      component: () => import("@/prototype/contractor/IndividualJobView.vue"),
-      meta: { public: true, allowAuthenticated: true },
-    },
-    {
-      path: "/prototype/contractor/messaging",
-      name: "ContractorMessagingInboxPrototype",
-      component: () => import("@/prototype/contractor/MessagingInbox.vue"),
-      meta: { public: true, allowAuthenticated: true },
-    },
-    {
-      path: "/onboarding/upload",
-      name: "OnboardingPrototypeUpload",
-      component: () => import("@/pages/onboarding/upload.vue"),
-      meta: { public: true, allowAuthenticated: true, skipOnboardingGuard: true },
-    },
-    {
-      path: "/onboarding/processing",
-      name: "OnboardingPrototypeProcessing",
-      component: () => import("@/pages/onboarding/processing.vue"),
-      meta: { public: true, allowAuthenticated: true, skipOnboardingGuard: true },
-    },
-    {
-      path: "/onboarding/trade-detection",
-      name: "OnboardingPrototypeTrade",
-      component: () => import("@/pages/onboarding/trade.vue"),
-      meta: { public: true, allowAuthenticated: true, skipOnboardingGuard: true },
-    },
-    {
-      path: "/onboarding/profile-preview",
-      name: "OnboardingPrototypeProfile",
-      component: () => import("@/pages/onboarding/profile.vue"),
-      meta: { public: true, allowAuthenticated: true, skipOnboardingGuard: true },
-    },
-    {
-      path: "/onboarding/line-items",
-      name: "OnboardingPrototypeLineItems",
-      component: () => import("@/pages/onboarding/lineitems.vue"),
-      meta: { public: true, allowAuthenticated: true, skipOnboardingGuard: true },
-    },
-    {
-      path: "/onboarding/proposal-preview",
-      name: "OnboardingPrototypeProposal",
-      component: () => import("@/pages/onboarding/proposal.vue"),
-      meta: { public: true, allowAuthenticated: true, skipOnboardingGuard: true },
-    },
-    {
-      path: "/onboarding/client-portal-preview",
-      name: "OnboardingPrototypeClientPreview",
-      component: () => import("@/pages/onboarding/clientpreview.vue"),
-      alias: ["/onboarding/clientpreview"],
-      meta: { public: true, allowAuthenticated: true, skipOnboardingGuard: true },
-    },
-    {
-      path: "/onboarding/first-client",
-      name: "OnboardingPrototypeFirstClient",
-      component: () => import("@/pages/onboarding/firstclient.vue"),
-      meta: { public: true, allowAuthenticated: true, skipOnboardingGuard: true },
-    },
-    {
-      path: "/onboarding/sent",
-      name: "OnboardingPrototypeSent",
-      component: () => import("@/pages/onboarding/sent.vue"),
-      meta: { public: true, allowAuthenticated: true, skipOnboardingGuard: true },
-    },
-    {
-      path: "/onboarding/dashboard",
-      name: "OnboardingPrototypeDashboard",
-      component: () => import("@/pages/dashboard/index.vue"),
-      meta: { public: true, allowAuthenticated: true, skipOnboardingGuard: true },
-    },
+    /* -----------------------------
+       AUTH
+    ------------------------------ */
+
     {
       path: "/login",
       name: "login",
       component: () => import("@/pages/auth/LoginPage.vue"),
       meta: { public: true },
     },
+
     {
       path: "/register",
       name: "register",
       component: () => import("@/pages/auth/RegisterPage.vue"),
       meta: { public: true },
     },
+
     {
       path: "/signup",
       name: "signup",
       component: () => import("@/pages/auth/RegisterPage.vue"),
       meta: { public: true },
     },
-    {
-      path: "/demo",
-      name: "demo",
-      component: () => import("@/pages/marketing/DemoRedirectPage.vue"),
-      meta: { public: true, allowAuthenticated: true },
-    },
-    {
-      path: "/onboarding",
-      name: "onboarding",
-      component: () => import("@/pages/onboarding/OnboardingPage.vue"),
-      meta: { public: false, skipOnboardingGuard: true },
-    },
+
+    /* -----------------------------
+       APP (AUTHENTICATED)
+    ------------------------------ */
+
     {
       path: "/app",
       component: () => import("@/layouts/Layout.vue"),
@@ -462,74 +148,10 @@ const router = createRouter({
           component: () => import("@/pages/dashboard/Dashboard.vue"),
         },
         {
-          path: "command-center-demo",
-          alias: "/command-center-demo",
-          name: "command-center-demo",
-          component: () => import("@/pages/dashboard/CommandCenterDemo.vue"),
-          meta: { public: false },
-        },
-        {
-          path: "quickquotes",
-          alias: "/quickquotes",
-          name: "quickquote-dashboard",
-          component: () => import("@/pages/quickquote/DashboardPage.vue"),
-        },
-        {
-          path: "quickquotes/new",
-          alias: "/quickquotes/new",
-          name: "quickquote-new",
-          component: () => import("@/pages/quickquote/QuickQuoteNewPage.vue"),
-        },
-        {
-          path: "quickquotes/builder",
-          alias: "/quickquotes/builder",
-          name: "quickquote-builder",
-          component: () => import("@/pages/quickquote/QuickQuotePage.vue"),
-        },
-        {
-          path: "quickquotes/:id",
-          alias: "/quickquotes/:id",
-          name: "quickquote-estimate",
-          component: () => import("@/pages/quickquote/EstimateEditorPage.vue"),
-          props: true,
-        },
-        {
-          path: "smart-proposals",
-          alias: "/smart-proposals",
-          name: "smart-proposals",
-          component: () => import("@/pages/smartproposals/SmartProposalsPage.vue"),
-        },
-        {
-          path: "prototypes/client-portal",
-          name: "ClientProposalPrototype",
-          component: () => import("@/prototype/client-portal/ClientProposalPage.vue"),
-          meta: { public: true, allowAuthenticated: true },
-        },
-        {
-          path: "proposals-v2",
-          name: "ProposalsV2Dev",
-          component: () => import("@/pages/smartproposals/SmartProposalsV2Page.vue"),
-          meta: {
-            requiresAuth: true,
-          },
-        },
-        {
-          path: "analytics",
-          alias: "/analytics",
-          name: "analytics",
-          component: () => import("@/pages/analytics/AnalyticsPage.vue"),
-        },
-        {
           path: "payments",
           alias: ["/payments", "/settings/payments"],
           name: "payments",
           component: () => import("@/pages/payments/PaymentsPage.vue"),
-        },
-        {
-          path: "help",
-          alias: "/help",
-          name: "help",
-          component: () => import("@/pages/help/HelpPage.vue"),
         },
         {
           path: "settings",
@@ -537,82 +159,63 @@ const router = createRouter({
           name: "settings",
           component: () => import("@/pages/settings/SettingsPage.vue"),
         },
-        {
-  path: "/proposal/:token/success",
-  name: "proposal-success",
-  component: () =>
-    import("@/pages/public/ProposalSuccessView.vue"),
-}
-
       ],
     },
   ],
 });
 
+/* --------------------------------------------------
+   Guards
+-------------------------------------------------- */
+
 const demoFlagValues = new Set(["1", "true"]);
 
 const isDemoFlag = (value: LocationQueryValue | null | undefined): boolean =>
-  typeof value === "string" ? demoFlagValues.has(value.toLowerCase()) : false;
+  typeof value === "string"
+    ? demoFlagValues.has(value.toLowerCase())
+    : false;
 
 router.beforeEach(async (to) => {
   const auth = useAuth();
   const demo = useDemoStore();
+
   await waitForAuth();
+
   const demoQuery = to.query.demo;
   const wantsDemo = Array.isArray(demoQuery)
-    ? demoQuery.some((value) => isDemoFlag(value ?? null))
-    : isDemoFlag(demoQuery ?? null);
+    ? demoQuery.some((value) => isDemoFlag(value))
+    : isDemoFlag(demoQuery);
 
-  if (wantsDemo && !demo.active) {
-    demo.activate();
-  }
+  if (wantsDemo && !demo.active) demo.activate();
 
   const isDemoActive = demo.active;
 
-  if (isDemoActive && "demo" in to.query) {
-    const nextQuery: LocationQueryRaw = { ...to.query, demo: undefined };
-    return { path: to.path, query: nextQuery, replace: true };
-  }
-
   if (!to.meta.public && !auth.isAuthenticated.value && !isDemoActive) {
-    const redirectTarget = auth.sanitizeRedirect(to.fullPath);
-    if (redirectTarget) {
-      auth.setStoredRedirect(redirectTarget);
-    } else {
-      auth.clearStoredRedirect();
-    }
     return { name: "login" };
   }
+
   if (
     to.meta.public &&
     !to.meta.allowAuthenticated &&
     (auth.isAuthenticated.value || isDemoActive)
   ) {
-    const redirectTarget = auth.getStoredRedirect() ?? "/dashboard";
-    auth.clearStoredRedirect();
-    return { path: redirectTarget };
+    return { path: "/dashboard" };
   }
-  if (!to.meta.public && !to.meta.skipOnboardingGuard && auth.isAuthenticated.value && !isDemoActive) {
+
+  if (!to.meta.public && auth.isAuthenticated.value && !isDemoActive) {
     const profileStore = useContractorProfileStore();
-    if (!profileStore.profile && !profileStore.loading && !profileStore.error) {
-      try {
-        await profileStore.load();
-      } catch (error) {
-        console.error("[router] failed to load contractor profile", error);
-      }
+    if (!profileStore.profile && !profileStore.loading) {
+      await profileStore.load().catch(() => {});
     }
-    const hasTrade = Boolean(profileStore.profile?.trade ?? profileStore.profile?.tradeType);
-    const hasProfile = Boolean(profileStore.profile);
-    const hasError = Boolean(profileStore.error);
-    const needsOnboarding = !profileStore.isDemo && !hasError && (!hasProfile || !hasTrade);
-    const bypass = isOnboardingBypassed();
-    if (needsOnboarding && !bypass && to.name !== "onboarding") {
-      return { name: "onboarding", replace: true };
-    }
-    if ((!needsOnboarding || bypass) && to.name === "onboarding") {
-      return { name: "dashboard-home", replace: true };
+
+    const needsOnboarding =
+      !profileStore.profile && !isOnboardingBypassed();
+
+    if (needsOnboarding && to.name !== "onboarding") {
+      return { name: "onboarding" };
     }
   }
+
   return true;
 });
 
