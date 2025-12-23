@@ -14,7 +14,7 @@
       <p class="text-gray-500">This proposal is no longer available.</p>
     </div>
 
-    <!-- Proposal (NON-NULL GUARANTEED) -->
+    <!-- Proposal (sent only) -->
     <div
       v-else-if="proposal"
       class="max-w-2xl w-full bg-white rounded-lg shadow p-6"
@@ -69,7 +69,7 @@ type Proposal = {
   id: string;
   title: string;
   description?: string;
-  status: string;
+  status: "sent" | "accepted";
   publicToken: string;
   options: ProposalOption[];
   depositConfig?: unknown;
@@ -86,8 +86,6 @@ const token = route.params.token as string;
 
 const loading = ref(true);
 const unavailable = ref(false);
-
-// IMPORTANT: explicit nullable ref
 const proposal = ref<Proposal | null>(null);
 
 /* =====================
@@ -110,14 +108,20 @@ onMounted(async () => {
     }
 
     const json = await res.json();
-    const fetched = json?.data?.proposal as Proposal | undefined;
+    const fetched = json?.data as Proposal | undefined;
 
     if (!fetched) {
       unavailable.value = true;
       return;
     }
 
-    // Optional guard — adjust if you want accepted/signed visible
+    // 🔁 Accepted proposals skip this page entirely
+    if (fetched.status === "accepted") {
+      router.replace(`/proposal/${token}/success`);
+      return;
+    }
+
+    // Only "sent" proposals render here
     if (fetched.status !== "sent") {
       unavailable.value = true;
       return;
@@ -152,7 +156,6 @@ async function accept(optionName: string) {
       return;
     }
 
-    // Redirect to success page
     router.push(`/proposal/${token}/success`);
   } catch (err) {
     console.error("[ClientProposalView] accept failed", err);
