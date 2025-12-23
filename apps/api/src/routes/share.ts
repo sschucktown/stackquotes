@@ -4,7 +4,46 @@ import { z } from "zod";
 import { Buffer } from "node:buffer";
 import { getServiceClient } from "../lib/supabase.js";
 
+
+
 export const shareRouter = new Hono();
+shareRouter.get("/proposal/:token/job", async (c) => {
+  const token = c.req.param("token");
+  const supabase = getServiceClient();
+
+  console.log("🧪 HIT /proposal/:token/job with token:", token);
+
+  const { data: proposal, error: proposalErr } = await supabase
+    .from("smart_proposals")
+    .select("id, job_id, deposit_amount")
+    .eq("public_token", token)
+    .single();
+
+  if (proposalErr || !proposal) {
+    return c.json({ error: "Proposal not found" }, 404);
+  }
+
+  if (!proposal.job_id) {
+    return c.json({ error: "Job not found" }, 404);
+  }
+
+  const { data: job, error: jobErr } = await supabase
+    .from("jobs")
+    .select("id, deposit_amount, payment_link_url, status")
+    .eq("id", proposal.job_id)
+    .single();
+
+  if (jobErr || !job) {
+    return c.json({ error: "Job not found" }, 404);
+  }
+
+  return c.json({
+    job_id: job.id,
+    status: job.status,
+    deposit_amount: job.deposit_amount ?? proposal.deposit_amount ?? 0,
+    payment_link_url: job.payment_link_url,
+  });
+});
 
 /* =========================================================
    GET /api/share/proposal/:token
