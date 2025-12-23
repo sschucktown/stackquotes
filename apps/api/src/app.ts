@@ -56,8 +56,6 @@ export const createApp = () => {
     isEnvLoaded = true;
   }
 
-  console.log("[api] SUPABASE_URL:", process.env.SUPABASE_URL ?? "(undefined)");
-
   const app = new Hono();
 
   // Global CORS
@@ -89,28 +87,27 @@ export const createApp = () => {
   // Health check
   const healthHandler = (c: Context) => c.json({ ok: true });
   app.get("/health", healthHandler);
-  app.get("/api/health", healthHandler);
 
   // ----------------------------
-  // Route mounts (all under /api)
+  // Route mounts (Vercel already gives /api)
   // ----------------------------
-  app.route("/api/estimates", estimatesRouter);
-  app.route("/api/clients", clientsRouter);
-  app.route("/api/pdf", pdfRouter);
-  app.route("/api/email", emailRouter);
-  app.route("/api/settings", settingsRouter);
-  app.route("/api/share", shareRouter);
-  app.route("/api/proposals", proposalsRouter);
-  app.route("/api/contractor", contractorRouter);
-  app.route("/api/stripe", stripeRouter);
-  app.route("/api/addons", addonsRouter);
-  app.route("/api/wisetack", wisetackRouter);
-  app.route("/api/billing", billingRouter);
-  app.route("/api/onboarding", onboardingRouter);
-  app.route("/api/dashboard", dashboardRouter);
-  app.route("/api/smartproposals", smartProposalsRouter);
-  app.route("/api/kickoff", kickoffRouter);
-    app.route("/api/jobs", jobsRouter);
+  app.route("/estimates", estimatesRouter);
+  app.route("/clients", clientsRouter);
+  app.route("/pdf", pdfRouter);
+  app.route("/email", emailRouter);
+  app.route("/settings", settingsRouter);
+  app.route("/share", shareRouter);
+  app.route("/proposals", proposalsRouter);
+  app.route("/contractor", contractorRouter);
+  app.route("/stripe", stripeRouter);
+  app.route("/addons", addonsRouter);
+  app.route("/wisetack", wisetackRouter);
+  app.route("/billing", billingRouter);
+  app.route("/onboarding", onboardingRouter);
+  app.route("/dashboard", dashboardRouter);
+  app.route("/smartproposals", smartProposalsRouter);
+  app.route("/kickoff", kickoffRouter);
+  app.route("/jobs", jobsRouter);
 
   return app;
 };
