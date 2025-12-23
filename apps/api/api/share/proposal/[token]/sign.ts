@@ -1,11 +1,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
-import { getServiceClient } from "../../../../lib/supabase";
-import { createJobFromProposal } from "../../../../lib/createJobFromProposal";
-
-/* --------------------------------------------------
-   Router
--------------------------------------------------- */
+import { Buffer } from "node:buffer";
+import { getServiceClient } from "../../../../lib/supabase.js";
 
 export const signRouter = new Hono();
 
@@ -24,8 +20,8 @@ const bodySchema = z.object({
 
 signRouter.post("/", async (c) => {
   const supabase = getServiceClient();
-
   const token = c.req.param("token");
+
   if (!token) {
     return c.json({ error: "Missing proposal token" }, 400);
   }
@@ -44,45 +40,24 @@ signRouter.post("/", async (c) => {
   const { accepted_option, signature_image } = parsed;
 
   /* -----------------------------
-     Fetch proposal by public token
+     Fetch proposal
   ------------------------------ */
 
-  const { data: proposal, error: fetchErr } = await supabase
+  const { data: proposal, error: proposalErr } = await supabase
     .from("smart_proposals")
-    .select(
-      `
-        id,
-        contractor_id,
-        client_id,
-        line_items,
-        deposit_amount,
-        status,
-        signed_at
-      `
-    )
+    .select("*")
     .eq("public_token", token)
     .single();
 
-  if (fetchErr || !proposal) {
+  if (proposalErr || !proposal) {
     return c.json({ error: "Proposal not found" }, 404);
-  }
-
-  if (proposal.signed_at) {
-    return c.json({ error: "Proposal already signed" }, 409);
-  }
-
-  if (proposal.status !== "sent") {
-    return c.json(
-      { error: "Proposal is not in a signable state" },
-      409
-    );
   }
 
   /* -----------------------------
      Upload signature
   ------------------------------ */
 
-  const base64 = signature_image.split(",")[1];
+  const base64 = signature_image.split(",")[1] ?? "";
   const buffer = Buffer.from(base64, "base64");
   const filename = `${proposal.id}.png`;
 
@@ -94,7 +69,7 @@ signRouter.post("/", async (c) => {
     });
 
   if (uploadErr) {
-    console.error("[SIGN] signature upload failed", uploadErr);
+    console.error("[SIGN] upload failed", uploadErr);
     return c.json({ error: "Signature upload failed" }, 500);
   }
 
@@ -102,18 +77,19 @@ signRouter.post("/", async (c) => {
     .from("proposal-signatures")
     .getPublicUrl(filename);
 
-  /* -----------------------------
-     Update proposal
-  ------------------------------ */
+  const signatureUrl = publicUrl.publicUrl;
+  const nowIso = new Date().toISOString();
 
-  const now = new Date().toISOString();
+  /* -----------------------------
+     Update proposal (signed)
+  ------------------------------ */
 
   const { error: updateErr } = await supabase
     .from("smart_proposals")
     .update({
       signed_option: accepted_option,
-      signature_image: publicUrl.publicUrl,
-      signed_at: now,
+      signature_image: signatureUrl,
+      signed_at: nowIso,
       status: "accepted",
     })
     .eq("id", proposal.id);
@@ -123,37 +99,66 @@ signRouter.post("/", async (c) => {
     return c.json({ error: "Failed to update proposal" }, 500);
   }
 
-  /* -----------------------------
-     Normalize proposal (TYPE FIX)
-  ------------------------------ */
+  /* ==================================================
+     ENSURE JOB EXISTS (AUTHORITATIVE)
+     This is the missing invariant fix
+  ================================================== */
 
-  const normalizedProposal = {
-    id: proposal.id,
-    contractor_id: proposal.contractor_id,
-    client_id: proposal.client_id,
-    line_items: proposal.line_items,
-    deposit_amount: proposal.deposit_amount,
-    status: proposal.status ?? undefined, // 🔑 critical fix
-  };
+  let jobId = proposal.job_id ?? null;
 
-  /* -----------------------------
-     Create job (single source of truth)
-  ------------------------------ */
+  if (!jobId) {
+    // Normalize options to compute approved price
+    let options: any[] = [];
 
-  let jobResult;
-  try {
-    jobResult = await createJobFromProposal({
-      supabase,
-      proposal: normalizedProposal,
-      acceptedOption: accepted_option,
-      actor: "client",
-    });
-  } catch (err: any) {
-    console.error("❌ [SIGN] job create failed", err);
-    return c.json(
-      { error: err.message || "Failed to create job" },
-      500
-    );
+    if (Array.isArray(proposal.options)) {
+      options = proposal.options;
+    } else if (
+      proposal.line_items &&
+      typeof proposal.line_items === "object" &&
+      Array.isArray((proposal.line_items as any).options)
+    ) {
+      options = (proposal.line_items as any).options;
+    }
+
+    const matchedOption =
+      options.find(
+        (o: any) =>
+          String(o?.name ?? "").toLowerCase() ===
+          accepted_option.toLowerCase()
+      ) ?? options[0];
+
+    const approvedPrice =
+      typeof matchedOption?.subtotal === "number"
+        ? matchedOption.subtotal
+        : 0;
+
+    const { data: job, error: jobErr } = await supabase
+      .from("jobs")
+      .insert({
+        proposal_id: proposal.id,
+        contractor_id: proposal.contractor_id,
+        client_id: proposal.client_id,
+        approved_option: accepted_option,
+        approved_price: approvedPrice,
+        deposit_amount: proposal.deposit_amount ?? null,
+        approved_at: nowIso,
+        status: "pending",
+      })
+      .select("id")
+      .single();
+
+    if (jobErr || !job) {
+      console.error("❌ [SIGN] job create failed", jobErr);
+      return c.json({ error: "Failed to create job" }, 500);
+    }
+
+    jobId = job.id;
+
+    // 🔑 CRITICAL BACK-LINK
+    await supabase
+      .from("smart_proposals")
+      .update({ job_id: jobId })
+      .eq("id", proposal.id);
   }
 
   /* -----------------------------
@@ -163,7 +168,8 @@ signRouter.post("/", async (c) => {
   return c.json({
     success: true,
     proposal_id: proposal.id,
-    job_id: jobResult.job.id,
-    accepted_option,
+    job_id: jobId,
   });
 });
+
+export default signRouter;
