@@ -5,8 +5,8 @@
 
   "routes": [
     {
-      "src": "/api/(.*)",
-      "dest": "apps/api/api/$1"
+      "src": "^/api/(.*)$",
+      "dest": "/apps/api/index.ts"
     },
     {
       "src": "/assets/(.*)",
