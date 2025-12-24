@@ -48,7 +48,7 @@ const loadEnvironment = () => {
 let isEnvLoaded = false;
 
 // ----------------------------
-// App factory
+// App factory (EXPORTED)
 // ----------------------------
 export const createApp = () => {
   if (!isEnvLoaded) {
@@ -89,7 +89,7 @@ export const createApp = () => {
   app.get("/health", healthHandler);
 
   // ----------------------------
-  // Route mounts (Vercel already gives /api)
+  // Route mounts (NO /api prefix)
   // ----------------------------
   app.route("/estimates", estimatesRouter);
   app.route("/clients", clientsRouter);
@@ -112,4 +112,7 @@ export const createApp = () => {
   return app;
 };
 
+// ----------------------------
+// Types
+// ----------------------------
 export type AppType = ReturnType<typeof createApp>;
