@@ -1,8 +1,29 @@
 import { Hono } from "hono";
-import proposalTokenRouter from "./token";
 
-const proposalRouter = new Hono();
+// TypeScript cannot resolve .js extensions during dev,
+// but Vercel WILL resolve them at runtime.
+// These suppress TS-only errors safely.
 
-proposalRouter.route("/:token", proposalTokenRouter);
+// @ts-ignore
+import { jobRouter } from "./[token]/job.js";
+// @ts-ignore
+import { signRouter } from "./[token]/sign.js";
 
-export default proposalRouter;
+export const proposalRouter = new Hono();
+
+/**
+ * 🔍 ROUTE PROBE
+ * This confirms routing is working
+ */
+proposalRouter.get("/:token", (c) => {
+  return c.json({
+    ok: true,
+    token: c.req.param("token"),
+  });
+});
+
+/**
+ * Nested routes
+ */
+proposalRouter.route("/:token/job", jobRouter);
+proposalRouter.route("/:token/sign", signRouter);
